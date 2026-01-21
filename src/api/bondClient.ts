@@ -1,7 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
 import { Program, Session, Product, Segment, Event, APIResponse } from '../types/bond';
 
-const BASE_URL = 'https://public.api.bondsports.co/v1';
+// Use proxy in development for CORS, direct API in production
+const isDev = import.meta.env.DEV;
+const BASE_URL = isDev ? '/api' : 'https://public.api.bondsports.co/v1';
 const API_KEY = 'zhoZODDEKuaexCBkvumrU7c84TbC3zsC4hENkjlz';
 
 // In-memory cache (5 minutes)
@@ -19,7 +21,7 @@ class BondClient {
   constructor() {
     this.client = axios.create({
       baseURL: BASE_URL,
-      headers: {
+      headers: isDev ? {} : {
         'x-api-key': API_KEY,
       },
     });

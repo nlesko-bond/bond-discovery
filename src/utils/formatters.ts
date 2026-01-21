@@ -111,3 +111,18 @@ export function getAgeRange(ageMin?: number, ageMax?: number): string {
   if (ageMax) return `Up to ${ageMax} years`;
   return '';
 }
+
+// Strip HTML tags from a string (for API descriptions)
+export function stripHtml(html?: string): string {
+  if (!html) return '';
+  // Remove HTML tags and decode common entities
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+}
