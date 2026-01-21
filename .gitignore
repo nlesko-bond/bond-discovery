@@ -1,5 +1,8 @@
 node_modules
 dist
+
+# Compiled TypeScript output (Vite handles TS directly)
+src/**/*.js
 .DS_Store
 *.local
 .env
