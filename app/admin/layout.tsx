@@ -1,29 +1,20 @@
-import { getServerSession } from 'next-auth';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { authOptions } from '@/lib/auth';
-import { AdminNav } from './AdminNav';
 import { 
   Settings, 
   Building2, 
   Palette, 
   SlidersHorizontal,
   LayoutDashboard,
-  FileText,
-  LogOut
+  FileText
 } from 'lucide-react';
 
-export default async function AdminLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Check authentication on server
-  const session = await getServerSession(authOptions);
-  
-  // Allow access to login page without auth
-  // All other admin pages require authentication
-  // Note: We handle login page separately in its own layout
+  // Note: Authentication is optional. When NEXTAUTH_SECRET is configured,
+  // you can protect routes by checking session in individual pages.
   
   return (
     <div className="min-h-screen bg-gray-100">
@@ -44,15 +35,6 @@ export default async function AdminLayout({
                 Bond Discovery Admin
               </h1>
             </div>
-            
-            {session?.user && (
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600">
-                  {session.user.email}
-                </span>
-                <AdminNav />
-              </div>
-            )}
           </div>
         </div>
       </header>

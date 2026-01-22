@@ -1,6 +1,10 @@
 import NextAuth from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { NextResponse } from 'next/server';
+import { authOptions, isAuthConfigured } from '@/lib/auth';
 
-const handler = NextAuth(authOptions);
+// Only create handler if auth is configured
+const handler = isAuthConfigured 
+  ? NextAuth(authOptions)
+  : () => NextResponse.json({ error: 'Auth not configured' }, { status: 503 });
 
 export { handler as GET, handler as POST };

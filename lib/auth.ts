@@ -4,13 +4,20 @@ import GoogleProvider from 'next-auth/providers/google';
 // Allowed email domains for admin access
 const ALLOWED_DOMAINS = ['bondsports.co'];
 
+// Check if auth is configured
+export const isAuthConfigured = !!(
+  process.env.NEXTAUTH_SECRET &&
+  process.env.GOOGLE_CLIENT_ID &&
+  process.env.GOOGLE_CLIENT_SECRET
+);
+
 export const authOptions: NextAuthOptions = {
-  providers: [
+  providers: isAuthConfigured ? [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-  ],
+  ] : [],
   
   callbacks: {
     async signIn({ user, account }) {
