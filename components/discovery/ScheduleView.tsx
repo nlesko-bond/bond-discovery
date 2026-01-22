@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -41,17 +41,37 @@ interface ScheduleViewProps {
 
 export function ScheduleView({ schedule, config, isLoading, error, totalEvents }: ScheduleViewProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   
   // Use URL scheduleView param first, then config default, then 'week'
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+  const [viewMode, setViewModeState] = useState<ViewMode>(() => {
     const urlScheduleView = searchParams.get('scheduleView') as ViewMode | null;
     if (urlScheduleView && ['list', 'day', 'week', 'month'].includes(urlScheduleView)) {
       return urlScheduleView;
     }
     return (config.features.defaultScheduleView as ViewMode) || 'week';
   });
+  
+  // Update URL when view mode changes
+  const setViewMode = useCallback((newMode: ViewMode) => {
+    setViewModeState(newMode);
+    
+    // Preserve existing URL params and update scheduleView
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('scheduleView', newMode);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, router, pathname]);
+  
+  // Sync view mode from URL when it changes externally
+  useEffect(() => {
+    const urlScheduleView = searchParams.get('scheduleView') as ViewMode | null;
+    if (urlScheduleView && ['list', 'day', 'week', 'month'].includes(urlScheduleView) && urlScheduleView !== viewMode) {
+      setViewModeState(urlScheduleView);
+    }
+  }, [searchParams]);
   
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
