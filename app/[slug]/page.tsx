@@ -17,6 +17,7 @@ async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
   const client = createBondClient(DEFAULT_API_KEY);
   const allPrograms: Program[] = [];
   const orgIds = config.organizationIds;
+  const today = new Date().toISOString().split('T')[0];
   
   // Fetch programs from all organizations in parallel
   const promises = orgIds.map(async (orgId) => {
@@ -35,7 +36,18 @@ async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
         organizationId: orgId,
       }));
       
-      return programs;
+      // Filter out past sessions (where endDate < today)
+      programs.forEach(program => {
+        if (program.sessions) {
+          program.sessions = program.sessions.filter(session => {
+            if (!session.endDate) return true; // Keep sessions without end date
+            return session.endDate >= today;
+          });
+        }
+      });
+      
+      // Remove programs with no active sessions
+      return programs.filter(p => !p.sessions || p.sessions.length > 0);
     } catch (error) {
       console.error(`Error fetching programs for org ${orgId}:`, error);
       return [];

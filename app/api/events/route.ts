@@ -29,6 +29,7 @@ interface TransformedEvent {
 /**
  * GET /api/events
  * Fetches all events for all sessions across organizations
+ * By default, only fetches events from today onwards (excludes past events)
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -36,8 +37,12 @@ export async function GET(request: Request) {
     ? searchParams.get('orgIds')!.split(/[_,]/).filter(Boolean) 
     : DEFAULT_ORG_IDS;
   const facilityId = searchParams.get('facilityId') || undefined;
-  const startDate = searchParams.get('startDate') || undefined;
+  
+  // Default to today if no startDate specified (don't fetch past events)
+  const today = new Date().toISOString().split('T')[0];
+  const startDate = searchParams.get('startDate') || today;
   const endDate = searchParams.get('endDate') || undefined;
+  const includePast = searchParams.get('includePast') === 'true';
   
   try {
     const client = createBondClient(DEFAULT_API_KEY);
@@ -62,6 +67,15 @@ export async function GET(request: Request) {
           const sessions = program.sessions || [];
           
           for (const session of sessions) {
+            // Skip sessions that have already ended (unless includePast is true)
+            if (!includePast && session.endDate) {
+              const sessionEndDate = new Date(session.endDate);
+              const todayDate = new Date(today);
+              if (sessionEndDate < todayDate) {
+                continue; // Skip past sessions
+              }
+            }
+            
             try {
               // Fetch events with resources expand for court/field names
               const eventsResponse = await client.getEvents(orgId, program.id, session.id, {

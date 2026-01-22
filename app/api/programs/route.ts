@@ -18,6 +18,10 @@ export async function GET(request: Request) {
   
   const facilityId = searchParams.get('facilityId') || undefined;
   const expand = searchParams.get('expand') || 'sessions,sessions.products,sessions.products.prices';
+  const includePast = searchParams.get('includePast') === 'true';
+  
+  // Today's date for filtering past sessions
+  const today = new Date().toISOString().split('T')[0];
 
   try {
     const client = createBondClient(DEFAULT_API_KEY);
@@ -37,6 +41,21 @@ export async function GET(request: Request) {
           ...transformProgram(raw),
           organizationId: orgId,
         }));
+
+        // Filter out past sessions unless includePast is true
+        if (!includePast) {
+          programs.forEach(program => {
+            if (program.sessions) {
+              program.sessions = program.sessions.filter(session => {
+                if (!session.endDate) return true; // Keep sessions without end date
+                return session.endDate >= today;
+              });
+            }
+          });
+          
+          // Remove programs with no active sessions
+          return programs.filter(p => !p.sessions || p.sessions.length > 0);
+        }
 
         return programs;
       } catch (error) {
