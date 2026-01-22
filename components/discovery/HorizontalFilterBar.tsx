@@ -46,6 +46,9 @@ export function HorizontalFilterBar({
 }: HorizontalFilterBarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Get enabled filters from config
+  const enabledFilters = config.features.enableFilters || ['facility', 'programType', 'sport', 'age', 'dateRange', 'program'];
 
   // Count active filters
   const activeFilterCount = [
@@ -109,8 +112,8 @@ export function HorizontalFilterBar({
     <div className="space-y-3">
       {/* Filter Buttons Row */}
       <div ref={dropdownRef} className="flex flex-wrap items-center gap-2">
-        {/* Facility Filter */}
-        {filterOptions.facilities.length > 0 && (
+        {/* Facility Filter - only show if enabled */}
+        {enabledFilters.includes('facility') && filterOptions.facilities.length > 0 && (
           <FilterDropdown
             label="Location"
             icon={<MapPin size={14} />}
@@ -146,8 +149,8 @@ export function HorizontalFilterBar({
           </FilterDropdown>
         )}
 
-        {/* Program Filter */}
-        {filterOptions.programs.length > 0 && (
+        {/* Program Filter - only show if enabled */}
+        {enabledFilters.includes('program') && filterOptions.programs.length > 0 && (
           <FilterDropdown
             label="Program"
             icon={<Tag size={14} />}
@@ -178,8 +181,8 @@ export function HorizontalFilterBar({
           </FilterDropdown>
         )}
 
-        {/* Program Type Filter */}
-        {filterOptions.programTypes.length > 0 && (
+        {/* Program Type Filter - only show if enabled */}
+        {enabledFilters.includes('programType') && filterOptions.programTypes.length > 0 && (
           <FilterDropdown
             label="Type"
             icon={<Layers size={14} />}
@@ -215,8 +218,8 @@ export function HorizontalFilterBar({
           </FilterDropdown>
         )}
 
-        {/* Sport Filter */}
-        {filterOptions.sports.length > 0 && (
+        {/* Sport Filter - only show if enabled */}
+        {enabledFilters.includes('sport') && filterOptions.sports.length > 0 && (
           <FilterDropdown
             label="Activity"
             icon={<Activity size={14} />}
@@ -252,53 +255,55 @@ export function HorizontalFilterBar({
           </FilterDropdown>
         )}
 
-        {/* Age Filter */}
-        <FilterDropdown
-          label="Age"
-          icon={<Users size={14} />}
-          isOpen={openDropdown === 'age'}
-          onToggle={() => setOpenDropdown(openDropdown === 'age' ? null : 'age')}
-          hasSelection={!!(filters.ageRange?.min || filters.ageRange?.max)}
-        >
-          <div className="p-3 space-y-3">
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">Min Age</label>
-              <input
-                type="number"
-                min={0}
-                max={99}
-                value={filters.ageRange?.min || ''}
-                onChange={(e) => onFilterChange({
-                  ...filters,
-                  ageRange: {
-                    ...filters.ageRange,
-                    min: e.target.value ? parseInt(e.target.value) : undefined,
-                  },
-                })}
-                placeholder="Any"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-toca-purple focus:border-transparent"
-              />
+        {/* Age Filter - only show if enabled */}
+        {enabledFilters.includes('age') && (
+          <FilterDropdown
+            label="Age"
+            icon={<Users size={14} />}
+            isOpen={openDropdown === 'age'}
+            onToggle={() => setOpenDropdown(openDropdown === 'age' ? null : 'age')}
+            hasSelection={!!(filters.ageRange?.min || filters.ageRange?.max)}
+          >
+            <div className="p-3 space-y-3">
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Min Age</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={99}
+                  value={filters.ageRange?.min || ''}
+                  onChange={(e) => onFilterChange({
+                    ...filters,
+                    ageRange: {
+                      ...filters.ageRange,
+                      min: e.target.value ? parseInt(e.target.value) : undefined,
+                    },
+                  })}
+                  placeholder="Any"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-toca-purple focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Max Age</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={99}
+                  value={filters.ageRange?.max || ''}
+                  onChange={(e) => onFilterChange({
+                    ...filters,
+                    ageRange: {
+                      ...filters.ageRange,
+                      max: e.target.value ? parseInt(e.target.value) : undefined,
+                    },
+                  })}
+                  placeholder="Any"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-toca-purple focus:border-transparent"
+                />
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">Max Age</label>
-              <input
-                type="number"
-                min={0}
-                max={99}
-                value={filters.ageRange?.max || ''}
-                onChange={(e) => onFilterChange({
-                  ...filters,
-                  ageRange: {
-                    ...filters.ageRange,
-                    max: e.target.value ? parseInt(e.target.value) : undefined,
-                  },
-                })}
-                placeholder="Any"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-toca-purple focus:border-transparent"
-              />
-            </div>
-          </div>
-        </FilterDropdown>
+          </FilterDropdown>
+        )}
 
         {/* Clear All */}
         {activeFilterCount > 0 && (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -546,43 +546,63 @@ function EventDetailModal({
   onClose: () => void;
   config: DiscoveryConfig;
 }) {
+  // Close on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-      <div className="w-full max-w-lg bg-white rounded-t-2xl sm:rounded-xl max-h-[80vh] overflow-hidden animate-slide-up">
-        {/* Header */}
+    <div 
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50"
+      onClick={onClose}
+    >
+      <div 
+        className="w-full max-w-lg bg-white rounded-t-2xl sm:rounded-xl max-h-[85vh] overflow-hidden animate-slide-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header with clear close button */}
         <div 
           className="p-4 text-white relative"
-          style={{ backgroundColor: event.color }}
+          style={{ background: `linear-gradient(135deg, ${event.color || '#1E2761'}, ${event.color || '#6366F1'}90)` }}
         >
+          {/* Close button - more visible */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+            className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 transition-colors border-2 border-white/30"
+            aria-label="Close"
           >
-            <X size={18} className="text-white" />
+            <X size={20} className="text-white" />
           </button>
           
-          <div className="pr-10">
-            <h3 className="text-xl font-bold">{event.programName}</h3>
+          <div className="pr-12">
+            <h3 className="text-xl font-bold leading-tight">{event.programName}</h3>
             {event.sessionName && event.sessionName !== event.programName && (
-              <p className="text-white/80 mt-1">{event.sessionName}</p>
+              <p className="text-white/90 mt-1 text-sm">{event.sessionName}</p>
             )}
-            <div className="flex items-center gap-2 mt-2 text-sm text-white/80">
-              {event.sport && <span className="capitalize">{getSportLabel(event.sport)}</span>}
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              {event.sport && (
+                <span className="text-xs bg-white/20 px-2 py-1 rounded-full capitalize">
+                  {getSportLabel(event.sport)}
+                </span>
+              )}
               {event.programType && (
-                <>
-                  <span>•</span>
-                  <span>{getProgramTypeLabel(event.programType)}</span>
-                </>
+                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
+                  {getProgramTypeLabel(event.programType)}
+                </span>
               )}
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-4">
+        <div className="p-5 space-y-4 overflow-y-auto max-h-[50vh]">
           {/* Date & Time */}
-          <div className="flex items-start gap-3">
-            <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
+          <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+            <Calendar className="w-5 h-5 text-toca-purple mt-0.5 flex-shrink-0" />
             <div>
               <p className="font-semibold text-gray-900">{formatDate(event.date, 'EEEE, MMMM d, yyyy')}</p>
               <p className="text-sm text-gray-600">
@@ -594,8 +614,8 @@ function EventDetailModal({
 
           {/* Location */}
           {(event.facilityName || event.location) && (
-            <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+              <MapPin className="w-5 h-5 text-toca-purple mt-0.5 flex-shrink-0" />
               <div>
                 <p className="font-semibold text-gray-900">{event.facilityName}</p>
                 {event.location && <p className="text-sm text-gray-600">{event.location}</p>}
@@ -605,15 +625,15 @@ function EventDetailModal({
 
           {/* Capacity */}
           {config.features.showAvailability && event.maxParticipants && (
-            <div className="flex items-start gap-3">
-              <Users className="w-5 h-5 text-gray-400 mt-0.5" />
+            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+              <Users className="w-5 h-5 text-toca-purple mt-0.5 flex-shrink-0" />
               <div>
                 <p className="font-semibold text-gray-900">
                   {event.currentParticipants || 0} / {event.maxParticipants} Enrolled
                 </p>
                 {event.spotsRemaining !== undefined && (
                   <p className={cn(
-                    'text-sm',
+                    'text-sm font-medium',
                     event.spotsRemaining <= 0 && 'text-red-600',
                     event.spotsRemaining > 0 && event.spotsRemaining <= 5 && 'text-yellow-600',
                     event.spotsRemaining > 5 && 'text-green-600'
@@ -625,44 +645,62 @@ function EventDetailModal({
             </div>
           )}
 
-          {/* Pricing */}
-          {config.features.showPricing && event.startingPrice && (
-            <div className="flex items-start gap-3">
-              <Tag className="w-5 h-5 text-gray-400 mt-0.5" />
-              <div>
-                <p className="font-semibold text-gray-900">{formatPrice(event.startingPrice)}</p>
-                {event.memberPrice && event.memberPrice < event.startingPrice && (
-                  <p className="text-sm text-toca-navy">
-                    Member price: {formatPrice(event.memberPrice)}
-                  </p>
+          {/* Pricing Section */}
+          {config.features.showPricing && (event.startingPrice !== undefined || event.membershipRequired) && (
+            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+              <Tag className="w-5 h-5 text-toca-purple mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                {event.startingPrice !== undefined && event.startingPrice > 0 ? (
+                  <>
+                    <p className="font-semibold text-gray-900 text-lg">{formatPrice(event.startingPrice)}</p>
+                    {event.memberPrice && event.memberPrice < event.startingPrice && (
+                      <div className="mt-1 p-2 bg-toca-navy/5 rounded border border-toca-navy/10">
+                        <p className="text-sm text-toca-navy font-medium">
+                          Member price: {formatPrice(event.memberPrice)}
+                        </p>
+                        <p className="text-xs text-green-600">
+                          Save {formatPrice(event.startingPrice - event.memberPrice)}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                ) : event.startingPrice === 0 ? (
+                  <p className="font-semibold text-green-600 text-lg">FREE</p>
+                ) : (
+                  <p className="text-gray-600">Contact for pricing</p>
                 )}
+                
                 {config.features.showMembershipBadges && event.membershipRequired && (
-                  <p className="text-sm text-amber-600 flex items-center gap-1 mt-1">
+                  <div className="mt-2 flex items-center gap-1.5 text-amber-700 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
                     <Shield size={14} />
-                    Membership required
-                  </p>
+                    <span className="text-sm font-medium">Membership required</span>
+                  </div>
                 )}
+              </div>
+            </div>
+          )}
+          
+          {/* No pricing available message */}
+          {config.features.showPricing && event.startingPrice === undefined && !event.membershipRequired && (
+            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+              <Tag className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-gray-500 text-sm">Pricing details available upon registration</p>
               </div>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
-          {event.linkSEO ? (
-            <a 
-              href={buildRegistrationUrl(event.linkSEO)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-3 bg-gradient-to-r from-toca-navy to-toca-purple text-white font-semibold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-            >
-              Register Now <ExternalLink size={16} />
-            </a>
-          ) : (
-            <button className="w-full py-3 bg-gradient-to-r from-toca-navy to-toca-purple text-white font-semibold rounded-xl hover:opacity-90 transition-opacity">
-              View Program Details
-            </button>
-          )}
+        <div className="p-4 border-t border-gray-200 bg-white">
+          <a 
+            href={event.linkSEO ? buildRegistrationUrl(event.linkSEO) : '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full py-3.5 bg-gradient-to-r from-toca-navy to-toca-purple text-white font-semibold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg"
+          >
+            Register Now <ExternalLink size={16} />
+          </a>
         </div>
       </div>
     </div>

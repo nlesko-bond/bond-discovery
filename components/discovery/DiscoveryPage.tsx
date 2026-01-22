@@ -212,13 +212,22 @@ export function DiscoveryPage({
   const filteredEvents = useMemo(() => {
     let result = [...apiEvents];
     
+    // Filter by program ID
+    if (filters.programIds && filters.programIds.length > 0) {
+      result = result.filter(event => 
+        filters.programIds!.includes(String(event.programId))
+      );
+    }
+    
     // Filter by facility
     if (filters.facilityIds && filters.facilityIds.length > 0) {
       result = result.filter(event => {
         // Match facility name or ID
         return filters.facilityIds!.some(id => {
           const facilityName = event.facilityName?.toLowerCase() || '';
-          return facilityName.includes(id.toLowerCase()) || event.facilityId === id;
+          return facilityName.includes(id.toLowerCase()) || 
+                 String(event.facilityId) === id ||
+                 event.facilityId === id;
         });
       });
     }
