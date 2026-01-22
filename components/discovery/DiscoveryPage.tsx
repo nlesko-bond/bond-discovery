@@ -212,11 +212,22 @@ export function DiscoveryPage({
   const filteredEvents = useMemo(() => {
     let result = [...apiEvents];
     
-    // Filter by program ID
+    // Filter by program ID - match by ID or by program name
     if (filters.programIds && filters.programIds.length > 0) {
-      result = result.filter(event => 
-        filters.programIds!.includes(String(event.programId))
+      // Get program names for the selected IDs from initialPrograms
+      const selectedPrograms = initialPrograms.filter(p => 
+        filters.programIds!.includes(p.id)
       );
+      const selectedProgramNames = selectedPrograms.map(p => p.name.toLowerCase());
+      
+      result = result.filter(event => {
+        const eventProgramId = String(event.programId);
+        const eventProgramName = (event.programName || '').toLowerCase();
+        
+        // Match by ID or by name (name matching helps when IDs differ between API calls)
+        return filters.programIds!.includes(eventProgramId) ||
+               selectedProgramNames.some(name => eventProgramName.includes(name) || name.includes(eventProgramName));
+      });
     }
     
     // Filter by facility
@@ -257,7 +268,7 @@ export function DiscoveryPage({
     }
     
     return result;
-  }, [apiEvents, filters]);
+  }, [apiEvents, filters, initialPrograms]);
   
   // Generate schedule data for calendar view from real API events
   const scheduleData = useMemo(() => {
