@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { SessionProvider } from '@/components/providers/SessionProvider';
 import './globals.css';
 
 const inter = Inter({ 
@@ -24,7 +25,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#c4ad7d',
+  themeColor: '#1E2761',
 };
 
 export default function RootLayout({
@@ -35,7 +36,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans antialiased">
-        {children}
+        <SessionProvider>
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );

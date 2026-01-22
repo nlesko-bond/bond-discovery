@@ -1,22 +1,24 @@
 import { DiscoveryConfig, BrandingConfig, FeatureConfig, FilterType } from '@/types';
 import { cacheGet, cacheSet, configCacheKey } from './cache';
 
+// In-memory store for page configs (in production, use Vercel KV or database)
+const pageConfigs: Map<string, DiscoveryConfig> = new Map();
+
 /**
- * Default configuration
+ * Default TOCA configuration
  */
 export const defaultConfig: DiscoveryConfig = {
-  id: 'default',
-  name: 'TOCA Soccer Discovery',
-  slug: 'default',
+  id: 'toca-default',
+  name: 'TOCA Soccer',
+  slug: 'toca',
   
   organizationIds: ['516', '512', '513', '519', '518', '521', '514', '515', '510', '520', '522', '511'],
   facilityIds: [],
   
   branding: {
-    // TOCA brand colors extracted from tocafootball.com
-    primaryColor: '#1E2761', // TOCA deep navy blue
-    secondaryColor: '#6366F1', // TOCA purple/indigo
-    accentColor: '#A5B4FC', // Light purple for buttons
+    primaryColor: '#1E2761',
+    secondaryColor: '#6366F1',
+    accentColor: '#A5B4FC',
     companyName: 'TOCA Soccer',
     tagline: 'Find soccer programs at your local TOCA centers',
   },
@@ -26,22 +28,69 @@ export const defaultConfig: DiscoveryConfig = {
     showAvailability: true,
     showMembershipBadges: true,
     showAgeGender: true,
-    enableFilters: ['search', 'facility', 'sport', 'programType', 'dateRange', 'age', 'availability'],
+    enableFilters: ['search', 'facility', 'program', 'sport', 'programType', 'dateRange', 'age', 'availability'],
     defaultView: 'programs',
     allowViewToggle: true,
   },
   
-  allowedParams: ['orgIds', 'facilityIds', 'viewMode', 'search', 'sport', 'programType'],
+  allowedParams: ['orgIds', 'facilityIds', 'programIds', 'viewMode', 'search', 'sport', 'programType', 'programTypes'],
   defaultParams: {},
   
-  cacheTtl: 300, // 5 minutes
+  cacheTtl: 300,
   
+  isActive: true,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
 
+// Initialize with default config
+pageConfigs.set('toca', defaultConfig);
+
 /**
- * Get configuration by ID
+ * Get all page configurations
+ */
+export async function getAllPageConfigs(): Promise<DiscoveryConfig[]> {
+  // Try to get from cache first
+  const cacheKey = 'all-page-configs';
+  const cached = await cacheGet<DiscoveryConfig[]>(cacheKey);
+  if (cached && cached.length > 0) {
+    return cached;
+  }
+  
+  // Return all configs from memory (in production, fetch from database)
+  const configs = Array.from(pageConfigs.values()).filter(c => c.isActive !== false);
+  
+  // Cache the list
+  await cacheSet(cacheKey, configs, { ttl: 60 });
+  
+  return configs;
+}
+
+/**
+ * Get configuration by slug
+ */
+export async function getConfigBySlug(slug: string): Promise<DiscoveryConfig | null> {
+  const cacheKey = `config-slug:${slug}`;
+  
+  // Try cache first
+  const cached = await cacheGet<DiscoveryConfig>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+  
+  // Look up in memory store
+  const config = pageConfigs.get(slug);
+  
+  if (config) {
+    await cacheSet(cacheKey, config, { ttl: 300 });
+    return config;
+  }
+  
+  return null;
+}
+
+/**
+ * Get configuration by ID (for admin)
  */
 export async function getConfig(configId: string = 'default'): Promise<DiscoveryConfig> {
   const cacheKey = configCacheKey(configId);
@@ -52,32 +101,104 @@ export async function getConfig(configId: string = 'default'): Promise<Discovery
     return cached;
   }
   
-  // TODO: Load from database/KV storage
-  // For now, return default config
-  const config = configId === 'default' ? defaultConfig : {
-    ...defaultConfig,
-    id: configId,
-  };
+  // Look up by ID
+  for (const config of pageConfigs.values()) {
+    if (config.id === configId) {
+      await cacheSet(cacheKey, config, { ttl: 3600 });
+      return config;
+    }
+  }
   
-  // Cache the config
-  await cacheSet(cacheKey, config, { ttl: 3600 }); // Cache for 1 hour
-  
-  return config;
+  // Return default config
+  return defaultConfig;
 }
 
 /**
- * Save configuration
+ * Create a new page configuration
  */
-export async function saveConfig(config: DiscoveryConfig): Promise<void> {
-  const cacheKey = configCacheKey(config.id);
+export async function createPageConfig(config: Omit<DiscoveryConfig, 'id' | 'createdAt' | 'updatedAt'>): Promise<DiscoveryConfig> {
+  const id = `page-${Date.now()}`;
   
-  const updatedConfig = {
+  const newConfig: DiscoveryConfig = {
     ...config,
+    id,
+    createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
   
-  // Save to cache (in production, also save to database)
-  await cacheSet(cacheKey, updatedConfig, { ttl: 3600 });
+  // Validate slug is unique
+  if (pageConfigs.has(newConfig.slug)) {
+    throw new Error(`Slug "${newConfig.slug}" already exists`);
+  }
+  
+  // Save to memory store
+  pageConfigs.set(newConfig.slug, newConfig);
+  
+  // Invalidate cache
+  await cacheSet(`config-slug:${newConfig.slug}`, newConfig, { ttl: 300 });
+  await cacheSet('all-page-configs', Array.from(pageConfigs.values()), { ttl: 60 });
+  
+  return newConfig;
+}
+
+/**
+ * Update an existing page configuration
+ */
+export async function updatePageConfig(slug: string, updates: Partial<DiscoveryConfig>): Promise<DiscoveryConfig> {
+  const existing = pageConfigs.get(slug);
+  
+  if (!existing) {
+    throw new Error(`Config with slug "${slug}" not found`);
+  }
+  
+  // If slug is being changed, handle the rename
+  if (updates.slug && updates.slug !== slug) {
+    if (pageConfigs.has(updates.slug)) {
+      throw new Error(`Slug "${updates.slug}" already exists`);
+    }
+    pageConfigs.delete(slug);
+  }
+  
+  const updatedConfig: DiscoveryConfig = {
+    ...existing,
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  };
+  
+  // Save to memory store
+  pageConfigs.set(updatedConfig.slug, updatedConfig);
+  
+  // Update cache
+  await cacheSet(`config-slug:${updatedConfig.slug}`, updatedConfig, { ttl: 300 });
+  await cacheSet(configCacheKey(updatedConfig.id), updatedConfig, { ttl: 3600 });
+  await cacheSet('all-page-configs', Array.from(pageConfigs.values()), { ttl: 60 });
+  
+  return updatedConfig;
+}
+
+/**
+ * Delete a page configuration
+ */
+export async function deletePageConfig(slug: string): Promise<boolean> {
+  if (slug === 'toca') {
+    throw new Error('Cannot delete the default TOCA configuration');
+  }
+  
+  const deleted = pageConfigs.delete(slug);
+  
+  if (deleted) {
+    // Invalidate caches
+    await cacheSet('all-page-configs', Array.from(pageConfigs.values()), { ttl: 60 });
+  }
+  
+  return deleted;
+}
+
+/**
+ * Save configuration (legacy support)
+ */
+export async function saveConfig(config: DiscoveryConfig): Promise<void> {
+  await updatePageConfig(config.slug, config);
 }
 
 /**

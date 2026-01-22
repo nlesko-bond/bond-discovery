@@ -295,7 +295,7 @@ export interface DiscoveryConfig {
   // Identity
   id: string;
   name: string;
-  slug?: string;
+  slug: string; // URL path (e.g., "toca" for /toca)
   
   // Organization/Facility
   organizationIds: string[];
@@ -316,6 +316,9 @@ export interface DiscoveryConfig {
   
   // Cache settings
   cacheTtl: number; // seconds
+  
+  // Status
+  isActive?: boolean; // Whether the page is published
   
   // Timestamps
   createdAt: string;
@@ -345,6 +348,7 @@ export interface FeatureConfig {
 export type FilterType = 
   | 'search' 
   | 'facility' 
+  | 'program'
   | 'sport' 
   | 'programType' 
   | 'dateRange' 

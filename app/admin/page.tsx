@@ -1,50 +1,53 @@
-import { getConfig } from '@/lib/config';
+import { getAllPageConfigs } from '@/lib/config';
 import { 
   Building2, 
-  Users, 
+  FileText, 
   Calendar,
-  TrendingUp,
+  Globe,
   Settings,
-  ExternalLink
+  ExternalLink,
+  Plus,
+  Eye
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function AdminDashboard() {
-  const config = await getConfig('default');
+  const pages = await getAllPageConfigs();
+  const totalOrgs = new Set(pages.flatMap(p => p.organizationIds)).size;
 
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-1">
-          Manage your Bond Discovery configuration
+          Manage your Bond Discovery pages and configurations
         </p>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
-          icon={Building2}
-          label="Organizations"
-          value={config.organizationIds.length}
+          icon={FileText}
+          label="Discovery Pages"
+          value={pages.length}
           color="blue"
         />
         <StatCard
-          icon={Users}
-          label="Facilities"
-          value={config.facilityIds.length || 'All'}
+          icon={Building2}
+          label="Organizations"
+          value={totalOrgs}
           color="green"
         />
         <StatCard
-          icon={Calendar}
-          label="Default View"
-          value={config.features.defaultView === 'programs' ? 'Programs' : 'Schedule'}
+          icon={Eye}
+          label="Active Pages"
+          value={pages.filter(p => p.isActive !== false).length}
           color="purple"
         />
         <StatCard
-          icon={TrendingUp}
-          label="Cache TTL"
-          value={`${config.cacheTtl}s`}
+          icon={Globe}
+          label="Status"
+          value="Live"
           color="amber"
         />
       </div>
@@ -52,92 +55,105 @@ export default async function AdminDashboard() {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <QuickActionCard
-          href="/admin/organizations"
-          icon={Building2}
-          title="Manage Organizations"
-          description="Add or remove organization and facility IDs"
+          href="/admin/pages"
+          icon={FileText}
+          title="Manage Pages"
+          description="Create and configure discovery pages"
         />
         <QuickActionCard
           href="/admin/branding"
           icon={Settings}
-          title="Customize Branding"
-          description="Update colors, logo, and company name"
+          title="Default Branding"
+          description="Update colors, logo, and styling"
         />
         <QuickActionCard
-          href="/"
+          href="/toca"
           icon={ExternalLink}
-          title="View Discovery"
-          description="See your changes live"
+          title="View TOCA Page"
+          description="Preview the main discovery page"
           external
         />
       </div>
 
-      {/* Current Configuration */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Current Configuration</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Branding</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">Company:</span>
-                <span className="font-medium">{config.branding.companyName}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">Primary Color:</span>
-                <div 
-                  className="w-6 h-6 rounded border border-gray-200"
-                  style={{ backgroundColor: config.branding.primaryColor }}
-                />
-                <span className="font-mono text-xs">{config.branding.primaryColor}</span>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Features</h3>
-            <div className="space-y-1 text-sm">
-              <FeatureStatus label="Show Pricing" enabled={config.features.showPricing} />
-              <FeatureStatus label="Show Availability" enabled={config.features.showAvailability} />
-              <FeatureStatus label="Membership Badges" enabled={config.features.showMembershipBadges} />
-              <FeatureStatus label="Age/Gender Info" enabled={config.features.showAgeGender} />
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Enabled Filters</h3>
-            <div className="flex flex-wrap gap-1">
-              {config.features.enableFilters.map(filter => (
-                <span 
-                  key={filter}
-                  className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full capitalize"
-                >
-                  {filter}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Organization IDs</h3>
-            <div className="flex flex-wrap gap-1">
-              {config.organizationIds.slice(0, 6).map(id => (
-                <span 
-                  key={id}
-                  className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-mono"
-                >
-                  {id}
-                </span>
-              ))}
-              {config.organizationIds.length > 6 && (
-                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                  +{config.organizationIds.length - 6} more
-                </span>
-              )}
-            </div>
-          </div>
+      {/* Pages Overview */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-gray-900">Discovery Pages</h2>
+          <Link
+            href="/admin/pages"
+            className="text-sm text-toca-purple hover:text-toca-purple-dark font-medium flex items-center gap-1"
+          >
+            <Plus size={16} />
+            New Page
+          </Link>
         </div>
+        
+        {pages.length === 0 ? (
+          <p className="text-gray-500 text-center py-8">
+            No pages created yet. Create your first discovery page to get started.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {pages.slice(0, 5).map(page => (
+              <div
+                key={page.id}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
+                    style={{ backgroundColor: page.branding.primaryColor }}
+                  >
+                    {page.branding.companyName.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{page.name}</p>
+                    <p className="text-sm text-gray-500">/{page.slug}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    page.isActive !== false
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {page.isActive !== false ? 'Active' : 'Draft'}
+                  </span>
+                  <Link
+                    href={`/${page.slug}`}
+                    target="_blank"
+                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <ExternalLink size={16} />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {pages.length > 5 && (
+          <Link
+            href="/admin/pages"
+            className="block text-center text-sm text-toca-purple hover:text-toca-purple-dark font-medium mt-4"
+          >
+            View all {pages.length} pages →
+          </Link>
+        )}
+      </div>
+
+      {/* Embed Instructions */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+        <h3 className="font-semibold text-blue-900 mb-2">Embedding in Webflow</h3>
+        <p className="text-sm text-blue-800 mb-3">
+          Use the embed URL to add discovery pages to your Webflow site:
+        </p>
+        <code className="block bg-white p-3 rounded-lg text-sm font-mono text-blue-700 mb-3">
+          &lt;iframe src="https://your-domain.com/embed/toca" width="100%" height="800"&gt;&lt;/iframe&gt;
+        </code>
+        <p className="text-xs text-blue-600">
+          Replace "toca" with your page slug and update the domain after deployment.
+        </p>
       </div>
     </div>
   );
@@ -208,14 +224,5 @@ function QuickActionCard({
         </div>
       </div>
     </Link>
-  );
-}
-
-function FeatureStatus({ label, enabled }: { label: string; enabled: boolean }) {
-  return (
-    <div className="flex items-center gap-2">
-      <div className={`w-2 h-2 rounded-full ${enabled ? 'bg-green-500' : 'bg-gray-300'}`} />
-      <span className={enabled ? 'text-gray-900' : 'text-gray-500'}>{label}</span>
-    </div>
   );
 }

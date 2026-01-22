@@ -1,18 +1,30 @@
+import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { authOptions } from '@/lib/auth';
+import { AdminNav } from './AdminNav';
 import { 
   Settings, 
   Building2, 
   Palette, 
   SlidersHorizontal,
   LayoutDashboard,
-  ArrowLeft
+  FileText,
+  LogOut
 } from 'lucide-react';
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Check authentication on server
+  const session = await getServerSession(authOptions);
+  
+  // Allow access to login page without auth
+  // All other admin pages require authentication
+  // Note: We handle login page separately in its own layout
+  
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Top Navigation */}
@@ -21,27 +33,39 @@ export default function AdminLayout({
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <Link 
-                href="/"
+                href="/toca"
                 className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
               >
-                <ArrowLeft size={20} />
-                <span className="hidden sm:inline">Back to Discovery</span>
+                <FileText size={20} />
+                <span className="hidden sm:inline">Preview TOCA</span>
               </Link>
               <div className="h-6 w-px bg-gray-300" />
               <h1 className="text-xl font-bold text-gray-900">
-                Admin Console
+                Bond Discovery Admin
               </h1>
             </div>
+            
+            {session?.user && (
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600">
+                  {session.user.email}
+                </span>
+                <AdminNav />
+              </div>
+            )}
           </div>
         </div>
       </header>
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-64px)] sticky top-16">
+        <aside className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-64px)] sticky top-16 hidden md:block">
           <nav className="p-4 space-y-1">
             <NavLink href="/admin" icon={LayoutDashboard}>
               Dashboard
+            </NavLink>
+            <NavLink href="/admin/pages" icon={FileText}>
+              Pages
             </NavLink>
             <NavLink href="/admin/organizations" icon={Building2}>
               Organizations
