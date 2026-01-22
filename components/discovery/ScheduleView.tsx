@@ -455,11 +455,8 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
           </button>
         </div>
       ) : viewMode === 'list' ? (
-        /* List View Header - Compact */
-        <div className="flex items-center justify-center px-3 py-2 bg-gradient-to-r from-toca-navy to-toca-purple text-white">
-          <h2 className="text-lg font-bold">All Upcoming Events</h2>
-          <span className="text-xs text-white/70 ml-2">({allDaysWithEvents.length} days)</span>
-        </div>
+        /* List View - No separate header needed, info is in sticky bar above */
+        null
       ) : (
         /* Week Navigation - Compact */
         <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-toca-navy to-toca-purple text-white">
