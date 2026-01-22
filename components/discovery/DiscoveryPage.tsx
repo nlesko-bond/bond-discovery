@@ -388,10 +388,11 @@ export function DiscoveryPage({
       });
     }
     
-    // Filter by search term
+    // Filter by search term - searches event name, program name, session name, and facility
     if (filters.search) {
       const search = filters.search.toLowerCase();
       result = result.filter(event => 
+        event.title?.toLowerCase().includes(search) ||
         event.programName?.toLowerCase().includes(search) ||
         event.sessionName?.toLowerCase().includes(search) ||
         event.facilityName?.toLowerCase().includes(search)
