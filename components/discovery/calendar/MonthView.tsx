@@ -8,12 +8,12 @@ import {
   parseISO, 
   isToday, 
   isSameMonth,
+  isSameDay,
   startOfMonth, 
   endOfMonth,
   startOfWeek,
   endOfWeek,
-  addDays,
-  isSameDay
+  addDays
 } from 'date-fns';
 
 interface MonthViewProps {
@@ -51,10 +51,10 @@ export function MonthView({
     let currentDate = startDate;
 
     while (currentDate <= endDate) {
-      const dateStr = format(currentDate, 'yyyy-MM-dd');
+      // Use isSameDay for proper timezone handling (matches DayView logic)
       const dayEvents = events.filter(event => {
-        const eventDate = event.startTime || event.date;
-        return eventDate.startsWith(dateStr);
+        const eventDate = parseISO(event.startTime || event.date);
+        return isSameDay(eventDate, currentDate);
       });
 
       days.push({
