@@ -13,62 +13,59 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Note: Authentication is optional. When NEXTAUTH_SECRET is configured,
-  // you can protect routes by checking session in individual pages.
-  
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Top Navigation */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link 
-                href="/toca"
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <FileText size={20} />
-                <span className="hidden sm:inline">Preview TOCA</span>
-              </Link>
-              <div className="h-6 w-px bg-gray-300" />
-              <h1 className="text-xl font-bold text-gray-900">
-                Bond Discovery Admin
-              </h1>
+        {/* Top Navigation */}
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center gap-4">
+                <Link 
+                  href="/toca"
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <FileText size={20} />
+                  <span className="hidden sm:inline">Preview TOCA</span>
+                </Link>
+                <div className="h-6 w-px bg-gray-300" />
+                <h1 className="text-xl font-bold text-gray-900">
+                  Bond Discovery Admin
+                </h1>
+              </div>
             </div>
           </div>
+        </header>
+
+        <div className="flex">
+          {/* Sidebar */}
+          <aside className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-64px)] sticky top-16 hidden md:block">
+            <nav className="p-4 space-y-1">
+              <NavLink href="/admin" icon={LayoutDashboard}>
+                Dashboard
+              </NavLink>
+              <NavLink href="/admin/pages" icon={FileText}>
+                Pages
+              </NavLink>
+              <NavLink href="/admin/organizations" icon={Building2}>
+                Organizations
+              </NavLink>
+              <NavLink href="/admin/branding" icon={Palette}>
+                Branding
+              </NavLink>
+              <NavLink href="/admin/filters" icon={SlidersHorizontal}>
+                Filters
+              </NavLink>
+              <NavLink href="/admin/settings" icon={Settings}>
+                Settings
+              </NavLink>
+            </nav>
+          </aside>
+
+          {/* Main Content */}
+          <main className="flex-1 p-6">
+            {children}
+          </main>
         </div>
-      </header>
-
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-64px)] sticky top-16 hidden md:block">
-          <nav className="p-4 space-y-1">
-            <NavLink href="/admin" icon={LayoutDashboard}>
-              Dashboard
-            </NavLink>
-            <NavLink href="/admin/pages" icon={FileText}>
-              Pages
-            </NavLink>
-            <NavLink href="/admin/organizations" icon={Building2}>
-              Organizations
-            </NavLink>
-            <NavLink href="/admin/branding" icon={Palette}>
-              Branding
-            </NavLink>
-            <NavLink href="/admin/filters" icon={SlidersHorizontal}>
-              Filters
-            </NavLink>
-            <NavLink href="/admin/settings" icon={Settings}>
-              Settings
-            </NavLink>
-          </nav>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6">
-          {children}
-        </main>
-      </div>
     </div>
   );
 }

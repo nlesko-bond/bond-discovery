@@ -4,23 +4,16 @@ import GoogleProvider from 'next-auth/providers/google';
 // Allowed email domains for admin access
 const ALLOWED_DOMAINS = ['bondsports.co'];
 
-// Check if auth is configured
-export const isAuthConfigured = !!(
-  process.env.NEXTAUTH_SECRET &&
-  process.env.GOOGLE_CLIENT_ID &&
-  process.env.GOOGLE_CLIENT_SECRET
-);
-
 export const authOptions: NextAuthOptions = {
-  providers: isAuthConfigured ? [
+  providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID ?? '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
     }),
-  ] : [],
+  ],
   
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user }) {
       // Only allow specific email domains
       if (user.email) {
         const domain = user.email.split('@')[1];
@@ -36,7 +29,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       // Add user ID to session
       if (session.user) {
-        session.user.id = token.sub || '';
+        (session.user as any).id = token.sub || '';
       }
       return session;
     },
