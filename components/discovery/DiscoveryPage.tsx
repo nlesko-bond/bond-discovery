@@ -42,6 +42,9 @@ export function DiscoveryPage({
     programIds: searchParams.programIds 
       ? (searchParams.programIds as string).split('_') 
       : [],
+    sessionIds: searchParams.sessionIds 
+      ? (searchParams.sessionIds as string).split('_') 
+      : [],
     facilityIds: searchParams.facilityIds 
       ? (searchParams.facilityIds as string).split('_') 
       : [],
@@ -228,6 +231,27 @@ export function DiscoveryPage({
       });
     }
     
+    // Filter by session - match by session name or ID
+    if (filters.sessionIds && filters.sessionIds.length > 0) {
+      // Get session names from initialPrograms
+      const allSessions: { id: string; name: string }[] = [];
+      initialPrograms.forEach(p => {
+        p.sessions?.forEach(s => {
+          allSessions.push({ id: s.id, name: s.name || `Session ${s.id}` });
+        });
+      });
+      
+      const selectedSessions = allSessions.filter(s =>
+        filters.sessionIds!.includes(s.id)
+      );
+      const selectedSessionNames = selectedSessions.map(s => s.name.toLowerCase().trim());
+      
+      result = result.filter(event => {
+        const eventSessionName = (event.sessionName || '').toLowerCase().trim();
+        return selectedSessionNames.some(name => eventSessionName.includes(name) || name.includes(eventSessionName));
+      });
+    }
+    
     // Filter by facility
     if (filters.facilityIds && filters.facilityIds.length > 0) {
       result = result.filter(event => {
@@ -300,10 +324,22 @@ export function DiscoveryPage({
     const sports = new Map<string, number>();
     const programTypes = new Map<string, number>();
     const programs: { id: string; name: string }[] = [];
+    const sessions: { id: string; name: string; programId: string }[] = [];
 
     initialPrograms.forEach(p => {
       // Add program to list
       programs.push({ id: p.id, name: p.name });
+      
+      // Add sessions from this program
+      if (p.sessions) {
+        p.sessions.forEach(s => {
+          sessions.push({
+            id: s.id,
+            name: s.name || `Session ${s.id}`,
+            programId: p.id,
+          });
+        });
+      }
       
       // Get facility from program level or from sessions
       let facilityId = p.facilityId;
@@ -347,6 +383,7 @@ export function DiscoveryPage({
         .map(([id, count]) => ({ id, label: id, count }))
         .sort((a, b) => b.count - a.count),
       programs: programs.sort((a, b) => a.name.localeCompare(b.name)),
+      sessions: sessions.sort((a, b) => a.name.localeCompare(b.name)),
     };
   }, [initialPrograms]);
 
@@ -358,6 +395,7 @@ export function DiscoveryPage({
 
     if (newFilters.search) params.search = newFilters.search;
     if (newFilters.programIds?.length) params.programIds = newFilters.programIds.join('_');
+    if (newFilters.sessionIds?.length) params.sessionIds = newFilters.sessionIds.join('_');
     if (newFilters.facilityIds?.length) params.facilityIds = newFilters.facilityIds.join('_');
     if (newFilters.programTypes?.length) params.programTypes = newFilters.programTypes.join('_');
     if (newFilters.sports?.length) params.sports = newFilters.sports.join('_');
@@ -403,7 +441,7 @@ export function DiscoveryPage({
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+        <div className="w-full px-3 py-3 sm:px-4 lg:px-6">
           <div className="flex items-center justify-between">
             {/* Logo & Title */}
             <div>
@@ -481,7 +519,7 @@ export function DiscoveryPage({
       </header>
 
       {/* Horizontal Filter Bar - visible on all screen sizes */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <div className="w-full px-3 sm:px-4 lg:px-6 py-2">
         <div className="overflow-x-auto sm:overflow-visible">
           <HorizontalFilterBar
             filters={filters}
@@ -509,6 +547,7 @@ export function DiscoveryPage({
               programs: filterOptions.programs.filter(p => 
                 filteredPrograms.some(fp => fp.id === p.id)
               ),
+              sessions: filterOptions.sessions,
               ages: [],
             }}
             config={config}
@@ -517,9 +556,9 @@ export function DiscoveryPage({
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-3 sm:px-4 lg:px-6">
         {/* Results Count */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <p className="text-sm text-gray-600">
             {viewMode === 'programs' 
               ? `${filteredPrograms.length} ${filteredPrograms.length === 1 ? 'program' : 'programs'}`
@@ -559,14 +598,14 @@ export function DiscoveryPage({
       />
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-12">
-        <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-gray-600">
-              © {new Date().getFullYear()} {config.branding.companyName}. All rights reserved.
+      <footer className="bg-white border-t border-gray-200 mt-8">
+        <div className="w-full px-3 py-4 sm:px-4 lg:px-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-xs text-gray-500">
+              © {new Date().getFullYear()} {config.branding.companyName}
             </p>
-            <div className="flex items-center gap-4 text-sm text-gray-500">
-              <span>Powered by Bond Sports API</span>
+            <div className="flex items-center gap-4 text-xs text-gray-400">
+              <span>Powered by Bond Sports</span>
             </div>
           </div>
         </div>

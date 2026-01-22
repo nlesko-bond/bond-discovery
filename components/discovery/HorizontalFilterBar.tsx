@@ -23,11 +23,18 @@ interface FilterOption {
   count?: number;
 }
 
+interface SessionOption {
+  id: string;
+  name: string;
+  programId: string;
+}
+
 interface FilterOptions {
   facilities: FilterOption[];
   programTypes: FilterOption[];
   sports: FilterOption[];
   programs: FilterOption[];
+  sessions?: SessionOption[]; // Sessions, filtered by selected programs
   ages: { min: number; max: number }[];
 }
 
@@ -73,7 +80,7 @@ export function HorizontalFilterBar({
   }, []);
 
   const handleMultiSelect = (
-    key: 'facilityIds' | 'programIds' | 'programTypes' | 'sports',
+    key: 'facilityIds' | 'programIds' | 'programTypes' | 'sports' | 'sessionIds',
     value: string
   ) => {
     const current = (filters[key] || []) as string[];
@@ -81,8 +88,15 @@ export function HorizontalFilterBar({
       ? current.filter(v => v !== value)
       : [...current, value];
     
+    // If clearing program selection, also clear session selection
+    const extraUpdates: Partial<DiscoveryFilters> = {};
+    if (key === 'programIds' && newValues.length === 0) {
+      extraUpdates.sessionIds = undefined;
+    }
+    
     onFilterChange({
       ...filters,
+      ...extraUpdates,
       [key]: newValues.length > 0 ? newValues : undefined,
     } as DiscoveryFilters);
   };
@@ -90,7 +104,11 @@ export function HorizontalFilterBar({
   const clearFilter = (key: string) => {
     const newFilters = { ...filters };
     if (key === 'facilityIds') newFilters.facilityIds = undefined;
-    if (key === 'programIds') newFilters.programIds = undefined;
+    if (key === 'programIds') {
+      newFilters.programIds = undefined;
+      newFilters.sessionIds = undefined; // Clear sessions when clearing programs
+    }
+    if (key === 'sessionIds') newFilters.sessionIds = undefined;
     if (key === 'programTypes') newFilters.programTypes = undefined;
     if (key === 'sports') newFilters.sports = undefined;
     if (key === 'age') {
@@ -177,6 +195,40 @@ export function HorizontalFilterBar({
                   )}
                 </button>
               ))}
+            </div>
+          </FilterDropdown>
+        )}
+
+        {/* Session Filter - only show when a program is selected */}
+        {filters.programIds && filters.programIds.length > 0 && filterOptions.sessions && filterOptions.sessions.length > 0 && (
+          <FilterDropdown
+            label="Session"
+            icon={<Calendar size={14} />}
+            isOpen={openDropdown === 'session'}
+            onToggle={() => setOpenDropdown(openDropdown === 'session' ? null : 'session')}
+            hasSelection={(filters.sessionIds?.length || 0) > 0}
+            selectionCount={filters.sessionIds?.length}
+          >
+            <div className="p-2 max-h-64 overflow-y-auto">
+              {filterOptions.sessions
+                .filter(session => filters.programIds?.includes(session.programId))
+                .map(session => (
+                  <button
+                    key={session.id}
+                    onClick={() => handleMultiSelect('sessionIds', session.id)}
+                    className={cn(
+                      'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
+                      filters.sessionIds?.includes(session.id)
+                        ? 'bg-toca-purple/10 text-toca-purple'
+                        : 'hover:bg-gray-50'
+                    )}
+                  >
+                    <span className="truncate">{session.name}</span>
+                    {filters.sessionIds?.includes(session.id) && (
+                      <Check size={14} className="text-toca-purple" />
+                    )}
+                  </button>
+                ))}
             </div>
           </FilterDropdown>
         )}

@@ -35,7 +35,10 @@ interface ScheduleViewProps {
 export function ScheduleView({ schedule, config, isLoading, error, totalEvents }: ScheduleViewProps) {
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  // Use config's defaultScheduleView if set, otherwise default to 'week'
+  const [viewMode, setViewMode] = useState<ViewMode>(() => 
+    (config.features.defaultScheduleView as ViewMode) || 'week'
+  );
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
 
@@ -391,18 +394,19 @@ function ListDaySection({
   if (day.events.length === 0) return null;
 
   return (
-    <div className={cn(day.isPast && 'opacity-60')}>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Day Header */}
       <div className={cn(
-        'flex items-center gap-3 px-4 py-3 rounded-t-xl font-semibold',
+        'flex items-center gap-3 px-4 py-3',
         day.isToday 
           ? 'bg-gradient-to-r from-toca-navy to-toca-purple text-white' 
-          : 'bg-gray-100 text-gray-900'
+          : 'bg-gray-50 border-b border-gray-100'
       )}>
         <div className={cn(
-          'w-12 h-12 rounded-lg flex flex-col items-center justify-center',
-          day.isToday ? 'bg-white/20' : 'bg-white'
+          'w-12 h-12 rounded-lg flex flex-col items-center justify-center shadow-sm',
+          day.isToday ? 'bg-white/20' : 'bg-white border border-gray-200'
         )}>
-          <span className={cn('text-xs font-normal', day.isToday ? 'text-white/80' : 'text-gray-500')}>
+          <span className={cn('text-xs font-medium', day.isToday ? 'text-white/80' : 'text-gray-500')}>
             {day.dayOfWeek.slice(0, 3)}
           </span>
           <span className={cn('text-lg font-bold', day.isToday ? 'text-white' : 'text-gray-900')}>
@@ -410,7 +414,7 @@ function ListDaySection({
           </span>
         </div>
         <div className="flex-1">
-          <span className={day.isToday ? 'text-white' : ''}>
+          <span className={cn('font-semibold', day.isToday ? 'text-white' : 'text-gray-900')}>
             {format(parseISO(day.date), 'EEEE, MMMM d')}
           </span>
           <div className={cn('text-sm', day.isToday ? 'text-white/70' : 'text-gray-500')}>
@@ -418,12 +422,14 @@ function ListDaySection({
           </div>
         </div>
         {day.isToday && (
-          <span className="text-xs bg-white/20 px-3 py-1 rounded-full">
+          <span className="text-xs bg-white/20 px-3 py-1 rounded-full font-medium">
             Today
           </span>
         )}
       </div>
-      <div className="border border-t-0 border-gray-200 rounded-b-xl divide-y divide-gray-100 bg-white overflow-hidden">
+      
+      {/* Events List */}
+      <div className="divide-y divide-gray-100">
         {day.events.map((event) => (
           <EventCard
             key={event.id}

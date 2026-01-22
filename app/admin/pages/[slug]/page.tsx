@@ -38,6 +38,7 @@ interface PageConfig {
     showAgeGender: boolean;
     enableFilters: string[];
     defaultView: 'programs' | 'schedule';
+    defaultScheduleView?: 'list' | 'day' | 'week' | 'month'; // Default view for schedule tab
     allowViewToggle: boolean;
   };
   defaultParams?: Record<string, string>;
@@ -486,6 +487,24 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   <option value="programs">Programs</option>
                   <option value="schedule">Schedule</option>
                 </select>
+              </div>
+              
+              <div>
+                <label className="label">Default Schedule View</label>
+                <select
+                  className="input"
+                  value={config.features.defaultScheduleView || 'week'}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    features: { ...config.features, defaultScheduleView: e.target.value as 'list' | 'day' | 'week' | 'month' }
+                  })}
+                >
+                  <option value="list">List</option>
+                  <option value="day">Day</option>
+                  <option value="week">Week Grid</option>
+                  <option value="month">Month</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">When Schedule tab is selected</p>
               </div>
               
               <div>

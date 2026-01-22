@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { CalendarEvent, DiscoveryConfig, DaySchedule } from '@/types';
 import { formatTime, cn } from '@/lib/utils';
 import { format, parseISO, isToday } from 'date-fns';
@@ -20,8 +20,27 @@ const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => i + 6);
  * 
  * Displays a 7-column grid with hour rows.
  * Shows first event fully and "+X more" for additional events.
+ * Auto-scrolls to current time on today.
  */
 export function WeekGridView({ days, config, onEventClick, onDayClick }: WeekGridViewProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const currentTimeRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to current time on mount
+  useEffect(() => {
+    const hasTodayInView = days.some(d => isToday(parseISO(d.date)));
+    if (hasTodayInView && scrollContainerRef.current) {
+      const currentHour = new Date().getHours();
+      // Only scroll if within visible time range
+      if (currentHour >= 6 && currentHour < 22) {
+        const hourIndex = currentHour - 6;
+        const scrollPosition = Math.max(0, hourIndex * 65 - 100); // 65px per row, offset 100px for visibility
+        setTimeout(() => {
+          scrollContainerRef.current?.scrollTo({ top: scrollPosition, behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  }, [days]);
   // Group events by day and hour for positioning
   const eventsByDayHour = useMemo(() => {
     const grouped: Record<string, Record<number, CalendarEvent[]>> = {};
@@ -83,7 +102,7 @@ export function WeekGridView({ days, config, onEventClick, onDayClick }: WeekGri
       </div>
 
       {/* Time Grid - Scrollable */}
-      <div className="overflow-y-auto max-h-[600px]">
+      <div ref={scrollContainerRef} className="overflow-y-auto max-h-[600px]">
         <div className="relative">
           {TIME_SLOTS.map((hour) => (
             <div key={hour} className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-gray-100 last:border-b-0">
@@ -187,7 +206,7 @@ function EventBlock({
   );
 }
 
-// Current Time Indicator
+// Current Time Indicator - red line across today's column
 function CurrentTimeIndicator({ days }: { days: DaySchedule[] }) {
   const now = new Date();
   const currentHour = now.getHours();
@@ -204,20 +223,31 @@ function CurrentTimeIndicator({ days }: { days: DaySchedule[] }) {
   const hoursSince6 = currentHour - 6;
   const topPosition = hoursSince6 * 65 + (currentMinutes / 60) * 65; // 65px per hour row
 
-  // Calculate left position based on column
+  // Calculate left position based on column - span full width for better visibility
   const columnWidth = `calc((100% - 70px) / 7)`;
   const leftPosition = `calc(70px + ${todayIndex} * ${columnWidth})`;
 
   return (
     <div
-      className="absolute h-0.5 bg-red-500 z-10 pointer-events-none"
+      className="absolute z-20 pointer-events-none"
       style={{
         top: `${topPosition}px`,
-        left: leftPosition,
-        width: columnWidth,
+        left: 0,
+        right: 0,
       }}
     >
-      <div className="absolute -left-1 -top-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
+      {/* Time label on left */}
+      <div className="absolute left-1 -top-2 text-[10px] font-bold text-red-600 bg-white px-1 rounded">
+        {format(now, 'h:mm a')}
+      </div>
+      {/* Full width line with red dot on today's column */}
+      <div className="absolute h-0.5 bg-red-500/30 left-[70px] right-0" />
+      <div
+        className="absolute h-0.5 bg-red-500"
+        style={{ left: leftPosition, width: columnWidth }}
+      >
+        <div className="absolute -left-1.5 -top-1.5 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-md" />
+      </div>
     </div>
   );
 }

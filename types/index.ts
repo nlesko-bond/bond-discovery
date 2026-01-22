@@ -335,6 +335,8 @@ export interface BrandingConfig {
   tagline?: string;
 }
 
+export type ScheduleViewType = 'list' | 'day' | 'week' | 'month';
+
 export interface FeatureConfig {
   showPricing: boolean;
   showAvailability: boolean;
@@ -342,6 +344,7 @@ export interface FeatureConfig {
   showAgeGender: boolean;
   enableFilters: FilterType[];
   defaultView: ViewMode;
+  defaultScheduleView?: ScheduleViewType; // Default view for schedule tab
   allowViewToggle: boolean;
 }
 
@@ -369,6 +372,7 @@ export interface DiscoveryFilters {
   search?: string;
   facilityIds?: string[];
   programIds?: string[];
+  sessionIds?: string[]; // Filter to specific sessions
   programTypes?: ProgramType[];
   sports?: string[];
   dateRange?: {

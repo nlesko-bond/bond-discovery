@@ -27,6 +27,8 @@ import {
   buildRegistrationUrl,
   cn
 } from '@/lib/utils';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { PricingCarousel } from './PricingCarousel';
 
 interface ProgramCardProps {
@@ -252,6 +254,8 @@ export function ProgramCard({ program, config, autoExpand = false }: ProgramCard
                   session={session} 
                   config={config}
                   programLinkSEO={program.linkSEO}
+                  programId={program.id}
+                  programName={program.name}
                 />
               ))
             ) : (
@@ -283,12 +287,17 @@ export function ProgramCard({ program, config, autoExpand = false }: ProgramCard
 function SessionCard({ 
   session, 
   config,
-  programLinkSEO 
+  programLinkSEO,
+  programId,
+  programName
 }: { 
   session: Session; 
   config: DiscoveryConfig;
   programLinkSEO?: string;
+  programId: string;
+  programName: string;
 }) {
+  const pathname = usePathname();
   const availability = getAvailabilityInfo(session.spotsRemaining, session.maxParticipants || session.capacity);
   const products = session.products || [];
   
@@ -303,6 +312,9 @@ function SessionCard({
   
   // Get price for single product
   const singleProductPrice = singleProduct?.prices?.[0]?.price ?? singleProduct?.prices?.[0]?.amount;
+  
+  // Build schedule link with program filter
+  const scheduleLink = `${pathname}?viewMode=schedule&programIds=${programId}`;
 
   return (
     <div className={cn(
@@ -341,6 +353,13 @@ function SessionCard({
                 {facilityName}
               </span>
             )}
+            <Link 
+              href={scheduleLink}
+              className="flex items-center gap-1 text-toca-purple hover:text-toca-purple-dark font-medium"
+            >
+              <Clock size={12} />
+              View Schedule
+            </Link>
           </div>
         </div>
         
