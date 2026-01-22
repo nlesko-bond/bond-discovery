@@ -328,7 +328,7 @@ export function DiscoveryPage({
   const filteredEvents = useMemo(() => {
     let result = [...apiEvents];
     
-    // Filter by program - match by program name since IDs may be shared
+    // Filter by program - match by ID first, then fallback to name
     if (filters.programIds && filters.programIds.length > 0) {
       // Get program names for the selected IDs from initialPrograms
       const selectedPrograms = initialPrograms.filter(p => 
@@ -337,14 +337,18 @@ export function DiscoveryPage({
       const selectedProgramNames = selectedPrograms.map(p => p.name.toLowerCase().trim());
       
       result = result.filter(event => {
-        const eventProgramName = (event.programName || '').toLowerCase().trim();
+        // First try to match by program ID directly
+        if (filters.programIds!.includes(event.programId)) {
+          return true;
+        }
         
-        // Match by exact program name
+        // Fallback to matching by program name
+        const eventProgramName = (event.programName || '').toLowerCase().trim();
         return selectedProgramNames.some(name => name === eventProgramName);
       });
     }
     
-    // Filter by session - match by session name or ID
+    // Filter by session - match by ID first, then fallback to name
     if (filters.sessionIds && filters.sessionIds.length > 0) {
       // Get session names from initialPrograms
       const allSessions: { id: string; name: string }[] = [];
@@ -360,6 +364,12 @@ export function DiscoveryPage({
       const selectedSessionNames = selectedSessions.map(s => s.name.toLowerCase().trim());
       
       result = result.filter(event => {
+        // First try to match by session ID directly
+        if (filters.sessionIds!.includes(event.sessionId)) {
+          return true;
+        }
+        
+        // Fallback to matching by session name
         const eventSessionName = (event.sessionName || '').toLowerCase().trim();
         return selectedSessionNames.some(name => eventSessionName.includes(name) || name.includes(eventSessionName));
       });
