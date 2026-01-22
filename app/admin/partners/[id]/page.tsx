@@ -24,6 +24,7 @@ interface PartnerGroup {
     accentColor?: string;
     logo?: string;
     tagline?: string;
+    fontFamily?: string;
   };
   default_features: {
     showPricing: boolean;
@@ -194,6 +195,33 @@ export default function EditPartnerPage({ params }: { params: { id: string } }) 
                 branding: { ...partner.branding, tagline: e.target.value || undefined }
               })}
             />
+          </div>
+          
+          <div>
+            <label className="label">Font Family</label>
+            <select
+              className="input"
+              value={partner.branding.fontFamily || ''}
+              onChange={(e) => setPartner({
+                ...partner,
+                branding: { ...partner.branding, fontFamily: e.target.value || undefined }
+              })}
+            >
+              <option value="">System Default</option>
+              <option value="'Inter', sans-serif">Inter</option>
+              <option value="'Roboto', sans-serif">Roboto</option>
+              <option value="'Open Sans', sans-serif">Open Sans</option>
+              <option value="'Lato', sans-serif">Lato</option>
+              <option value="'Montserrat', sans-serif">Montserrat</option>
+              <option value="'Poppins', sans-serif">Poppins</option>
+              <option value="'Nunito', sans-serif">Nunito</option>
+              <option value="'Raleway', sans-serif">Raleway</option>
+              <option value="'Oswald', sans-serif">Oswald</option>
+              <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Font will be loaded from Google Fonts
+            </p>
           </div>
           
           <div className="md:col-span-2">

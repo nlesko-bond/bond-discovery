@@ -159,6 +159,7 @@ export async function createPageConfig(config: {
         accentColor: config.branding?.accentColor || '#8B5CF6',
         logo: config.branding?.logo || null,
         tagline: config.branding?.tagline || null,
+        fontFamily: config.branding?.fontFamily || null,
       },
       features: {
         showPricing: config.features?.showPricing ?? true,

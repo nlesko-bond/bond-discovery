@@ -333,6 +333,7 @@ export interface BrandingConfig {
   favicon?: string;
   companyName: string;
   tagline?: string;
+  fontFamily?: string; // e.g., 'Inter', 'Roboto', 'Open Sans'
 }
 
 export type ScheduleViewType = 'list' | 'day' | 'week' | 'month';

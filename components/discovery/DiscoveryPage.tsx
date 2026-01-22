@@ -141,6 +141,24 @@ export function DiscoveryPage({
     }
   }, [urlSearchParams]);
   
+  // Load Google Font if custom font is specified
+  useEffect(() => {
+    if (config.branding.fontFamily) {
+      // Extract font name from the fontFamily string (e.g., "'Inter', sans-serif" -> "Inter")
+      const fontName = config.branding.fontFamily.split(',')[0].replace(/['"]/g, '').trim();
+      if (fontName && fontName !== 'inherit') {
+        const link = document.createElement('link');
+        link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@400;500;600;700;800&display=swap`;
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
+        
+        return () => {
+          document.head.removeChild(link);
+        };
+      }
+    }
+  }, [config.branding.fontFamily]);
+  
   // Sync filters with URL params on navigation
   useEffect(() => {
     const urlProgramIds = urlSearchParams.get('programIds');
@@ -567,22 +585,32 @@ export function DiscoveryPage({
   }, [filters]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div 
+      className="min-h-screen bg-gray-50"
+      style={{ fontFamily: config.branding.fontFamily || 'inherit' }}
+    >
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="w-full px-3 py-3 sm:px-4 lg:px-6">
           <div className="flex items-center justify-between">
             {/* Logo & Tagline */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <BrandLogo config={config} size="md" />
               {config.branding.tagline && (
-                <div className="hidden sm:block border-l-2 pl-3" style={{ borderColor: config.branding.primaryColor }}>
-                  <p 
-                    className="text-sm font-bold"
-                    style={{ color: config.branding.primaryColor }}
+                <div 
+                  className="hidden sm:flex items-center border-l-2 pl-4"
+                  style={{ borderColor: config.branding.primaryColor }}
+                >
+                  <span 
+                    className="text-base tracking-tight"
+                    style={{ 
+                      color: config.branding.primaryColor,
+                      fontWeight: 700,
+                      fontFamily: config.branding.fontFamily || 'inherit'
+                    }}
                   >
                     {config.branding.tagline}
-                  </p>
+                  </span>
                 </div>
               )}
             </div>

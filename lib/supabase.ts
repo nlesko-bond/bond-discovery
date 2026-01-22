@@ -20,6 +20,7 @@ export interface DiscoveryPageRow {
     accentColor?: string;
     logo?: string;
     tagline?: string;
+    fontFamily?: string;
   };
   features: {
     showPricing: boolean;
