@@ -205,7 +205,7 @@ export default function SettingsPage() {
         <div className="mb-6">
           <label className="label">Allowed URL Parameters</label>
           <div className="flex flex-wrap gap-2">
-            {['orgIds', 'facilityIds', 'viewMode', 'search', 'sport', 'programType', 'startDate', 'endDate', 'ageMin', 'ageMax'].map(param => {
+            {['orgIds', 'facilityIds', 'programIds', 'viewMode', 'search', 'sport', 'programType', 'programTypes', 'startDate', 'endDate', 'ageMin', 'ageMax'].map(param => {
               const isEnabled = settings.allowedParams.includes(param);
               return (
                 <button

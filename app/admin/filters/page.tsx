@@ -15,7 +15,8 @@ interface FeaturesState {
 
 const ALL_FILTERS = [
   { id: 'search', label: 'Search', description: 'Text search for programs' },
-  { id: 'facility', label: 'Facility', description: 'Filter by facility location' },
+  { id: 'facility', label: 'Facility/Location', description: 'Filter by facility location' },
+  { id: 'program', label: 'Program', description: 'Filter by specific program name' },
   { id: 'sport', label: 'Sport/Activity', description: 'Filter by sport type' },
   { id: 'programType', label: 'Program Type', description: 'Filter by class, camp, league, etc.' },
   { id: 'dateRange', label: 'Date Range', description: 'Filter by date range' },

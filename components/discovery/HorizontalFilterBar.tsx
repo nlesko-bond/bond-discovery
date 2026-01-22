@@ -418,7 +418,7 @@ function FilterDropdown({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 min-w-[200px] z-50 animate-fade-in">
+        <div className="fixed sm:absolute top-auto sm:top-full left-0 right-0 sm:right-auto sm:left-0 mt-1 bg-white rounded-xl shadow-xl border border-gray-200 min-w-[200px] z-[100] animate-fade-in max-h-[60vh] overflow-y-auto">
           {children}
         </div>
       )}

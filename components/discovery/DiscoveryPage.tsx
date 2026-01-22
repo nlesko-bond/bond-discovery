@@ -462,19 +462,39 @@ export function DiscoveryPage({
       </header>
 
       {/* Horizontal Filter Bar - visible on all screen sizes */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 overflow-x-auto">
-        <HorizontalFilterBar
-          filters={filters}
-          onFilterChange={handleFiltersChange}
-          filterOptions={{
-            facilities: filterOptions.facilities.map(f => ({ id: f.id, name: f.name, count: f.count })),
-            programTypes: filterOptions.programTypes.map(t => ({ id: t.id, name: t.label, count: t.count })),
-            sports: filterOptions.sports.map(s => ({ id: s.id, name: s.label, count: s.count })),
-            programs: filterOptions.programs || [],
-            ages: [],
-          }}
-          config={config}
-        />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="overflow-x-auto sm:overflow-visible">
+          <HorizontalFilterBar
+            filters={filters}
+            onFilterChange={handleFiltersChange}
+            filterOptions={{
+              // Use cascading counts based on filtered programs
+              facilities: filterOptions.facilities.map(f => ({ 
+                id: f.id, 
+                name: f.name, 
+                count: filteredPrograms.filter(p => 
+                  p.facilityId === f.id || 
+                  p.sessions?.some(s => String(s.facility?.id) === f.id)
+                ).length 
+              })),
+              programTypes: filterOptions.programTypes.map(t => ({ 
+                id: t.id, 
+                name: t.label, 
+                count: filteredPrograms.filter(p => p.type === t.id).length 
+              })),
+              sports: filterOptions.sports.map(s => ({ 
+                id: s.id, 
+                name: s.label, 
+                count: filteredPrograms.filter(p => p.sport === s.id).length 
+              })),
+              programs: filterOptions.programs.filter(p => 
+                filteredPrograms.some(fp => fp.id === p.id)
+              ),
+              ages: [],
+            }}
+            config={config}
+          />
+        </div>
       </div>
 
       {/* Main Content */}

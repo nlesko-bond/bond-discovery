@@ -294,7 +294,15 @@ function SessionCard({
   
   const facilityName = session.facility?.name;
   const baseLink = session.linkSEO || programLinkSEO;
-  const registrationLink = buildRegistrationUrl(baseLink);
+  
+  // For single product, deep link directly to that product
+  const singleProduct = products.length === 1 ? products[0] : null;
+  const registrationLink = singleProduct 
+    ? buildRegistrationUrl(baseLink, { productId: singleProduct.id })
+    : buildRegistrationUrl(baseLink);
+  
+  // Get price for single product
+  const singleProductPrice = singleProduct?.prices?.[0]?.price ?? singleProduct?.prices?.[0]?.amount;
 
   return (
     <div className={cn(
@@ -336,26 +344,35 @@ function SessionCard({
           </div>
         </div>
         
-        {/* Register Button in Header */}
-        {registrationLink && (
-          <a
-            href={registrationLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-toca-purple text-white text-xs font-semibold rounded-lg hover:bg-toca-purple-dark transition-colors"
-          >
-            Register <ExternalLink size={12} />
-          </a>
-        )}
+        {/* Price + Register Button in Header */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Show price inline when single product */}
+          {config.features.showPricing && singleProduct && singleProductPrice !== undefined && (
+            <span className="text-sm font-bold text-gray-900">
+              {formatPrice(singleProductPrice)}
+            </span>
+          )}
+          
+          {registrationLink && (
+            <a
+              href={registrationLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-toca-purple text-white text-xs font-semibold rounded-lg hover:bg-toca-purple-dark transition-colors"
+            >
+              Register <ExternalLink size={12} />
+            </a>
+          )}
+        </div>
       </div>
 
-      {/* Products/Pricing Carousel - Compact */}
-      {config.features.showPricing && products.length > 0 && (
+      {/* Products/Pricing Carousel - Only show when multiple products */}
+      {config.features.showPricing && products.length > 1 && (
         <div className="mt-3 pt-3 border-t border-gray-100">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
               <DollarSign size={12} />
-              {products.length} pricing option{products.length !== 1 ? 's' : ''}
+              {products.length} pricing options
             </p>
           </div>
           <PricingCarousel 
