@@ -587,7 +587,7 @@ function DayColumn({
           style={{ borderLeftColor: event.color || '#6366F1' }}
         >
           <div className="font-medium text-gray-900 line-clamp-1 text-[10px] md:text-xs">
-            {event.programName}
+            {event.title || event.programName}
           </div>
           <div className="text-gray-500 text-[9px] md:text-[10px]">
             {formatTime(event.startTime)}
@@ -701,9 +701,9 @@ function EventCard({
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <h4 className="font-bold text-gray-900 line-clamp-1 text-base">
-              {event.programName}
+              {event.title || event.programName}
             </h4>
-            {event.sessionName && event.sessionName !== event.programName && (
+            {event.sessionName && event.sessionName !== event.programName && event.sessionName !== event.title && (
               <p className="text-sm text-gray-700 line-clamp-1 mt-0.5">
                 {event.sessionName}
               </p>

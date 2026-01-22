@@ -181,7 +181,7 @@ function EventDot({
         style={{ backgroundColor: event.color || '#6366F1' }}
       />
       <span className="text-xs text-gray-700 truncate hidden sm:block">
-        {event.programName}
+        {event.title || event.programName}
       </span>
     </div>
   );

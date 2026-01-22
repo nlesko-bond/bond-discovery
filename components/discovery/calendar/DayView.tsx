@@ -173,13 +173,13 @@ function EventCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          {/* Program Name */}
+          {/* Event/Program Name */}
           <h4 className="font-bold text-gray-900 text-sm group-hover:text-toca-purple transition-colors line-clamp-1">
-            {event.programName}
+            {event.title || event.programName}
           </h4>
           
           {/* Session Name if different */}
-          {event.sessionName && event.sessionName !== event.programName && (
+          {event.sessionName && event.sessionName !== event.programName && event.sessionName !== event.title && (
             <p className="text-xs text-gray-600 mt-0.5 line-clamp-1">
               {event.sessionName}
             </p>
