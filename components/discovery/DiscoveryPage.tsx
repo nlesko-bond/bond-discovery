@@ -212,21 +212,19 @@ export function DiscoveryPage({
   const filteredEvents = useMemo(() => {
     let result = [...apiEvents];
     
-    // Filter by program ID - match by ID or by program name
+    // Filter by program - match by program name since IDs may be shared
     if (filters.programIds && filters.programIds.length > 0) {
       // Get program names for the selected IDs from initialPrograms
       const selectedPrograms = initialPrograms.filter(p => 
         filters.programIds!.includes(p.id)
       );
-      const selectedProgramNames = selectedPrograms.map(p => p.name.toLowerCase());
+      const selectedProgramNames = selectedPrograms.map(p => p.name.toLowerCase().trim());
       
       result = result.filter(event => {
-        const eventProgramId = String(event.programId);
-        const eventProgramName = (event.programName || '').toLowerCase();
+        const eventProgramName = (event.programName || '').toLowerCase().trim();
         
-        // Match by ID or by name (name matching helps when IDs differ between API calls)
-        return filters.programIds!.includes(eventProgramId) ||
-               selectedProgramNames.some(name => eventProgramName.includes(name) || name.includes(eventProgramName));
+        // Match by exact program name
+        return selectedProgramNames.some(name => name === eventProgramName);
       });
     }
     

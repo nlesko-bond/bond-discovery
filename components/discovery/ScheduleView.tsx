@@ -450,29 +450,30 @@ function EventCard({
   const spotsInfo = event.spotsRemaining !== undefined && event.maxParticipants;
   const isFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 0;
   const isAlmostFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 5 && !isFull;
+  const eventColor = event.color || '#6366F1';
 
   return (
     <button
       onClick={onClick}
       className={cn(
-        'w-full text-left p-4 transition-all hover:bg-gray-50 flex items-start gap-4',
+        'w-full text-left p-4 transition-all hover:bg-blue-50/50 flex items-start gap-3',
         isFull && 'opacity-60'
       )}
     >
-      {/* Color indicator */}
+      {/* Color indicator - more prominent */}
       <div 
-        className="w-1 h-full min-h-[60px] rounded-full flex-shrink-0"
-        style={{ backgroundColor: event.color || '#6366F1' }}
+        className="w-1.5 self-stretch rounded-full flex-shrink-0"
+        style={{ backgroundColor: eventColor }}
       />
       
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-gray-900 line-clamp-1">
+            <h4 className="font-bold text-gray-900 line-clamp-1 text-base">
               {event.programName}
             </h4>
             {event.sessionName && event.sessionName !== event.programName && (
-              <p className="text-sm text-gray-600 line-clamp-1">
+              <p className="text-sm text-gray-700 line-clamp-1 mt-0.5">
                 {event.sessionName}
               </p>
             )}
@@ -499,22 +500,22 @@ function EventCard({
           </div>
         </div>
 
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-          <span className="flex items-center gap-1.5">
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <span className="flex items-center gap-1.5 text-gray-700">
             <Clock size={14} className="text-toca-purple" />
             {formatTime(event.startTime)}
             {event.endTime && ` - ${formatTime(event.endTime)}`}
           </span>
           
           {event.facilityName && (
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 text-gray-700">
               <MapPin size={14} className="text-toca-purple" />
               {event.facilityName}
             </span>
           )}
           
           {config.features.showPricing && event.startingPrice !== undefined && (
-            <span className="font-semibold text-toca-navy">
+            <span className="font-bold text-toca-navy">
               {event.startingPrice === 0 ? 'FREE' : formatPrice(event.startingPrice)}
             </span>
           )}
@@ -526,7 +527,7 @@ function EventCard({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1 mt-2 text-sm text-toca-purple hover:text-toca-purple-dark font-medium"
+            className="inline-flex items-center gap-1 mt-2 text-sm text-toca-purple hover:text-toca-purple-dark font-semibold"
           >
             Register <ExternalLink size={12} />
           </a>
@@ -564,37 +565,41 @@ function EventDetailModal({
         className="w-full max-w-lg bg-white rounded-t-2xl sm:rounded-xl max-h-[85vh] overflow-hidden animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header with clear close button */}
+        {/* Header with program info */}
         <div 
-          className="p-4 text-white relative"
-          style={{ background: `linear-gradient(135deg, ${event.color || '#1E2761'}, ${event.color || '#6366F1'}90)` }}
+          className="p-5 text-white relative"
+          style={{ background: `linear-gradient(135deg, #1E2761, #6366F1)` }}
         >
-          {/* Close button - more visible */}
+          {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 transition-colors border-2 border-white/30"
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors"
             aria-label="Close"
           >
-            <X size={20} className="text-white" />
+            <X size={18} className="text-white" />
           </button>
           
-          <div className="pr-12">
-            <h3 className="text-xl font-bold leading-tight">{event.programName}</h3>
+          <div className="pr-10">
+            <h3 className="text-xl font-bold leading-tight">
+              {event.programName || 'Event Details'}
+            </h3>
             {event.sessionName && event.sessionName !== event.programName && (
-              <p className="text-white/90 mt-1 text-sm">{event.sessionName}</p>
+              <p className="text-white/90 mt-1">{event.sessionName}</p>
             )}
-            <div className="flex flex-wrap items-center gap-2 mt-3">
-              {event.sport && (
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-full capitalize">
-                  {getSportLabel(event.sport)}
-                </span>
-              )}
-              {event.programType && (
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
-                  {getProgramTypeLabel(event.programType)}
-                </span>
-              )}
-            </div>
+            {(event.sport || event.programType) && (
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                {event.sport && (
+                  <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full capitalize">
+                    {getSportLabel(event.sport)}
+                  </span>
+                )}
+                {event.programType && (
+                  <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full">
+                    {getProgramTypeLabel(event.programType)}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
