@@ -770,8 +770,13 @@ function EventCard({
           
           {config.features.showPricing && event.startingPrice !== undefined && (
             <span className="font-bold text-toca-navy">
-              {event.startingPrice === 0 ? 'FREE' : formatPrice(event.startingPrice)}
+              {event.startingPrice === 0 
+                ? (event.memberPrice === 0 ? 'Included with Membership' : 'FREE')
+                : formatPrice(event.startingPrice)}
             </span>
+          )}
+          {config.features.showPricing && event.memberPrice === 0 && event.startingPrice !== 0 && (
+            <span className="text-xs text-amber-600 font-medium">Free for Members</span>
           )}
         </div>
         
@@ -915,19 +920,26 @@ function EventDetailModal({
                 {event.startingPrice !== undefined && event.startingPrice > 0 ? (
                   <>
                     <p className="font-semibold text-gray-900 text-lg">{formatPrice(event.startingPrice)}</p>
-                    {event.memberPrice && event.memberPrice < event.startingPrice && (
-                      <div className="mt-1 p-2 bg-toca-navy/5 rounded border border-toca-navy/10">
-                        <p className="text-sm text-toca-navy font-medium">
-                          Member price: {formatPrice(event.memberPrice)}
+                    {event.memberPrice !== undefined && event.memberPrice < event.startingPrice && (
+                      <div className="mt-1 p-2 bg-amber-50 rounded border border-amber-200">
+                        <p className="text-sm text-amber-700 font-medium flex items-center gap-1.5">
+                          <Shield size={12} />
+                          {event.memberPrice === 0 
+                            ? 'Free for Members' 
+                            : `Member price: ${formatPrice(event.memberPrice)}`}
                         </p>
-                        <p className="text-xs text-green-600">
-                          Save {formatPrice(event.startingPrice - event.memberPrice)}
-                        </p>
+                        {event.memberPrice > 0 && (
+                          <p className="text-xs text-green-600 mt-0.5">
+                            Save {formatPrice(event.startingPrice - event.memberPrice)}
+                          </p>
+                        )}
                       </div>
                     )}
                   </>
                 ) : event.startingPrice === 0 ? (
-                  <p className="font-semibold text-green-600 text-lg">FREE</p>
+                  <p className="font-semibold text-green-600 text-lg">
+                    {event.memberPrice === 0 ? 'Included with Membership' : 'FREE'}
+                  </p>
                 ) : (
                   <p className="text-gray-600">Contact for pricing</p>
                 )}

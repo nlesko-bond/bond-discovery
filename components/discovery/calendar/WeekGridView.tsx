@@ -58,57 +58,65 @@ export function WeekGridView({ days, config, onEventClick, onDayClick }: WeekGri
     return grouped;
   }, [days]);
 
+  // Calculate minimum width to ensure columns don't get too squished on mobile
+  const minColumnWidth = 80; // Minimum 80px per day column
+  const timeColumnWidth = 50; // Narrower time column on mobile
+  const minGridWidth = timeColumnWidth + (minColumnWidth * 7);
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      {/* Header Row - Day Names & Dates */}
-      <div className="grid grid-cols-[70px_repeat(7,1fr)] bg-gray-50 border-b border-gray-200">
-        <div className="p-3 border-r border-gray-200" /> {/* Empty corner */}
-        {days.map((day) => {
-          const dayDate = parseISO(day.date);
-          const isCurrent = isToday(dayDate);
-          
-          return (
-            <div
-              key={day.date}
-              onClick={() => onDayClick?.(day.date)}
-              className={cn(
-                'p-3 text-center border-r border-gray-200 last:border-r-0 cursor-pointer hover:bg-gray-100 transition-colors',
-                isCurrent && 'bg-toca-purple/10'
-              )}
-            >
-              <div className={cn(
-                'text-xs font-semibold uppercase tracking-wide',
-                isCurrent ? 'text-toca-purple' : 'text-gray-500'
-              )}>
-                {format(dayDate, 'EEE')}
-              </div>
-              <div className={cn(
-                'mt-1 font-bold text-lg',
-                isCurrent 
-                  ? 'text-white bg-toca-purple w-8 h-8 rounded-full flex items-center justify-center mx-auto' 
-                  : 'text-gray-900'
-              )}>
-                {format(dayDate, 'd')}
-              </div>
-              <div className={cn(
-                'text-[10px] mt-1',
-                isCurrent ? 'text-toca-purple' : 'text-gray-400'
-              )}>
-                {format(dayDate, 'MMM')}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      {/* Horizontal scroll wrapper for mobile */}
+      <div className="overflow-x-auto">
+        <div style={{ minWidth: `${minGridWidth}px` }}>
+          {/* Header Row - Day Names & Dates */}
+          <div className="grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[70px_repeat(7,1fr)] bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+            <div className="p-2 sm:p-3 border-r border-gray-200" /> {/* Empty corner */}
+            {days.map((day) => {
+              const dayDate = parseISO(day.date);
+              const isCurrent = isToday(dayDate);
+              
+              return (
+                <div
+                  key={day.date}
+                  onClick={() => onDayClick?.(day.date)}
+                  className={cn(
+                    'p-2 sm:p-3 text-center border-r border-gray-200 last:border-r-0 cursor-pointer hover:bg-gray-100 transition-colors',
+                    isCurrent && 'bg-toca-purple/10'
+                  )}
+                >
+                  <div className={cn(
+                    'text-[10px] sm:text-xs font-semibold uppercase tracking-wide',
+                    isCurrent ? 'text-toca-purple' : 'text-gray-500'
+                  )}>
+                    {format(dayDate, 'EEE')}
+                  </div>
+                  <div className={cn(
+                    'mt-0.5 sm:mt-1 font-bold text-base sm:text-lg',
+                    isCurrent 
+                      ? 'text-white bg-toca-purple w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mx-auto text-sm sm:text-base' 
+                      : 'text-gray-900'
+                  )}>
+                    {format(dayDate, 'd')}
+                  </div>
+                  <div className={cn(
+                    'text-[9px] sm:text-[10px] mt-0.5 sm:mt-1',
+                    isCurrent ? 'text-toca-purple' : 'text-gray-400'
+                  )}>
+                    {format(dayDate, 'MMM')}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-      {/* Time Grid - Scrollable */}
-      <div ref={scrollContainerRef} className="overflow-y-auto max-h-[600px]">
-        <div className="relative">
+          {/* Time Grid - Scrollable */}
+          <div ref={scrollContainerRef} className="overflow-y-auto max-h-[600px]">
+            <div className="relative">
           {TIME_SLOTS.map((hour) => (
-            <div key={hour} className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-gray-100 last:border-b-0">
+            <div key={hour} className="grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[70px_repeat(7,1fr)] border-b border-gray-100 last:border-b-0">
               {/* Time Label */}
-              <div className="p-2 pr-3 text-right border-r border-gray-200 bg-gray-50/50">
-                <span className="text-xs text-gray-500 font-medium">
+              <div className="p-1 sm:p-2 pr-2 sm:pr-3 text-right border-r border-gray-200 bg-gray-50/50">
+                <span className="text-[10px] sm:text-xs text-gray-500 font-medium">
                   {format(new Date().setHours(hour, 0, 0, 0), 'h a')}
                 </span>
               </div>
@@ -146,6 +154,8 @@ export function WeekGridView({ days, config, onEventClick, onDayClick }: WeekGri
           {days.some(d => isToday(parseISO(d.date))) && (
             <CurrentTimeIndicator days={days} />
           )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
