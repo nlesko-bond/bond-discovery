@@ -24,6 +24,9 @@ interface TransformedEvent {
   registrationWindowStatus?: string;
   maxParticipants?: number;
   currentParticipants?: number;
+  // Pricing
+  startingPrice?: number;
+  memberPrice?: number;
 }
 
 /**
@@ -83,6 +86,27 @@ export async function GET(request: Request) {
               });
               const events = eventsResponse.data || [];
               
+              // Get pricing from session products
+              const products = session.products || [];
+              let startingPrice: number | undefined;
+              let memberPrice: number | undefined;
+              
+              for (const product of products) {
+                const prices = product.prices || [];
+                for (const price of prices) {
+                  const amount = price.price || price.amount || 0;
+                  if (product.membershipRequired || product.isMemberProduct) {
+                    if (memberPrice === undefined || amount < memberPrice) {
+                      memberPrice = amount;
+                    }
+                  } else {
+                    if (startingPrice === undefined || amount < startingPrice) {
+                      startingPrice = amount;
+                    }
+                  }
+                }
+              }
+              
               // Transform and add events
               events.forEach((event: any) => {
                 // Extract resource names (court/field) from resources array
@@ -108,6 +132,8 @@ export async function GET(request: Request) {
                   registrationWindowStatus: event.registrationWindowStatus,
                   maxParticipants: event.maxParticipants,
                   currentParticipants: event.currentParticipants,
+                  startingPrice,
+                  memberPrice,
                 };
                 
                 // Apply date filtering if provided

@@ -80,13 +80,6 @@ export function MonthView({
 
   return (
     <div className="select-none">
-      {/* Month Header */}
-      <div className="mb-4 text-center">
-        <h3 className="text-xl font-bold text-gray-900">
-          {format(currentMonth, 'MMMM yyyy')}
-        </h3>
-      </div>
-
       {/* Weekday Headers */}
       <div className="grid grid-cols-7 border-b border-gray-200">
         {WEEKDAYS.map(day => (

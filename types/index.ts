@@ -399,6 +399,7 @@ export interface CalendarEvent {
   programName: string;
   sessionId: string;
   sessionName: string;
+  title?: string;  // Event-specific title (falls back to programName)
   
   // When
   date: string;

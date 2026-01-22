@@ -166,6 +166,10 @@ function EventBlock({
 }) {
   const startTime = formatTime(event.startTime);
   
+  // Determine display name: prefer title, then sessionName if different from programName, then programName
+  const displayName = event.title || event.programName;
+  const showSession = event.sessionName && event.sessionName !== event.programName && event.sessionName !== event.title;
+  
   return (
     <div className="space-y-1">
       <button
@@ -180,13 +184,13 @@ function EventBlock({
           borderLeftWidth: '3px',
           backgroundColor: `${event.color || '#6366F1'}10`
         }}
-        title={`${event.programName} - ${startTime}`}
+        title={`${displayName}${showSession ? ` - ${event.sessionName}` : ''} - ${startTime}`}
       >
         <p 
           className="font-semibold line-clamp-2 leading-tight"
           style={{ color: event.color || '#1E2761' }}
         >
-          {event.programName}
+          {displayName}
         </p>
         <p className="text-gray-500 mt-0.5 text-[10px]">
           {startTime}
@@ -194,7 +198,7 @@ function EventBlock({
       </button>
       
       {/* +X more indicator */}
-      {moreCount && moreCount > 0 && (
+      {typeof moreCount === 'number' && moreCount > 0 && (
         <button
           onClick={onMoreClick}
           className="w-full text-center text-[10px] text-toca-purple font-medium py-1 hover:bg-toca-purple/10 rounded transition-colors"

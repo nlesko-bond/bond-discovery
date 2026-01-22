@@ -426,6 +426,7 @@ export function DiscoveryPage({
       programName: event.programName || event.title,
       sessionId: event.sessionId || '',
       sessionName: event.sessionName || '',
+      title: event.title || event.sessionName || event.programName, // Event-specific title
       date: event.startDate?.split('T')[0] || '',
       startTime: event.startDate || '',
       endTime: event.endDate || '',
@@ -438,6 +439,8 @@ export function DiscoveryPage({
       color: getSportGradient(event.sport || ''),
       maxParticipants: event.maxParticipants,
       currentParticipants: event.currentParticipants,
+      startingPrice: event.startingPrice,
+      memberPrice: event.memberPrice,
     }));
     
     return buildWeekSchedules(calendarEvents, 8);
