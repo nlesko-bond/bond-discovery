@@ -63,12 +63,19 @@ export async function GET(request: Request) {
           
           for (const session of sessions) {
             try {
-              // Fetch events (space expand may not be supported on all endpoints)
-              const eventsResponse = await client.getEvents(orgId, program.id, session.id);
+              // Fetch events with resources expand for court/field names
+              const eventsResponse = await client.getEvents(orgId, program.id, session.id, {
+                expand: 'resources'
+              });
               const events = eventsResponse.data || [];
               
               // Transform and add events
               events.forEach((event: any) => {
+                // Extract resource names (court/field) from resources array
+                const resourceNames = event.resources && Array.isArray(event.resources) 
+                  ? event.resources.map((r: any) => r.name).filter(Boolean).join(', ')
+                  : undefined;
+                
                 const transformedEvent: TransformedEvent = {
                   id: String(event.id),
                   title: event.title || session.name || program.name,
@@ -80,7 +87,7 @@ export async function GET(request: Request) {
                   sessionId: session.id,
                   sessionName: session.name || '',
                   facilityName: session.facility?.name || program.facilityName,
-                  spaceName: event.space?.name || event.spaceName,  // Resource/court/field
+                  spaceName: resourceNames,  // Resource/court/field from expand=resources
                   sport: program.sport,
                   type: program.type,
                   linkSEO: session.linkSEO || program.linkSEO,

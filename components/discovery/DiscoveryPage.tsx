@@ -290,13 +290,23 @@ export function DiscoveryPage({
   const [eventsError, setEventsError] = useState<string | null>(null);
   const [eventsFetched, setEventsFetched] = useState(false);
   
+  // Reset events when config changes (different page)
+  useEffect(() => {
+    setEventsFetched(false);
+    setApiEvents([]);
+  }, [config.organizationIds.join(',')]);
+  
   // Fetch events from API when schedule view is selected
   useEffect(() => {
     if (viewMode === 'schedule' && !eventsFetched && !eventsLoading) {
       setEventsLoading(true);
       setEventsError(null);
       
-      fetch('/api/events')
+      // Build URL with organization IDs from config
+      const orgIds = config.organizationIds.join(',');
+      const url = orgIds ? `/api/events?orgIds=${orgIds}` : '/api/events';
+      
+      fetch(url)
         .then(res => res.json())
         .then(data => {
           if (data.data) {
@@ -312,7 +322,7 @@ export function DiscoveryPage({
           setEventsLoading(false);
         });
     }
-  }, [viewMode, eventsFetched, eventsLoading]);
+  }, [viewMode, eventsFetched, eventsLoading, config.organizationIds]);
   
   // Filter events based on current filters
   const filteredEvents = useMemo(() => {
