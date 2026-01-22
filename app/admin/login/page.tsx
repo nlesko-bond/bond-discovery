@@ -2,10 +2,10 @@
 
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
-import { LogIn, AlertCircle, Shield } from 'lucide-react';
+import { useEffect, Suspense } from 'react';
+import { AlertCircle, Shield } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -91,5 +91,17 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-toca-purple"></div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }
