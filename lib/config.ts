@@ -8,9 +8,16 @@ const DEFAULT_ENABLED_FILTERS: FilterType[] = ['search', 'facility', 'programTyp
 
 function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
   // Use defaults if enableFilters is empty or missing
-  const enableFilters = (row.features.enableFilters && row.features.enableFilters.length > 0)
-    ? row.features.enableFilters as FilterType[]
-    : DEFAULT_ENABLED_FILTERS;
+  let enableFilters: FilterType[];
+  if (row.features.enableFilters && row.features.enableFilters.length > 0) {
+    enableFilters = row.features.enableFilters as FilterType[];
+    // Always include search if not present
+    if (!enableFilters.includes('search')) {
+      enableFilters = ['search', ...enableFilters];
+    }
+  } else {
+    enableFilters = DEFAULT_ENABLED_FILTERS;
+  }
     
   return {
     id: row.id,
