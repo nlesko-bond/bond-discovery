@@ -32,6 +32,7 @@ import { PricingCarousel } from './PricingCarousel';
 interface ProgramCardProps {
   program: Program;
   config: DiscoveryConfig;
+  autoExpand?: boolean; // Auto-expand sessions when viewing single program
 }
 
 // Sport-specific gradients for visual appeal
@@ -50,8 +51,8 @@ const sportGradients: Record<string, string> = {
   default: 'from-toca-navy to-toca-purple',
 };
 
-export function ProgramCard({ program, config }: ProgramCardProps) {
-  const [expanded, setExpanded] = useState(false);
+export function ProgramCard({ program, config, autoExpand = false }: ProgramCardProps) {
+  const [expanded, setExpanded] = useState(autoExpand);
   
   const sessions = getSessions(program);
   // Include all sessions that haven't ended yet
@@ -297,70 +298,70 @@ function SessionCard({
 
   return (
     <div className={cn(
-      'p-4 bg-white rounded-xl border transition-all',
+      'p-3 bg-white rounded-xl border transition-all',
       session.isFull ? 'border-gray-200 opacity-70' : 'border-gray-200 hover:border-toca-purple/50 hover:shadow-md'
     )}>
-      {/* Session Header */}
-      <div className="flex items-start justify-between gap-3 mb-3">
+      {/* Session Header with Register Button */}
+      <div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-gray-900">
-            {session.name || 'Session'}
-          </p>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-gray-500">
+          <div className="flex items-center gap-2">
+            <p className="font-bold text-gray-900 text-sm truncate">
+              {session.name || 'Session'}
+            </p>
+            {config.features.showAvailability && availability.label && (
+              <span className={cn(
+                'text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap',
+                availability.color === 'red' && 'bg-red-100 text-red-700',
+                availability.color === 'yellow' && 'bg-amber-100 text-amber-700',
+                availability.color === 'green' && 'bg-green-100 text-green-700',
+                availability.color === 'gray' && 'bg-gray-100 text-gray-600'
+              )}>
+                {availability.label}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-gray-500">
             {(session.startDate || session.endDate) && (
               <span className="flex items-center gap-1">
-                <Calendar size={14} className="text-gray-400" />
+                <Calendar size={12} className="text-gray-400" />
                 {formatDateRange(session.startDate || '', session.endDate || '')}
               </span>
             )}
             {facilityName && (
               <span className="flex items-center gap-1">
-                <MapPin size={14} className="text-gray-400" />
+                <MapPin size={12} className="text-gray-400" />
                 {facilityName}
               </span>
             )}
           </div>
         </div>
         
-        {config.features.showAvailability && availability.label && (
-          <div className={cn(
-            'text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap',
-            availability.color === 'red' && 'bg-red-100 text-red-700',
-            availability.color === 'yellow' && 'bg-amber-100 text-amber-700',
-            availability.color === 'green' && 'bg-green-100 text-green-700',
-            availability.color === 'gray' && 'bg-gray-100 text-gray-600'
-          )}>
-            {availability.label}
-          </div>
-        )}
-      </div>
-
-      {/* Products/Pricing Carousel */}
-      {config.features.showPricing && products.length > 0 && (
-        <div className="pt-3 border-t border-gray-100">
-          <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
-            <DollarSign size={12} />
-            {products.length} pricing option{products.length !== 1 ? 's' : ''}
-          </p>
-          <PricingCarousel 
-            products={products}
-            baseRegistrationUrl={baseLink}
-          />
-        </div>
-      )}
-
-      {/* Register Link */}
-      {registrationLink && (
-        <div className="mt-3 pt-3 border-t border-gray-100">
+        {/* Register Button in Header */}
+        {registrationLink && (
           <a
             href={registrationLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold text-toca-purple hover:text-toca-purple-dark transition-colors"
+            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-toca-purple text-white text-xs font-semibold rounded-lg hover:bg-toca-purple-dark transition-colors"
           >
-            <span>Register Now</span>
-            <ExternalLink size={14} />
+            Register <ExternalLink size={12} />
           </a>
+        )}
+      </div>
+
+      {/* Products/Pricing Carousel - Compact */}
+      {config.features.showPricing && products.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+              <DollarSign size={12} />
+              {products.length} pricing option{products.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <PricingCarousel 
+            products={products}
+            baseRegistrationUrl={baseLink}
+          />
         </div>
       )}
     </div>

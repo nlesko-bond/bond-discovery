@@ -50,6 +50,7 @@ export function ProgramGrid({ programs, config }: ProgramGridProps) {
             key={program.id}
             program={program}
             config={config}
+            autoExpand={programs.length === 1} // Auto-expand when viewing single program
           />
         ))}
       </div>

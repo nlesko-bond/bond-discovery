@@ -363,6 +363,7 @@ export type ViewMode = 'programs' | 'schedule';
 export interface DiscoveryFilters {
   search?: string;
   facilityIds?: string[];
+  programIds?: string[];
   programTypes?: ProgramType[];
   sports?: string[];
   dateRange?: {

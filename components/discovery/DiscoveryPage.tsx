@@ -38,6 +38,9 @@ export function DiscoveryPage({
   
   const [filters, setFilters] = useState<DiscoveryFilters>({
     search: (searchParams.search as string) || '',
+    programIds: searchParams.programIds 
+      ? (searchParams.programIds as string).split('_') 
+      : [],
     facilityIds: searchParams.facilityIds 
       ? (searchParams.facilityIds as string).split('_') 
       : [],
@@ -76,6 +79,11 @@ export function DiscoveryPage({
         p.description?.toLowerCase().includes(query) ||
         p.sport?.toLowerCase().includes(query)
       );
+    }
+
+    // Program ID filter (deep link to specific programs)
+    if (filters.programIds && filters.programIds.length > 0) {
+      result = result.filter(p => filters.programIds!.includes(p.id));
     }
 
     // Facility filter
@@ -272,8 +280,12 @@ export function DiscoveryPage({
     const facilities = new Map<string, { id: string; name: string; count: number }>();
     const sports = new Map<string, number>();
     const programTypes = new Map<string, number>();
+    const programs: { id: string; name: string }[] = [];
 
     initialPrograms.forEach(p => {
+      // Add program to list
+      programs.push({ id: p.id, name: p.name });
+      
       // Get facility from program level or from sessions
       let facilityId = p.facilityId;
       let facilityName = p.facilityName;
@@ -315,6 +327,7 @@ export function DiscoveryPage({
       programTypes: Array.from(programTypes.entries())
         .map(([id, count]) => ({ id, label: id, count }))
         .sort((a, b) => b.count - a.count),
+      programs: programs.sort((a, b) => a.name.localeCompare(b.name)),
     };
   }, [initialPrograms]);
 
@@ -325,6 +338,7 @@ export function DiscoveryPage({
     };
 
     if (newFilters.search) params.search = newFilters.search;
+    if (newFilters.programIds?.length) params.programIds = newFilters.programIds.join('_');
     if (newFilters.facilityIds?.length) params.facilityIds = newFilters.facilityIds.join('_');
     if (newFilters.programTypes?.length) params.programTypes = newFilters.programTypes.join('_');
     if (newFilters.sports?.length) params.sports = newFilters.sports.join('_');
@@ -412,19 +426,8 @@ export function DiscoveryPage({
                 </div>
               )}
 
-              {/* Mobile Filter Button */}
-              <button
-                onClick={() => setShowMobileFilters(true)}
-                className="md:hidden flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors relative"
-              >
-                <SlidersHorizontal size={18} />
-                <span className="sr-only sm:not-sr-only">Filters</span>
-                {activeFilterCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-toca-purple text-white text-xs font-bold rounded-full flex items-center justify-center">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
+              {/* Mobile Filter Button - Only shown on very small screens if needed */}
+              {/* Filters are now inline on all screen sizes */}
             </div>
           </div>
 
@@ -458,8 +461,8 @@ export function DiscoveryPage({
         </div>
       </header>
 
-      {/* Horizontal Filter Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 hidden sm:block">
+      {/* Horizontal Filter Bar - visible on all screen sizes */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 overflow-x-auto">
         <HorizontalFilterBar
           filters={filters}
           onFilterChange={handleFiltersChange}
@@ -467,6 +470,7 @@ export function DiscoveryPage({
             facilities: filterOptions.facilities.map(f => ({ id: f.id, name: f.name, count: f.count })),
             programTypes: filterOptions.programTypes.map(t => ({ id: t.id, name: t.label, count: t.count })),
             sports: filterOptions.sports.map(s => ({ id: s.id, name: s.label, count: s.count })),
+            programs: filterOptions.programs || [],
             ages: [],
           }}
           config={config}

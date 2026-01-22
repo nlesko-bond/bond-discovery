@@ -10,7 +10,9 @@ import {
   Users, 
   Calendar,
   Filter,
-  Check
+  Check,
+  Tag,
+  Search
 } from 'lucide-react';
 import { DiscoveryFilters, DiscoveryConfig } from '@/types';
 import { cn, getProgramTypeLabel, getSportLabel } from '@/lib/utils';
@@ -25,6 +27,7 @@ interface FilterOptions {
   facilities: FilterOption[];
   programTypes: FilterOption[];
   sports: FilterOption[];
+  programs: FilterOption[];
   ages: { min: number; max: number }[];
 }
 
@@ -47,6 +50,7 @@ export function HorizontalFilterBar({
   // Count active filters
   const activeFilterCount = [
     filters.facilityIds?.length || 0,
+    filters.programIds?.length || 0,
     filters.programTypes?.length || 0,
     filters.sports?.length || 0,
     (filters.ageRange?.min || filters.ageRange?.max) ? 1 : 0,
@@ -66,7 +70,7 @@ export function HorizontalFilterBar({
   }, []);
 
   const handleMultiSelect = (
-    key: 'facilityIds' | 'programTypes' | 'sports',
+    key: 'facilityIds' | 'programIds' | 'programTypes' | 'sports',
     value: string
   ) => {
     const current = (filters[key] || []) as string[];
@@ -83,6 +87,7 @@ export function HorizontalFilterBar({
   const clearFilter = (key: string) => {
     const newFilters = { ...filters };
     if (key === 'facilityIds') newFilters.facilityIds = undefined;
+    if (key === 'programIds') newFilters.programIds = undefined;
     if (key === 'programTypes') newFilters.programTypes = undefined;
     if (key === 'sports') newFilters.sports = undefined;
     if (key === 'age') {
@@ -135,6 +140,38 @@ export function HorizontalFilterBar({
                       <Check size={14} className="text-toca-purple" />
                     )}
                   </div>
+                </button>
+              ))}
+            </div>
+          </FilterDropdown>
+        )}
+
+        {/* Program Filter */}
+        {filterOptions.programs.length > 0 && (
+          <FilterDropdown
+            label="Program"
+            icon={<Tag size={14} />}
+            isOpen={openDropdown === 'program'}
+            onToggle={() => setOpenDropdown(openDropdown === 'program' ? null : 'program')}
+            hasSelection={(filters.programIds?.length || 0) > 0}
+            selectionCount={filters.programIds?.length}
+          >
+            <div className="p-2 max-h-64 overflow-y-auto">
+              {filterOptions.programs.map(program => (
+                <button
+                  key={program.id}
+                  onClick={() => handleMultiSelect('programIds', program.id)}
+                  className={cn(
+                    'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
+                    filters.programIds?.includes(program.id)
+                      ? 'bg-toca-purple/10 text-toca-purple'
+                      : 'hover:bg-gray-50'
+                  )}
+                >
+                  <span className="truncate">{program.name}</span>
+                  {filters.programIds?.includes(program.id) && (
+                    <Check size={14} className="text-toca-purple" />
+                  )}
                 </button>
               ))}
             </div>
@@ -290,6 +327,18 @@ export function HorizontalFilterBar({
             ) : null;
           })}
 
+          {/* Program Chips */}
+          {filters.programIds?.map(id => {
+            const program = filterOptions.programs.find(p => p.id === id);
+            return program ? (
+              <FilterChip
+                key={`program-${id}`}
+                label={program.name}
+                onRemove={() => handleMultiSelect('programIds', id)}
+              />
+            ) : null;
+          })}
+
           {/* Type Chips */}
           {filters.programTypes?.map(type => (
             <FilterChip
@@ -360,8 +409,8 @@ function FilterDropdown({
       >
         {icon}
         <span>{label}</span>
-        {selectionCount && selectionCount > 0 && (
-          <span className="bg-toca-purple text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+        {selectionCount != null && selectionCount > 0 && (
+          <span className="bg-toca-purple text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
             {selectionCount}
           </span>
         )}
