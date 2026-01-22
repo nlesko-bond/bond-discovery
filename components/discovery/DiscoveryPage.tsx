@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { 
   LayoutGrid, 
   Calendar, 
@@ -31,6 +31,7 @@ export function DiscoveryPage({
   searchParams 
 }: DiscoveryPageProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const urlSearchParams = useSearchParams();
   
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
@@ -350,9 +351,9 @@ export function DiscoveryPage({
     if (newFilters.availability && newFilters.availability !== 'all') params.availability = newFilters.availability;
     if (newFilters.membershipRequired !== null) params.membershipRequired = newFilters.membershipRequired;
 
-    const url = buildUrl('/', params);
+    const url = buildUrl(pathname, params);
     router.replace(url, { scroll: false });
-  }, [router]);
+  }, [router, pathname]);
 
   // Handle filter changes
   const handleFiltersChange = useCallback((newFilters: DiscoveryFilters) => {
