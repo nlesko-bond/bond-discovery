@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   ChevronLeft, 
   ChevronRight, 
   Calendar,
   CalendarDays,
+  CalendarRange,
   List,
   Clock,
   MapPin,
@@ -13,13 +14,15 @@ import {
   Tag,
   Shield,
   X,
-  ExternalLink
+  ExternalLink,
+  LayoutGrid
 } from 'lucide-react';
 import { WeekSchedule, DaySchedule, CalendarEvent, DiscoveryConfig } from '@/types';
-import { formatDate, formatTime, formatPrice, getSportLabel, getProgramTypeLabel, cn } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
+import { formatDate, formatTime, formatPrice, getSportLabel, getProgramTypeLabel, buildRegistrationUrl, cn } from '@/lib/utils';
+import { format, parseISO, startOfMonth, addMonths, subMonths } from 'date-fns';
+import { DayView, WeekGridView, MonthView } from './calendar';
 
-type ViewMode = 'calendar' | 'list';
+type ViewMode = 'list' | 'day' | 'week' | 'month';
 
 interface ScheduleViewProps {
   schedule: WeekSchedule[];
@@ -33,11 +36,26 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
+  const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
 
   const currentWeek = schedule[currentWeekIndex];
   
   // Count events for this week
   const weekEventCount = currentWeek?.days.reduce((sum, day) => sum + day.events.length, 0) || 0;
+
+  // Flatten all events for month view
+  const allEvents = useMemo(() => {
+    return schedule.flatMap(week => 
+      week.days.flatMap(day => day.events)
+    );
+  }, [schedule]);
+
+  // Handle day click from month view
+  const handleDayClick = (date: string) => {
+    setSelectedDayDate(date);
+    setViewMode('day');
+  };
 
   // Loading state
   if (isLoading) {
@@ -96,94 +114,186 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
             <button
               onClick={() => setViewMode('list')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                'flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-all',
                 viewMode === 'list'
                   ? 'bg-white text-toca-navy shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               )}
+              title="List View"
             >
               <List size={14} />
-              <span className="hidden sm:inline">List</span>
+              <span className="hidden md:inline">List</span>
             </button>
             <button
-              onClick={() => setViewMode('calendar')}
+              onClick={() => {
+                setSelectedDayDate(currentWeek?.days[0]?.date || new Date().toISOString().split('T')[0]);
+                setViewMode('day');
+              }}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
-                viewMode === 'calendar'
+                'flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                viewMode === 'day'
                   ? 'bg-white text-toca-navy shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               )}
+              title="Day View"
+            >
+              <Clock size={14} />
+              <span className="hidden md:inline">Day</span>
+            </button>
+            <button
+              onClick={() => setViewMode('week')}
+              className={cn(
+                'flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-all hidden sm:flex',
+                viewMode === 'week'
+                  ? 'bg-white text-toca-navy shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              )}
+              title="Week View"
             >
               <CalendarDays size={14} />
-              <span className="hidden sm:inline">Calendar</span>
+              <span className="hidden md:inline">Week</span>
+            </button>
+            <button
+              onClick={() => setViewMode('month')}
+              className={cn(
+                'flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                viewMode === 'month'
+                  ? 'bg-white text-toca-navy shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              )}
+              title="Month View"
+            >
+              <LayoutGrid size={14} />
+              <span className="hidden md:inline">Month</span>
             </button>
           </div>
         </div>
       )}
       
-      {/* Week Navigation */}
-      <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-toca-navy to-toca-purple rounded-xl p-4 text-white">
-        <button
-          onClick={() => setCurrentWeekIndex(Math.max(0, currentWeekIndex - 1))}
-          disabled={currentWeekIndex === 0}
-          className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronLeft size={24} />
-        </button>
+      {/* Navigation - changes based on view mode */}
+      {viewMode === 'month' ? (
+        /* Month Navigation */
+        <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-toca-navy to-toca-purple rounded-xl p-4 text-white">
+          <button
+            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            <ChevronLeft size={24} />
+          </button>
 
-        <div className="text-center">
-          <h2 className="text-xl font-bold">
-            {format(parseISO(currentWeek.weekStart), 'MMM d')} -{' '}
-            {format(parseISO(currentWeek.weekEnd), 'MMM d, yyyy')}
-          </h2>
-          <p className="text-sm text-white/70">
-            Week {currentWeekIndex + 1} of {schedule.length}
-            {weekEventCount > 0 && ` • ${weekEventCount} events`}
-          </p>
+          <div className="text-center">
+            <h2 className="text-xl font-bold">
+              {format(currentMonth, 'MMMM yyyy')}
+            </h2>
+          </div>
+
+          <button
+            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            <ChevronRight size={24} />
+          </button>
         </div>
+      ) : viewMode === 'day' && selectedDayDate ? (
+        /* Day Navigation */
+        <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-toca-navy to-toca-purple rounded-xl p-4 text-white">
+          <button
+            onClick={() => {
+              const currentDate = parseISO(selectedDayDate);
+              const prevDate = new Date(currentDate);
+              prevDate.setDate(prevDate.getDate() - 1);
+              setSelectedDayDate(prevDate.toISOString().split('T')[0]);
+            }}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            <ChevronLeft size={24} />
+          </button>
 
-        <button
-          onClick={() => setCurrentWeekIndex(Math.min(schedule.length - 1, currentWeekIndex + 1))}
-          disabled={currentWeekIndex === schedule.length - 1}
-          className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronRight size={24} />
-        </button>
-      </div>
-
-      {/* Calendar Grid View */}
-      {viewMode === 'calendar' && (
-        <div className="grid grid-cols-7 gap-1 md:gap-2">
-          {/* Day Headers */}
-          {currentWeek.days.map((day) => (
-            <div
-              key={`header-${day.date}`}
-              className={cn(
-                'text-center py-2 text-sm font-semibold rounded-t-lg',
-                day.isToday ? 'bg-toca-purple text-white' : 'bg-gray-100 text-gray-700'
-              )}
+          <div className="text-center">
+            <h2 className="text-xl font-bold">
+              {format(parseISO(selectedDayDate), 'EEEE, MMM d')}
+            </h2>
+            <button 
+              onClick={() => setViewMode('list')}
+              className="text-sm text-white/70 hover:text-white transition-colors"
             >
-              <div className="hidden sm:block">{day.dayOfWeek}</div>
-              <div className="sm:hidden">{day.dayOfWeek.slice(0, 1)}</div>
-              <div className={cn(
-                'text-xs font-normal mt-0.5',
-                day.isToday ? 'text-white/80' : 'text-gray-500'
-              )}>
-                {format(parseISO(day.date), 'd')}
-              </div>
-            </div>
-          ))}
+              ← Back to week
+            </button>
+          </div>
 
-          {/* Day Content */}
-          {currentWeek.days.map((day) => (
-            <DayColumn
-              key={`content-${day.date}`}
-              day={day}
-              onEventClick={setSelectedEvent}
-              config={config}
-            />
-          ))}
+          <button
+            onClick={() => {
+              const currentDate = parseISO(selectedDayDate);
+              const nextDate = new Date(currentDate);
+              nextDate.setDate(nextDate.getDate() + 1);
+              setSelectedDayDate(nextDate.toISOString().split('T')[0]);
+            }}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            <ChevronRight size={24} />
+          </button>
         </div>
+      ) : (
+        /* Week Navigation (for list and week views) */
+        <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-toca-navy to-toca-purple rounded-xl p-4 text-white">
+          <button
+            onClick={() => setCurrentWeekIndex(Math.max(0, currentWeekIndex - 1))}
+            disabled={currentWeekIndex === 0}
+            className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronLeft size={24} />
+          </button>
+
+          <div className="text-center">
+            <h2 className="text-xl font-bold">
+              {format(parseISO(currentWeek.weekStart), 'MMM d')} -{' '}
+              {format(parseISO(currentWeek.weekEnd), 'MMM d, yyyy')}
+            </h2>
+            <p className="text-sm text-white/70">
+              Week {currentWeekIndex + 1} of {schedule.length}
+              {weekEventCount > 0 && ` • ${weekEventCount} events`}
+            </p>
+          </div>
+
+          <button
+            onClick={() => setCurrentWeekIndex(Math.min(schedule.length - 1, currentWeekIndex + 1))}
+            disabled={currentWeekIndex === schedule.length - 1}
+            className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronRight size={24} />
+          </button>
+        </div>
+      )}
+
+      {/* Day View */}
+      {viewMode === 'day' && selectedDayDate && (
+        <DayView
+          events={allEvents}
+          date={selectedDayDate}
+          config={config}
+          onEventClick={setSelectedEvent}
+        />
+      )}
+
+      {/* Week Grid View */}
+      {viewMode === 'week' && currentWeek && (
+        <WeekGridView
+          days={currentWeek.days}
+          config={config}
+          onEventClick={setSelectedEvent}
+          onDayClick={handleDayClick}
+        />
+      )}
+
+      {/* Month View */}
+      {viewMode === 'month' && (
+        <MonthView
+          events={allEvents}
+          currentMonth={currentMonth}
+          config={config}
+          onDayClick={handleDayClick}
+          onEventClick={setSelectedEvent}
+        />
       )}
 
       {/* List View */}
@@ -200,8 +310,8 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
         </div>
       )}
 
-      {/* Empty State */}
-      {!hasEventsThisWeek && (
+      {/* Empty State - only for list/week modes */}
+      {(viewMode === 'list' || viewMode === 'week') && !hasEventsThisWeek && (
         <div className="text-center py-12">
           <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500">No events scheduled this week</p>
@@ -412,7 +522,7 @@ function EventCard({
         
         {event.linkSEO && (
           <a 
-            href={event.linkSEO}
+            href={buildRegistrationUrl(event.linkSEO)}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
@@ -541,7 +651,7 @@ function EventDetailModal({
         <div className="p-4 border-t border-gray-200 bg-gray-50">
           {event.linkSEO ? (
             <a 
-              href={event.linkSEO}
+              href={buildRegistrationUrl(event.linkSEO)}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full py-3 bg-gradient-to-r from-toca-navy to-toca-purple text-white font-semibold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"

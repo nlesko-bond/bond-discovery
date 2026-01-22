@@ -244,3 +244,37 @@ export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength - 3) + '...';
 }
+
+/**
+ * Build registration URL with deep linking parameters
+ * - skipToProducts=true bypasses landing page and goes to package selection
+ * - productId={id} pre-selects a specific product
+ */
+export function buildRegistrationUrl(
+  linkSEO: string | undefined,
+  options?: { skipToProducts?: boolean; productId?: string }
+): string | undefined {
+  if (!linkSEO) return undefined;
+  
+  try {
+    const url = new URL(linkSEO);
+    
+    // Add skipToProducts param if requested (default true for better UX)
+    if (options?.skipToProducts !== false) {
+      url.searchParams.set('skipToProducts', 'true');
+    }
+    
+    // Add productId if provided for direct checkout
+    if (options?.productId) {
+      url.searchParams.set('productId', options.productId);
+    }
+    
+    return url.toString();
+  } catch {
+    // If URL parsing fails, return original or add params manually
+    if (!linkSEO.includes('?')) {
+      return `${linkSEO}?skipToProducts=true${options?.productId ? `&productId=${options.productId}` : ''}`;
+    }
+    return `${linkSEO}&skipToProducts=true${options?.productId ? `&productId=${options.productId}` : ''}`;
+  }
+}

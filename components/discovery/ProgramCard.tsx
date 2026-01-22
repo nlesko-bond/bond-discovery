@@ -24,8 +24,10 @@ import {
   getSportLabel,
   getGenderLabel,
   getAvailabilityInfo,
+  buildRegistrationUrl,
   cn
 } from '@/lib/utils';
+import { PricingCarousel } from './PricingCarousel';
 
 interface ProgramCardProps {
   program: Program;
@@ -260,7 +262,7 @@ export function ProgramCard({ program, config }: ProgramCardProps) {
           {program.linkSEO && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <a
-                href={program.linkSEO}
+                href={buildRegistrationUrl(program.linkSEO)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-toca-navy text-white font-semibold rounded-xl hover:bg-toca-purple-dark transition-colors"
@@ -286,16 +288,12 @@ function SessionCard({
   config: DiscoveryConfig;
   programLinkSEO?: string;
 }) {
-  const [showProducts, setShowProducts] = useState(false);
   const availability = getAvailabilityInfo(session.spotsRemaining, session.maxParticipants || session.capacity);
   const products = session.products || [];
   
-  // Separate member and regular products
-  const memberProducts = products.filter(p => p.isMemberProduct);
-  const regularProducts = products.filter(p => !p.isMemberProduct);
-  
   const facilityName = session.facility?.name;
-  const registrationLink = session.linkSEO || programLinkSEO;
+  const baseLink = session.linkSEO || programLinkSEO;
+  const registrationLink = buildRegistrationUrl(baseLink);
 
   return (
     <div className={cn(
@@ -337,41 +335,17 @@ function SessionCard({
         )}
       </div>
 
-      {/* Products/Pricing */}
+      {/* Products/Pricing Carousel */}
       {config.features.showPricing && products.length > 0 && (
         <div className="pt-3 border-t border-gray-100">
-          <button
-            onClick={() => setShowProducts(!showProducts)}
-            className="w-full text-left flex items-center justify-between text-sm font-semibold text-gray-700 hover:text-toca-purple transition-colors"
-          >
-            <span className="flex items-center gap-1.5">
-              <DollarSign size={14} />
-              {products.length} pricing option{products.length !== 1 ? 's' : ''}
-            </span>
-            <ChevronDown size={14} className={cn('transition-transform', showProducts && 'rotate-180')} />
-          </button>
-          
-          {showProducts && (
-            <div className="mt-3 space-y-2">
-              {/* Regular Products */}
-              {regularProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-              
-              {/* Member Products */}
-              {memberProducts.length > 0 && (
-                <div className="pt-2 mt-2 border-t border-dashed border-gray-200">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 mb-2">
-                    <Star size={12} />
-                    Member Pricing
-                  </div>
-                  {memberProducts.map(product => (
-                    <ProductCard key={product.id} product={product} isMember />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
+            <DollarSign size={12} />
+            {products.length} pricing option{products.length !== 1 ? 's' : ''}
+          </p>
+          <PricingCarousel 
+            products={products}
+            baseRegistrationUrl={baseLink}
+          />
         </div>
       )}
 
@@ -394,7 +368,15 @@ function SessionCard({
 }
 
 // Product card component
-function ProductCard({ product, isMember = false }: { product: Product; isMember?: boolean }) {
+function ProductCard({ 
+  product, 
+  isMember = false,
+  registrationUrl 
+}: { 
+  product: Product; 
+  isMember?: boolean;
+  registrationUrl?: string;
+}) {
   const lowestPrice = product.prices.reduce(
     (min, p) => (p.price < min ? p.price : min),
     product.prices[0]?.price ?? 0
@@ -419,13 +401,30 @@ function ProductCard({ product, isMember = false }: { product: Product; isMember
             </p>
           )}
         </div>
-        <span className={cn(
-          'font-bold text-lg whitespace-nowrap',
-          isMember ? 'text-amber-600' : 'text-gray-900',
-          lowestPrice === 0 && 'text-green-600'
-        )}>
-          {formatPrice(lowestPrice)}
-        </span>
+        <div className="flex flex-col items-end gap-1.5">
+          <span className={cn(
+            'font-bold text-lg whitespace-nowrap',
+            isMember ? 'text-amber-600' : 'text-gray-900',
+            lowestPrice === 0 && 'text-green-600'
+          )}>
+            {formatPrice(lowestPrice)}
+          </span>
+          {registrationUrl && (
+            <a
+              href={registrationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                'text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1',
+                isMember 
+                  ? 'bg-amber-600 text-white hover:bg-amber-700' 
+                  : 'bg-toca-purple text-white hover:bg-toca-purple-dark'
+              )}
+            >
+              Select <ExternalLink size={10} />
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );

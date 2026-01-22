@@ -11,10 +11,11 @@ import {
 import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode } from '@/types';
 import { ProgramGrid } from './ProgramGrid';
 import { ScheduleView } from './ScheduleView';
-import { FilterBar } from './FilterBar';
+import { HorizontalFilterBar } from './HorizontalFilterBar';
 import { MobileFilters } from './MobileFilters';
 import { programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers';
 import { buildUrl, getSportGradient } from '@/lib/utils';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 interface DiscoveryPageProps {
   initialPrograms: Program[];
@@ -373,13 +374,12 @@ export function DiscoveryPage({
           <div className="flex items-center justify-between">
             {/* Logo & Title */}
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                <span className="text-toca-purple">{config.branding.companyName.split(' ')[0]}</span>{' '}
-                {config.branding.companyName.split(' ').slice(1).join(' ') || 'Discovery'}
-              </h1>
-              <p className="text-xs text-gray-500 hidden sm:block">
-                {config.branding.tagline}
-              </p>
+              <BrandLogo config={config} size="md" />
+              {config.branding.tagline && (
+                <p className="text-xs text-gray-500 hidden sm:block mt-0.5">
+                  {config.branding.tagline}
+                </p>
+              )}
             </div>
 
             {/* View Toggle & Mobile Filter */}
@@ -458,37 +458,50 @@ export function DiscoveryPage({
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto">
-        <div className="flex">
-          {/* Desktop Sidebar Filters */}
-          <aside className="hidden md:block w-64 lg:w-72 flex-shrink-0 sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto border-r border-gray-200 bg-white">
-            <FilterBar
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-              options={filterOptions}
-              enabledFilters={config.features.enableFilters}
-            />
-          </aside>
+      {/* Horizontal Filter Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 hidden sm:block">
+        <HorizontalFilterBar
+          filters={filters}
+          onFilterChange={handleFiltersChange}
+          filterOptions={{
+            facilities: filterOptions.facilities.map(f => ({ id: f.id, name: f.name, count: f.count })),
+            programTypes: filterOptions.programTypes.map(t => ({ id: t.id, name: t.label, count: t.count })),
+            sports: filterOptions.sports.map(s => ({ id: s.id, name: s.label, count: s.count })),
+            ages: [],
+          }}
+          config={config}
+        />
+      </div>
 
-          {/* Main Content Area */}
-          <main className="flex-1 min-w-0">
-            {viewMode === 'programs' ? (
-              <ProgramGrid 
-                programs={filteredPrograms} 
-                config={config}
-              />
-            ) : (
-              <ScheduleView 
-                schedule={scheduleData || []} 
-                config={config}
-                isLoading={eventsLoading}
-                error={eventsError}
-                totalEvents={filteredEvents.length}
-              />
-            )}
-          </main>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Results Count */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm text-gray-600">
+            {viewMode === 'programs' 
+              ? `${filteredPrograms.length} ${filteredPrograms.length === 1 ? 'program' : 'programs'}`
+              : `${filteredEvents.length} events`
+            }
+          </p>
         </div>
+
+        {/* Main Content Area */}
+        <main>
+          {viewMode === 'programs' ? (
+            <ProgramGrid 
+              programs={filteredPrograms} 
+              config={config}
+            />
+          ) : (
+            <ScheduleView 
+              schedule={scheduleData || []} 
+              config={config}
+              isLoading={eventsLoading}
+              error={eventsError}
+              totalEvents={filteredEvents.length}
+            />
+          )}
+        </main>
       </div>
 
       {/* Mobile Filter Drawer */}
