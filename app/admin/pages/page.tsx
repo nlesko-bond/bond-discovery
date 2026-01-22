@@ -43,6 +43,8 @@ export default function PagesPage() {
     companyName: '',
     organizationIds: '',
     primaryColor: '#1E2761',
+    secondaryColor: '#6366F1',
+    accentColor: '#8B5CF6',
   });
   const [creating, setCreating] = useState(false);
 
@@ -81,7 +83,8 @@ export default function PagesPage() {
           branding: {
             companyName: newPage.companyName || newPage.name,
             primaryColor: newPage.primaryColor,
-            secondaryColor: '#6366F1',
+            secondaryColor: newPage.secondaryColor,
+            accentColor: newPage.accentColor,
           },
           organizationIds: newPage.organizationIds.split(',').map(s => s.trim()).filter(Boolean),
         }),
@@ -89,7 +92,7 @@ export default function PagesPage() {
       
       if (res.ok) {
         setShowNewForm(false);
-        setNewPage({ name: '', slug: '', companyName: '', organizationIds: '', primaryColor: '#1E2761' });
+        setNewPage({ name: '', slug: '', companyName: '', organizationIds: '', primaryColor: '#1E2761', secondaryColor: '#6366F1', accentColor: '#8B5CF6' });
         fetchPages();
       } else {
         const error = await res.json();
@@ -205,6 +208,40 @@ export default function PagesPage() {
                   className="input flex-1"
                   value={newPage.primaryColor}
                   onChange={(e) => setNewPage({ ...newPage, primaryColor: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="label">Secondary Color</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  className="w-10 h-10 rounded cursor-pointer"
+                  value={newPage.secondaryColor}
+                  onChange={(e) => setNewPage({ ...newPage, secondaryColor: e.target.value })}
+                />
+                <input
+                  type="text"
+                  className="input flex-1"
+                  value={newPage.secondaryColor}
+                  onChange={(e) => setNewPage({ ...newPage, secondaryColor: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="label">Accent Color</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  className="w-10 h-10 rounded cursor-pointer"
+                  value={newPage.accentColor}
+                  onChange={(e) => setNewPage({ ...newPage, accentColor: e.target.value })}
+                />
+                <input
+                  type="text"
+                  className="input flex-1"
+                  value={newPage.accentColor}
+                  onChange={(e) => setNewPage({ ...newPage, accentColor: e.target.value })}
                 />
               </div>
             </div>
