@@ -417,17 +417,36 @@ export function programsToCalendarEvents(programs: Program[]): CalendarEvent[] {
 
 /**
  * Build week schedule from calendar events
+ * Now includes past events if they exist in the data
  */
 export function buildWeekSchedules(events: CalendarEvent[], weeksToShow: number = 4): WeekSchedule[] {
   const today = new Date();
   const weeks: WeekSchedule[] = [];
   
-  for (let i = 0; i < weeksToShow; i++) {
-    const weekDate = addWeeks(today, i);
-    const weekStart = startOfWeek(weekDate, { weekStartsOn: 0 });
-    const weekEnd = endOfWeek(weekDate, { weekStartsOn: 0 });
+  // Find the date range of all events
+  let earliestDate = today;
+  let latestDate = addWeeks(today, weeksToShow);
+  
+  if (events.length > 0) {
+    const eventDates = events
+      .map(e => e.date ? parseISO(e.date) : null)
+      .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
     
-    const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
+    if (eventDates.length > 0) {
+      const sortedDates = eventDates.sort((a, b) => a.getTime() - b.getTime());
+      earliestDate = sortedDates[0] < today ? sortedDates[0] : today;
+      const latestEventDate = sortedDates[sortedDates.length - 1];
+      latestDate = latestEventDate > latestDate ? latestEventDate : latestDate;
+    }
+  }
+  
+  // Build weeks from earliest to latest
+  let currentWeekStart = startOfWeek(earliestDate, { weekStartsOn: 0 });
+  const finalWeekEnd = endOfWeek(latestDate, { weekStartsOn: 0 });
+  
+  while (currentWeekStart <= finalWeekEnd) {
+    const weekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 0 });
+    const days = eachDayOfInterval({ start: currentWeekStart, end: weekEnd });
     
     const daySchedules: DaySchedule[] = days.map(day => {
       const dateStr = format(day, 'yyyy-MM-dd');
@@ -449,10 +468,12 @@ export function buildWeekSchedules(events: CalendarEvent[], weeksToShow: number 
     });
     
     weeks.push({
-      weekStart: format(weekStart, 'yyyy-MM-dd'),
+      weekStart: format(currentWeekStart, 'yyyy-MM-dd'),
       weekEnd: format(weekEnd, 'yyyy-MM-dd'),
       days: daySchedules,
     });
+    
+    currentWeekStart = addWeeks(currentWeekStart, 1);
   }
   
   return weeks;
