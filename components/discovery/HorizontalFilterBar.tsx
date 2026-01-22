@@ -57,6 +57,24 @@ export function HorizontalFilterBar({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   
+  // Debounce search to filter results as user types
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery !== filters.search) {
+        onFilterChange({ ...filters, search: searchQuery });
+      }
+    }, 300); // 300ms debounce
+    
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+  
+  // Sync local state if filters.search changes externally
+  useEffect(() => {
+    if (filters.search !== searchQuery && filters.search !== undefined) {
+      setSearchQuery(filters.search);
+    }
+  }, [filters.search]);
+  
   // Get enabled filters from config
   const enabledFilters = config.features.enableFilters || ['search', 'facility', 'programType', 'sport', 'age', 'dateRange', 'program'];
   
@@ -192,8 +210,15 @@ export function HorizontalFilterBar({
                   setSearchQuery(e.target.value);
                   setShowSearchResults(true);
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    // Immediately apply search on Enter
+                    onFilterChange({ ...filters, search: searchQuery });
+                    setShowSearchResults(false);
+                  }
+                }}
                 onFocus={() => setShowSearchResults(true)}
-                placeholder="Search programs..."
+                placeholder="Search events..."
                 className="w-32 sm:w-48 text-sm bg-transparent border-none outline-none placeholder-gray-400"
               />
               {searchQuery && (
