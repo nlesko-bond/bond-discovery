@@ -60,10 +60,11 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
     setViewModeState(newMode);
     
     // Preserve existing URL params and update scheduleView
-    const params = new URLSearchParams(searchParams.toString());
+    // Use window.location.search to get current params (avoids stale closure)
+    const params = new URLSearchParams(window.location.search);
     params.set('scheduleView', newMode);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, router, pathname]);
+  }, [router, pathname]);
   
   // Sync view mode from URL when it changes externally
   useEffect(() => {
