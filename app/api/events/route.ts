@@ -63,10 +63,8 @@ export async function GET(request: Request) {
           
           for (const session of sessions) {
             try {
-              // Fetch events with space expand for resource/court info
-              const eventsResponse = await client.getEvents(orgId, program.id, session.id, {
-                expand: 'space'
-              });
+              // Fetch events (space expand may not be supported on all endpoints)
+              const eventsResponse = await client.getEvents(orgId, program.id, session.id);
               const events = eventsResponse.data || [];
               
               // Transform and add events
