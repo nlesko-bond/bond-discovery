@@ -6,7 +6,10 @@ import {
   LayoutGrid, 
   Calendar, 
   SlidersHorizontal, 
-  X 
+  X,
+  Share2,
+  Check,
+  Link as LinkIcon
 } from 'lucide-react';
 import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode } from '@/types';
 import { ProgramGrid } from './ProgramGrid';
@@ -34,42 +37,141 @@ export function DiscoveryPage({
   const pathname = usePathname();
   const urlSearchParams = useSearchParams();
   
+  // Generate localStorage key based on page slug
+  const storageKey = `discovery-filters-${config.slug}`;
+  
+  // Initialize filters from URL params first, then localStorage, then defaults
+  const getInitialFilters = (): DiscoveryFilters => {
+    // URL params always take priority
+    if (Object.keys(searchParams).length > 0) {
+      return {
+        search: (searchParams.search as string) || '',
+        programIds: searchParams.programIds 
+          ? (searchParams.programIds as string).split('_') 
+          : [],
+        sessionIds: searchParams.sessionIds 
+          ? (searchParams.sessionIds as string).split('_') 
+          : [],
+        facilityIds: searchParams.facilityIds 
+          ? (searchParams.facilityIds as string).split('_') 
+          : [],
+        programTypes: searchParams.programTypes 
+          ? (searchParams.programTypes as string).split('_') as any[]
+          : [],
+        sports: searchParams.sports 
+          ? (searchParams.sports as string).split('_') 
+          : [],
+        dateRange: {
+          start: searchParams.startDate as string,
+          end: searchParams.endDate as string,
+        },
+        ageRange: {
+          min: searchParams.ageMin ? parseInt(searchParams.ageMin as string) : undefined,
+          max: searchParams.ageMax ? parseInt(searchParams.ageMax as string) : undefined,
+        },
+        gender: (searchParams.gender as any) || 'all',
+        availability: (searchParams.availability as any) || 'all',
+        membershipRequired: searchParams.membershipRequired === 'true' 
+          ? true 
+          : searchParams.membershipRequired === 'false' 
+            ? false 
+            : null,
+      };
+    }
+    
+    // Try localStorage
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          // Invalid JSON, ignore
+        }
+      }
+    }
+    
+    // Return defaults
+    return {
+      search: '',
+      programIds: [],
+      sessionIds: [],
+      facilityIds: [],
+      programTypes: [],
+      sports: [],
+      dateRange: {},
+      ageRange: {},
+      gender: 'all',
+      availability: 'all',
+      membershipRequired: null,
+    };
+  };
+
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [filters, setFilters] = useState<DiscoveryFilters>(getInitialFilters);
+  const [showCopied, setShowCopied] = useState(false);
   
-  const [filters, setFilters] = useState<DiscoveryFilters>({
-    search: (searchParams.search as string) || '',
-    programIds: searchParams.programIds 
-      ? (searchParams.programIds as string).split('_') 
-      : [],
-    sessionIds: searchParams.sessionIds 
-      ? (searchParams.sessionIds as string).split('_') 
-      : [],
-    facilityIds: searchParams.facilityIds 
-      ? (searchParams.facilityIds as string).split('_') 
-      : [],
-    programTypes: searchParams.programTypes 
-      ? (searchParams.programTypes as string).split('_') as any[]
-      : [],
-    sports: searchParams.sports 
-      ? (searchParams.sports as string).split('_') 
-      : [],
-    dateRange: {
-      start: searchParams.startDate as string,
-      end: searchParams.endDate as string,
-    },
-    ageRange: {
-      min: searchParams.ageMin ? parseInt(searchParams.ageMin as string) : undefined,
-      max: searchParams.ageMax ? parseInt(searchParams.ageMax as string) : undefined,
-    },
-    gender: (searchParams.gender as any) || 'all',
-    availability: (searchParams.availability as any) || 'all',
-    membershipRequired: searchParams.membershipRequired === 'true' 
-      ? true 
-      : searchParams.membershipRequired === 'false' 
-        ? false 
-        : null,
-  });
+  // Copy current URL to clipboard
+  const handleShare = useCallback(async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShowCopied(true);
+      setTimeout(() => setShowCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = url;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setShowCopied(true);
+      setTimeout(() => setShowCopied(false), 2000);
+    }
+  }, []);
+  
+  // Sync viewMode with URL params on navigation
+  useEffect(() => {
+    const urlViewMode = urlSearchParams.get('viewMode') as ViewMode | null;
+    if (urlViewMode && urlViewMode !== viewMode) {
+      setViewMode(urlViewMode);
+    }
+  }, [urlSearchParams]);
+  
+  // Sync filters with URL params on navigation
+  useEffect(() => {
+    const urlProgramIds = urlSearchParams.get('programIds');
+    const urlSessionIds = urlSearchParams.get('sessionIds');
+    const urlFacilityIds = urlSearchParams.get('facilityIds');
+    
+    // Only update if URL params present and different
+    const newProgramIds = urlProgramIds ? urlProgramIds.split('_') : [];
+    const newSessionIds = urlSessionIds ? urlSessionIds.split('_') : [];
+    const newFacilityIds = urlFacilityIds ? urlFacilityIds.split('_') : [];
+    
+    const filtersChanged = 
+      JSON.stringify(newProgramIds) !== JSON.stringify(filters.programIds || []) ||
+      JSON.stringify(newSessionIds) !== JSON.stringify(filters.sessionIds || []) ||
+      JSON.stringify(newFacilityIds) !== JSON.stringify(filters.facilityIds || []);
+    
+    if (filtersChanged) {
+      setFilters(prev => ({
+        ...prev,
+        programIds: newProgramIds.length > 0 ? newProgramIds : undefined,
+        sessionIds: newSessionIds.length > 0 ? newSessionIds : undefined,
+        facilityIds: newFacilityIds.length > 0 ? newFacilityIds : undefined,
+      }));
+    }
+  }, [urlSearchParams]);
+  
+  // Save filters to localStorage when they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(storageKey, JSON.stringify(filters));
+    }
+  }, [filters, storageKey]);
 
   // Filter programs based on current filters
   const filteredPrograms = useMemo(() => {
@@ -453,8 +555,27 @@ export function DiscoveryPage({
               )}
             </div>
 
-            {/* View Toggle & Mobile Filter */}
+            {/* View Toggle & Share */}
             <div className="flex items-center gap-2">
+              {/* Share Button */}
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Copy link to clipboard"
+              >
+                {showCopied ? (
+                  <>
+                    <Check size={16} className="text-green-600" />
+                    <span className="hidden sm:inline text-green-600">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <LinkIcon size={16} />
+                    <span className="hidden sm:inline">Share</span>
+                  </>
+                )}
+              </button>
+              
               {/* Desktop View Toggle */}
               {config.features.allowViewToggle && (
                 <div className="hidden sm:flex items-center bg-gray-100 rounded-lg p-1">
@@ -518,8 +639,8 @@ export function DiscoveryPage({
         </div>
       </header>
 
-      {/* Horizontal Filter Bar - visible on all screen sizes */}
-      <div className="w-full px-3 sm:px-4 lg:px-6 py-2">
+      {/* Horizontal Filter Bar - visible on all screen sizes, sticky below header */}
+      <div className="w-full px-3 sm:px-4 lg:px-6 py-2 bg-gray-50 sticky top-[57px] z-30">
         <div className="overflow-x-auto sm:overflow-visible">
           <HorizontalFilterBar
             filters={filters}

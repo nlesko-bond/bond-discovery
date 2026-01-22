@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -15,11 +15,12 @@ import {
   Shield,
   X,
   ExternalLink,
-  LayoutGrid
+  LayoutGrid,
+  Loader2
 } from 'lucide-react';
 import { WeekSchedule, DaySchedule, CalendarEvent, DiscoveryConfig } from '@/types';
 import { formatDate, formatTime, formatPrice, getSportLabel, getProgramTypeLabel, buildRegistrationUrl, cn } from '@/lib/utils';
-import { format, parseISO, startOfMonth, addMonths, subMonths } from 'date-fns';
+import { format, parseISO, startOfMonth, addMonths, subMonths, isToday, isSameDay } from 'date-fns';
 import { DayView, WeekGridView, MonthView } from './calendar';
 
 type ViewMode = 'list' | 'day' | 'week' | 'month';
@@ -41,6 +42,10 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
   );
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
+  
+  // Lazy loading for list view
+  const [visibleDays, setVisibleDays] = useState(14); // Start with 2 weeks
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const currentWeek = schedule[currentWeekIndex];
   
@@ -53,6 +58,57 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
       week.days.flatMap(day => day.events)
     );
   }, [schedule]);
+  
+  // Get all days with events (for list view), grouped by date
+  const allDaysWithEvents = useMemo(() => {
+    const dayMap = new Map<string, DaySchedule>();
+    
+    schedule.forEach(week => {
+      week.days.forEach(day => {
+        if (day.events.length > 0) {
+          const existing = dayMap.get(day.date);
+          if (existing) {
+            // Merge events for same day from different weeks (shouldn't happen but just in case)
+            existing.events.push(...day.events);
+          } else {
+            dayMap.set(day.date, { ...day });
+          }
+        }
+      });
+    });
+    
+    // Sort by date
+    return Array.from(dayMap.values()).sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  }, [schedule]);
+  
+  // Visible days for lazy loading
+  const visibleDaysData = useMemo(() => {
+    return allDaysWithEvents.slice(0, visibleDays);
+  }, [allDaysWithEvents, visibleDays]);
+  
+  const hasMoreDays = visibleDays < allDaysWithEvents.length;
+  
+  // Infinite scroll observer
+  useEffect(() => {
+    if (viewMode !== 'list' || !hasMoreDays) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleDays(prev => Math.min(prev + 14, allDaysWithEvents.length));
+        }
+      },
+      { threshold: 0.1 }
+    );
+    
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+    
+    return () => observer.disconnect();
+  }, [viewMode, hasMoreDays, allDaysWithEvents.length]);
 
   // Handle day click from month view
   const handleDayClick = (date: string) => {
@@ -220,7 +276,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
               onClick={() => setViewMode('list')}
               className="text-sm text-white/70 hover:text-white transition-colors"
             >
-              ← Back to week
+              ← Back to list
             </button>
           </div>
 
@@ -236,8 +292,18 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
             <ChevronRight size={24} />
           </button>
         </div>
+      ) : viewMode === 'list' ? (
+        /* List View Header - No week navigation needed */
+        <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-toca-navy to-toca-purple rounded-xl p-4 text-white">
+          <div className="text-center flex-1">
+            <h2 className="text-xl font-bold">All Upcoming Events</h2>
+            <p className="text-sm text-white/70">
+              {allDaysWithEvents.length} days with events
+            </p>
+          </div>
+        </div>
       ) : (
-        /* Week Navigation (for list and week views) */
+        /* Week Navigation (for week view) */
         <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-toca-navy to-toca-purple rounded-xl p-4 text-white">
           <button
             onClick={() => setCurrentWeekIndex(Math.max(0, currentWeekIndex - 1))}
@@ -299,22 +365,48 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
         />
       )}
 
-      {/* List View */}
+      {/* List View - Shows ALL events with lazy loading */}
       {viewMode === 'list' && (
-        <div className="space-y-3">
-          {currentWeek.days.map((day) => (
-            <ListDaySection
-              key={day.date}
-              day={day}
-              onEventClick={setSelectedEvent}
-              config={config}
-            />
-          ))}
+        <div className="space-y-4">
+          {visibleDaysData.length > 0 ? (
+            <>
+              {visibleDaysData.map((day) => (
+                <ListDaySection
+                  key={day.date}
+                  day={day}
+                  onEventClick={setSelectedEvent}
+                  config={config}
+                />
+              ))}
+              
+              {/* Load More Trigger */}
+              {hasMoreDays && (
+                <div ref={loadMoreRef} className="flex items-center justify-center py-6">
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span className="text-sm">Loading more events...</span>
+                  </div>
+                </div>
+              )}
+              
+              {/* End of list indicator */}
+              {!hasMoreDays && allDaysWithEvents.length > 14 && (
+                <div className="text-center py-4 text-sm text-gray-400">
+                  Showing all {allDaysWithEvents.length} days with events
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No events found</p>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Empty State - only for list/week modes */}
-      {(viewMode === 'list' || viewMode === 'week') && !hasEventsThisWeek && (
+      {/* Empty State - only for week mode */}
+      {viewMode === 'week' && !hasEventsThisWeek && (
         <div className="text-center py-12">
           <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500">No events scheduled this week</p>

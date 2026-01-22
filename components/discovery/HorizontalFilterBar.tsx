@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   ChevronDown, 
   X, 
@@ -52,10 +52,44 @@ export function HorizontalFilterBar({
   config,
 }: HorizontalFilterBarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState(filters.search || '');
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
   
   // Get enabled filters from config
   const enabledFilters = config.features.enableFilters || ['facility', 'programType', 'sport', 'age', 'dateRange', 'program'];
+  
+  // Search suggestions based on query
+  const searchSuggestions = useMemo(() => {
+    if (!searchQuery || searchQuery.length < 2) return [];
+    
+    const query = searchQuery.toLowerCase();
+    const suggestions: { type: 'program' | 'facility' | 'sport'; id: string; name: string }[] = [];
+    
+    // Match programs
+    filterOptions.programs.forEach(p => {
+      if (p.name.toLowerCase().includes(query)) {
+        suggestions.push({ type: 'program', id: p.id, name: p.name });
+      }
+    });
+    
+    // Match facilities
+    filterOptions.facilities.forEach(f => {
+      if (f.name.toLowerCase().includes(query)) {
+        suggestions.push({ type: 'facility', id: f.id, name: f.name });
+      }
+    });
+    
+    // Match sports
+    filterOptions.sports.forEach(s => {
+      if (s.name.toLowerCase().includes(query)) {
+        suggestions.push({ type: 'sport', id: s.id, name: s.name });
+      }
+    });
+    
+    return suggestions.slice(0, 8); // Limit to 8 suggestions
+  }, [searchQuery, filterOptions]);
 
   // Count active filters
   const activeFilterCount = [
@@ -73,11 +107,27 @@ export function HorizontalFilterBar({
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setOpenDropdown(null);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+  
+  // Handle selecting a search suggestion
+  const handleSearchSuggestionClick = (suggestion: { type: 'program' | 'facility' | 'sport'; id: string; name: string }) => {
+    if (suggestion.type === 'program') {
+      handleMultiSelect('programIds', suggestion.id);
+    } else if (suggestion.type === 'facility') {
+      handleMultiSelect('facilityIds', suggestion.id);
+    } else if (suggestion.type === 'sport') {
+      handleMultiSelect('sports', suggestion.id);
+    }
+    setSearchQuery('');
+    setShowSearchResults(false);
+  };
 
   const handleMultiSelect = (
     key: 'facilityIds' | 'programIds' | 'programTypes' | 'sports' | 'sessionIds',
@@ -130,6 +180,58 @@ export function HorizontalFilterBar({
     <div className="space-y-3">
       {/* Filter Buttons Row */}
       <div ref={dropdownRef} className="flex flex-wrap items-center gap-2">
+        {/* Search Input with Autocomplete */}
+        {enabledFilters.includes('search') && (
+          <div ref={searchRef} className="relative">
+            <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+              <Search size={14} className="text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSearchResults(true);
+                }}
+                onFocus={() => setShowSearchResults(true)}
+                placeholder="Search programs..."
+                className="w-32 sm:w-48 text-sm bg-transparent border-none outline-none placeholder-gray-400"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    onFilterChange({ ...filters, search: '' });
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            
+            {/* Search Suggestions Dropdown */}
+            {showSearchResults && searchSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-64 overflow-y-auto">
+                <div className="p-1">
+                  {searchSuggestions.map((suggestion, idx) => (
+                    <button
+                      key={`${suggestion.type}-${suggestion.id}-${idx}`}
+                      onClick={() => handleSearchSuggestionClick(suggestion)}
+                      className="w-full text-left px-3 py-2 rounded-md text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      {suggestion.type === 'program' && <Tag size={12} className="text-toca-purple" />}
+                      {suggestion.type === 'facility' && <MapPin size={12} className="text-toca-purple" />}
+                      {suggestion.type === 'sport' && <Activity size={12} className="text-toca-purple" />}
+                      <span className="truncate">{suggestion.name}</span>
+                      <span className="text-xs text-gray-400 capitalize ml-auto">{suggestion.type}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Facility Filter - only show if enabled */}
         {enabledFilters.includes('facility') && filterOptions.facilities.length > 0 && (
           <FilterDropdown
