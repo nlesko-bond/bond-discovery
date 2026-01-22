@@ -30,6 +30,7 @@ interface PageConfig {
   };
   organizationIds: string[];
   facilityIds?: string[];
+  apiKey?: string; // Per-page API key
   features: {
     showPricing: boolean;
     showAvailability: boolean;
@@ -50,8 +51,10 @@ const ALL_FILTERS = [
   { id: 'sport', name: 'Sport', description: 'Filter by sport type' },
   { id: 'age', name: 'Age Range', description: 'Filter by age restrictions' },
   { id: 'gender', name: 'Gender', description: 'Filter by gender restrictions' },
-  { id: 'date', name: 'Date Range', description: 'Filter by date' },
+  { id: 'dateRange', name: 'Date Range', description: 'Filter by date' },
   { id: 'program', name: 'Program', description: 'Filter by specific program' },
+  { id: 'availability', name: 'Availability', description: 'Filter by spots available' },
+  { id: 'price', name: 'Price', description: 'Filter by price range' },
 ];
 
 export default function EditPagePage({ params }: { params: { slug: string } }) {
@@ -513,40 +516,61 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                 />
                 <p className="text-xs text-gray-500 mt-1">Restrict to specific facilities</p>
               </div>
-              
+            </div>
+            
+            <hr className="my-6" />
+            
+            <h3 className="font-semibold text-gray-900 mb-4">API Configuration</h3>
+            <div className="grid grid-cols-1 gap-6">
               <div>
-                <label className="label">Cache TTL (seconds)</label>
+                <label className="label">Bond Sports API Key</label>
                 <input
-                  type="number"
-                  className="input"
-                  value={config.cacheTtl || 300}
-                  onChange={(e) => setConfig({ ...config, cacheTtl: parseInt(e.target.value) || 300 })}
+                  type="password"
+                  className="input font-mono"
+                  placeholder="Enter API key for this organization"
+                  value={config.apiKey || ''}
+                  onChange={(e) => setConfig({ ...config, apiKey: e.target.value || undefined })}
                 />
-                <p className="text-xs text-gray-500 mt-1">How long to cache API data</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Each partner can have their own API key. Leave empty to use the global default.
+                </p>
               </div>
               
-              <div>
-                <label className="label">Page Status</label>
-                <button
-                  onClick={() => setConfig({ ...config, isActive: !config.isActive })}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                    config.isActive !== false
-                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {config.isActive !== false ? (
-                    <>
-                      <Eye size={16} />
-                      Active (Public)
-                    </>
-                  ) : (
-                    <>
-                      <EyeOff size={16} />
-                      Draft (Hidden)
-                    </>
-                  )}
-                </button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="label">Cache TTL (seconds)</label>
+                  <input
+                    type="number"
+                    className="input"
+                    value={config.cacheTtl || 300}
+                    onChange={(e) => setConfig({ ...config, cacheTtl: parseInt(e.target.value) || 300 })}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">How long to cache API data</p>
+                </div>
+                
+                <div>
+                  <label className="label">Page Status</label>
+                  <button
+                    onClick={() => setConfig({ ...config, isActive: !config.isActive })}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                      config.isActive !== false
+                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {config.isActive !== false ? (
+                      <>
+                        <Eye size={16} />
+                        Active (Public)
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff size={16} />
+                        Draft (Hidden)
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
             

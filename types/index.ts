@@ -351,7 +351,8 @@ export type FilterType =
   | 'program'
   | 'sport' 
   | 'programType' 
-  | 'dateRange' 
+  | 'dateRange'
+  | 'date' // alias for dateRange 
   | 'age' 
   | 'gender' 
   | 'price' 

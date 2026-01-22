@@ -45,6 +45,7 @@ export default function PagesPage() {
     primaryColor: '#1E2761',
     secondaryColor: '#6366F1',
     accentColor: '#8B5CF6',
+    apiKey: '',
   });
   const [creating, setCreating] = useState(false);
 
@@ -87,12 +88,13 @@ export default function PagesPage() {
             accentColor: newPage.accentColor,
           },
           organizationIds: newPage.organizationIds.split(',').map(s => s.trim()).filter(Boolean),
+          apiKey: newPage.apiKey || undefined,
         }),
       });
       
       if (res.ok) {
         setShowNewForm(false);
-        setNewPage({ name: '', slug: '', companyName: '', organizationIds: '', primaryColor: '#1E2761', secondaryColor: '#6366F1', accentColor: '#8B5CF6' });
+        setNewPage({ name: '', slug: '', companyName: '', organizationIds: '', primaryColor: '#1E2761', secondaryColor: '#6366F1', accentColor: '#8B5CF6', apiKey: '' });
         fetchPages();
       } else {
         const error = await res.json();
@@ -245,7 +247,7 @@ export default function PagesPage() {
                 />
               </div>
             </div>
-            <div className="md:col-span-2">
+            <div>
               <label className="label">Organization IDs *</label>
               <input
                 type="text"
@@ -254,7 +256,18 @@ export default function PagesPage() {
                 value={newPage.organizationIds}
                 onChange={(e) => setNewPage({ ...newPage, organizationIds: e.target.value })}
               />
-              <p className="text-xs text-gray-500 mt-1">Comma-separated list of organization IDs</p>
+              <p className="text-xs text-gray-500 mt-1">Comma-separated list</p>
+            </div>
+            <div>
+              <label className="label">API Key (Optional)</label>
+              <input
+                type="password"
+                className="input font-mono"
+                placeholder="Leave empty for default"
+                value={newPage.apiKey}
+                onChange={(e) => setNewPage({ ...newPage, apiKey: e.target.value })}
+              />
+              <p className="text-xs text-gray-500 mt-1">Partner-specific API key</p>
             </div>
           </div>
           
