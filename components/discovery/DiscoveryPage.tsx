@@ -19,6 +19,7 @@ import { MobileFilters } from './MobileFilters';
 import { programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers';
 import { buildUrl, getSportGradient } from '@/lib/utils';
 import { BrandLogo } from '@/components/ui/BrandLogo';
+import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 
 interface DiscoveryPageProps {
   initialPrograms: Program[];

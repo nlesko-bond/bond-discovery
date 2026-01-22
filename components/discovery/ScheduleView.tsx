@@ -16,12 +16,16 @@ import {
   X,
   ExternalLink,
   LayoutGrid,
-  Loader2
+  Loader2,
+  Download,
+  FileText,
+  CalendarPlus
 } from 'lucide-react';
 import { WeekSchedule, DaySchedule, CalendarEvent, DiscoveryConfig } from '@/types';
 import { formatDate, formatTime, formatPrice, getSportLabel, getProgramTypeLabel, buildRegistrationUrl, cn } from '@/lib/utils';
 import { format, parseISO, startOfMonth, addMonths, subMonths, isToday, isSameDay } from 'date-fns';
 import { DayView, WeekGridView, MonthView } from './calendar';
+import { ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 
 type ViewMode = 'list' | 'day' | 'week' | 'month';
 
@@ -46,6 +50,21 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
   // Lazy loading for list view
   const [visibleDays, setVisibleDays] = useState(14); // Start with 2 weeks
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  
+  // Export dropdown state
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
+  
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const currentWeek = schedule[currentWeekIndex];
   
@@ -58,6 +77,61 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
       week.days.flatMap(day => day.events)
     );
   }, [schedule]);
+  
+  // Generate iCal content
+  const generateICal = useCallback(() => {
+    const events = allEvents;
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Bond Sports//Discovery//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+    ];
+    
+    events.forEach(event => {
+      const startDate = new Date(event.startTime || event.date);
+      const endDate = event.endTime ? new Date(event.endTime) : new Date(startDate.getTime() + 60 * 60 * 1000);
+      
+      const formatDate = (d: Date) => {
+        return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      };
+      
+      lines.push('BEGIN:VEVENT');
+      lines.push(`UID:${event.id}@bondsports.co`);
+      lines.push(`DTSTART:${formatDate(startDate)}`);
+      lines.push(`DTEND:${formatDate(endDate)}`);
+      lines.push(`SUMMARY:${event.programName || 'Event'}`);
+      if (event.sessionName) lines.push(`DESCRIPTION:${event.sessionName}`);
+      if (event.facilityName) lines.push(`LOCATION:${event.facilityName}`);
+      if (event.linkSEO) lines.push(`URL:https://app.bondsports.co${event.linkSEO}`);
+      lines.push('END:VEVENT');
+    });
+    
+    lines.push('END:VCALENDAR');
+    return lines.join('\r\n');
+  }, [allEvents]);
+  
+  // Download iCal file
+  const handleExportICal = useCallback(() => {
+    const icalContent = generateICal();
+    const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'schedule.ics';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setShowExportMenu(false);
+  }, [generateICal]);
+  
+  // Print/PDF export
+  const handleExportPDF = useCallback(() => {
+    window.print();
+    setShowExportMenu(false);
+  }, []);
   
   // Get all days with events (for list view), grouped by date
   const allDaysWithEvents = useMemo(() => {
@@ -116,15 +190,11 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
     setViewMode('day');
   };
 
-  // Loading state
+  // Loading state - show skeleton
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-toca-navy border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading Events...</h3>
-          <p className="text-gray-500 text-sm">Fetching schedule data from all sessions.</p>
-        </div>
+      <div className="p-4 md:p-6">
+        <ScheduleViewSkeleton />
       </div>
     );
   }
@@ -225,6 +295,43 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
               <LayoutGrid size={14} />
               <span className="hidden md:inline">Month</span>
             </button>
+          </div>
+          
+          {/* Export Button */}
+          <div ref={exportRef} className="relative ml-2">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Export schedule"
+            >
+              <Download size={14} />
+              <span className="hidden sm:inline">Export</span>
+            </button>
+            
+            {showExportMenu && (
+              <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 w-48 overflow-hidden">
+                <button
+                  onClick={handleExportICal}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <CalendarPlus size={16} className="text-toca-purple" />
+                  <div className="text-left">
+                    <div className="font-medium">Add to Calendar</div>
+                    <div className="text-xs text-gray-500">Download .ics file</div>
+                  </div>
+                </button>
+                <button
+                  onClick={handleExportPDF}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
+                >
+                  <FileText size={16} className="text-toca-purple" />
+                  <div className="text-left">
+                    <div className="font-medium">Print / PDF</div>
+                    <div className="text-xs text-gray-500">Save as PDF</div>
+                  </div>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
