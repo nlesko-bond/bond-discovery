@@ -572,13 +572,15 @@ export function DiscoveryPage({
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="w-full px-3 py-3 sm:px-4 lg:px-6">
           <div className="flex items-center justify-between">
-            {/* Logo & Title */}
-            <div>
+            {/* Logo & Tagline */}
+            <div className="flex items-center gap-3">
               <BrandLogo config={config} size="md" />
               {config.branding.tagline && (
-                <p className="text-xs text-gray-500 hidden sm:block mt-0.5">
-                  {config.branding.tagline}
-                </p>
+                <div className="hidden sm:block border-l border-gray-200 pl-3">
+                  <p className="text-sm text-gray-600 font-medium">
+                    {config.branding.tagline}
+                  </p>
+                </div>
               )}
             </div>
 
@@ -705,15 +707,6 @@ export function DiscoveryPage({
 
       {/* Main Content */}
       <div className="w-full px-3 sm:px-4 lg:px-6">
-        {/* Results Count - only show for programs (schedule view has its own count) */}
-        {viewMode === 'programs' && (
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-gray-600">
-              {filteredPrograms.length} {filteredPrograms.length === 1 ? 'program' : 'programs'}
-            </p>
-          </div>
-        )}
-
         {/* Main Content Area */}
         <main>
           {viewMode === 'programs' ? (
