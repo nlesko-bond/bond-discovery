@@ -57,20 +57,29 @@ export function HorizontalFilterBar({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   
+  // Use ref to avoid stale closure in debounce effect
+  const filtersRef = useRef(filters);
+  const onFilterChangeRef = useRef(onFilterChange);
+  
+  useEffect(() => {
+    filtersRef.current = filters;
+    onFilterChangeRef.current = onFilterChange;
+  }, [filters, onFilterChange]);
+  
   // Debounce search to filter results as user types
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (searchQuery !== filters.search) {
-        onFilterChange({ ...filters, search: searchQuery });
+      if (searchQuery !== filtersRef.current.search) {
+        onFilterChangeRef.current({ ...filtersRef.current, search: searchQuery });
       }
     }, 300); // 300ms debounce
     
     return () => clearTimeout(timer);
   }, [searchQuery]);
   
-  // Sync local state if filters.search changes externally
+  // Sync local state if filters.search changes externally (e.g., from URL)
   useEffect(() => {
-    if (filters.search !== searchQuery && filters.search !== undefined) {
+    if (filters.search !== undefined && filters.search !== searchQuery) {
       setSearchQuery(filters.search);
     }
   }, [filters.search]);
