@@ -576,8 +576,11 @@ export function DiscoveryPage({
             <div className="flex items-center gap-3">
               <BrandLogo config={config} size="md" />
               {config.branding.tagline && (
-                <div className="hidden sm:block border-l border-gray-200 pl-3">
-                  <p className="text-sm text-gray-600 font-medium">
+                <div className="hidden sm:block border-l-2 pl-3" style={{ borderColor: config.branding.primaryColor }}>
+                  <p 
+                    className="text-sm font-bold"
+                    style={{ color: config.branding.primaryColor }}
+                  >
                     {config.branding.tagline}
                   </p>
                 </div>
