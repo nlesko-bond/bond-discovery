@@ -705,15 +705,14 @@ export function DiscoveryPage({
 
       {/* Main Content */}
       <div className="w-full px-3 sm:px-4 lg:px-6">
-        {/* Results Count */}
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-sm text-gray-600">
-            {viewMode === 'programs' 
-              ? `${filteredPrograms.length} ${filteredPrograms.length === 1 ? 'program' : 'programs'}`
-              : `${filteredEvents.length} events`
-            }
-          </p>
-        </div>
+        {/* Results Count - only show for programs (schedule view has its own count) */}
+        {viewMode === 'programs' && (
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-gray-600">
+              {filteredPrograms.length} {filteredPrograms.length === 1 ? 'program' : 'programs'}
+            </p>
+          </div>
+        )}
 
         {/* Main Content Area */}
         <main>

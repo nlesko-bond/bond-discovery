@@ -338,7 +338,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
             <button
               onClick={() => setViewMode('week')}
               className={cn(
-                'flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-all hidden sm:flex',
+                'flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-all',
                 viewMode === 'week'
                   ? 'bg-white text-toca-navy shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
