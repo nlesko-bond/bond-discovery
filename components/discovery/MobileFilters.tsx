@@ -130,7 +130,7 @@ export function MobileFilters({
                           : (filters.facilityIds || []).filter(f => f !== facility.id);
                         onFiltersChange({ ...filters, facilityIds: updated });
                       }}
-                      className="w-5 h-5 accent-bond-gold rounded"
+                      className="w-5 h-5 accent-toca-purple rounded"
                     />
                     <span className="text-base text-gray-700 flex-1">{facility.name}</span>
                     <span className="text-sm text-gray-400">({facility.count})</span>
@@ -159,7 +159,7 @@ export function MobileFilters({
                       className={cn(
                         'px-4 py-2 rounded-full text-sm font-medium transition-colors',
                         isSelected
-                          ? 'bg-bond-gold text-white'
+                          ? 'bg-toca-purple text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       )}
                     >
@@ -190,7 +190,7 @@ export function MobileFilters({
                       className={cn(
                         'px-4 py-2 rounded-full text-sm font-medium transition-colors capitalize',
                         isSelected
-                          ? 'bg-bond-gold text-white'
+                          ? 'bg-toca-purple text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       )}
                     >
@@ -291,7 +291,7 @@ export function MobileFilters({
                       name="availability"
                       checked={filters.availability === option.id || (!filters.availability && option.id === 'all')}
                       onChange={() => onFiltersChange({ ...filters, availability: option.id as any })}
-                      className="w-5 h-5 accent-bond-gold"
+                      className="w-5 h-5 accent-toca-purple"
                     />
                     <span className="text-base text-gray-700">{option.label}</span>
                   </label>
@@ -305,13 +305,13 @@ export function MobileFilters({
         <div className="sticky bottom-0 z-10 bg-white border-t border-gray-200 px-4 py-4 space-y-3">
           <button
             onClick={onClose}
-            className="w-full py-4 bg-bond-gold text-white font-semibold rounded-xl hover:bg-bond-gold-dark transition-colors text-lg"
+            className="w-full py-4 bg-toca-purple text-white font-semibold rounded-xl hover:bg-toca-purple-dark transition-colors text-lg"
           >
             Show {resultCount} Result{resultCount !== 1 ? 's' : ''}
           </button>
           <button
             onClick={handleClearAll}
-            className="w-full py-3 text-bond-gold font-medium hover:bg-gray-50 rounded-xl transition-colors"
+            className="w-full py-3 text-toca-purple font-medium hover:bg-gray-50 rounded-xl transition-colors"
           >
             Clear All Filters
           </button>

@@ -6,17 +6,19 @@ import { cacheGet, cacheSet, configCacheKey } from './cache';
  */
 export const defaultConfig: DiscoveryConfig = {
   id: 'default',
-  name: 'Bond Discovery',
+  name: 'TOCA Soccer Discovery',
   slug: 'default',
   
   organizationIds: ['516', '512', '513', '519', '518', '521', '514', '515', '510', '520', '522', '511'],
   facilityIds: [],
   
   branding: {
-    primaryColor: '#c4ad7d',
-    secondaryColor: '#1f2937',
-    companyName: 'Bond Sports',
-    tagline: 'Find programs at your local sports facilities',
+    // TOCA brand colors extracted from tocafootball.com
+    primaryColor: '#1E2761', // TOCA deep navy blue
+    secondaryColor: '#6366F1', // TOCA purple/indigo
+    accentColor: '#A5B4FC', // Light purple for buttons
+    companyName: 'TOCA Soccer',
+    tagline: 'Find soccer programs at your local TOCA centers',
   },
   
   features: {

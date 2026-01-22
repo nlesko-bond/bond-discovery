@@ -14,7 +14,7 @@ import { ScheduleView } from './ScheduleView';
 import { FilterBar } from './FilterBar';
 import { MobileFilters } from './MobileFilters';
 import { programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers';
-import { buildUrl } from '@/lib/utils';
+import { buildUrl, getSportGradient } from '@/lib/utils';
 
 interface DiscoveryPageProps {
   initialPrograms: Program[];
@@ -79,9 +79,19 @@ export function DiscoveryPage({
 
     // Facility filter
     if (filters.facilityIds && filters.facilityIds.length > 0) {
-      result = result.filter(p =>
-        p.facilityId && filters.facilityIds!.includes(p.facilityId)
-      );
+      result = result.filter(p => {
+        // Check program-level facility
+        if (p.facilityId && filters.facilityIds!.includes(p.facilityId)) {
+          return true;
+        }
+        // Check session-level facilities
+        if (p.sessions) {
+          return p.sessions.some(s => 
+            s.facility && filters.facilityIds!.includes(String(s.facility.id))
+          );
+        }
+        return false;
+      });
     }
 
     // Program type filter
@@ -158,12 +168,103 @@ export function DiscoveryPage({
     return result;
   }, [initialPrograms, filters]);
 
-  // Generate schedule data for calendar view
+  // State for real events from API
+  const [apiEvents, setApiEvents] = useState<any[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventsError, setEventsError] = useState<string | null>(null);
+  const [eventsFetched, setEventsFetched] = useState(false);
+  
+  // Fetch events from API when schedule view is selected
+  useEffect(() => {
+    if (viewMode === 'schedule' && !eventsFetched && !eventsLoading) {
+      setEventsLoading(true);
+      setEventsError(null);
+      
+      fetch('/api/events')
+        .then(res => res.json())
+        .then(data => {
+          if (data.data) {
+            setApiEvents(data.data);
+            setEventsFetched(true);
+          }
+        })
+        .catch(err => {
+          console.error('Error fetching events:', err);
+          setEventsError('Failed to load events');
+        })
+        .finally(() => {
+          setEventsLoading(false);
+        });
+    }
+  }, [viewMode, eventsFetched, eventsLoading]);
+  
+  // Filter events based on current filters
+  const filteredEvents = useMemo(() => {
+    let result = [...apiEvents];
+    
+    // Filter by facility
+    if (filters.facilityIds && filters.facilityIds.length > 0) {
+      result = result.filter(event => {
+        // Match facility name or ID
+        return filters.facilityIds!.some(id => {
+          const facilityName = event.facilityName?.toLowerCase() || '';
+          return facilityName.includes(id.toLowerCase()) || event.facilityId === id;
+        });
+      });
+    }
+    
+    // Filter by search term
+    if (filters.search) {
+      const search = filters.search.toLowerCase();
+      result = result.filter(event => 
+        event.programName?.toLowerCase().includes(search) ||
+        event.sessionName?.toLowerCase().includes(search) ||
+        event.facilityName?.toLowerCase().includes(search)
+      );
+    }
+    
+    // Filter by program type
+    if (filters.programTypes && filters.programTypes.length > 0) {
+      result = result.filter(event => 
+        filters.programTypes!.includes(event.type)
+      );
+    }
+    
+    // Filter by sport
+    if (filters.sports && filters.sports.length > 0) {
+      result = result.filter(event => 
+        filters.sports!.includes(event.sport)
+      );
+    }
+    
+    return result;
+  }, [apiEvents, filters]);
+  
+  // Generate schedule data for calendar view from real API events
   const scheduleData = useMemo(() => {
     if (viewMode !== 'schedule') return null;
-    const events = programsToCalendarEvents(filteredPrograms);
-    return buildWeekSchedules(events, 8);
-  }, [filteredPrograms, viewMode]);
+    
+    // Convert filtered API events to CalendarEvent format
+    const calendarEvents = filteredEvents.map(event => ({
+      id: event.id,
+      programId: event.programId || '',
+      programName: event.programName || event.title,
+      sessionId: event.sessionId || '',
+      sessionName: event.sessionName || '',
+      date: event.startDate?.split('T')[0] || '',
+      startTime: event.startDate || '',
+      endTime: event.endDate || '',
+      facilityId: '',
+      facilityName: event.facilityName || '',
+      sport: event.sport,
+      type: event.type,
+      linkSEO: event.linkSEO,
+      color: getSportGradient(event.sport || ''),
+      maxParticipants: event.maxParticipants,
+    }));
+    
+    return buildWeekSchedules(calendarEvents, 8);
+  }, [filteredEvents, viewMode]);
 
   // Extract filter options from programs
   const filterOptions = useMemo(() => {
@@ -172,14 +273,27 @@ export function DiscoveryPage({
     const programTypes = new Map<string, number>();
 
     initialPrograms.forEach(p => {
-      if (p.facilityId) {
-        const existing = facilities.get(p.facilityId);
+      // Get facility from program level or from sessions
+      let facilityId = p.facilityId;
+      let facilityName = p.facilityName;
+      
+      // If not on program, check sessions
+      if (!facilityId && p.sessions && p.sessions.length > 0) {
+        const sessionWithFacility = p.sessions.find(s => s.facility);
+        if (sessionWithFacility?.facility) {
+          facilityId = String(sessionWithFacility.facility.id);
+          facilityName = sessionWithFacility.facility.name;
+        }
+      }
+      
+      if (facilityId) {
+        const existing = facilities.get(facilityId);
         if (existing) {
           existing.count++;
         } else {
-          facilities.set(p.facilityId, {
-            id: p.facilityId,
-            name: p.facilityName || p.facilityId,
+          facilities.set(facilityId, {
+            id: facilityId,
+            name: facilityName || facilityId,
             count: 1,
           });
         }
@@ -260,7 +374,7 @@ export function DiscoveryPage({
             {/* Logo & Title */}
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                <span className="text-bond-gold">{config.branding.companyName.split(' ')[0]}</span>{' '}
+                <span className="text-toca-purple">{config.branding.companyName.split(' ')[0]}</span>{' '}
                 {config.branding.companyName.split(' ').slice(1).join(' ') || 'Discovery'}
               </h1>
               <p className="text-xs text-gray-500 hidden sm:block">
@@ -306,7 +420,7 @@ export function DiscoveryPage({
                 <SlidersHorizontal size={18} />
                 <span className="sr-only sm:not-sr-only">Filters</span>
                 {activeFilterCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-bond-gold text-white text-xs font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-toca-purple text-white text-xs font-bold rounded-full flex items-center justify-center">
                     {activeFilterCount}
                   </span>
                 )}
@@ -368,6 +482,9 @@ export function DiscoveryPage({
               <ScheduleView 
                 schedule={scheduleData || []} 
                 config={config}
+                isLoading={eventsLoading}
+                error={eventsError}
+                totalEvents={filteredEvents.length}
               />
             )}
           </main>

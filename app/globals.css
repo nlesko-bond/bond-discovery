@@ -3,10 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #c4ad7d;
-  --color-primary-dark: #a68d5e;
-  --color-primary-light: #dcc89f;
-  --color-secondary: #1f2937;
+  /* TOCA brand colors - extracted from tocafootball.com */
+  --color-primary: #1E2761;
+  --color-primary-dark: #151C4A;
+  --color-primary-light: #2A3578;
+  --color-secondary: #6366F1;
+  --color-secondary-light: #A5B4FC;
+  --color-accent: #8B5CF6;
 }
 
 @layer base {
@@ -25,8 +28,8 @@
   }
 
   .btn-primary {
-    @apply px-4 py-2 bg-bond-gold text-white rounded-lg font-medium 
-           hover:bg-bond-gold-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply px-4 py-2 bg-toca-navy text-white rounded-lg font-medium 
+           hover:bg-toca-purple transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
@@ -65,7 +68,7 @@
 
   .input {
     @apply w-full px-3 py-2 border border-gray-300 rounded-lg text-sm 
-           focus:outline-none focus:ring-2 focus:ring-bond-gold focus:border-transparent
+           focus:outline-none focus:ring-2 focus:ring-toca-purple focus:border-transparent
            disabled:bg-gray-100 disabled:cursor-not-allowed;
   }
 
@@ -91,7 +94,7 @@
   .gradient-yoga { @apply bg-gradient-to-br from-purple-500 to-violet-600; }
   .gradient-fitness { @apply bg-gradient-to-br from-blue-500 to-indigo-600; }
   .gradient-swimming { @apply bg-gradient-to-br from-cyan-500 to-blue-600; }
-  .gradient-default { @apply bg-gradient-to-br from-bond-gold to-bond-gold-dark; }
+  .gradient-default { @apply bg-gradient-to-br from-toca-navy to-toca-purple; }
 
   .line-clamp-2 {
     display: -webkit-box;

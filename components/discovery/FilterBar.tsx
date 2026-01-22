@@ -59,7 +59,7 @@ export function FilterBar({
         {hasActiveFilters && (
           <button
             onClick={handleClearAll}
-            className="text-xs font-medium text-bond-gold hover:text-bond-gold-dark"
+            className="text-xs font-medium text-toca-purple hover:text-toca-purple-dark"
           >
             Clear All
           </button>
@@ -112,7 +112,7 @@ export function FilterBar({
                         : (filters.facilityIds || []).filter(f => f !== facility.id);
                       onFiltersChange({ ...filters, facilityIds: updated });
                     }}
-                    className="w-4 h-4 accent-bond-gold rounded"
+                    className="w-4 h-4 accent-toca-purple rounded"
                   />
                   <span className="text-sm text-gray-700 flex-1">{facility.name}</span>
                   <span className="text-xs text-gray-400">({facility.count})</span>
@@ -142,7 +142,7 @@ export function FilterBar({
                         : (filters.programTypes || []).filter(t => t !== type.id);
                       onFiltersChange({ ...filters, programTypes: updated });
                     }}
-                    className="w-4 h-4 accent-bond-gold rounded"
+                    className="w-4 h-4 accent-toca-purple rounded"
                   />
                   <span className="text-sm text-gray-700 capitalize flex-1">
                     {getProgramTypeLabel(type.id)}
@@ -174,7 +174,7 @@ export function FilterBar({
                         : (filters.sports || []).filter(s => s !== sport.id);
                       onFiltersChange({ ...filters, sports: updated });
                     }}
-                    className="w-4 h-4 accent-bond-gold rounded"
+                    className="w-4 h-4 accent-toca-purple rounded"
                   />
                   <span className="text-sm text-gray-700 capitalize flex-1">
                     {getSportLabel(sport.id)}
@@ -287,7 +287,7 @@ export function FilterBar({
                     name="availability"
                     checked={filters.availability === option.id || (!filters.availability && option.id === 'all')}
                     onChange={() => onFiltersChange({ ...filters, availability: option.id as any })}
-                    className="w-4 h-4 accent-bond-gold"
+                    className="w-4 h-4 accent-toca-purple"
                   />
                   <span className="text-sm text-gray-700">{option.label}</span>
                 </label>
@@ -314,12 +314,12 @@ function FilterSection({ title, expanded, onToggle, count, children }: FilterSec
     <div className="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between text-sm font-semibold text-gray-900 hover:text-bond-gold transition-colors"
+        className="w-full flex items-center justify-between text-sm font-semibold text-gray-900 hover:text-toca-purple transition-colors"
       >
         <div className="flex items-center gap-2">
           <span>{title}</span>
           {count > 0 && (
-            <span className="text-xs font-bold px-2 py-0.5 bg-bond-gold text-white rounded-full">
+            <span className="text-xs font-bold px-2 py-0.5 bg-toca-purple text-white rounded-full">
               {count}
             </span>
           )}

@@ -5,6 +5,12 @@ import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
+// Filter types enum for validation
+const filterTypeEnum = z.enum([
+  'search', 'facility', 'sport', 'programType', 'dateRange', 
+  'age', 'gender', 'price', 'availability', 'membership'
+]);
+
 // Config validation schema
 const configSchema = z.object({
   id: z.string().optional(),
@@ -25,7 +31,7 @@ const configSchema = z.object({
     showAvailability: z.boolean(),
     showMembershipBadges: z.boolean(),
     showAgeGender: z.boolean(),
-    enableFilters: z.array(z.string()),
+    enableFilters: z.array(filterTypeEnum),
     defaultView: z.enum(['programs', 'schedule']),
     allowViewToggle: z.boolean(),
   }),

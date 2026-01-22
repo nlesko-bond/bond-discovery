@@ -10,15 +10,19 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Format price in cents to currency string
+ * Format price in DOLLARS to currency string
+ * Note: Bond API returns prices in dollars, not cents!
  */
-export function formatPrice(amountInCents: number, currency = 'USD'): string {
+export function formatPrice(amountInDollars: number, currency = 'USD'): string {
+  if (amountInDollars === 0) {
+    return 'FREE';
+  }
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
-  }).format(amountInCents / 100);
+  }).format(amountInDollars);
 }
 
 /**
@@ -35,13 +39,21 @@ export function formatDate(dateStr: string, formatStr = 'MMM d, yyyy'): string {
 }
 
 /**
- * Format time string (HH:mm:ss or HH:mm to h:mm a)
+ * Format time string (ISO date, HH:mm:ss, or HH:mm to h:mm a)
  */
 export function formatTime(timeStr?: string): string {
   if (!timeStr) return '';
   
   try {
-    // Try HH:mm:ss format first
+    // Try ISO date format first (2026-01-18T00:00:00.000Z)
+    if (timeStr.includes('T')) {
+      const parsed = parseISO(timeStr);
+      if (isValid(parsed)) {
+        return format(parsed, 'h:mm a');
+      }
+    }
+    
+    // Try HH:mm:ss format
     let parsed = parse(timeStr, 'HH:mm:ss', new Date());
     if (isValid(parsed)) {
       return format(parsed, 'h:mm a');
@@ -90,9 +102,11 @@ export function formatDateRange(startDate: string, endDate: string): string {
  */
 export function formatAgeRange(min?: number, max?: number): string {
   if (!min && !max) return '';
-  if (min && max) return `Ages ${min}-${max}`;
+  // Treat unreasonably high max ages (100+) as "no max"
+  const effectiveMax = max && max < 100 ? max : undefined;
+  if (min && effectiveMax) return `Ages ${min}-${effectiveMax}`;
   if (min) return `Ages ${min}+`;
-  if (max) return `Ages up to ${max}`;
+  if (effectiveMax) return `Ages up to ${effectiveMax}`;
   return '';
 }
 

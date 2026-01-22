@@ -12,3 +12,4 @@ src/**/*.js
 .idea
 *.iml
 .vscode
+.next/

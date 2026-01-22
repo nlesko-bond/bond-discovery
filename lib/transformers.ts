@@ -6,7 +6,8 @@ import {
   SessionEvent, 
   CalendarEvent,
   DaySchedule,
-  WeekSchedule
+  WeekSchedule,
+  Media
 } from '@/types';
 import { 
   format, 
@@ -21,12 +22,25 @@ import {
 
 /**
  * Normalize API response to handle different data formats
+ * The Bond API wraps nested arrays in { meta: {...}, data: [...] }
  */
 function normalizeArray<T>(data: any): T[] {
   if (!data) return [];
   if (Array.isArray(data)) return data;
   if (data.data && Array.isArray(data.data)) return data.data;
+  if (typeof data === 'object' && 'meta' in data && 'data' in data) {
+    return data.data || [];
+  }
   return [];
+}
+
+/**
+ * Check if a product name/description indicates it's a member-only product
+ */
+function isMemberProduct(product: any): boolean {
+  const name = (product.name || '').toLowerCase();
+  const desc = (product.description || '').toLowerCase();
+  return name.includes('member') || desc.includes('member');
 }
 
 /**
@@ -35,19 +49,42 @@ function normalizeArray<T>(data: any): T[] {
 export function transformProgram(raw: any): Program {
   const sessions = normalizeArray<any>(raw.sessions).map(transformSession);
   
+  // Get facility from first session if not on program
+  const facilityFromSession = sessions[0]?.facility;
+  
   return {
     id: String(raw.id),
     name: raw.name || '',
     description: stripHtml(raw.description),
+    longDescription: stripHtml(raw.longDescription),
     type: raw.type?.toLowerCase(),
     sport: raw.sport?.toLowerCase(),
-    facilityId: raw.facility_id ? String(raw.facility_id) : undefined,
-    facilityName: raw.facility?.name || raw.facility_name,
-    organizationId: raw.organization_id ? String(raw.organization_id) : undefined,
-    imageUrl: raw.image_url || raw.imageUrl,
-    ageMin: raw.age_min || raw.ageMin,
-    ageMax: raw.age_max || raw.ageMax,
+    facilityId: raw.facility_id ? String(raw.facility_id) : (facilityFromSession?.id ? String(facilityFromSession.id) : undefined),
+    facilityName: raw.facility?.name || raw.facility_name || facilityFromSession?.name,
+    organizationId: raw.organizationId ? String(raw.organizationId) : (raw.organization_id ? String(raw.organization_id) : undefined),
+    
+    // Image from mainMedia
+    imageUrl: raw.mainMedia?.url || raw.image_url || raw.imageUrl,
+    mainMedia: raw.mainMedia ? {
+      id: raw.mainMedia.id,
+      url: raw.mainMedia.url,
+      mediaType: raw.mainMedia.mediaType,
+      fileType: raw.mainMedia.fileType,
+      name: raw.mainMedia.name,
+    } : undefined,
+    
+    // Registration link
+    linkSEO: raw.linkSEO,
+    
+    // Age/Gender
+    ageMin: raw.minAge || raw.age_min || raw.ageMin,
+    ageMax: raw.maxAge || raw.age_max || raw.ageMax,
     gender: normalizeGender(raw.gender),
+    levels: raw.levels,
+    
+    // Status
+    publishingStatus: raw.publishingStatus,
+    
     createdAt: raw.created_at || raw.createdAt,
     updatedAt: raw.updated_at || raw.updatedAt,
     sessions,
@@ -58,8 +95,12 @@ export function transformProgram(raw: any): Program {
       city: raw.facility.city,
       state: raw.facility.state,
       zipCode: raw.facility.zip_code,
-      organizationId: String(raw.facility.organization_id),
-    } : undefined,
+      organizationId: String(raw.facility.organization_id || raw.facility.organizationId),
+    } : (facilityFromSession ? {
+      id: String(facilityFromSession.id),
+      name: facilityFromSession.name,
+      organizationId: '',
+    } : undefined),
   };
 }
 
@@ -71,32 +112,71 @@ export function transformSession(raw: any): Session {
   const events = normalizeArray<any>(raw.events).map(transformEvent);
   const segments = normalizeArray<any>(raw.segments).map(transformSegment);
   
-  const capacity = raw.capacity || raw.max_participants;
+  const capacity = raw.maxParticipants || raw.capacity || raw.max_participants;
   const currentEnrollment = raw.current_enrollment || raw.currentEnrollment || 0;
   const spotsRemaining = capacity ? Math.max(0, capacity - currentEnrollment) : undefined;
   
   return {
     id: String(raw.id),
-    programId: String(raw.program_id || raw.programId),
+    programId: String(raw.programId || raw.program_id),
     name: raw.name,
     description: stripHtml(raw.description),
-    startDate: raw.start_date || raw.startDate,
-    endDate: raw.end_date || raw.endDate,
-    startTime: raw.start_time || raw.startTime,
-    endTime: raw.end_time || raw.endTime,
+    longDescription: stripHtml(raw.longDescription),
+    
+    // Registration link
+    linkSEO: raw.linkSEO,
+    
+    // Facility
+    facility: raw.facility ? {
+      id: raw.facility.id,
+      name: raw.facility.name,
+    } : undefined,
+    
+    // Dates
+    startDate: raw.startDate || raw.start_date,
+    endDate: raw.endDate || raw.end_date,
+    startTime: raw.startTime || raw.start_time,
+    endTime: raw.endTime || raw.end_time,
+    
+    // Registration dates
+    registrationStartDate: raw.registrationStartDate,
+    registrationEndDate: raw.registrationEndDate,
+    earlyRegistrationStartDate: raw.earlyRegistrationStartDate,
+    earlyRegistrationEndDate: raw.earlyRegistrationEndDate,
+    lateRegistrationStartDate: raw.lateRegistrationStartDate,
+    lateRegistrationEndDate: raw.lateRegistrationEndDate,
+    cutoffDate: raw.cutoffDate,
+    
+    // Capacity
     capacity,
+    maxParticipants: raw.maxParticipants,
+    maxMaleParticipants: raw.maxMaleParticipants,
+    maxFemaleParticipants: raw.maxFemaleParticipants,
     currentEnrollment,
     spotsRemaining,
     isFull: spotsRemaining !== undefined && spotsRemaining <= 0,
-    waitlistEnabled: raw.waitlist_enabled || raw.waitlistEnabled,
+    waitlistEnabled: raw.isWaitlistEnabled || raw.waitlist_enabled || raw.waitlistEnabled,
+    isWaitlistEnabled: raw.isWaitlistEnabled,
     waitlistCount: raw.waitlist_count || raw.waitlistCount,
+    
+    // Status
     status: raw.status,
-    ageMin: raw.age_min || raw.ageMin,
-    ageMax: raw.age_max || raw.ageMax,
+    isSegmented: raw.isSegmented,
+    
+    // Age/Gender
+    ageMin: raw.minAge || raw.age_min || raw.ageMin,
+    ageMax: raw.maxAge || raw.age_max || raw.ageMax,
+    minAge: raw.minAge,
+    maxAge: raw.maxAge,
     gender: normalizeGender(raw.gender),
+    levels: raw.levels,
+    sport: raw.sport?.toLowerCase(),
+    
+    // Recurrence
     recurring: raw.recurring,
     recurrencePattern: raw.recurrence_pattern || raw.recurrencePattern,
     daysOfWeek: raw.days_of_week || raw.daysOfWeek,
+    
     products,
     events,
     segments,
@@ -112,17 +192,29 @@ export function transformProduct(raw: any): Product {
   const maxParticipants = raw.max_participants || raw.maxParticipants;
   const currentParticipants = raw.current_participants || raw.currentParticipants || 0;
   
+  // Detect if this is a member product from name/description
+  const memberProduct = isMemberProduct(raw);
+  
   return {
     id: String(raw.id),
-    sessionId: String(raw.session_id || raw.sessionId),
+    sessionId: raw.sessionId ? String(raw.sessionId) : (raw.session_id ? String(raw.session_id) : undefined),
+    organizationId: raw.organizationId,
     name: raw.name || '',
-    description: stripHtml(raw.description),
+    description: raw.description, // Keep raw description for product details
+    quantity: raw.quantity,
     type: raw.type?.toLowerCase(),
     status: normalizeProductStatus(raw.status),
+    
+    // Dates
+    startDate: raw.startDate,
+    endDate: raw.endDate,
     registrationStartDate: raw.registration_start_date || raw.registrationStartDate,
     registrationEndDate: raw.registration_end_date || raw.registrationEndDate,
     earlyBirdEndDate: raw.early_bird_end_date || raw.earlyBirdEndDate,
-    membershipRequired: raw.membership_required || raw.membershipRequired || raw.membership_gated || false,
+    
+    // Membership - inferred from name/description
+    isMemberProduct: memberProduct,
+    membershipRequired: memberProduct || raw.membership_required || raw.membershipRequired || raw.membership_gated || false,
     membershipIds: raw.membership_ids || raw.membershipIds,
     membershipDiscounts: normalizeArray<any>(raw.membership_discounts || raw.membershipDiscounts).map(d => ({
       membershipId: String(d.membership_id || d.membershipId),
@@ -131,30 +223,59 @@ export function transformProduct(raw: any): Product {
       discountValue: d.discount_value || d.discountValue || d.discount || 0,
       finalPrice: d.final_price || d.finalPrice,
     })),
+    
+    // Capacity
     maxParticipants,
     currentParticipants,
     spotsRemaining: maxParticipants ? Math.max(0, maxParticipants - currentParticipants) : undefined,
+    
+    // Flags
+    isAll: raw.isAll,
+    isProRated: raw.isProRated,
+    isPunchPass: raw.isPunchPass,
+    
+    // Payment
+    downpayment: raw.downpayment,
+    taxes: raw.taxes,
+    timezone: raw.timezone,
+    
     prices,
   };
 }
 
 /**
  * Transform raw API price to normalized Price type
+ * Note: Bond API returns 'price' in dollars (not cents!)
  */
 export function transformPrice(raw: any): Price {
+  // API returns 'price' field in dollars
+  const priceInDollars = raw.price ?? raw.amount ?? 0;
+  
   return {
     id: String(raw.id),
-    productId: String(raw.product_id || raw.productId),
-    amount: raw.amount || 0,
+    productId: raw.productId ? String(raw.productId) : (raw.product_id ? String(raw.product_id) : undefined),
+    organizationId: raw.organizationId,
+    packageId: raw.packageId,
+    price: priceInDollars, // Keep in dollars
+    amount: priceInDollars, // Alias
     currency: raw.currency || 'USD',
     name: raw.name,
     description: raw.description,
+    
+    // Dates
+    startDate: raw.startDate,
+    endDate: raw.endDate,
+    
+    // Age-based
     ageGroup: raw.age_group || raw.ageGroup,
     ageMin: raw.age_min || raw.ageMin,
     ageMax: raw.age_max || raw.ageMax,
+    
+    // Discounts
     originalAmount: raw.original_amount || raw.originalAmount,
     discountAmount: raw.discount_amount || raw.discountAmount,
     discountPercent: raw.discount_percent || raw.discountPercent,
+    
     validFrom: raw.valid_from || raw.validFrom,
     validUntil: raw.valid_until || raw.validUntil,
   };
@@ -374,11 +495,11 @@ function getLowestPrice(products: Product[]): number | undefined {
   let lowest: number | undefined;
   
   products.forEach(product => {
-    if (product.status !== 'active') return;
-    
+    // Don't filter by status - API doesn't always return it
     product.prices.forEach(price => {
-      if (lowest === undefined || price.amount < lowest) {
-        lowest = price.amount;
+      const priceValue = price.price ?? price.amount ?? 0;
+      if (lowest === undefined || priceValue < lowest) {
+        lowest = priceValue;
       }
     });
   });
@@ -390,17 +511,17 @@ function getMemberPrice(products: Product[]): number | undefined {
   let memberPrice: number | undefined;
   
   products.forEach(product => {
-    if (product.status !== 'active') return;
     if (!product.membershipDiscounts?.length) return;
     
     product.prices.forEach(price => {
       const discount = product.membershipDiscounts?.[0];
       if (discount) {
+        const priceValue = price.price ?? price.amount ?? 0;
         let discountedPrice: number;
         if (discount.discountType === 'percentage') {
-          discountedPrice = price.amount * (1 - discount.discountValue / 100);
+          discountedPrice = priceValue * (1 - discount.discountValue / 100);
         } else {
-          discountedPrice = price.amount - discount.discountValue;
+          discountedPrice = priceValue - discount.discountValue;
         }
         
         if (memberPrice === undefined || discountedPrice < memberPrice) {

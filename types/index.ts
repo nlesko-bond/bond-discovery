@@ -19,11 +19,21 @@ export interface Facility {
   organizationId: string;
 }
 
+// Media type for images
+export interface Media {
+  id: number;
+  url: string;
+  mediaType?: number;
+  fileType?: string;
+  name?: string;
+}
+
 // Program Types
 export interface Program {
   id: string;
   name: string;
   description?: string;
+  longDescription?: string;
   type?: ProgramType;
   sport?: string;
   facilityId?: string;
@@ -31,10 +41,20 @@ export interface Program {
   organizationId?: string;
   imageUrl?: string;
   
+  // Media
+  mainMedia?: Media;
+  
+  // Links
+  linkSEO?: string;
+  
   // Age/Gender restrictions
   ageMin?: number;
   ageMax?: number;
   gender?: Gender;
+  levels?: string[];
+  
+  // Publishing
+  publishingStatus?: number;
   
   // Dates
   createdAt?: string;
@@ -64,6 +84,16 @@ export interface Session {
   programId: string;
   name?: string;
   description?: string;
+  longDescription?: string;
+  
+  // Links
+  linkSEO?: string;
+  
+  // Facility
+  facility?: {
+    id: number;
+    name: string;
+  };
   
   // Dates and times
   startDate?: string;
@@ -71,21 +101,39 @@ export interface Session {
   startTime?: string;
   endTime?: string;
   
+  // Registration dates
+  registrationStartDate?: string;
+  registrationEndDate?: string;
+  earlyRegistrationStartDate?: string;
+  earlyRegistrationEndDate?: string;
+  lateRegistrationStartDate?: string;
+  lateRegistrationEndDate?: string;
+  cutoffDate?: string;
+  
   // Capacity
   capacity?: number;
+  maxParticipants?: number;
+  maxMaleParticipants?: number;
+  maxFemaleParticipants?: number;
   currentEnrollment?: number;
   spotsRemaining?: number;
   isFull?: boolean;
   waitlistEnabled?: boolean;
+  isWaitlistEnabled?: boolean;
   waitlistCount?: number;
   
   // Status
   status?: SessionStatus;
+  isSegmented?: boolean;
   
   // Age/Gender (can override program)
   ageMin?: number;
   ageMax?: number;
+  minAge?: number;
+  maxAge?: number;
   gender?: Gender;
+  levels?: string[];
+  sport?: string;
   
   // Recurrence
   recurring?: boolean;
@@ -103,19 +151,24 @@ export type SessionStatus = 'active' | 'inactive' | 'cancelled' | 'completed' | 
 // Product and Pricing Types
 export interface Product {
   id: string;
-  sessionId: string;
+  sessionId?: string;
+  organizationId?: number;
   name: string;
   description?: string;
+  quantity?: number;
   type?: ProductType;
-  status: ProductStatus;
+  status?: ProductStatus;
   
   // Registration dates
+  startDate?: string;
+  endDate?: string;
   registrationStartDate?: string;
   registrationEndDate?: string;
   earlyBirdEndDate?: string;
   
-  // Membership
-  membershipRequired: boolean;
+  // Membership - inferred from product name/description
+  isMemberProduct?: boolean;
+  membershipRequired?: boolean;
   membershipIds?: string[];
   membershipDiscounts?: MembershipDiscount[];
   
@@ -123,6 +176,16 @@ export interface Product {
   maxParticipants?: number;
   currentParticipants?: number;
   spotsRemaining?: number;
+  
+  // Flags
+  isAll?: boolean;
+  isProRated?: boolean;
+  isPunchPass?: boolean;
+  
+  // Payment
+  downpayment?: number;
+  taxes?: any[];
+  timezone?: string;
   
   // Pricing
   prices: Price[];
@@ -133,11 +196,18 @@ export type ProductStatus = 'active' | 'inactive' | 'sold_out' | 'coming_soon';
 
 export interface Price {
   id: string;
-  productId: string;
-  amount: number; // In cents
+  productId?: string;
+  organizationId?: number;
+  packageId?: number | null;
+  price: number; // In dollars (NOT cents!)
+  amount?: number; // Alias for price
   currency: string;
   name?: string;
   description?: string;
+  
+  // Dates
+  startDate?: string;
+  endDate?: string;
   
   // Age-based pricing
   ageGroup?: string;
@@ -255,6 +325,7 @@ export interface DiscoveryConfig {
 export interface BrandingConfig {
   primaryColor: string;
   secondaryColor: string;
+  accentColor?: string;
   logo?: string;
   favicon?: string;
   companyName: string;
@@ -343,6 +414,9 @@ export interface CalendarEvent {
   startingPrice?: number;
   memberPrice?: number;
   membershipRequired?: boolean;
+  
+  // Links
+  linkSEO?: string;
 }
 
 export interface DaySchedule {

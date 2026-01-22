@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     : DEFAULT_ORG_IDS;
   
   const facilityId = searchParams.get('facilityId') || undefined;
-  const expand = searchParams.get('expand') || 'sessions,sessions.products,sessions.products.prices,sessions.events,facility';
+  const expand = searchParams.get('expand') || 'sessions,sessions.products,sessions.products.prices';
 
   try {
     const client = createBondClient(DEFAULT_API_KEY);
@@ -26,13 +26,11 @@ export async function GET(request: Request) {
     // Fetch programs from all organizations in parallel
     const promises = orgIds.map(async (orgId) => {
       try {
-        const cacheKey = programsCacheKey(orgId, facilityId);
+        console.log(`Fetching programs for org ${orgId}...`);
         
-        const response = await cached(
-          cacheKey,
-          () => client.getPrograms(orgId, { expand, facilityId }),
-          { ttl: 300 }
-        );
+        // Fetch directly without caching for now to debug
+        const response = await client.getPrograms(orgId, { expand, facilityId });
+        console.log(`Got ${response?.data?.length || 0} programs for org ${orgId}`);
 
         // Transform and add org ID
         const programs = (response.data || []).map(raw => ({

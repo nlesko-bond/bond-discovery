@@ -9,7 +9,10 @@ import {
   MapPin,
   Tag,
   Sparkles,
-  Shield
+  Shield,
+  ExternalLink,
+  DollarSign,
+  Star
 } from 'lucide-react';
 import { Program, Session, Product, DiscoveryConfig } from '@/types';
 import { 
@@ -21,7 +24,6 @@ import {
   getSportLabel,
   getGenderLabel,
   getAvailabilityInfo,
-  getSportGradient,
   cn
 } from '@/lib/utils';
 
@@ -30,72 +32,109 @@ interface ProgramCardProps {
   config: DiscoveryConfig;
 }
 
+// Sport-specific gradients for visual appeal
+const sportGradients: Record<string, string> = {
+  soccer: 'from-green-500 to-emerald-600',
+  football: 'from-amber-600 to-orange-700',
+  basketball: 'from-orange-500 to-red-600',
+  tennis: 'from-yellow-400 to-lime-500',
+  yoga: 'from-purple-500 to-violet-600',
+  fitness: 'from-blue-500 to-indigo-600',
+  swimming: 'from-cyan-500 to-blue-600',
+  baseball: 'from-red-500 to-rose-600',
+  volleyball: 'from-pink-500 to-rose-600',
+  hockey: 'from-slate-500 to-gray-700',
+  lacrosse: 'from-blue-600 to-indigo-700',
+  default: 'from-toca-navy to-toca-purple',
+};
+
 export function ProgramCard({ program, config }: ProgramCardProps) {
   const [expanded, setExpanded] = useState(false);
   
   const sessions = getSessions(program);
+  // Include all sessions that haven't ended yet
   const upcomingSessions = sessions.filter(s => {
-    if (!s.startDate) return true;
-    return new Date(s.startDate) >= new Date();
+    if (!s.endDate) return true;
+    const endDate = new Date(s.endDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return endDate >= today;
   });
   
   // Get pricing info
-  const { lowestPrice, memberPrice, hasMembershipRequired } = getPricingInfo(sessions);
+  const pricingInfo = getPricingInfo(sessions);
   
-  // Get availability info
-  const totalSpots = sessions.reduce((sum, s) => sum + (s.capacity || 0), 0);
+  // Get availability info across all sessions
+  const totalSpots = sessions.reduce((sum, s) => sum + (s.maxParticipants || s.capacity || 0), 0);
   const enrolledSpots = sessions.reduce((sum, s) => sum + (s.currentEnrollment || 0), 0);
-  const spotsRemaining = totalSpots - enrolledSpots;
+  const spotsRemaining = totalSpots > 0 ? totalSpots - enrolledSpots : undefined;
   const availabilityInfo = getAvailabilityInfo(spotsRemaining, totalSpots);
+  
+  // Get facility name from first session if available
+  const facilityName = program.facilityName || sessions[0]?.facility?.name;
   
   // Age/Gender info
   const ageRange = formatAgeRange(program.ageMin, program.ageMax);
-  const genderLabel = program.gender && program.gender !== 'all' 
+  const genderLabel = program.gender && program.gender !== 'all' && program.gender !== 'coed'
     ? getGenderLabel(program.gender) 
     : null;
 
+  // Sport gradient
+  const gradient = sportGradients[program.sport?.toLowerCase() || ''] || sportGradients.default;
+  
+  // Has image?
+  const imageUrl = program.imageUrl || program.mainMedia?.url;
+
   return (
-    <div className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl hover:border-gray-300 transition-all duration-300">
-      {/* Header with gradient */}
-      <div className={cn('h-32 relative overflow-hidden', getSportGradient(program.sport))}>
-        {program.imageUrl ? (
-          <img
-            src={program.imageUrl}
-            alt={program.name}
-            className="w-full h-full object-cover"
-          />
+    <div className="group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-2xl hover:border-gray-300 transition-all duration-300 hover:-translate-y-1">
+      {/* Header with image or gradient */}
+      <div className="h-40 relative overflow-hidden">
+        {imageUrl ? (
+          <>
+            <img
+              src={imageUrl}
+              alt={program.name}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          </>
         ) : (
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,white_0%,transparent_60%)]" />
+          <div className={`w-full h-full bg-gradient-to-br ${gradient}`}>
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,white_0%,transparent_50%)]" />
+              <div className="absolute bottom-0 right-0 w-32 h-32 rounded-full bg-white/10 -mr-10 -mb-10" />
+            </div>
           </div>
         )}
         
-        {/* Badges overlay */}
+        {/* Top badges */}
         <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
           {program.type && (
-            <span className="badge-type bg-white/90 backdrop-blur-sm shadow-sm">
+            <span className="px-2.5 py-1 text-xs font-bold bg-white/95 backdrop-blur-sm text-gray-800 rounded-full shadow-sm">
               {getProgramTypeLabel(program.type)}
             </span>
           )}
-          {availabilityInfo.color === 'red' && totalSpots > 0 && (
-            <span className="badge bg-red-500 text-white shadow-sm flex items-center gap-1">
+          {config.features.showAvailability && availabilityInfo.color === 'red' && totalSpots > 0 && (
+            <span className="px-2.5 py-1 text-xs font-bold bg-red-500 text-white rounded-full shadow-sm flex items-center gap-1">
               <Sparkles size={12} />
-              {availabilityInfo.label}
+              {spotsRemaining === 0 ? 'Full' : 'Almost Full'}
             </span>
           )}
         </div>
 
-        {/* Sport badge & Membership indicator */}
-        <div className="absolute bottom-3 right-3 flex gap-2">
-          {config.features.showMembershipBadges && hasMembershipRequired && (
-            <span className="badge-membership flex items-center gap-1">
-              <Shield size={12} />
-              Members
-            </span>
-          )}
-          {program.sport && (
-            <span className="badge bg-black/30 backdrop-blur-sm text-white">
-              {getSportLabel(program.sport)}
+        {/* Bottom badges */}
+        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
+          <div className="flex gap-2">
+            {program.sport && (
+              <span className="px-2.5 py-1 text-xs font-bold bg-black/40 backdrop-blur-sm text-white rounded-full">
+                {getSportLabel(program.sport)}
+              </span>
+            )}
+          </div>
+          {config.features.showMembershipBadges && pricingInfo.hasMemberPricing && (
+            <span className="px-2.5 py-1 text-xs font-bold bg-amber-500 text-white rounded-full shadow-sm flex items-center gap-1">
+              <Star size={12} />
+              Member Pricing
             </span>
           )}
         </div>
@@ -104,14 +143,22 @@ export function ProgramCard({ program, config }: ProgramCardProps) {
       {/* Content */}
       <div className="p-5">
         {/* Title */}
-        <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-bond-gold transition-colors">
+        <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-toca-purple transition-colors">
           {program.name}
         </h3>
+
+        {/* Facility & Location */}
+        {facilityName && (
+          <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-2">
+            <MapPin size={14} className="text-gray-400 flex-shrink-0" />
+            <span className="truncate">{facilityName}</span>
+          </div>
+        )}
 
         {/* Age/Gender line */}
         {config.features.showAgeGender && (ageRange || genderLabel) && (
           <p className="text-sm text-gray-500 mb-2">
-            {[ageRange, genderLabel].filter(Boolean).join(' | ')}
+            {[ageRange, genderLabel].filter(Boolean).join(' • ')}
           </p>
         )}
 
@@ -126,74 +173,103 @@ export function ProgramCard({ program, config }: ProgramCardProps) {
         <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
           <div className="flex items-center gap-1.5">
             <Calendar size={14} className="text-gray-400" />
-            <span>{upcomingSessions.length} upcoming</span>
+            <span>{upcomingSessions.length} session{upcomingSessions.length !== 1 ? 's' : ''}</span>
           </div>
-          {config.features.showAvailability && totalSpots > 0 && (
+          {config.features.showAvailability && totalSpots > 0 && spotsRemaining !== undefined && (
             <div className="flex items-center gap-1.5">
               <Users size={14} className="text-gray-400" />
               <span className={cn(
-                spotsRemaining <= 5 ? 'text-red-600 font-medium' : ''
+                spotsRemaining <= 5 && spotsRemaining > 0 ? 'text-amber-600 font-medium' : '',
+                spotsRemaining === 0 ? 'text-red-600 font-medium' : ''
               )}>
-                {spotsRemaining > 0 ? `${spotsRemaining} spots` : 'Full'}
+                {spotsRemaining > 0 ? `${spotsRemaining} spots left` : 'Full'}
               </span>
             </div>
           )}
         </div>
 
-        {/* Pricing */}
+        {/* Pricing Section */}
         {config.features.showPricing && (
-          <div className="flex items-end justify-between pt-4 border-t border-gray-100">
-            <div>
-              {lowestPrice !== undefined ? (
-                <>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">From</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatPrice(lowestPrice)}
-                  </p>
-                  {memberPrice !== undefined && memberPrice < lowestPrice && (
-                    <p className="text-sm text-bond-gold font-medium">
-                      Members: {formatPrice(memberPrice)}
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p className="text-sm text-gray-500">Contact for pricing</p>
-              )}
+          <div className="pt-4 border-t border-gray-100">
+            <div className="flex items-end justify-between">
+              <div>
+                {pricingInfo.hasPrice ? (
+                  <div className="space-y-1">
+                    {/* Regular price */}
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">From</span>
+                      <span className="text-2xl font-bold text-gray-900">
+                        {formatPrice(pricingInfo.regularPrice!)}
+                      </span>
+                    </div>
+                    
+                    {/* Member price */}
+                    {pricingInfo.hasMemberPricing && pricingInfo.memberPrice !== undefined && (
+                      <div className="flex items-center gap-2">
+                        <Star size={14} className="text-amber-500" />
+                        <span className="text-sm font-semibold text-amber-600">
+                          Members: {formatPrice(pricingInfo.memberPrice)}
+                        </span>
+                        {pricingInfo.regularPrice && pricingInfo.memberPrice < pricingInfo.regularPrice && (
+                          <span className="text-xs text-green-600 font-medium">
+                            Save {Math.round(((pricingInfo.regularPrice - pricingInfo.memberPrice) / pricingInfo.regularPrice) * 100)}%
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-sm text-gray-500">See pricing options</span>
+                )}
+              </div>
+              
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-toca-purple transition-all duration-200"
+              >
+                <span>Details</span>
+                <ChevronDown
+                  size={16}
+                  className={cn('transition-transform', expanded && 'rotate-180')}
+                />
+              </button>
             </div>
-            
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="flex items-center gap-1 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-bond-gold transition-colors"
-            >
-              <span>Sessions</span>
-              <ChevronDown
-                size={16}
-                className={cn('transition-transform', expanded && 'rotate-180')}
-              />
-            </button>
           </div>
         )}
       </div>
 
       {/* Expanded Sessions */}
-      {expanded && sessions.length > 0 && (
-        <div className="border-t border-gray-100 bg-gray-50/50 p-4 animate-fade-in">
-          <div className="space-y-2">
-            {sessions.slice(0, 5).map((session) => (
-              <SessionCard key={session.id} session={session} config={config} />
-            ))}
-            {sessions.length > 5 && (
-              <button className="w-full text-sm text-bond-gold font-medium py-2 hover:underline flex items-center justify-center gap-1">
-                View all {sessions.length} sessions
-              </button>
+      {expanded && (
+        <div className="border-t border-gray-100 bg-gray-50/70 p-4 animate-fade-in">
+          <div className="space-y-3">
+            {sessions.length > 0 ? (
+              sessions.map((session) => (
+                <SessionCard 
+                  key={session.id} 
+                  session={session} 
+                  config={config}
+                  programLinkSEO={program.linkSEO}
+                />
+              ))
+            ) : (
+              <p className="text-gray-500 text-sm text-center py-4">No sessions available</p>
             )}
           </div>
-        </div>
-      )}
-      
-      {expanded && sessions.length === 0 && (
-        <div className="border-t border-gray-100 bg-gray-50/50 p-6 text-center">
-          <p className="text-gray-500 text-sm">No sessions available</p>
+          
+          {/* Register CTA */}
+          {program.linkSEO && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <a
+                href={program.linkSEO}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-toca-navy text-white font-semibold rounded-xl hover:bg-toca-purple-dark transition-colors"
+              >
+                <span>View Program & Register</span>
+                <ExternalLink size={16} />
+              </a>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -201,34 +277,48 @@ export function ProgramCard({ program, config }: ProgramCardProps) {
 }
 
 // Session card component
-function SessionCard({ session, config }: { session: Session; config: DiscoveryConfig }) {
+function SessionCard({ 
+  session, 
+  config,
+  programLinkSEO 
+}: { 
+  session: Session; 
+  config: DiscoveryConfig;
+  programLinkSEO?: string;
+}) {
   const [showProducts, setShowProducts] = useState(false);
-  const availability = getAvailabilityInfo(session.spotsRemaining, session.capacity);
+  const availability = getAvailabilityInfo(session.spotsRemaining, session.maxParticipants || session.capacity);
   const products = session.products || [];
-  const activeProducts = products.filter(p => p.status === 'active');
+  
+  // Separate member and regular products
+  const memberProducts = products.filter(p => p.isMemberProduct);
+  const regularProducts = products.filter(p => !p.isMemberProduct);
+  
+  const facilityName = session.facility?.name;
+  const registrationLink = session.linkSEO || programLinkSEO;
 
   return (
     <div className={cn(
-      'p-3 bg-white border rounded-lg transition-colors',
-      session.isFull ? 'border-gray-200 opacity-60' : 'border-gray-200 hover:border-bond-gold/50'
+      'p-4 bg-white rounded-xl border transition-all',
+      session.isFull ? 'border-gray-200 opacity-70' : 'border-gray-200 hover:border-toca-purple/50 hover:shadow-md'
     )}>
-      <div className="flex items-start justify-between gap-3">
+      {/* Session Header */}
+      <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-900 truncate">
+          <p className="font-bold text-gray-900">
             {session.name || 'Session'}
           </p>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-gray-500">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-gray-500">
             {(session.startDate || session.endDate) && (
               <span className="flex items-center gap-1">
-                <Calendar size={12} />
+                <Calendar size={14} className="text-gray-400" />
                 {formatDateRange(session.startDate || '', session.endDate || '')}
               </span>
             )}
-            {session.startTime && (
+            {facilityName && (
               <span className="flex items-center gap-1">
-                <Clock size={12} />
-                {formatTime(session.startTime)}
-                {session.endTime && ` - ${formatTime(session.endTime)}`}
+                <MapPin size={14} className="text-gray-400" />
+                {facilityName}
               </span>
             )}
           </div>
@@ -236,11 +326,11 @@ function SessionCard({ session, config }: { session: Session; config: DiscoveryC
         
         {config.features.showAvailability && availability.label && (
           <div className={cn(
-            'text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap',
+            'text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap',
             availability.color === 'red' && 'bg-red-100 text-red-700',
-            availability.color === 'yellow' && 'bg-yellow-100 text-yellow-700',
+            availability.color === 'yellow' && 'bg-amber-100 text-amber-700',
             availability.color === 'green' && 'bg-green-100 text-green-700',
-            availability.color === 'gray' && 'bg-gray-100 text-gray-700'
+            availability.color === 'gray' && 'bg-gray-100 text-gray-600'
           )}>
             {availability.label}
           </div>
@@ -248,24 +338,55 @@ function SessionCard({ session, config }: { session: Session; config: DiscoveryC
       </div>
 
       {/* Products/Pricing */}
-      {config.features.showPricing && activeProducts.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-gray-100">
+      {config.features.showPricing && products.length > 0 && (
+        <div className="pt-3 border-t border-gray-100">
           <button
             onClick={() => setShowProducts(!showProducts)}
-            className="text-xs text-bond-gold font-medium flex items-center gap-1"
+            className="w-full text-left flex items-center justify-between text-sm font-semibold text-gray-700 hover:text-toca-purple transition-colors"
           >
-            <Tag size={12} />
-            {activeProducts.length} pricing option{activeProducts.length !== 1 ? 's' : ''}
-            <ChevronDown size={12} className={cn('transition-transform', showProducts && 'rotate-180')} />
+            <span className="flex items-center gap-1.5">
+              <DollarSign size={14} />
+              {products.length} pricing option{products.length !== 1 ? 's' : ''}
+            </span>
+            <ChevronDown size={14} className={cn('transition-transform', showProducts && 'rotate-180')} />
           </button>
           
           {showProducts && (
-            <div className="mt-2 space-y-2">
-              {activeProducts.map(product => (
+            <div className="mt-3 space-y-2">
+              {/* Regular Products */}
+              {regularProducts.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))}
+              
+              {/* Member Products */}
+              {memberProducts.length > 0 && (
+                <div className="pt-2 mt-2 border-t border-dashed border-gray-200">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 mb-2">
+                    <Star size={12} />
+                    Member Pricing
+                  </div>
+                  {memberProducts.map(product => (
+                    <ProductCard key={product.id} product={product} isMember />
+                  ))}
+                </div>
+              )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Register Link */}
+      {registrationLink && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <a
+            href={registrationLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold text-toca-purple hover:text-toca-purple-dark transition-colors"
+          >
+            <span>Register Now</span>
+            <ExternalLink size={14} />
+          </a>
         </div>
       )}
     </div>
@@ -273,41 +394,39 @@ function SessionCard({ session, config }: { session: Session; config: DiscoveryC
 }
 
 // Product card component
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({ product, isMember = false }: { product: Product; isMember?: boolean }) {
   const lowestPrice = product.prices.reduce(
-    (min, p) => p.amount < min ? p.amount : min,
-    Infinity
+    (min, p) => (p.price < min ? p.price : min),
+    product.prices[0]?.price ?? 0
   );
-  const hasDiscount = product.membershipDiscounts && product.membershipDiscounts.length > 0;
 
   return (
-    <div className="p-2 bg-gray-50 rounded text-xs">
-      <div className="flex items-center justify-between">
-        <span className="font-medium text-gray-900">{product.name}</span>
-        <span className="font-bold text-gray-900">
-          {lowestPrice !== Infinity ? formatPrice(lowestPrice) : 'TBD'}
+    <div className={cn(
+      'p-3 rounded-lg',
+      isMember ? 'bg-amber-50 border border-amber-100' : 'bg-gray-50'
+    )}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <span className={cn(
+            'font-semibold text-sm',
+            isMember ? 'text-amber-800' : 'text-gray-900'
+          )}>
+            {product.name}
+          </span>
+          {product.description && (
+            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+              {product.description}
+            </p>
+          )}
+        </div>
+        <span className={cn(
+          'font-bold text-lg whitespace-nowrap',
+          isMember ? 'text-amber-600' : 'text-gray-900',
+          lowestPrice === 0 && 'text-green-600'
+        )}>
+          {formatPrice(lowestPrice)}
         </span>
       </div>
-      
-      {product.membershipRequired && (
-        <div className="flex items-center gap-1 mt-1 text-amber-600">
-          <Shield size={10} />
-          <span>Membership required</span>
-        </div>
-      )}
-      
-      {hasDiscount && !product.membershipRequired && (
-        <div className="flex items-center gap-1 mt-1 text-bond-gold">
-          <Tag size={10} />
-          <span>Member discount available</span>
-        </div>
-      )}
-      
-      {product.registrationStartDate && new Date(product.registrationStartDate) > new Date() && (
-        <div className="mt-1 text-gray-500">
-          Registration opens {formatDateRange(product.registrationStartDate, product.registrationStartDate)}
-        </div>
-      )}
     </div>
   );
 }
@@ -323,48 +442,43 @@ function getSessions(program: Program): Session[] {
   return [];
 }
 
-function getPricingInfo(sessions: Session[]): {
-  lowestPrice?: number;
+interface PricingInfo {
+  hasPrice: boolean;
+  regularPrice?: number;
   memberPrice?: number;
-  hasMembershipRequired: boolean;
-} {
-  let lowestPrice: number | undefined;
+  hasMemberPricing: boolean;
+}
+
+function getPricingInfo(sessions: Session[]): PricingInfo {
+  let regularPrice: number | undefined;
   let memberPrice: number | undefined;
-  let hasMembershipRequired = false;
+  let hasMemberPricing = false;
 
   sessions.forEach(session => {
     (session.products || []).forEach(product => {
-      if (product.status !== 'active') return;
+      const isMember = product.isMemberProduct;
       
-      if (product.membershipRequired) {
-        hasMembershipRequired = true;
-      }
-
       product.prices.forEach(price => {
-        if (lowestPrice === undefined || price.amount < lowestPrice) {
-          lowestPrice = price.amount;
+        const priceValue = price.price ?? price.amount ?? 0;
+        
+        if (isMember) {
+          hasMemberPricing = true;
+          if (memberPrice === undefined || priceValue < memberPrice) {
+            memberPrice = priceValue;
+          }
+        } else {
+          if (regularPrice === undefined || priceValue < regularPrice) {
+            regularPrice = priceValue;
+          }
         }
       });
-
-      // Calculate member price
-      if (product.membershipDiscounts?.length) {
-        product.prices.forEach(price => {
-          const discount = product.membershipDiscounts![0];
-          let discountedPrice: number;
-          
-          if (discount.discountType === 'percentage') {
-            discountedPrice = price.amount * (1 - discount.discountValue / 100);
-          } else {
-            discountedPrice = price.amount - discount.discountValue;
-          }
-          
-          if (memberPrice === undefined || discountedPrice < memberPrice) {
-            memberPrice = Math.max(0, discountedPrice);
-          }
-        });
-      }
     });
   });
 
-  return { lowestPrice, memberPrice, hasMembershipRequired };
+  return {
+    hasPrice: regularPrice !== undefined || memberPrice !== undefined,
+    regularPrice,
+    memberPrice,
+    hasMemberPricing,
+  };
 }
