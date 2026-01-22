@@ -17,11 +17,13 @@ interface TransformedEvent {
   sessionId: string;
   sessionName: string;
   facilityName?: string;
+  spaceName?: string;  // Resource/court/field name
   sport?: string;
   type?: string;
   linkSEO?: string;
   registrationWindowStatus?: string;
   maxParticipants?: number;
+  currentParticipants?: number;
 }
 
 /**
@@ -61,8 +63,10 @@ export async function GET(request: Request) {
           
           for (const session of sessions) {
             try {
-              console.log(`Fetching events for session ${session.id}...`);
-              const eventsResponse = await client.getEvents(orgId, program.id, session.id);
+              // Fetch events with space expand for resource/court info
+              const eventsResponse = await client.getEvents(orgId, program.id, session.id, {
+                expand: 'space'
+              });
               const events = eventsResponse.data || [];
               
               // Transform and add events
@@ -78,11 +82,13 @@ export async function GET(request: Request) {
                   sessionId: session.id,
                   sessionName: session.name || '',
                   facilityName: session.facility?.name || program.facilityName,
+                  spaceName: event.space?.name || event.spaceName,  // Resource/court/field
                   sport: program.sport,
                   type: program.type,
                   linkSEO: session.linkSEO || program.linkSEO,
                   registrationWindowStatus: event.registrationWindowStatus,
                   maxParticipants: event.maxParticipants,
+                  currentParticipants: event.currentParticipants,
                 };
                 
                 // Apply date filtering if provided

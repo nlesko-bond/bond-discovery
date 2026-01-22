@@ -119,3 +119,38 @@
     display: none;
   }
 }
+
+/* Print styles */
+@media print {
+  /* Hide non-essential elements */
+  header,
+  .print\\:hidden,
+  [class*="print:hidden"],
+  button,
+  .sticky {
+    display: none !important;
+  }
+  
+  /* Reset backgrounds */
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  /* Show content cleanly */
+  .print\\:block {
+    display: block !important;
+  }
+  
+  /* Remove shadows and borders */
+  * {
+    box-shadow: none !important;
+  }
+  
+  /* Keep colors in events */
+  .bg-gradient-to-r {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

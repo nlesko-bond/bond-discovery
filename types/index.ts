@@ -408,6 +408,7 @@ export interface CalendarEvent {
   // Where
   facilityId: string;
   facilityName: string;
+  spaceName?: string;  // Resource/court/field name
   location?: string;
   
   // Capacity

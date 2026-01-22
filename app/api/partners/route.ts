@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
           showAvailability: true,
           showMembershipBadges: true,
           showAgeGender: true,
-          enableFilters: ['facility', 'programType', 'sport', 'age', 'dateRange', 'program'],
+          enableFilters: ['search', 'facility', 'programType', 'sport', 'age', 'dateRange', 'program'],
           defaultView: 'programs',
           allowViewToggle: true,
         },

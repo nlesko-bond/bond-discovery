@@ -411,11 +411,13 @@ export function DiscoveryPage({
       endTime: event.endDate || '',
       facilityId: '',
       facilityName: event.facilityName || '',
+      spaceName: event.spaceName || '',  // Resource/court/field
       sport: event.sport,
       type: event.type,
       linkSEO: event.linkSEO,
       color: getSportGradient(event.sport || ''),
       maxParticipants: event.maxParticipants,
+      currentParticipants: event.currentParticipants,
     }));
     
     return buildWeekSchedules(calendarEvents, 8);

@@ -156,10 +156,15 @@ export class BondClient {
   async getEvents(
     orgId: string,
     programId: string,
-    sessionId: string
+    sessionId: string,
+    options?: { expand?: string }
   ): Promise<APIResponse<SessionEvent[]>> {
+    const params: Record<string, string> = {};
+    if (options?.expand) params.expand = options.expand;
+    
     return this.fetch<APIResponse<SessionEvent[]>>(
-      `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/events`
+      `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/events`,
+      params
     );
   }
 

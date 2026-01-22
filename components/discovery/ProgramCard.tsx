@@ -313,8 +313,8 @@ function SessionCard({
   // Get price for single product
   const singleProductPrice = singleProduct?.prices?.[0]?.price ?? singleProduct?.prices?.[0]?.amount;
   
-  // Build schedule link with program filter
-  const scheduleLink = `${pathname}?viewMode=schedule&programIds=${programId}`;
+  // Build schedule link with program filter - links to list view
+  const scheduleLink = `${pathname}?viewMode=schedule&scheduleView=list&programIds=${programId}`;
 
   return (
     <div className={cn(

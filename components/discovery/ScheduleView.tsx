@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -19,7 +20,8 @@ import {
   Loader2,
   Download,
   FileText,
-  CalendarPlus
+  CalendarPlus,
+  FileSpreadsheet
 } from 'lucide-react';
 import { WeekSchedule, DaySchedule, CalendarEvent, DiscoveryConfig } from '@/types';
 import { formatDate, formatTime, formatPrice, getSportLabel, getProgramTypeLabel, buildRegistrationUrl, cn } from '@/lib/utils';
@@ -38,12 +40,19 @@ interface ScheduleViewProps {
 }
 
 export function ScheduleView({ schedule, config, isLoading, error, totalEvents }: ScheduleViewProps) {
+  const searchParams = useSearchParams();
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  // Use config's defaultScheduleView if set, otherwise default to 'week'
-  const [viewMode, setViewMode] = useState<ViewMode>(() => 
-    (config.features.defaultScheduleView as ViewMode) || 'week'
-  );
+  
+  // Use URL scheduleView param first, then config default, then 'week'
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const urlScheduleView = searchParams.get('scheduleView') as ViewMode | null;
+    if (urlScheduleView && ['list', 'day', 'week', 'month'].includes(urlScheduleView)) {
+      return urlScheduleView;
+    }
+    return (config.features.defaultScheduleView as ViewMode) || 'week';
+  });
+  
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
   
@@ -129,9 +138,46 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
   
   // Print/PDF export
   const handleExportPDF = useCallback(() => {
-    window.print();
     setShowExportMenu(false);
+    window.print();
   }, []);
+  
+  // CSV export
+  const handleExportCSV = useCallback(() => {
+    const headers = ['Date', 'Time', 'Program', 'Session', 'Location', 'Spots', 'Price', 'Registration Link'];
+    const rows = allEvents.map(event => {
+      const date = event.startTime ? format(new Date(event.startTime), 'yyyy-MM-dd') : event.date;
+      const time = event.startTime ? format(new Date(event.startTime), 'h:mm a') : '';
+      const endTime = event.endTime ? format(new Date(event.endTime), 'h:mm a') : '';
+      const timeRange = endTime ? `${time} - ${endTime}` : time;
+      const link = event.linkSEO ? `https://app.bondsports.co${event.linkSEO}` : '';
+      const price = event.startingPrice ? `$${event.startingPrice}` : '';
+      const location = [event.facilityName, event.spaceName].filter(Boolean).join(' - ');
+      
+      return [
+        date,
+        timeRange,
+        event.programName || '',
+        event.sessionName || '',
+        location,
+        event.spotsRemaining !== undefined ? `${event.spotsRemaining} available` : '',
+        price,
+        link
+      ].map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',');
+    });
+    
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'schedule.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setShowExportMenu(false);
+  }, [allEvents]);
   
   // Get all days with events (for list view), grouped by date
   const allDaysWithEvents = useMemo(() => {
@@ -227,15 +273,14 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
   const hasEventsThisWeek = currentWeek.days.some(day => day.events.length > 0);
 
   return (
-    <div className="p-4 md:p-6">
-      {/* Header with stats */}
-      {totalEvents !== undefined && totalEvents > 0 && (
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-toca-purple animate-pulse" />
-            <span className="text-sm text-gray-600">
-              <span className="font-semibold text-toca-navy">{totalEvents.toLocaleString()}</span> events loaded
-            </span>
+    <div className="relative">
+      {/* Sticky Header with stats and controls */}
+      <div className="sticky top-0 z-20 bg-gray-50 px-3 py-2 border-b border-gray-200">
+        <div className="flex items-center justify-between gap-2">
+          {/* Event count - compact */}
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <div className="w-1.5 h-1.5 rounded-full bg-toca-purple" />
+            <span><span className="font-semibold text-toca-navy">{totalEvents?.toLocaleString() || 0}</span> events</span>
           </div>
           
           {/* View Toggle */}
@@ -297,11 +342,11 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
             </button>
           </div>
           
-          {/* Export Button */}
-          <div ref={exportRef} className="relative ml-2">
+          {/* Export Button - hidden in print */}
+          <div ref={exportRef} className="relative ml-2 print:hidden">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
               title="Export schedule"
             >
               <Download size={14} />
@@ -309,10 +354,10 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
             </button>
             
             {showExportMenu && (
-              <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 w-48 overflow-hidden">
+              <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 w-48 overflow-hidden print:hidden">
                 <button
                   onClick={handleExportICal}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <CalendarPlus size={16} className="text-toca-purple" />
                   <div className="text-left">
@@ -321,8 +366,18 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
                   </div>
                 </button>
                 <button
+                  onClick={handleExportCSV}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
+                >
+                  <FileSpreadsheet size={16} className="text-toca-purple" />
+                  <div className="text-left">
+                    <div className="font-medium">Export to CSV</div>
+                    <div className="text-xs text-gray-500">Excel compatible</div>
+                  </div>
+                </button>
+                <button
                   onClick={handleExportPDF}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
                 >
                   <FileText size={16} className="text-toca-purple" />
                   <div className="text-left">
@@ -334,35 +389,23 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
             )}
           </div>
         </div>
-      )}
+      </div>
       
-      {/* Navigation - changes based on view mode */}
+      {/* Navigation - compact, inline with content */}
       {viewMode === 'month' ? (
         /* Month Navigation */
-        <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-toca-navy to-toca-purple rounded-xl p-4 text-white">
-          <button
-            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            <ChevronLeft size={24} />
+        <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-toca-navy to-toca-purple text-white print:bg-toca-navy">
+          <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
+            <ChevronLeft size={20} />
           </button>
-
-          <div className="text-center">
-            <h2 className="text-xl font-bold">
-              {format(currentMonth, 'MMMM yyyy')}
-            </h2>
-          </div>
-
-          <button
-            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            <ChevronRight size={24} />
+          <h2 className="text-lg font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
+          <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
+            <ChevronRight size={20} />
           </button>
         </div>
       ) : viewMode === 'day' && selectedDayDate ? (
         /* Day Navigation */
-        <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-toca-navy to-toca-purple rounded-xl p-4 text-white">
+        <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-toca-navy to-toca-purple text-white">
           <button
             onClick={() => {
               const currentDate = parseISO(selectedDayDate);
@@ -370,23 +413,14 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
               prevDate.setDate(prevDate.getDate() - 1);
               setSelectedDayDate(prevDate.toISOString().split('T')[0]);
             }}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={20} />
           </button>
-
           <div className="text-center">
-            <h2 className="text-xl font-bold">
-              {format(parseISO(selectedDayDate), 'EEEE, MMM d')}
-            </h2>
-            <button 
-              onClick={() => setViewMode('list')}
-              className="text-sm text-white/70 hover:text-white transition-colors"
-            >
-              ← Back to list
-            </button>
+            <h2 className="text-lg font-bold">{format(parseISO(selectedDayDate), 'EEE, MMM d')}</h2>
+            <button onClick={() => setViewMode('list')} className="text-xs text-white/70 hover:text-white">← Back to list</button>
           </div>
-
           <button
             onClick={() => {
               const currentDate = parseISO(selectedDayDate);
@@ -394,49 +428,41 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
               nextDate.setDate(nextDate.getDate() + 1);
               setSelectedDayDate(nextDate.toISOString().split('T')[0]);
             }}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={20} />
           </button>
         </div>
       ) : viewMode === 'list' ? (
-        /* List View Header - No week navigation needed */
-        <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-toca-navy to-toca-purple rounded-xl p-4 text-white">
-          <div className="text-center flex-1">
-            <h2 className="text-xl font-bold">All Upcoming Events</h2>
-            <p className="text-sm text-white/70">
-              {allDaysWithEvents.length} days with events
-            </p>
-          </div>
+        /* List View Header - Compact */
+        <div className="flex items-center justify-center px-3 py-2 bg-gradient-to-r from-toca-navy to-toca-purple text-white">
+          <h2 className="text-lg font-bold">All Upcoming Events</h2>
+          <span className="text-xs text-white/70 ml-2">({allDaysWithEvents.length} days)</span>
         </div>
       ) : (
-        /* Week Navigation (for week view) */
-        <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-toca-navy to-toca-purple rounded-xl p-4 text-white">
+        /* Week Navigation - Compact */
+        <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-toca-navy to-toca-purple text-white">
           <button
             onClick={() => setCurrentWeekIndex(Math.max(0, currentWeekIndex - 1))}
             disabled={currentWeekIndex === 0}
-            className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={20} />
           </button>
-
           <div className="text-center">
-            <h2 className="text-xl font-bold">
-              {format(parseISO(currentWeek.weekStart), 'MMM d')} -{' '}
-              {format(parseISO(currentWeek.weekEnd), 'MMM d, yyyy')}
+            <h2 className="text-base font-bold">
+              {format(parseISO(currentWeek.weekStart), 'MMM d')} - {format(parseISO(currentWeek.weekEnd), 'MMM d, yyyy')}
             </h2>
-            <p className="text-sm text-white/70">
-              Week {currentWeekIndex + 1} of {schedule.length}
-              {weekEventCount > 0 && ` • ${weekEventCount} events`}
+            <p className="text-xs text-white/70">
+              Week {currentWeekIndex + 1} of {schedule.length} {weekEventCount > 0 && `• ${weekEventCount} events`}
             </p>
           </div>
-
           <button
             onClick={() => setCurrentWeekIndex(Math.min(schedule.length - 1, currentWeekIndex + 1))}
             disabled={currentWeekIndex === schedule.length - 1}
-            className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={20} />
           </button>
         </div>
       )}
@@ -712,10 +738,12 @@ function EventCard({
             {event.endTime && ` - ${formatTime(event.endTime)}`}
           </span>
           
-          {event.facilityName && (
+          {(event.facilityName || event.spaceName) && (
             <span className="flex items-center gap-1.5 text-gray-700">
               <MapPin size={14} className="text-toca-purple" />
               {event.facilityName}
+              {event.spaceName && event.facilityName && ' • '}
+              {event.spaceName && <span className="text-gray-500">{event.spaceName}</span>}
             </span>
           )}
           
@@ -823,11 +851,14 @@ function EventDetailModal({
           </div>
 
           {/* Location */}
-          {(event.facilityName || event.location) && (
+          {(event.facilityName || event.spaceName || event.location) && (
             <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
               <MapPin className="w-5 h-5 text-toca-purple mt-0.5 flex-shrink-0" />
               <div>
                 <p className="font-semibold text-gray-900">{event.facilityName}</p>
+                {event.spaceName && (
+                  <p className="text-sm text-toca-purple font-medium">{event.spaceName}</p>
+                )}
                 {event.location && <p className="text-sm text-gray-600">{event.location}</p>}
               </div>
             </div>

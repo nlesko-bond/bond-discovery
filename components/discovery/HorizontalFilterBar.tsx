@@ -58,7 +58,7 @@ export function HorizontalFilterBar({
   const searchRef = useRef<HTMLDivElement>(null);
   
   // Get enabled filters from config
-  const enabledFilters = config.features.enableFilters || ['facility', 'programType', 'sport', 'age', 'dateRange', 'program'];
+  const enabledFilters = config.features.enableFilters || ['search', 'facility', 'programType', 'sport', 'age', 'dateRange', 'program'];
   
   // Search suggestions based on query
   const searchSuggestions = useMemo(() => {

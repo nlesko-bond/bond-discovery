@@ -367,6 +367,7 @@ export function programsToCalendarEvents(programs: Program[]): CalendarEvent[] {
           endTime: event.endTime || session.endTime || '',
           facilityId: event.facilityId || program.facilityId || '',
           facilityName: event.facilityName || program.facilityName || '',
+          spaceName: (event as any).spaceName || (event as any).space?.name,  // Resource/court/field
           location: event.location,
           maxParticipants: event.maxParticipants || session.capacity,
           currentParticipants: event.currentParticipants || session.currentEnrollment,
