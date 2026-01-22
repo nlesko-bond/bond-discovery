@@ -127,6 +127,7 @@ export async function createPageConfig(config: {
   defaultParams?: Record<string, string>;
   cacheTtl?: number;
   isActive?: boolean;
+  partnerGroupId?: string;
 }): Promise<DiscoveryConfig> {
   const { data, error } = await supabase
     .from('discovery_pages')
@@ -136,6 +137,7 @@ export async function createPageConfig(config: {
       organization_ids: config.organizationIds.map(Number),
       facility_ids: config.facilityIds?.map(Number) || [],
       api_key: config.apiKey || null,
+      partner_group_id: config.partnerGroupId || null,
       branding: {
         companyName: config.branding?.companyName || config.name,
         primaryColor: config.branding?.primaryColor || '#1E2761',
@@ -149,7 +151,7 @@ export async function createPageConfig(config: {
         showAvailability: config.features?.showAvailability ?? true,
         showMembershipBadges: config.features?.showMembershipBadges ?? true,
         showAgeGender: config.features?.showAgeGender ?? true,
-        enableFilters: config.features?.enableFilters || ['facility', 'programType', 'sport', 'age', 'date'],
+        enableFilters: config.features?.enableFilters || ['facility', 'programType', 'sport', 'age', 'dateRange'],
         defaultView: config.features?.defaultView || 'programs',
         allowViewToggle: config.features?.allowViewToggle ?? true,
       },

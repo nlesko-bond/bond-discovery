@@ -1,11 +1,9 @@
 import Link from 'next/link';
 import { 
-  Settings, 
-  Building2, 
-  Palette, 
-  SlidersHorizontal,
   LayoutDashboard,
-  FileText
+  Users,
+  FileText,
+  HelpCircle
 } from 'lucide-react';
 
 export default function AdminLayout({
@@ -19,19 +17,9 @@ export default function AdminLayout({
         <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-4">
-                <Link 
-                  href="/toca"
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                  <FileText size={20} />
-                  <span className="hidden sm:inline">Preview TOCA</span>
-                </Link>
-                <div className="h-6 w-px bg-gray-300" />
-                <h1 className="text-xl font-bold text-gray-900">
-                  Bond Discovery Admin
-                </h1>
-              </div>
+              <h1 className="text-xl font-bold text-gray-900">
+                Bond Discovery Admin
+              </h1>
             </div>
           </div>
         </header>
@@ -43,21 +31,18 @@ export default function AdminLayout({
               <NavLink href="/admin" icon={LayoutDashboard}>
                 Dashboard
               </NavLink>
+              <NavLink href="/admin/partners" icon={Users}>
+                Partner Groups
+              </NavLink>
               <NavLink href="/admin/pages" icon={FileText}>
-                Pages
+                Discovery Pages
               </NavLink>
-              <NavLink href="/admin/organizations" icon={Building2}>
-                Organizations
-              </NavLink>
-              <NavLink href="/admin/branding" icon={Palette}>
-                Branding
-              </NavLink>
-              <NavLink href="/admin/filters" icon={SlidersHorizontal}>
-                Filters
-              </NavLink>
-              <NavLink href="/admin/settings" icon={Settings}>
-                Settings
-              </NavLink>
+              
+              <div className="pt-4 mt-4 border-t border-gray-200">
+                <NavLink href="/admin/help" icon={HelpCircle}>
+                  Help & Docs
+                </NavLink>
+              </div>
             </nav>
           </aside>
 

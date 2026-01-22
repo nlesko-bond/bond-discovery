@@ -40,6 +40,8 @@ export async function POST(request: NextRequest) {
       slug: body.slug,
       organizationIds: body.organizationIds,
       facilityIds: body.facilityIds || [],
+      apiKey: body.apiKey,
+      partnerGroupId: body.partner_group_id,
       branding: {
         ...defaultConfig.branding,
         ...body.branding,
