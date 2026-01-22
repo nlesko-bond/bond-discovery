@@ -4,7 +4,14 @@ import { supabase, DiscoveryPageRow } from './supabase';
 /**
  * Convert database row to DiscoveryConfig
  */
+const DEFAULT_ENABLED_FILTERS: FilterType[] = ['search', 'facility', 'programType', 'sport', 'age', 'dateRange', 'program'];
+
 function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
+  // Use defaults if enableFilters is empty or missing
+  const enableFilters = (row.features.enableFilters && row.features.enableFilters.length > 0)
+    ? row.features.enableFilters as FilterType[]
+    : DEFAULT_ENABLED_FILTERS;
+    
   return {
     id: row.id,
     name: row.name,
@@ -15,7 +22,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
     branding: row.branding,
     features: {
       ...row.features,
-      enableFilters: row.features.enableFilters as FilterType[],
+      enableFilters,
     },
     allowedParams: row.allowed_params || [],
     defaultParams: row.default_params || {},
@@ -151,7 +158,9 @@ export async function createPageConfig(config: {
         showAvailability: config.features?.showAvailability ?? true,
         showMembershipBadges: config.features?.showMembershipBadges ?? true,
         showAgeGender: config.features?.showAgeGender ?? true,
-        enableFilters: config.features?.enableFilters || ['search', 'facility', 'programType', 'sport', 'age', 'dateRange', 'program'],
+        enableFilters: (config.features?.enableFilters && config.features.enableFilters.length > 0) 
+          ? config.features.enableFilters 
+          : ['search', 'facility', 'programType', 'sport', 'age', 'dateRange', 'program'],
         defaultView: config.features?.defaultView || 'programs',
         allowViewToggle: config.features?.allowViewToggle ?? true,
       },

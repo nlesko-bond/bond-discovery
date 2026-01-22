@@ -273,9 +273,9 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
   const hasEventsThisWeek = currentWeek.days.some(day => day.events.length > 0);
 
   return (
-    <div className="relative">
-      {/* Sticky Header with stats and controls */}
-      <div className="sticky top-0 z-20 bg-gray-50 px-3 py-2 border-b border-gray-200">
+    <div>
+      {/* Header with stats and controls - sticks below main header */}
+      <div className="sticky top-[57px] z-20 bg-gray-50 px-3 py-2 border-b border-gray-200 -mx-3 sm:-mx-4 lg:-mx-6">
         <div className="flex items-center justify-between gap-2">
           {/* Event count - compact */}
           <div className="flex items-center gap-1.5 text-xs text-gray-500">
