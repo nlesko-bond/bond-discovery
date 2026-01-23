@@ -764,6 +764,8 @@ function EventCard({
   // Check registration status
   const isRegistrationOpen = event.registrationWindowStatus === 'open';
   const isRegistrationClosed = event.registrationWindowStatus === 'closed' || event.registrationWindowStatus === 'ended';
+  const isRegistrationNotYetOpen = event.registrationWindowStatus === 'not_opened_yet';
+  const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
 
   // Get start time - try multiple sources
   const startTimeStr = formatTime(event.startTime) || formatTime(event.date) || '';
@@ -805,7 +807,12 @@ function EventCard({
                   Registration Closed
                 </span>
               )}
-              {config.features.showAvailability && spotsInfo && !isRegistrationClosed && (
+              {isRegistrationNotYetOpen && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-600">
+                  Coming Soon
+                </span>
+              )}
+              {config.features.showAvailability && spotsInfo && !isRegistrationUnavailable && (
                 <span className={cn(
                   'text-xs font-medium px-2 py-0.5 rounded-full',
                   isFull && 'bg-red-100 text-red-700',
@@ -879,9 +886,9 @@ function EventCard({
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 className="inline-flex items-center gap-1 font-medium ml-auto hover:opacity-80"
-                style={{ color: isRegistrationClosed ? '#6B7280' : secondaryColor }}
+                style={{ color: isRegistrationUnavailable ? '#6B7280' : secondaryColor }}
               >
-                {isRegistrationClosed ? 'Learn More' : 'Register'} <ExternalLink size={12} />
+                {isRegistrationUnavailable ? 'Learn More' : 'Register'} <ExternalLink size={12} />
               </a>
             )}
           </div>
@@ -904,6 +911,8 @@ function EventDetailModal({
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
   const isRegistrationClosed = event.registrationWindowStatus === 'closed' || event.registrationWindowStatus === 'ended';
+  const isRegistrationNotYetOpen = event.registrationWindowStatus === 'not_opened_yet';
+  const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
   
   // Close on escape key
   useEffect(() => {
@@ -944,11 +953,16 @@ function EventDetailModal({
             {event.sessionName && event.sessionName !== event.programName && (
               <p className="text-white/90 mt-1">{event.sessionName}</p>
             )}
-            {(event.sport || event.programType || isRegistrationClosed) && (
+            {(event.sport || event.programType || isRegistrationUnavailable) && (
               <div className="flex flex-wrap items-center gap-2 mt-3">
                 {isRegistrationClosed && (
                   <span className="text-xs bg-white/30 px-2.5 py-1 rounded-full font-medium">
                     Registration Closed
+                  </span>
+                )}
+                {isRegistrationNotYetOpen && (
+                  <span className="text-xs bg-white/30 px-2.5 py-1 rounded-full font-medium">
+                    Coming Soon
                   </span>
                 )}
                 {event.sport && (
@@ -1077,12 +1091,12 @@ function EventDetailModal({
             rel="noopener noreferrer"
             className="w-full py-3.5 text-white font-semibold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg"
             style={{ 
-              background: isRegistrationClosed 
+              background: isRegistrationUnavailable 
                 ? '#9CA3AF' 
                 : `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
             }}
           >
-            {isRegistrationClosed ? 'Learn More' : 'Register Now'} <ExternalLink size={16} />
+            {isRegistrationUnavailable ? 'Learn More' : 'Register Now'} <ExternalLink size={16} />
           </a>
         </div>
       </div>
