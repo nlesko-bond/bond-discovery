@@ -2,13 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Star, ExternalLink } from 'lucide-react';
-import { Product } from '@/types';
+import { Product, DiscoveryConfig } from '@/types';
 import { formatPrice, buildRegistrationUrl, cn } from '@/lib/utils';
 
 interface PricingCarouselProps {
   products: Product[];
   baseRegistrationUrl?: string;
   className?: string;
+  config?: DiscoveryConfig;
 }
 
 /**
@@ -22,12 +23,17 @@ interface PricingCarouselProps {
 export function PricingCarousel({ 
   products, 
   baseRegistrationUrl, 
-  className 
+  className,
+  config
 }: PricingCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  
+  // Get brand colors
+  const primaryColor = config?.branding?.primaryColor || '#1E2761';
+  const secondaryColor = config?.branding?.secondaryColor || '#6366F1';
 
   // Separate member and regular products
   const regularProducts = products.filter(p => !p.isMemberProduct);
@@ -101,6 +107,8 @@ export function PricingCarousel({
             product={product}
             registrationUrl={buildRegistrationUrl(baseRegistrationUrl, { productId: product.id })}
             isFirstMember={index === regularProducts.length && memberProducts.length > 0}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
           />
         ))}
       </div>
@@ -119,12 +127,11 @@ export function PricingCarousel({
                   behavior: 'smooth',
                 });
               }}
-              className={cn(
-                'w-2 h-2 rounded-full transition-all',
-                index === activeIndex
-                  ? 'bg-toca-purple w-4'
-                  : 'bg-gray-300 hover:bg-gray-400'
-              )}
+              className="w-2 h-2 rounded-full transition-all"
+              style={{
+                backgroundColor: index === activeIndex ? secondaryColor : '#D1D5DB',
+                width: index === activeIndex ? '1rem' : '0.5rem',
+              }}
             />
           ))}
         </div>
@@ -138,10 +145,14 @@ function PricingCard({
   product,
   registrationUrl,
   isFirstMember,
+  primaryColor,
+  secondaryColor,
 }: {
   product: Product;
   registrationUrl?: string;
   isFirstMember?: boolean;
+  primaryColor: string;
+  secondaryColor: string;
 }) {
   const lowestPrice = product.prices.reduce(
     (min, p) => (p.price < min ? p.price : min),
@@ -162,8 +173,21 @@ function PricingCard({
         'flex-shrink-0 w-[160px] sm:w-[180px] snap-start p-4 rounded-xl border-2 transition-all flex flex-col',
         isMember
           ? 'bg-gradient-to-b from-amber-50 to-white border-amber-200'
-          : 'bg-white border-gray-200 hover:border-toca-purple/30 hover:shadow-md'
+          : 'bg-white border-gray-200 hover:shadow-md'
       )}
+      style={{
+        borderColor: isMember ? undefined : undefined,
+      }}
+      onMouseEnter={(e) => {
+        if (!isMember) {
+          e.currentTarget.style.borderColor = `${secondaryColor}40`;
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isMember) {
+          e.currentTarget.style.borderColor = '#E5E7EB';
+        }
+      }}
     >
       {/* Member Badge */}
       {isMember && (
@@ -206,12 +230,12 @@ function PricingCard({
           href={registrationUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className={cn(
-            'mt-3 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-semibold transition-colors',
-            isMember
-              ? 'bg-amber-600 text-white hover:bg-amber-700'
-              : 'bg-toca-navy text-white hover:bg-toca-purple'
-          )}
+          className="mt-3 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-semibold transition-opacity text-white hover:opacity-90"
+          style={{
+            background: isMember 
+              ? '#D97706' 
+              : `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`
+          }}
         >
           Select <ExternalLink size={12} />
         </a>

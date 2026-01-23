@@ -152,8 +152,11 @@ export function ProgramCard({ program, config, autoExpand = false }: ProgramCard
       {/* Content */}
       <div className="p-5">
         {/* Title */}
-        <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-indigo-600 transition-colors">
-          {program.name}
+        <h3 
+          className="text-lg font-bold text-gray-900 mb-1 line-clamp-2 transition-colors"
+          style={{ '--hover-color': secondaryColor } as React.CSSProperties}
+        >
+          <span className="group-hover:opacity-80">{program.name}</span>
         </h3>
 
         {/* Facility & Location */}
@@ -426,6 +429,7 @@ function SessionCard({
           <PricingCarousel 
             products={products}
             baseRegistrationUrl={baseLink}
+            config={config}
           />
         </div>
       )}
