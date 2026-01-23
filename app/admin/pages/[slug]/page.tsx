@@ -32,6 +32,7 @@ interface PageConfig {
   facilityIds?: string[];
   excludedProgramIds?: string[]; // Programs to exclude from this page
   apiKey?: string; // Per-page API key
+  gtmId?: string; // Page-level GTM ID (overrides partner group)
   features: {
     showPricing: boolean;
     showAvailability: boolean;
@@ -688,6 +689,25 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                     )}
                   </button>
                 </div>
+              </div>
+            </div>
+            
+            <hr className="my-6" />
+            
+            <h3 className="font-semibold text-gray-900 mb-4">Analytics</h3>
+            <div className="grid grid-cols-1 gap-6">
+              <div>
+                <label className="label">Google Tag Manager ID (Optional)</label>
+                <input
+                  type="text"
+                  className="input font-mono"
+                  placeholder="GTM-XXXXXX"
+                  value={config.gtmId || ''}
+                  onChange={(e) => setConfig({ ...config, gtmId: e.target.value || undefined })}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Page-specific GTM container ID. Leave empty to inherit from partner group.
+                </p>
               </div>
             </div>
             

@@ -20,6 +20,7 @@ import { programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers
 import { buildUrl, getSportGradient, cn } from '@/lib/utils';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skeleton';
+import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
 
 interface DiscoveryPageProps {
   initialPrograms: Program[];
@@ -117,6 +118,8 @@ export function DiscoveryPage({
   // Copy current URL to clipboard
   const handleShare = useCallback(async () => {
     const url = window.location.href;
+    // Track share event
+    gtmEvent.shareLink(config.slug, url);
     try {
       await navigator.clipboard.writeText(url);
       setShowCopied(true);
@@ -638,9 +641,11 @@ export function DiscoveryPage({
 
   // Handle view mode change
   const handleViewModeChange = useCallback((newMode: ViewMode) => {
+    // Track view mode change
+    gtmEvent.viewModeChanged(viewMode, newMode);
     setViewMode(newMode);
     updateUrl(filters, newMode);
-  }, [filters, updateUrl]);
+  }, [filters, updateUrl, viewMode]);
 
   // Count active filters
   const activeFilterCount = useMemo(() => {
@@ -661,6 +666,9 @@ export function DiscoveryPage({
       className="min-h-screen bg-gray-50"
       style={{ fontFamily: config.branding.fontFamily || 'inherit' }}
     >
+      {/* Google Tag Manager */}
+      <GoogleTagManager gtmId={config.gtmId} />
+      
       {/* Header - Conditional based on headerDisplay setting */}
       {config.features.headerDisplay !== 'hidden' && (
         <header className={cn(

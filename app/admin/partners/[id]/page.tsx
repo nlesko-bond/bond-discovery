@@ -17,6 +17,7 @@ interface PartnerGroup {
   name: string;
   slug: string;
   api_key?: string;
+  gtm_id?: string;
   branding: {
     companyName: string;
     primaryColor: string;
@@ -74,6 +75,7 @@ export default function EditPartnerPage({ params }: { params: { id: string } }) 
         body: JSON.stringify({
           name: partner.name,
           api_key: partner.api_key,
+          gtm_id: partner.gtm_id,
           branding: partner.branding,
           default_features: partner.default_features,
         }),
@@ -235,6 +237,25 @@ export default function EditPartnerPage({ params }: { params: { id: string } }) 
             />
             <p className="text-xs text-gray-500 mt-1">
               All pages under this partner will use this API key
+            </p>
+          </div>
+        </div>
+        
+        <hr className="my-6" />
+        
+        <h3 className="font-semibold text-gray-900 mb-4">Analytics</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="md:col-span-2">
+            <label className="label">Google Tag Manager ID</label>
+            <input
+              type="text"
+              className="input font-mono"
+              placeholder="GTM-XXXXXX"
+              value={partner.gtm_id || ''}
+              onChange={(e) => setPartner({ ...partner, gtm_id: e.target.value || undefined })}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              GTM container ID for tracking. All pages under this partner will use this GTM ID unless overridden at page level.
             </p>
           </div>
         </div>

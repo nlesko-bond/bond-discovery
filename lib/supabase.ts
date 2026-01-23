@@ -38,8 +38,11 @@ export interface DiscoveryPageRow {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // GTM tracking
+  gtm_id: string | null;
   // Joined from partner_groups
   partner_group?: {
     api_key: string | null;
+    gtm_id: string | null;
   } | null;
 }

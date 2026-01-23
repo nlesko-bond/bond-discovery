@@ -316,6 +316,9 @@ export interface DiscoveryConfig {
   // API (server-side only)
   apiKey?: string;
   
+  // Analytics
+  gtmId?: string; // Google Tag Manager container ID (inherits from partner group if not set)
+  
   // URL Parameters
   allowedParams: string[];
   defaultParams: Record<string, string>;

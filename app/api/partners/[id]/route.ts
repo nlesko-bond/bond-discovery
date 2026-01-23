@@ -32,6 +32,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const updateData: any = {};
     if (body.name !== undefined) updateData.name = body.name;
     if (body.api_key !== undefined) updateData.api_key = body.api_key;
+    if (body.gtm_id !== undefined) updateData.gtm_id = body.gtm_id;
     if (body.branding !== undefined) updateData.branding = body.branding;
     if (body.default_features !== undefined) updateData.default_features = body.default_features;
     if (body.is_active !== undefined) updateData.is_active = body.is_active;

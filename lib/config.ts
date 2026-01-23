@@ -21,6 +21,9 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
   
   // Get API key: page-level first, then inherit from partner group
   const apiKey = row.api_key || row.partner_group?.api_key || undefined;
+  
+  // Get GTM ID: page-level first, then inherit from partner group
+  const gtmId = row.gtm_id || row.partner_group?.gtm_id || undefined;
     
   return {
     id: row.id,
@@ -29,6 +32,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
     organizationIds: row.organization_ids.map(String),
     facilityIds: row.facility_ids?.map(String) || [],
     apiKey,
+    gtmId,
     branding: row.branding,
     features: {
       ...row.features,
@@ -84,7 +88,7 @@ export async function getAllPageConfigs(): Promise<DiscoveryConfig[]> {
     .from('discovery_pages')
     .select(`
       *,
-      partner_group:partner_groups(api_key)
+      partner_group:partner_groups(api_key, gtm_id)
     `)
     .eq('is_active', true)
     .order('name');
@@ -106,7 +110,7 @@ export async function getConfigBySlug(slug: string): Promise<DiscoveryConfig | n
     .from('discovery_pages')
     .select(`
       *,
-      partner_group:partner_groups(api_key)
+      partner_group:partner_groups(api_key, gtm_id)
     `)
     .eq('slug', slug)
     .single();
@@ -127,7 +131,7 @@ export async function getConfig(configId: string = 'default'): Promise<Discovery
     .from('discovery_pages')
     .select(`
       *,
-      partner_group:partner_groups(api_key)
+      partner_group:partner_groups(api_key, gtm_id)
     `)
     .eq('id', configId)
     .single();
@@ -212,6 +216,7 @@ export async function updatePageConfig(slug: string, updates: Partial<DiscoveryC
   if (updates.organizationIds !== undefined) updateData.organization_ids = updates.organizationIds.map(Number);
   if (updates.facilityIds !== undefined) updateData.facility_ids = updates.facilityIds.map(Number);
   if (updates.apiKey !== undefined) updateData.api_key = updates.apiKey;
+  if (updates.gtmId !== undefined) updateData.gtm_id = updates.gtmId;
   if (updates.branding !== undefined) updateData.branding = updates.branding;
   if (updates.features !== undefined) updateData.features = updates.features;
   if (updates.allowedParams !== undefined) updateData.allowed_params = updates.allowedParams;
