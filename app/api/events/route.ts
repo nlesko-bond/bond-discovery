@@ -7,6 +7,30 @@ import { Program, Session, SessionEvent } from '@/types';
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
 
+/**
+ * Calculate registration status from session dates
+ * This is more accurate than the event's registrationWindowStatus
+ */
+function calculateSessionRegistrationStatus(
+  registrationStartDate?: string,
+  registrationEndDate?: string
+): string {
+  const today = new Date().toISOString().split('T')[0];
+  
+  // If registration hasn't started yet
+  if (registrationStartDate && registrationStartDate > today) {
+    return 'not_opened_yet';
+  }
+  
+  // If registration has ended
+  if (registrationEndDate && registrationEndDate < today) {
+    return 'closed';
+  }
+  
+  // Registration is open (or no dates specified)
+  return 'open';
+}
+
 interface TransformedEvent {
   id: string;
   title: string;
@@ -145,6 +169,12 @@ export async function GET(request: Request) {
                   ? event.resources.map((r: any) => r.name).filter(Boolean).join(', ')
                   : undefined;
                 
+                // Calculate registration status from SESSION dates (more accurate than event status)
+                const sessionRegistrationStatus = calculateSessionRegistrationStatus(
+                  session.registrationStartDate,
+                  session.registrationEndDate
+                );
+                
                 const transformedEvent: TransformedEvent = {
                   id: String(event.id),
                   title: event.title || session.name || program.name,
@@ -160,7 +190,7 @@ export async function GET(request: Request) {
                   sport: program.sport,
                   type: program.type,
                   linkSEO: session.linkSEO || program.linkSEO,
-                  registrationWindowStatus: event.registrationWindowStatus,
+                  registrationWindowStatus: sessionRegistrationStatus,
                   maxParticipants: event.maxParticipants,
                   currentParticipants: event.currentParticipants,
                   startingPrice,

@@ -389,24 +389,30 @@ function SessionCard({
                 {facilityName}
               </span>
             )}
-            <Link 
-              href={scheduleLink}
-              className="flex items-center gap-1 font-medium hover:opacity-80"
-              style={{ color: secondaryColor }}
-            >
-              <Clock size={12} />
-              View Schedule
-            </Link>
-            {config.features.showPricing && products.length > 0 && (
-              <button
-                onClick={() => setShowPricing(!showPricing)}
+            {/* Schedule & Pricing links inline */}
+            <span className="flex items-center gap-2">
+              <Link 
+                href={scheduleLink}
                 className="flex items-center gap-1 font-medium hover:opacity-80"
                 style={{ color: secondaryColor }}
               >
-                <DollarSign size={12} />
-                {showPricing ? 'Hide' : 'View'} Pricing
-              </button>
-            )}
+                <Clock size={12} />
+                Schedule
+              </Link>
+              {config.features.showPricing && products.length > 0 && (
+                <>
+                  <span className="text-gray-300">|</span>
+                  <button
+                    onClick={() => setShowPricing(!showPricing)}
+                    className="flex items-center gap-1 font-medium hover:opacity-80"
+                    style={{ color: secondaryColor }}
+                  >
+                    <DollarSign size={12} />
+                    {showPricing ? 'Hide' : ''} Pricing
+                  </button>
+                </>
+              )}
+            </span>
           </div>
         </div>
         
