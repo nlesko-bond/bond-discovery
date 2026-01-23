@@ -50,11 +50,25 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   
-  // Use URL scheduleView param first, then config default, then 'week'
+  // Detect if mobile (client-side only)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  // Use URL scheduleView param first, then config default, then 'list' for mobile or 'week' for desktop
   const [viewMode, setViewModeState] = useState<ViewMode>(() => {
     const urlScheduleView = searchParams.get('scheduleView') as ViewMode | null;
     if (urlScheduleView && ['list', 'day', 'week', 'month'].includes(urlScheduleView)) {
       return urlScheduleView;
+    }
+    // Check for mobile on initial render (SSR fallback to week)
+    const isMobileInitial = typeof window !== 'undefined' && window.innerWidth < 640;
+    if (isMobileInitial && !config.features.defaultScheduleView) {
+      return 'list';
     }
     return (config.features.defaultScheduleView as ViewMode) || 'week';
   });
@@ -420,11 +434,14 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
         </div>
       </div>
       
-      {/* Navigation - compact, inline with content */}
+      {/* Navigation - sticky on mobile for calendar views */}
+      <div className={cn(
+        viewMode !== 'list' && 'sticky top-[105px] sm:top-[57px] z-10'
+      )}>
       {viewMode === 'month' ? (
         /* Month Navigation */
         <div 
-          className="flex items-center justify-between px-3 py-2 text-white"
+          className="flex items-center justify-between px-3 py-2 text-white rounded-t-lg"
           style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
         >
           <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
@@ -468,23 +485,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
             <ChevronRight size={20} />
           </button>
         </div>
-      ) : viewMode === 'list' ? (
-        /* List View Header */
-        <div 
-          className="flex items-center justify-between px-4 py-3 text-white rounded-t-xl"
-          style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
-        >
-          <div>
-            <h2 className="text-lg font-bold">Upcoming Events</h2>
-            <p className="text-sm text-white/70">
-              {allDaysWithEvents.length} days with events
-            </p>
-          </div>
-          <div className="text-right text-sm text-white/70">
-            <span className="font-medium text-white">{totalEvents}</span> total events
-          </div>
-        </div>
-      ) : (
+      ) : viewMode === 'list' ? null : (
         /* Week Navigation - Compact */
         <div 
           className="flex items-center justify-between px-3 py-2 text-white"
@@ -514,6 +515,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
           </button>
         </div>
       )}
+      </div>
 
       {/* Day View */}
       {viewMode === 'day' && selectedDayDate && (
@@ -814,14 +816,12 @@ function EventCard({
             </p>
           )}
 
-          {/* Details row */}
+          {/* Details row - show space name (most specific) or facility name */}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-            {(event.facilityName || event.spaceName) && (
+            {(event.spaceName || event.facilityName) && (
               <span className="flex items-center gap-1">
                 <MapPin size={13} className="text-gray-400" />
-                {event.facilityName}
-                {event.spaceName && event.facilityName && ' · '}
-                {event.spaceName}
+                {event.spaceName || event.facilityName}
               </span>
             )}
             

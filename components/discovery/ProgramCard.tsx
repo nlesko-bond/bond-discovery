@@ -291,7 +291,7 @@ export function ProgramCard({ program, config, autoExpand = false }: ProgramCard
 
 // Session card component
 function SessionCard({ 
-  session, 
+  session,
   config,
   programLinkSEO,
   programId,
@@ -304,6 +304,7 @@ function SessionCard({
   programName: string;
 }) {
   const pathname = usePathname();
+  const [showPricing, setShowPricing] = useState(false);
   const availability = getAvailabilityInfo(session.spotsRemaining, session.maxParticipants || session.capacity);
   const products = session.products || [];
   
@@ -373,6 +374,16 @@ function SessionCard({
               <Clock size={12} />
               View Schedule
             </Link>
+            {config.features.showPricing && products.length > 0 && (
+              <button
+                onClick={() => setShowPricing(!showPricing)}
+                className="flex items-center gap-1 font-medium hover:opacity-80"
+                style={{ color: secondaryColor }}
+              >
+                <DollarSign size={12} />
+                {showPricing ? 'Hide' : 'View'} Pricing
+              </button>
+            )}
           </div>
         </div>
         
@@ -399,13 +410,13 @@ function SessionCard({
         </div>
       </div>
 
-      {/* Products/Pricing Carousel - Only show when multiple products */}
-      {config.features.showPricing && products.length > 1 && (
-        <div className="mt-3 pt-3 border-t border-gray-100">
+      {/* Products/Pricing Carousel - Show when toggled via "View Pricing" button */}
+      {config.features.showPricing && showPricing && products.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-gray-100 animate-fade-in">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
               <DollarSign size={12} />
-              {products.length} pricing options
+              {products.length} pricing option{products.length !== 1 ? 's' : ''}
             </p>
           </div>
           <PricingCarousel 

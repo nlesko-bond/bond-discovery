@@ -129,6 +129,7 @@ export function HorizontalFilterBar({
     filters.programTypes?.length || 0,
     filters.sports?.length || 0,
     (filters.ageRange?.min || filters.ageRange?.max) ? 1 : 0,
+    (filters.gender && filters.gender !== 'all') ? 1 : 0,
     filters.dateRange?.start || filters.dateRange?.end ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
 
@@ -194,6 +195,9 @@ export function HorizontalFilterBar({
     if (key === 'sports') newFilters.sports = undefined;
     if (key === 'age') {
       newFilters.ageRange = undefined;
+    }
+    if (key === 'gender') {
+      newFilters.gender = undefined;
     }
     if (key === 'date') {
       newFilters.dateRange = undefined;
@@ -522,6 +526,53 @@ export function HorizontalFilterBar({
           </FilterDropdown>
         )}
 
+        {/* Gender Filter - only show if enabled */}
+        {enabledFilters.includes('gender') && (
+          <FilterDropdown
+            label="Gender"
+            icon={<Users size={14} />}
+            isOpen={openDropdown === 'gender'}
+            onToggle={() => setOpenDropdown(openDropdown === 'gender' ? null : 'gender')}
+            hasSelection={!!(filters.gender && filters.gender !== 'all')}
+            brandColor={secondaryColor}
+          >
+            <div className="py-1">
+              {[
+                { value: 'all', label: 'All Genders' },
+                { value: 'coed', label: 'Co-ed / Mixed' },
+                { value: 'male', label: 'Male / Boys' },
+                { value: 'female', label: 'Female / Girls' },
+              ].map(option => (
+                <button
+                  key={option.value}
+                  onClick={() => {
+                    onFilterChange({
+                      ...filters,
+                      gender: option.value === 'all' ? undefined : option.value as any,
+                    });
+                    setOpenDropdown(null);
+                  }}
+                  className={cn(
+                    'w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center justify-between',
+                    (filters.gender === option.value || (!filters.gender && option.value === 'all'))
+                      ? 'font-medium'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  )}
+                  style={(filters.gender === option.value || (!filters.gender && option.value === 'all'))
+                    ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor }
+                    : undefined
+                  }
+                >
+                  {option.label}
+                  {(filters.gender === option.value || (!filters.gender && option.value === 'all')) && (
+                    <Check size={14} style={{ color: secondaryColor }} />
+                  )}
+                </button>
+              ))}
+            </div>
+          </FilterDropdown>
+        )}
+
         {/* Clear All */}
         {activeFilterCount > 0 && (
           <button
@@ -588,6 +639,15 @@ export function HorizontalFilterBar({
             <FilterChip
               label={`Ages ${filters.ageRange?.min || 0}-${filters.ageRange?.max || '∞'}`}
               onRemove={() => clearFilter('age')}
+              brandColor={secondaryColor}
+            />
+          )}
+
+          {/* Gender Chip */}
+          {filters.gender && filters.gender !== 'all' && (
+            <FilterChip
+              label={filters.gender === 'coed' ? 'Co-ed' : filters.gender === 'male' ? 'Male/Boys' : 'Female/Girls'}
+              onRemove={() => clearFilter('gender')}
               brandColor={secondaryColor}
             />
           )}
