@@ -444,7 +444,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
       
       {/* Navigation - for calendar views */}
       <div className={cn(
-        viewMode !== 'list' && 'sticky top-[57px] z-10'
+        viewMode !== 'list' && 'sticky top-[105px] sm:top-[57px] z-10'
       )}>
       {viewMode === 'month' ? (
         /* Month Navigation */
@@ -699,9 +699,9 @@ function ListDaySection({
       className="relative"
       aria-label={`Events for ${format(parseISO(day.date), 'EEEE, MMMM d')}`}
     >
-      {/* Day Header - sticky with brand gradient */}
+      {/* Day Header - sticky with brand gradient (top position accounts for header height) */}
       <header 
-        className="sticky top-[57px] z-20 flex items-center gap-3 px-4 py-3 text-white rounded-t-xl shadow-md"
+        className="sticky top-[105px] sm:top-[57px] z-20 flex items-center gap-3 px-4 py-3 text-white rounded-t-xl shadow-md"
         style={{ 
           background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
         }}
