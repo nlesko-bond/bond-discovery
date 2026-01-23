@@ -56,9 +56,10 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
   
   // Use URL scheduleView param first, then config default
   // Note: We use a consistent default for SSR to avoid hydration mismatch
+  const validViewModes = ['list', 'table', 'day', 'week', 'month'];
   const [viewMode, setViewModeState] = useState<ViewMode>(() => {
     const urlScheduleView = searchParams.get('scheduleView') as ViewMode | null;
-    if (urlScheduleView && ['list', 'day', 'week', 'month'].includes(urlScheduleView)) {
+    if (urlScheduleView && validViewModes.includes(urlScheduleView)) {
       return urlScheduleView;
     }
     // Use list as default since it works well on both mobile and desktop
@@ -92,7 +93,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
   // Sync view mode from URL when it changes externally
   useEffect(() => {
     const urlScheduleView = searchParams.get('scheduleView') as ViewMode | null;
-    if (urlScheduleView && ['list', 'day', 'week', 'month'].includes(urlScheduleView) && urlScheduleView !== viewMode) {
+    if (urlScheduleView && validViewModes.includes(urlScheduleView) && urlScheduleView !== viewMode) {
       setViewModeState(urlScheduleView);
     }
   }, [searchParams]);
