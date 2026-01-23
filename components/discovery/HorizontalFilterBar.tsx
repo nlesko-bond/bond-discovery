@@ -57,6 +57,10 @@ export function HorizontalFilterBar({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   
+  // Dynamic colors from config
+  const primaryColor = config.branding.primaryColor || '#1E2761';
+  const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  
   // Use ref to avoid stale closure in debounce effect
   const filtersRef = useRef(filters);
   const onFilterChangeRef = useRef(onFilterChange);
@@ -205,8 +209,15 @@ export function HorizontalFilterBar({
 
   return (
     <div className="space-y-3">
-      {/* Filter Buttons Row */}
-      <div ref={dropdownRef} className="flex flex-wrap items-center gap-2">
+      {/* Filter Buttons Row - with CSS variables for colors */}
+      <div 
+        ref={dropdownRef} 
+        className="flex flex-wrap items-center gap-2"
+        style={{ 
+          '--brand-primary': primaryColor,
+          '--brand-secondary': secondaryColor,
+        } as React.CSSProperties}
+      >
         {/* Search Input with Autocomplete */}
         {enabledFilters.includes('search') && (
           <div ref={searchRef} className="relative">
@@ -253,9 +264,9 @@ export function HorizontalFilterBar({
                       onClick={() => handleSearchSuggestionClick(suggestion)}
                       className="w-full text-left px-3 py-2 rounded-md text-sm hover:bg-gray-50 flex items-center gap-2"
                     >
-                      {suggestion.type === 'program' && <Tag size={12} className="text-toca-purple" />}
-                      {suggestion.type === 'facility' && <MapPin size={12} className="text-toca-purple" />}
-                      {suggestion.type === 'sport' && <Activity size={12} className="text-toca-purple" />}
+                      {suggestion.type === 'program' && <Tag size={12} style={{ color: secondaryColor }} />}
+                      {suggestion.type === 'facility' && <MapPin size={12} style={{ color: secondaryColor }} />}
+                      {suggestion.type === 'sport' && <Activity size={12} style={{ color: secondaryColor }} />}
                       <span className="truncate">{suggestion.name}</span>
                       <span className="text-xs text-gray-400 capitalize ml-auto">{suggestion.type}</span>
                     </button>
@@ -275,30 +286,33 @@ export function HorizontalFilterBar({
             onToggle={() => setOpenDropdown(openDropdown === 'facility' ? null : 'facility')}
             hasSelection={(filters.facilityIds?.length || 0) > 0}
             selectionCount={filters.facilityIds?.length}
+            brandColor={secondaryColor}
           >
             <div className="p-2 max-h-64 overflow-y-auto">
-              {filterOptions.facilities.map(facility => (
-                <button
-                  key={facility.id}
-                  onClick={() => handleMultiSelect('facilityIds', facility.id)}
-                  className={cn(
-                    'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
-                    filters.facilityIds?.includes(facility.id)
-                      ? 'bg-toca-purple/10 text-toca-purple'
-                      : 'hover:bg-gray-50'
-                  )}
-                >
-                  <span className="truncate">{facility.name}</span>
-                  <div className="flex items-center gap-2">
-                    {facility.count !== undefined && (
-                      <span className="text-xs text-gray-400">{facility.count}</span>
+              {filterOptions.facilities.map(facility => {
+                const isSelected = filters.facilityIds?.includes(facility.id);
+                return (
+                  <button
+                    key={facility.id}
+                    onClick={() => handleMultiSelect('facilityIds', facility.id)}
+                    className={cn(
+                      'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
+                      !isSelected && 'hover:bg-gray-50'
                     )}
-                    {filters.facilityIds?.includes(facility.id) && (
-                      <Check size={14} className="text-toca-purple" />
-                    )}
-                  </div>
-                </button>
-              ))}
+                    style={isSelected ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor } : undefined}
+                  >
+                    <span className="truncate">{facility.name}</span>
+                    <div className="flex items-center gap-2">
+                      {facility.count !== undefined && (
+                        <span className="text-xs text-gray-400">{facility.count}</span>
+                      )}
+                      {isSelected && (
+                        <Check size={14} style={{ color: secondaryColor }} />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </FilterDropdown>
         )}
@@ -312,25 +326,28 @@ export function HorizontalFilterBar({
             onToggle={() => setOpenDropdown(openDropdown === 'program' ? null : 'program')}
             hasSelection={(filters.programIds?.length || 0) > 0}
             selectionCount={filters.programIds?.length}
+            brandColor={secondaryColor}
           >
             <div className="p-2 max-h-64 overflow-y-auto">
-              {filterOptions.programs.map(program => (
-                <button
-                  key={program.id}
-                  onClick={() => handleMultiSelect('programIds', program.id)}
-                  className={cn(
-                    'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
-                    filters.programIds?.includes(program.id)
-                      ? 'bg-toca-purple/10 text-toca-purple'
-                      : 'hover:bg-gray-50'
-                  )}
-                >
-                  <span className="truncate">{program.name}</span>
-                  {filters.programIds?.includes(program.id) && (
-                    <Check size={14} className="text-toca-purple" />
-                  )}
-                </button>
-              ))}
+              {filterOptions.programs.map(program => {
+                const isSelected = filters.programIds?.includes(program.id);
+                return (
+                  <button
+                    key={program.id}
+                    onClick={() => handleMultiSelect('programIds', program.id)}
+                    className={cn(
+                      'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
+                      !isSelected && 'hover:bg-gray-50'
+                    )}
+                    style={isSelected ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor } : undefined}
+                  >
+                    <span className="truncate">{program.name}</span>
+                    {isSelected && (
+                      <Check size={14} style={{ color: secondaryColor }} />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </FilterDropdown>
         )}
@@ -344,27 +361,30 @@ export function HorizontalFilterBar({
             onToggle={() => setOpenDropdown(openDropdown === 'session' ? null : 'session')}
             hasSelection={(filters.sessionIds?.length || 0) > 0}
             selectionCount={filters.sessionIds?.length}
+            brandColor={secondaryColor}
           >
             <div className="p-2 max-h-64 overflow-y-auto">
               {filterOptions.sessions
                 .filter(session => filters.programIds?.includes(session.programId))
-                .map(session => (
-                  <button
-                    key={session.id}
-                    onClick={() => handleMultiSelect('sessionIds', session.id)}
-                    className={cn(
-                      'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
-                      filters.sessionIds?.includes(session.id)
-                        ? 'bg-toca-purple/10 text-toca-purple'
-                        : 'hover:bg-gray-50'
-                    )}
-                  >
-                    <span className="truncate">{session.name}</span>
-                    {filters.sessionIds?.includes(session.id) && (
-                      <Check size={14} className="text-toca-purple" />
-                    )}
-                  </button>
-                ))}
+                .map(session => {
+                  const isSelected = filters.sessionIds?.includes(session.id);
+                  return (
+                    <button
+                      key={session.id}
+                      onClick={() => handleMultiSelect('sessionIds', session.id)}
+                      className={cn(
+                        'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
+                        !isSelected && 'hover:bg-gray-50'
+                      )}
+                      style={isSelected ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor } : undefined}
+                    >
+                      <span className="truncate">{session.name}</span>
+                      {isSelected && (
+                        <Check size={14} style={{ color: secondaryColor }} />
+                      )}
+                    </button>
+                  );
+                })}
             </div>
           </FilterDropdown>
         )}
@@ -378,30 +398,33 @@ export function HorizontalFilterBar({
             onToggle={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
             hasSelection={(filters.programTypes?.length || 0) > 0}
             selectionCount={filters.programTypes?.length}
+            brandColor={secondaryColor}
           >
             <div className="p-2">
-              {filterOptions.programTypes.map(type => (
-                <button
-                  key={type.id}
-                  onClick={() => handleMultiSelect('programTypes', type.id)}
-                  className={cn(
-                    'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
-                    (filters.programTypes as string[] | undefined)?.includes(type.id)
-                      ? 'bg-toca-purple/10 text-toca-purple'
-                      : 'hover:bg-gray-50'
-                  )}
-                >
-                  <span>{getProgramTypeLabel(type.id as any)}</span>
-                  <div className="flex items-center gap-2">
-                    {type.count !== undefined && (
-                      <span className="text-xs text-gray-400">{type.count}</span>
+              {filterOptions.programTypes.map(type => {
+                const isSelected = (filters.programTypes as string[] | undefined)?.includes(type.id);
+                return (
+                  <button
+                    key={type.id}
+                    onClick={() => handleMultiSelect('programTypes', type.id)}
+                    className={cn(
+                      'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
+                      !isSelected && 'hover:bg-gray-50'
                     )}
-                    {(filters.programTypes as string[] | undefined)?.includes(type.id) && (
-                      <Check size={14} className="text-toca-purple" />
-                    )}
-                  </div>
-                </button>
-              ))}
+                    style={isSelected ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor } : undefined}
+                  >
+                    <span>{getProgramTypeLabel(type.id as any)}</span>
+                    <div className="flex items-center gap-2">
+                      {type.count !== undefined && (
+                        <span className="text-xs text-gray-400">{type.count}</span>
+                      )}
+                      {isSelected && (
+                        <Check size={14} style={{ color: secondaryColor }} />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </FilterDropdown>
         )}
@@ -415,30 +438,33 @@ export function HorizontalFilterBar({
             onToggle={() => setOpenDropdown(openDropdown === 'sport' ? null : 'sport')}
             hasSelection={(filters.sports?.length || 0) > 0}
             selectionCount={filters.sports?.length}
+            brandColor={secondaryColor}
           >
             <div className="p-2 max-h-64 overflow-y-auto">
-              {filterOptions.sports.map(sport => (
-                <button
-                  key={sport.id}
-                  onClick={() => handleMultiSelect('sports', sport.id)}
-                  className={cn(
-                    'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
-                    filters.sports?.includes(sport.id)
-                      ? 'bg-toca-purple/10 text-toca-purple'
-                      : 'hover:bg-gray-50'
-                  )}
-                >
-                  <span>{getSportLabel(sport.id)}</span>
-                  <div className="flex items-center gap-2">
-                    {sport.count !== undefined && (
-                      <span className="text-xs text-gray-400">{sport.count}</span>
+              {filterOptions.sports.map(sport => {
+                const isSelected = filters.sports?.includes(sport.id);
+                return (
+                  <button
+                    key={sport.id}
+                    onClick={() => handleMultiSelect('sports', sport.id)}
+                    className={cn(
+                      'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
+                      !isSelected && 'hover:bg-gray-50'
                     )}
-                    {filters.sports?.includes(sport.id) && (
-                      <Check size={14} className="text-toca-purple" />
-                    )}
-                  </div>
-                </button>
-              ))}
+                    style={isSelected ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor } : undefined}
+                  >
+                    <span>{getSportLabel(sport.id)}</span>
+                    <div className="flex items-center gap-2">
+                      {sport.count !== undefined && (
+                        <span className="text-xs text-gray-400">{sport.count}</span>
+                      )}
+                      {isSelected && (
+                        <Check size={14} style={{ color: secondaryColor }} />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </FilterDropdown>
         )}
@@ -451,6 +477,7 @@ export function HorizontalFilterBar({
             isOpen={openDropdown === 'age'}
             onToggle={() => setOpenDropdown(openDropdown === 'age' ? null : 'age')}
             hasSelection={!!(filters.ageRange?.min || filters.ageRange?.max)}
+            brandColor={secondaryColor}
           >
             <div className="p-3 space-y-3">
               <div>
@@ -468,7 +495,8 @@ export function HorizontalFilterBar({
                     },
                   })}
                   placeholder="Any"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-toca-purple focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                  style={{ '--tw-ring-color': secondaryColor } as React.CSSProperties}
                 />
               </div>
               <div>
@@ -486,7 +514,8 @@ export function HorizontalFilterBar({
                     },
                   })}
                   placeholder="Any"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-toca-purple focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                  style={{ '--tw-ring-color': secondaryColor } as React.CSSProperties}
                 />
               </div>
             </div>
@@ -516,6 +545,7 @@ export function HorizontalFilterBar({
                 key={`facility-${id}`}
                 label={facility.name}
                 onRemove={() => handleMultiSelect('facilityIds', id)}
+                brandColor={secondaryColor}
               />
             ) : null;
           })}
@@ -528,6 +558,7 @@ export function HorizontalFilterBar({
                 key={`program-${id}`}
                 label={program.name}
                 onRemove={() => handleMultiSelect('programIds', id)}
+                brandColor={secondaryColor}
               />
             ) : null;
           })}
@@ -538,6 +569,7 @@ export function HorizontalFilterBar({
               key={`type-${type}`}
               label={getProgramTypeLabel(type as any)}
               onRemove={() => handleMultiSelect('programTypes', type)}
+              brandColor={secondaryColor}
             />
           ))}
 
@@ -547,6 +579,7 @@ export function HorizontalFilterBar({
               key={`sport-${sport}`}
               label={getSportLabel(sport)}
               onRemove={() => handleMultiSelect('sports', sport)}
+              brandColor={secondaryColor}
             />
           ))}
 
@@ -555,6 +588,7 @@ export function HorizontalFilterBar({
             <FilterChip
               label={`Ages ${filters.ageRange?.min || 0}-${filters.ageRange?.max || '∞'}`}
               onRemove={() => clearFilter('age')}
+              brandColor={secondaryColor}
             />
           )}
 
@@ -563,6 +597,7 @@ export function HorizontalFilterBar({
             <FilterChip
               label="Date Range"
               onRemove={() => clearFilter('date')}
+              brandColor={secondaryColor}
             />
           )}
         </div>
@@ -580,6 +615,7 @@ function FilterDropdown({
   hasSelection,
   selectionCount,
   children,
+  brandColor = '#6366F1',
 }: {
   label: string;
   icon: React.ReactNode;
@@ -588,6 +624,7 @@ function FilterDropdown({
   hasSelection?: boolean;
   selectionCount?: number;
   children: React.ReactNode;
+  brandColor?: string;
 }) {
   return (
     <div className="relative">
@@ -595,15 +632,21 @@ function FilterDropdown({
         onClick={onToggle}
         className={cn(
           'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-all',
-          hasSelection
-            ? 'bg-toca-purple/10 border-toca-purple/30 text-toca-purple'
-            : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+          !hasSelection && 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
         )}
+        style={hasSelection ? { 
+          backgroundColor: `${brandColor}15`, 
+          borderColor: `${brandColor}30`, 
+          color: brandColor 
+        } : undefined}
       >
         {icon}
         <span>{label}</span>
         {selectionCount != null && selectionCount > 0 && (
-          <span className="bg-toca-purple text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+          <span 
+            className="text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center"
+            style={{ backgroundColor: brandColor }}
+          >
             {selectionCount}
           </span>
         )}
@@ -620,13 +663,16 @@ function FilterDropdown({
 }
 
 // Filter Chip Component
-function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+function FilterChip({ label, onRemove, brandColor = '#6366F1' }: { label: string; onRemove: () => void; brandColor?: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-toca-purple/10 text-toca-purple text-sm font-medium rounded-full">
+    <span 
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full"
+      style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+    >
       {label}
       <button
         onClick={onRemove}
-        className="hover:bg-toca-purple/20 rounded-full p-0.5 transition-colors"
+        className="rounded-full p-0.5 transition-colors hover:opacity-70"
       >
         <X size={12} />
       </button>

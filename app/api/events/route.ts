@@ -40,6 +40,7 @@ export async function GET(request: Request) {
     ? searchParams.get('orgIds')!.split(/[_,]/).filter(Boolean) 
     : DEFAULT_ORG_IDS;
   const facilityId = searchParams.get('facilityId') || undefined;
+  const apiKey = searchParams.get('apiKey') || DEFAULT_API_KEY;
   
   // Default to today if no startDate specified (don't fetch past events)
   const today = new Date().toISOString().split('T')[0];
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
   const includePast = searchParams.get('includePast') === 'true';
   
   try {
-    const client = createBondClient(DEFAULT_API_KEY);
+    const client = createBondClient(apiKey);
     const allEvents: TransformedEvent[] = [];
     
     // First, get all programs with sessions

@@ -320,9 +320,12 @@ export function DiscoveryPage({
       setEventsLoading(true);
       setEventsError(null);
       
-      // Build URL with organization IDs from config
+      // Build URL with organization IDs from config and API key
       const orgIds = config.organizationIds.join(',');
-      const url = orgIds ? `/api/events?orgIds=${orgIds}` : '/api/events';
+      const params = new URLSearchParams();
+      if (orgIds) params.set('orgIds', orgIds);
+      if (config.apiKey) params.set('apiKey', config.apiKey);
+      const url = `/api/events?${params.toString()}`;
       
       fetch(url)
         .then(res => res.json())

@@ -50,11 +50,15 @@ const sportGradients: Record<string, string> = {
   volleyball: 'from-pink-500 to-rose-600',
   hockey: 'from-slate-500 to-gray-700',
   lacrosse: 'from-blue-600 to-indigo-700',
-  default: 'from-toca-navy to-toca-purple',
+  default: 'from-indigo-600 to-purple-600',
 };
 
 export function ProgramCard({ program, config, autoExpand = false }: ProgramCardProps) {
   const [expanded, setExpanded] = useState(autoExpand);
+  
+  // Dynamic colors from config
+  const primaryColor = config.branding.primaryColor || '#1E2761';
+  const secondaryColor = config.branding.secondaryColor || '#6366F1';
   
   const sessions = getSessions(program);
   // Include all sessions that haven't ended yet
@@ -148,7 +152,7 @@ export function ProgramCard({ program, config, autoExpand = false }: ProgramCard
       {/* Content */}
       <div className="p-5">
         {/* Title */}
-        <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-toca-purple transition-colors">
+        <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-indigo-600 transition-colors">
           {program.name}
         </h3>
 
@@ -230,7 +234,8 @@ export function ProgramCard({ program, config, autoExpand = false }: ProgramCard
               
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-toca-purple transition-all duration-200"
+                className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all duration-200"
+                style={{ '--hover-bg': secondaryColor } as React.CSSProperties}
               >
                 <span>Details</span>
                 <ChevronDown
@@ -270,7 +275,8 @@ export function ProgramCard({ program, config, autoExpand = false }: ProgramCard
                 href={buildRegistrationUrl(program.linkSEO)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-toca-navy text-white font-semibold rounded-xl hover:bg-toca-purple-dark transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-white font-semibold rounded-xl hover:opacity-90 transition-colors"
+                style={{ backgroundColor: primaryColor }}
               >
                 <span>View Program & Register</span>
                 <ExternalLink size={16} />
@@ -301,6 +307,9 @@ function SessionCard({
   const availability = getAvailabilityInfo(session.spotsRemaining, session.maxParticipants || session.capacity);
   const products = session.products || [];
   
+  // Dynamic colors from config
+  const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  
   const facilityName = session.facility?.name;
   const baseLink = session.linkSEO || programLinkSEO;
   
@@ -317,10 +326,13 @@ function SessionCard({
   const scheduleLink = `${pathname}?viewMode=schedule&scheduleView=list&programIds=${programId}&sessionIds=${session.id}`;
 
   return (
-    <div className={cn(
-      'p-3 bg-white rounded-xl border transition-all',
-      session.isFull ? 'border-gray-200 opacity-70' : 'border-gray-200 hover:border-toca-purple/50 hover:shadow-md'
-    )}>
+    <div 
+      className={cn(
+        'p-3 bg-white rounded-xl border transition-all',
+        session.isFull ? 'border-gray-200 opacity-70' : 'border-gray-200 hover:shadow-md'
+      )}
+      style={!session.isFull ? { '--hover-border': `${secondaryColor}50` } as React.CSSProperties : undefined}
+    >
       {/* Session Header with Register Button */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -355,7 +367,8 @@ function SessionCard({
             )}
             <Link 
               href={scheduleLink}
-              className="flex items-center gap-1 text-toca-purple hover:text-toca-purple-dark font-medium"
+              className="flex items-center gap-1 font-medium hover:opacity-80"
+              style={{ color: secondaryColor }}
             >
               <Clock size={12} />
               View Schedule
@@ -377,7 +390,8 @@ function SessionCard({
               href={registrationLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-toca-purple text-white text-xs font-semibold rounded-lg hover:bg-toca-purple-dark transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-colors"
+              style={{ backgroundColor: secondaryColor }}
             >
               Register <ExternalLink size={12} />
             </a>
@@ -455,7 +469,7 @@ function ProductCard({
                 'text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1',
                 isMember 
                   ? 'bg-amber-600 text-white hover:bg-amber-700' 
-                  : 'bg-toca-purple text-white hover:bg-toca-purple-dark'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
               )}
             >
               Select <ExternalLink size={10} />

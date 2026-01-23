@@ -14,7 +14,9 @@ interface PageProps {
 }
 
 async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
-  const client = createBondClient(DEFAULT_API_KEY);
+  // Use page-specific API key if configured, otherwise fall back to default
+  const apiKey = config.apiKey || DEFAULT_API_KEY;
+  const client = createBondClient(apiKey);
   const allPrograms: Program[] = [];
   const orgIds = config.organizationIds;
   const today = new Date().toISOString().split('T')[0];

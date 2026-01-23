@@ -44,6 +44,10 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
   const router = useRouter();
   const pathname = usePathname();
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
+  
+  // Dynamic colors from config
+  const primaryColor = config.branding.primaryColor || '#1E2761';
+  const secondaryColor = config.branding.secondaryColor || '#6366F1';
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   
   // Use URL scheduleView param first, then config default, then 'week'
@@ -300,8 +304,8 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
         <div className="flex items-center justify-between gap-2">
           {/* Event count - compact */}
           <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <div className="w-1.5 h-1.5 rounded-full bg-toca-purple" />
-            <span><span className="font-semibold text-toca-navy">{totalEvents?.toLocaleString() || 0}</span> events</span>
+            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: secondaryColor }} />
+            <span><span className="font-semibold" style={{ color: primaryColor }}>{totalEvents?.toLocaleString() || 0}</span> events</span>
           </div>
           
           {/* View Toggle - consistent button sizes */}
@@ -311,9 +315,10 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
               className={cn(
                 'flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1.5 sm:px-3 sm:py-1.5 rounded-md text-sm font-medium transition-all',
                 viewMode === 'list'
-                  ? 'bg-white text-toca-navy shadow-sm'
+                  ? 'bg-white shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               )}
+              style={viewMode === 'list' ? { color: primaryColor } : undefined}
               title="List View"
             >
               <List size={16} />
@@ -327,9 +332,10 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
               className={cn(
                 'flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1.5 sm:px-3 sm:py-1.5 rounded-md text-sm font-medium transition-all',
                 viewMode === 'day'
-                  ? 'bg-white text-toca-navy shadow-sm'
+                  ? 'bg-white shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               )}
+              style={viewMode === 'day' ? { color: primaryColor } : undefined}
               title="Day View"
             >
               <Clock size={16} />
@@ -340,9 +346,10 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
               className={cn(
                 'flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1.5 sm:px-3 sm:py-1.5 rounded-md text-sm font-medium transition-all',
                 viewMode === 'week'
-                  ? 'bg-white text-toca-navy shadow-sm'
+                  ? 'bg-white shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               )}
+              style={viewMode === 'week' ? { color: primaryColor } : undefined}
               title="Week View"
             >
               <Calendar size={16} />
@@ -353,9 +360,10 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
               className={cn(
                 'flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1.5 sm:px-3 sm:py-1.5 rounded-md text-sm font-medium transition-all',
                 viewMode === 'month'
-                  ? 'bg-white text-toca-navy shadow-sm'
+                  ? 'bg-white shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               )}
+              style={viewMode === 'month' ? { color: primaryColor } : undefined}
               title="Month View"
             >
               <LayoutGrid size={16} />
@@ -380,7 +388,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
                   onClick={handleExportICal}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                  <CalendarPlus size={16} className="text-toca-purple" />
+                  <CalendarPlus size={16} style={{ color: secondaryColor }} />
                   <div className="text-left">
                     <div className="font-medium">Add to Calendar</div>
                     <div className="text-xs text-gray-500">Download .ics file</div>
@@ -390,7 +398,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
                   onClick={handleExportCSV}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
                 >
-                  <FileSpreadsheet size={16} className="text-toca-purple" />
+                  <FileSpreadsheet size={16} style={{ color: secondaryColor }} />
                   <div className="text-left">
                     <div className="font-medium">Export to CSV</div>
                     <div className="text-xs text-gray-500">Excel compatible</div>
@@ -400,7 +408,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
                   onClick={handleExportPDF}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
                 >
-                  <FileText size={16} className="text-toca-purple" />
+                  <FileText size={16} style={{ color: secondaryColor }} />
                   <div className="text-left">
                     <div className="font-medium">Print / PDF</div>
                     <div className="text-xs text-gray-500">Save as PDF</div>
@@ -415,7 +423,10 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
       {/* Navigation - compact, inline with content */}
       {viewMode === 'month' ? (
         /* Month Navigation */
-        <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-toca-navy to-toca-purple text-white print:bg-toca-navy">
+        <div 
+          className="flex items-center justify-between px-3 py-2 text-white"
+          style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
+        >
           <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
             <ChevronLeft size={20} />
           </button>
@@ -426,7 +437,10 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
         </div>
       ) : viewMode === 'day' && selectedDayDate ? (
         /* Day Navigation */
-        <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-toca-navy to-toca-purple text-white">
+        <div 
+          className="flex items-center justify-between px-3 py-2 text-white"
+          style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
+        >
           <button
             onClick={() => {
               const currentDate = parseISO(selectedDayDate);
@@ -456,7 +470,10 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
         </div>
       ) : viewMode === 'list' ? (
         /* List View Header */
-        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-toca-navy to-toca-purple text-white rounded-t-xl">
+        <div 
+          className="flex items-center justify-between px-4 py-3 text-white rounded-t-xl"
+          style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
+        >
           <div>
             <h2 className="text-lg font-bold">Upcoming Events</h2>
             <p className="text-sm text-white/70">
@@ -469,7 +486,10 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
         </div>
       ) : (
         /* Week Navigation - Compact */
-        <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-toca-navy to-toca-purple text-white">
+        <div 
+          className="flex items-center justify-between px-3 py-2 text-white"
+          style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
+        >
           <button
             onClick={() => setCurrentWeekIndex(Math.max(0, currentWeekIndex - 1))}
             disabled={currentWeekIndex === 0}
@@ -596,23 +616,25 @@ function DayColumn({
   onEventClick: (event: CalendarEvent) => void;
   config: DiscoveryConfig;
 }) {
+  const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  
   return (
     <div
       className={cn(
         'min-h-[120px] md:min-h-[200px] p-1 md:p-2 border border-t-0 rounded-b-lg space-y-1 overflow-y-auto max-h-[300px] md:max-h-[400px]',
-        day.isToday ? 'bg-toca-purple/5 border-toca-purple/30' : 'bg-white border-gray-200',
         day.isPast && 'opacity-50'
       )}
+      style={day.isToday ? { 
+        backgroundColor: `${secondaryColor}08`, 
+        borderColor: `${secondaryColor}30` 
+      } : undefined}
     >
       {day.events.slice(0, 5).map((event) => (
         <button
           key={event.id}
           onClick={() => onEventClick(event)}
-          className={cn(
-            'w-full text-left p-1.5 rounded text-xs transition-all hover:bg-toca-purple/10',
-            'border-l-2'
-          )}
-          style={{ borderLeftColor: event.color || '#6366F1' }}
+          className="w-full text-left p-1.5 rounded text-xs transition-all hover:bg-gray-100 border-l-2"
+          style={{ borderLeftColor: event.color || secondaryColor }}
         >
           <div className="font-medium text-gray-900 line-clamp-1 text-[10px] md:text-xs">
             {event.title || event.programName}
@@ -623,7 +645,10 @@ function DayColumn({
         </button>
       ))}
       {day.events.length > 5 && (
-        <button className="w-full text-center text-[10px] text-toca-purple font-medium py-1">
+        <button 
+          className="w-full text-center text-[10px] font-medium py-1"
+          style={{ color: secondaryColor }}
+        >
           +{day.events.length - 5} more
         </button>
       )}
@@ -644,17 +669,24 @@ function ListDaySection({
   onEventClick: (event: CalendarEvent) => void;
   config: DiscoveryConfig;
 }) {
+  const primaryColor = config.branding.primaryColor || '#1E2761';
+  const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  
   if (day.events.length === 0) return null;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       {/* Day Header */}
-      <div className={cn(
-        'flex items-center gap-3 px-4 py-3',
-        day.isToday 
-          ? 'bg-gradient-to-r from-toca-navy to-toca-purple text-white' 
-          : 'bg-gray-50 border-b border-gray-100'
-      )}>
+      <div 
+        className={cn(
+          'flex items-center gap-3 px-4 py-3',
+          !day.isToday && 'bg-gray-50 border-b border-gray-100'
+        )}
+        style={day.isToday ? { 
+          background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
+          color: 'white'
+        } : undefined}
+      >
         <div className={cn(
           'w-12 h-12 rounded-lg flex flex-col items-center justify-center shadow-sm',
           day.isToday ? 'bg-white/20' : 'bg-white border border-gray-200'
@@ -824,6 +856,9 @@ function EventDetailModal({
   onClose: () => void;
   config: DiscoveryConfig;
 }) {
+  const primaryColor = config.branding.primaryColor || '#1E2761';
+  const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -845,7 +880,7 @@ function EventDetailModal({
         {/* Header with program info */}
         <div 
           className="p-5 text-white relative"
-          style={{ background: `linear-gradient(135deg, #1E2761, #6366F1)` }}
+          style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}
         >
           {/* Close button */}
           <button
@@ -884,7 +919,7 @@ function EventDetailModal({
         <div className="p-5 space-y-4 overflow-y-auto max-h-[50vh]">
           {/* Date & Time */}
           <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-            <Calendar className="w-5 h-5 text-toca-purple mt-0.5 flex-shrink-0" />
+            <Calendar className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: secondaryColor }} />
             <div>
               <p className="font-semibold text-gray-900">{formatDate(event.date, 'EEEE, MMMM d, yyyy')}</p>
               <p className="text-sm text-gray-600">
@@ -897,11 +932,11 @@ function EventDetailModal({
           {/* Location */}
           {(event.facilityName || event.spaceName || event.location) && (
             <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-              <MapPin className="w-5 h-5 text-toca-purple mt-0.5 flex-shrink-0" />
+              <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: secondaryColor }} />
               <div>
                 <p className="font-semibold text-gray-900">{event.facilityName}</p>
                 {event.spaceName && (
-                  <p className="text-sm text-toca-purple font-medium">{event.spaceName}</p>
+                  <p className="text-sm font-medium" style={{ color: secondaryColor }}>{event.spaceName}</p>
                 )}
                 {event.location && <p className="text-sm text-gray-600">{event.location}</p>}
               </div>
@@ -911,7 +946,7 @@ function EventDetailModal({
           {/* Capacity */}
           {config.features.showAvailability && event.maxParticipants && (
             <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-              <Users className="w-5 h-5 text-toca-purple mt-0.5 flex-shrink-0" />
+              <Users className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: secondaryColor }} />
               <div>
                 <p className="font-semibold text-gray-900">
                   {event.currentParticipants || 0} / {event.maxParticipants} Enrolled
@@ -933,7 +968,7 @@ function EventDetailModal({
           {/* Pricing Section */}
           {config.features.showPricing && (event.startingPrice !== undefined || event.membershipRequired) && (
             <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-              <Tag className="w-5 h-5 text-toca-purple mt-0.5 flex-shrink-0" />
+              <Tag className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: secondaryColor }} />
               <div className="flex-1">
                 {event.startingPrice !== undefined && event.startingPrice > 0 ? (
                   <>
@@ -989,7 +1024,8 @@ function EventDetailModal({
             href={event.linkSEO ? buildRegistrationUrl(event.linkSEO) : '#'}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full py-3.5 bg-gradient-to-r from-toca-navy to-toca-purple text-white font-semibold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg"
+            className="w-full py-3.5 text-white font-semibold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg"
+            style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
           >
             Register Now <ExternalLink size={16} />
           </a>
