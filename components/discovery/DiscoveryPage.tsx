@@ -21,6 +21,7 @@ import { buildUrl, getSportGradient, cn } from '@/lib/utils';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
+import { bondAnalytics } from '@/lib/analytics';
 
 interface DiscoveryPageProps {
   initialPrograms: Program[];
@@ -118,8 +119,9 @@ export function DiscoveryPage({
   // Copy current URL to clipboard
   const handleShare = useCallback(async () => {
     const url = window.location.href;
-    // Track share event
+    // Track share event (GTM + Bond Analytics)
     gtmEvent.shareLink(config.slug, url);
+    bondAnalytics.shareLink(config.slug, url);
     try {
       await navigator.clipboard.writeText(url);
       setShowCopied(true);
@@ -135,7 +137,7 @@ export function DiscoveryPage({
       setShowCopied(true);
       setTimeout(() => setShowCopied(false), 2000);
     }
-  }, []);
+  }, [config.slug]);
   
   // Sync viewMode with URL params on navigation
   useEffect(() => {
@@ -144,6 +146,14 @@ export function DiscoveryPage({
       setViewMode(urlViewMode);
     }
   }, [urlSearchParams]);
+  
+  // Track page view on mount (Bond Analytics)
+  useEffect(() => {
+    bondAnalytics.pageView({
+      pageSlug: config.slug,
+      viewMode,
+    });
+  }, [config.slug]); // Only track once on mount
   
   // Load Google Font if custom font is specified
   useEffect(() => {
@@ -641,11 +651,12 @@ export function DiscoveryPage({
 
   // Handle view mode change
   const handleViewModeChange = useCallback((newMode: ViewMode) => {
-    // Track view mode change
+    // Track view mode change (GTM + Bond Analytics)
     gtmEvent.viewModeChanged(viewMode, newMode);
+    bondAnalytics.viewModeChanged(config.slug, viewMode, newMode);
     setViewMode(newMode);
     updateUrl(filters, newMode);
-  }, [filters, updateUrl, viewMode]);
+  }, [config.slug, filters, updateUrl, viewMode]);
 
   // Count active filters
   const activeFilterCount = useMemo(() => {
@@ -666,8 +677,8 @@ export function DiscoveryPage({
       className="min-h-screen bg-gray-50"
       style={{ fontFamily: config.branding.fontFamily || 'inherit' }}
     >
-      {/* Google Tag Manager */}
-      <GoogleTagManager gtmId={config.gtmId} />
+      {/* Google Tag Manager - System GTM (Bond) + Partner GTM */}
+      <GoogleTagManager gtmId={config.gtmId} pageSlug={config.slug} />
       
       {/* Header - Conditional based on headerDisplay setting */}
       {config.features.headerDisplay !== 'hidden' && (

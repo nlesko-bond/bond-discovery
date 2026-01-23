@@ -9,7 +9,8 @@ import {
   FileText,
   HelpCircle,
   LogOut,
-  User
+  User,
+  BarChart3
 } from 'lucide-react';
 import { AdminProviders } from './AdminProviders';
 import { AdminAuthGuard } from './AdminAuthGuard';
@@ -73,6 +74,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </NavLink>
             <NavLink href="/admin/pages" icon={FileText}>
               Discovery Pages
+            </NavLink>
+            <NavLink href="/admin/analytics" icon={BarChart3}>
+              Analytics
             </NavLink>
             
             <div className="pt-4 mt-4 border-t border-gray-200">
