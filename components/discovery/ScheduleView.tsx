@@ -220,15 +220,20 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
         if (day.events.length > 0) {
           const existing = dayMap.get(day.date);
           if (existing) {
+            // Add more events to existing day
             existing.events.push(...day.events);
           } else {
-            dayMap.set(day.date, { ...day });
+            // Create new day entry with a COPY of the events array
+            dayMap.set(day.date, { 
+              ...day, 
+              events: [...day.events] 
+            });
           }
         }
       });
     });
     
-    // Sort days chronologically, and sort events within each day by start time
+    // Convert to array and sort days chronologically
     const result = Array.from(dayMap.values()).sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
