@@ -43,6 +43,9 @@ interface PageConfig {
     mobileDefaultScheduleView?: 'list' | 'table' | 'day' | 'week' | 'month'; // Default view for mobile
     allowViewToggle: boolean;
     showTableView?: boolean; // Show table view option on desktop
+    // Embed options
+    headerDisplay?: 'full' | 'minimal' | 'hidden';
+    disableStickyHeader?: boolean;
   };
   defaultParams?: Record<string, string>;
   cacheTtl?: number;
@@ -469,6 +472,49 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   })}
                 />
                 <span>Show Table view option on desktop (great for high-volume events)</span>
+              </label>
+            </div>
+            
+            <hr className="my-6" />
+            
+            <h3 className="font-semibold text-gray-900 mb-4">Embed Options</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Configure these settings when embedding the discovery page on another website.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="label">Header Display</label>
+                <select
+                  className="input"
+                  value={config.features.headerDisplay || 'full'}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    features: { ...config.features, headerDisplay: e.target.value as 'full' | 'minimal' | 'hidden' }
+                  })}
+                >
+                  <option value="full">Full - Logo, tagline, tabs, share button (sticky)</option>
+                  <option value="minimal">Minimal - Tabs and share button only (not sticky)</option>
+                  <option value="hidden">Hidden - No header (tabs move to filter bar)</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Use "Minimal" or "Hidden" when embedding on a site that already has its own header/branding.
+                </p>
+              </div>
+              
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300"
+                  checked={config.features.disableStickyHeader || false}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    features: { ...config.features, disableStickyHeader: e.target.checked }
+                  })}
+                />
+                <div>
+                  <span>Disable sticky main header</span>
+                  <p className="text-xs text-gray-500">Calendar navigation headers will still stick for better UX</p>
+                </div>
               </label>
             </div>
           </div>

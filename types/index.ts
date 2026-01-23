@@ -355,6 +355,9 @@ export interface FeatureConfig {
   mobileDefaultScheduleView?: ScheduleViewType; // Default view for mobile (defaults to 'list')
   allowViewToggle: boolean;
   showTableView?: boolean; // Show table view option on desktop
+  // Embed-friendly options
+  headerDisplay?: 'full' | 'minimal' | 'hidden'; // Header visibility mode (default: 'full')
+  disableStickyHeader?: boolean; // Disable sticky main header (calendar headers still stick)
 }
 
 export type FilterType = 

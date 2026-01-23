@@ -477,9 +477,16 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
       </div>
       
       {/* Navigation - for calendar views */}
-      {/* Note: top values account for header (~57px) + filter bar (~52px) = ~109px on desktop */}
+      {/* Note: top values account for header + filter bar. When header is hidden/minimal, use smaller values */}
       <div className={cn(
-        viewMode !== 'list' && viewMode !== 'table' && 'sticky top-[112px] sm:top-[109px] z-10'
+        viewMode !== 'list' && viewMode !== 'table' && 'sticky z-10',
+        viewMode !== 'list' && viewMode !== 'table' && (
+          config.features.headerDisplay === 'hidden' 
+            ? 'top-[52px] sm:top-[52px]'  // Only filter bar (~52px)
+            : config.features.headerDisplay === 'minimal'
+              ? 'top-[100px] sm:top-[52px]' // Minimal header + filter bar
+              : 'top-[112px] sm:top-[109px]' // Full header + filter bar
+        )
       )}>
       {viewMode === 'month' ? (
         /* Month Navigation */

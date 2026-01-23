@@ -17,7 +17,7 @@ import { ScheduleView } from './ScheduleView';
 import { HorizontalFilterBar } from './HorizontalFilterBar';
 import { MobileFilters } from './MobileFilters';
 import { programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers';
-import { buildUrl, getSportGradient } from '@/lib/utils';
+import { buildUrl, getSportGradient, cn } from '@/lib/utils';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 
@@ -661,150 +661,209 @@ export function DiscoveryPage({
       className="min-h-screen bg-gray-50"
       style={{ fontFamily: config.branding.fontFamily || 'inherit' }}
     >
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="w-full px-3 py-3 sm:px-4 lg:px-6">
-          <div className="flex items-center justify-between">
-            {/* Logo & Tagline */}
-            <div className="flex items-center gap-4">
-              <BrandLogo config={config} size="md" />
-              {config.branding.tagline && (
-                <div 
-                  className="hidden sm:flex items-center border-l-2 pl-4"
-                  style={{ borderColor: config.branding.primaryColor }}
-                >
-                  <span 
-                    className="text-base tracking-tight"
-                    style={{ 
-                      color: config.branding.primaryColor,
-                      fontWeight: 700,
-                      fontFamily: config.branding.fontFamily || 'inherit'
-                    }}
-                  >
-                    {config.branding.tagline}
-                  </span>
+      {/* Header - Conditional based on headerDisplay setting */}
+      {config.features.headerDisplay !== 'hidden' && (
+        <header className={cn(
+          "bg-white border-b border-gray-200 z-40",
+          // Only sticky if not disabled AND not minimal mode
+          !config.features.disableStickyHeader && config.features.headerDisplay !== 'minimal' && 'sticky top-0'
+        )}>
+          <div className="w-full px-3 py-3 sm:px-4 lg:px-6">
+            <div className="flex items-center justify-between">
+              {/* Logo & Tagline - Only shown in full mode */}
+              {config.features.headerDisplay !== 'minimal' && (
+                <div className="flex items-center gap-4">
+                  <BrandLogo config={config} size="md" />
+                  {config.branding.tagline && (
+                    <div 
+                      className="hidden sm:flex items-center border-l-2 pl-4"
+                      style={{ borderColor: config.branding.primaryColor }}
+                    >
+                      <span 
+                        className="text-base tracking-tight"
+                        style={{ 
+                          color: config.branding.primaryColor,
+                          fontWeight: 700,
+                          fontFamily: config.branding.fontFamily || 'inherit'
+                        }}
+                      >
+                        {config.branding.tagline}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
 
-            {/* View Toggle & Share */}
-            <div className="flex items-center gap-2">
-              {/* Share Button */}
-              <button
-                onClick={handleShare}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Copy link to clipboard"
-              >
-                {showCopied ? (
-                  <>
-                    <Check size={16} className="text-green-600" />
-                    <span className="hidden sm:inline text-green-600">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <LinkIcon size={16} />
-                    <span className="hidden sm:inline">Share</span>
-                  </>
+              {/* View Toggle & Share */}
+              <div className={cn(
+                "flex items-center gap-2",
+                config.features.headerDisplay === 'minimal' && 'w-full justify-between'
+              )}>
+                {/* Desktop View Toggle - shown in header for full/minimal modes */}
+                {config.features.allowViewToggle && (
+                  <div className="hidden sm:flex items-center bg-gray-100 rounded-lg p-1">
+                    <button
+                      onClick={() => handleViewModeChange('programs')}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                        viewMode === 'programs'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      <LayoutGrid size={16} />
+                      Programs
+                    </button>
+                    <button
+                      onClick={() => handleViewModeChange('schedule')}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                        viewMode === 'schedule'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      <Calendar size={16} />
+                      Schedule
+                    </button>
+                  </div>
                 )}
-              </button>
-              
-              {/* Desktop View Toggle */}
-              {config.features.allowViewToggle && (
-                <div className="hidden sm:flex items-center bg-gray-100 rounded-lg p-1">
-                  <button
-                    onClick={() => handleViewModeChange('programs')}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                      viewMode === 'programs'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    <LayoutGrid size={16} />
-                    Programs
-                  </button>
-                  <button
-                    onClick={() => handleViewModeChange('schedule')}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                      viewMode === 'schedule'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    <Calendar size={16} />
-                    Schedule
-                  </button>
-                </div>
-              )}
 
-              {/* Mobile Filter Button - Only shown on very small screens if needed */}
-              {/* Filters are now inline on all screen sizes */}
+                {/* Share Button */}
+                <button
+                  onClick={handleShare}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Copy link to clipboard"
+                >
+                  {showCopied ? (
+                    <>
+                      <Check size={16} className="text-green-600" />
+                      <span className="hidden sm:inline text-green-600">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <LinkIcon size={16} />
+                      <span className="hidden sm:inline">Share</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
+
+            {/* Mobile View Toggle */}
+            {config.features.allowViewToggle && (
+              <div className="sm:hidden mt-3 flex items-center bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => handleViewModeChange('programs')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                    viewMode === 'programs'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600'
+                  }`}
+                >
+                  <LayoutGrid size={16} />
+                  Programs
+                </button>
+                <button
+                  onClick={() => handleViewModeChange('schedule')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                    viewMode === 'schedule'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600'
+                  }`}
+                >
+                  <Calendar size={16} />
+                  Schedule
+                </button>
+              </div>
+            )}
           </div>
-
-          {/* Mobile View Toggle */}
-          {config.features.allowViewToggle && (
-            <div className="sm:hidden mt-3 flex items-center bg-gray-100 rounded-lg p-1">
-              <button
-                onClick={() => handleViewModeChange('programs')}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
-                  viewMode === 'programs'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600'
-                }`}
-              >
-                <LayoutGrid size={16} />
-                Programs
-              </button>
-              <button
-                onClick={() => handleViewModeChange('schedule')}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
-                  viewMode === 'schedule'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600'
-                }`}
-              >
-                <Calendar size={16} />
-                Schedule
-              </button>
-            </div>
-          )}
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Horizontal Filter Bar - visible on all screen sizes */}
       <div className="w-full px-3 sm:px-4 lg:px-6 py-2 bg-gray-50 border-b border-gray-200">
-        <div className="overflow-x-auto sm:overflow-visible">
-          <HorizontalFilterBar
-            filters={filters}
-            onFilterChange={handleFiltersChange}
-            filterOptions={{
-              // Use cascading counts based on filtered programs
-              facilities: filterOptions.facilities.map(f => ({ 
-                id: f.id, 
-                name: f.name, 
-                count: filteredPrograms.filter(p => 
-                  p.facilityId === f.id || 
-                  p.sessions?.some(s => String(s.facility?.id) === f.id)
-                ).length 
-              })),
-              programTypes: filterOptions.programTypes.map(t => ({ 
-                id: t.id, 
-                name: t.label, 
-                count: filteredPrograms.filter(p => p.type === t.id).length 
-              })),
-              sports: filterOptions.sports.map(s => ({ 
-                id: s.id, 
-                name: s.label, 
-                count: filteredPrograms.filter(p => p.sport === s.id).length 
-              })),
-              programs: filterOptions.programs.filter(p => 
-                filteredPrograms.some(fp => fp.id === p.id)
-              ),
-              sessions: filterOptions.sessions,
-              ages: [],
-            }}
-            config={config}
-          />
+        <div className="flex items-center gap-3">
+          {/* View Toggle - shown here when header is hidden */}
+          {config.features.headerDisplay === 'hidden' && config.features.allowViewToggle && (
+            <div className="flex items-center bg-white rounded-lg p-1 border border-gray-200 flex-shrink-0">
+              <button
+                onClick={() => handleViewModeChange('programs')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  viewMode === 'programs'
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <LayoutGrid size={14} />
+                <span className="hidden sm:inline">Programs</span>
+              </button>
+              <button
+                onClick={() => handleViewModeChange('schedule')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  viewMode === 'schedule'
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Calendar size={14} />
+                <span className="hidden sm:inline">Schedule</span>
+              </button>
+            </div>
+          )}
+          
+          <div className="overflow-x-auto sm:overflow-visible flex-1 min-w-0">
+            <HorizontalFilterBar
+              filters={filters}
+              onFilterChange={handleFiltersChange}
+              filterOptions={{
+                // Use cascading counts based on filtered programs
+                facilities: filterOptions.facilities.map(f => ({ 
+                  id: f.id, 
+                  name: f.name, 
+                  count: filteredPrograms.filter(p => 
+                    p.facilityId === f.id || 
+                    p.sessions?.some(s => String(s.facility?.id) === f.id)
+                  ).length 
+                })),
+                programTypes: filterOptions.programTypes.map(t => ({ 
+                  id: t.id, 
+                  name: t.label, 
+                  count: filteredPrograms.filter(p => p.type === t.id).length 
+                })),
+                sports: filterOptions.sports.map(s => ({ 
+                  id: s.id, 
+                  name: s.label, 
+                  count: filteredPrograms.filter(p => p.sport === s.id).length 
+                })),
+                programs: filterOptions.programs.filter(p => 
+                  filteredPrograms.some(fp => fp.id === p.id)
+                ),
+                sessions: filterOptions.sessions,
+                ages: [],
+              }}
+              config={config}
+            />
+          </div>
+          
+          {/* Share Button - shown here when header is hidden */}
+          {config.features.headerDisplay === 'hidden' && (
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200 flex-shrink-0"
+              title="Copy link to clipboard"
+            >
+              {showCopied ? (
+                <>
+                  <Check size={14} className="text-green-600" />
+                  <span className="hidden sm:inline text-green-600">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <LinkIcon size={14} />
+                  <span className="hidden sm:inline">Share</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
