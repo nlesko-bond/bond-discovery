@@ -99,7 +99,10 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
   }, [searchParams]);
   
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
-  const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
+  // Default to today for day view
+  const [selectedDayDate, setSelectedDayDate] = useState<string | null>(() => {
+    return new Date().toISOString().split('T')[0];
+  });
   
   // Lazy loading for list view
   const [visibleDays, setVisibleDays] = useState(14); // Start with 2 weeks
@@ -378,7 +381,8 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
             )}
             <button
               onClick={() => {
-                setSelectedDayDate(currentWeek?.days[0]?.date || new Date().toISOString().split('T')[0]);
+                // Default to today, not start of week
+                setSelectedDayDate(new Date().toISOString().split('T')[0]);
                 setViewMode('day');
               }}
               className={cn(
