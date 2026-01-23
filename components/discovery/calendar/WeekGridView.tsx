@@ -69,7 +69,7 @@ export function WeekGridView({ days, config, onEventClick, onDayClick }: WeekGri
       <div className="overflow-x-auto">
         <div style={{ minWidth: `${minGridWidth}px` }}>
           {/* Header Row - Day Names & Dates */}
-          <div className="grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[70px_repeat(7,1fr)] bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+          <div className="grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[70px_repeat(7,1fr)] bg-gray-50 border-b border-gray-200">
             <div className="p-2 sm:p-3 border-r border-gray-200" /> {/* Empty corner */}
             {days.map((day) => {
               const dayDate = parseISO(day.date);

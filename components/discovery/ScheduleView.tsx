@@ -304,20 +304,20 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
             <span><span className="font-semibold text-toca-navy">{totalEvents?.toLocaleString() || 0}</span> events</span>
           </div>
           
-          {/* View Toggle */}
-          <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg">
+          {/* View Toggle - consistent button sizes */}
+          <div className="flex items-center gap-0.5 p-1 bg-gray-100 rounded-lg">
             <button
               onClick={() => setViewMode('list')}
               className={cn(
-                'flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                'flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1.5 sm:px-3 sm:py-1.5 rounded-md text-sm font-medium transition-all',
                 viewMode === 'list'
                   ? 'bg-white text-toca-navy shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               )}
               title="List View"
             >
-              <List size={14} />
-              <span className="hidden md:inline">List</span>
+              <List size={16} />
+              <span className="hidden sm:inline">List</span>
             </button>
             <button
               onClick={() => {
@@ -325,41 +325,41 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
                 setViewMode('day');
               }}
               className={cn(
-                'flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                'flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1.5 sm:px-3 sm:py-1.5 rounded-md text-sm font-medium transition-all',
                 viewMode === 'day'
                   ? 'bg-white text-toca-navy shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               )}
               title="Day View"
             >
-              <Clock size={14} />
-              <span className="hidden md:inline">Day</span>
+              <Clock size={16} />
+              <span className="hidden sm:inline">Day</span>
             </button>
             <button
               onClick={() => setViewMode('week')}
               className={cn(
-                'flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                'flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1.5 sm:px-3 sm:py-1.5 rounded-md text-sm font-medium transition-all',
                 viewMode === 'week'
                   ? 'bg-white text-toca-navy shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               )}
               title="Week View"
             >
-              <CalendarDays size={14} />
-              <span className="hidden md:inline">Week</span>
+              <Calendar size={16} />
+              <span className="hidden sm:inline">Week</span>
             </button>
             <button
               onClick={() => setViewMode('month')}
               className={cn(
-                'flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                'flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1.5 sm:px-3 sm:py-1.5 rounded-md text-sm font-medium transition-all',
                 viewMode === 'month'
                   ? 'bg-white text-toca-navy shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               )}
               title="Month View"
             >
-              <LayoutGrid size={14} />
-              <span className="hidden md:inline">Month</span>
+              <LayoutGrid size={16} />
+              <span className="hidden sm:inline">Month</span>
             </button>
           </div>
           
@@ -711,37 +711,39 @@ function EventCard({
   const isAlmostFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 5 && !isFull;
   const eventColor = event.color || '#6366F1';
 
+  const startTimeStr = formatTime(event.startTime) || formatTime(event.date);
+  
   return (
     <button
       onClick={onClick}
       className={cn(
-        'w-full text-left group transition-all',
+        'w-full text-left group transition-all rounded-lg overflow-hidden',
         isFull && 'opacity-60'
       )}
     >
       {/* Card with left accent border */}
-      <div className="flex">
-        {/* Left accent bar - thicker with rounded top */}
+      <div className="flex min-h-[80px]">
+        {/* Left accent bar - visible and prominent */}
         <div 
-          className="w-1 md:w-1.5 rounded-l-lg flex-shrink-0 transition-all group-hover:w-2"
+          className="w-1.5 sm:w-2 flex-shrink-0"
           style={{ backgroundColor: eventColor }}
         />
         
         {/* Content area */}
-        <div className="flex-1 bg-gray-50/50 group-hover:bg-blue-50/50 p-3 md:p-4 transition-colors">
+        <div className="flex-1 bg-gray-50 group-hover:bg-blue-50/70 p-3 sm:p-4 transition-colors border-y border-r border-gray-100 rounded-r-lg">
           {/* Top row: Time prominently + badges */}
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <div className="flex items-center gap-2">
-              {/* Time badge - more prominent */}
+          <div className="flex items-start sm:items-center justify-between gap-2 mb-2 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Time badge - always visible */}
               <span 
-                className="inline-flex items-center gap-1.5 text-sm font-semibold px-2.5 py-1 rounded-lg text-white"
+                className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold px-2 sm:px-2.5 py-1 rounded-md text-white whitespace-nowrap"
                 style={{ backgroundColor: eventColor }}
               >
-                <Clock size={12} />
-                {formatTime(event.startTime)}
+                <Clock size={11} className="flex-shrink-0" />
+                {startTimeStr || 'TBD'}
               </span>
               {event.endTime && (
-                <span className="text-sm text-gray-500">
+                <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
                   → {formatTime(event.endTime)}
                 </span>
               )}
