@@ -731,17 +731,13 @@ function EventCard({
         <div className="flex-1 p-3 sm:p-4">
           {/* Top row: Time + badges */}
           <div className="flex items-start sm:items-center justify-between gap-2 mb-1.5 flex-wrap sm:flex-nowrap">
-            {/* Time - simple text, matches end time style */}
+            {/* Time - simple text */}
             <div className="flex items-center gap-1.5 text-sm text-gray-700">
               <Clock size={14} className="text-gray-400" />
               <span className="font-semibold">
                 {startTimeStr || 'TBD'}
+                {endTimeStr && ` – ${endTimeStr}`}
               </span>
-              {endTimeStr && (
-                <span className="text-gray-400">
-                  – {endTimeStr}
-                </span>
-              )}
             </div>
             
             {/* Badges */}
