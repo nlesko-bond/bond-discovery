@@ -115,11 +115,11 @@ export function DayView({ events, date, config, onEventClick }: DayViewProps) {
 
                   {/* Hour Row */}
                   <div className="flex-1 min-h-[72px] border-l border-gray-200 pl-4 py-2 relative">
-                    {/* Current Time Indicator */}
+                    {/* Current Time Indicator - z-0 so it goes behind sticky header */}
                     {isCurrentHour && (
                       <div
                         ref={currentTimeRef}
-                        className="absolute left-0 right-0 h-0.5 bg-red-500 z-10"
+                        className="absolute left-0 right-0 h-0.5 bg-red-500 z-0"
                         style={{ top: `${(currentMinutes / 60) * 100}%` }}
                       >
                         <div className="absolute -left-2 -top-1.5 w-3 h-3 bg-red-500 rounded-full" />
