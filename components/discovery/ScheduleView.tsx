@@ -760,6 +760,10 @@ function EventCard({
   const spotsInfo = event.spotsRemaining !== undefined && event.maxParticipants;
   const isFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 0;
   const isAlmostFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 5 && !isFull;
+  
+  // Check registration status
+  const isRegistrationOpen = event.registrationWindowStatus === 'open';
+  const isRegistrationClosed = event.registrationWindowStatus === 'closed' || event.registrationWindowStatus === 'ended';
 
   // Get start time - try multiple sources
   const startTimeStr = formatTime(event.startTime) || formatTime(event.date) || '';
@@ -796,7 +800,12 @@ function EventCard({
             
             {/* Badges */}
             <div className="flex items-center gap-1.5 flex-shrink-0">
-              {config.features.showAvailability && spotsInfo && (
+              {isRegistrationClosed && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                  Registration Closed
+                </span>
+              )}
+              {config.features.showAvailability && spotsInfo && !isRegistrationClosed && (
                 <span className={cn(
                   'text-xs font-medium px-2 py-0.5 rounded-full',
                   isFull && 'bg-red-100 text-red-700',
@@ -862,7 +871,7 @@ function EventCard({
               <span className="text-xs text-amber-600 font-medium">Free for Members</span>
             )}
             
-            {/* Register link inline */}
+            {/* Register/Learn More link inline */}
             {event.linkSEO && (
               <a 
                 href={buildRegistrationUrl(event.linkSEO)}
@@ -870,9 +879,9 @@ function EventCard({
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 className="inline-flex items-center gap-1 font-medium ml-auto hover:opacity-80"
-                style={{ color: secondaryColor }}
+                style={{ color: isRegistrationClosed ? '#6B7280' : secondaryColor }}
               >
-                Register <ExternalLink size={12} />
+                {isRegistrationClosed ? 'Learn More' : 'Register'} <ExternalLink size={12} />
               </a>
             )}
           </div>
@@ -894,6 +903,7 @@ function EventDetailModal({
 }) {
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  const isRegistrationClosed = event.registrationWindowStatus === 'closed' || event.registrationWindowStatus === 'ended';
   
   // Close on escape key
   useEffect(() => {
@@ -934,8 +944,13 @@ function EventDetailModal({
             {event.sessionName && event.sessionName !== event.programName && (
               <p className="text-white/90 mt-1">{event.sessionName}</p>
             )}
-            {(event.sport || event.programType) && (
+            {(event.sport || event.programType || isRegistrationClosed) && (
               <div className="flex flex-wrap items-center gap-2 mt-3">
+                {isRegistrationClosed && (
+                  <span className="text-xs bg-white/30 px-2.5 py-1 rounded-full font-medium">
+                    Registration Closed
+                  </span>
+                )}
                 {event.sport && (
                   <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full capitalize">
                     {getSportLabel(event.sport)}
@@ -1061,9 +1076,13 @@ function EventDetailModal({
             target="_blank"
             rel="noopener noreferrer"
             className="w-full py-3.5 text-white font-semibold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg"
-            style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
+            style={{ 
+              background: isRegistrationClosed 
+                ? '#9CA3AF' 
+                : `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
+            }}
           >
-            Register Now <ExternalLink size={16} />
+            {isRegistrationClosed ? 'Learn More' : 'Register Now'} <ExternalLink size={16} />
           </a>
         </div>
       </div>

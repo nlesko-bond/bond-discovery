@@ -486,6 +486,7 @@ export function DiscoveryPage({
         currentParticipants: event.currentParticipants,
         startingPrice: event.startingPrice,
         memberPrice: event.memberPrice,
+        registrationWindowStatus: event.registrationWindowStatus,
       };
     });
     

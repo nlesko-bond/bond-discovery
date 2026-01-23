@@ -431,6 +431,10 @@ export interface CalendarEvent {
   
   // Links
   linkSEO?: string;
+  
+  // Registration status
+  registrationWindowStatus?: 'open' | 'closed' | 'upcoming' | 'ended' | string;
+  type?: string;
 }
 
 export interface DaySchedule {
