@@ -220,7 +220,6 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
         if (day.events.length > 0) {
           const existing = dayMap.get(day.date);
           if (existing) {
-            // Merge events for same day from different weeks (shouldn't happen but just in case)
             existing.events.push(...day.events);
           } else {
             dayMap.set(day.date, { ...day });
@@ -229,7 +228,6 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
       });
     });
     
-    // Sort by date
     return Array.from(dayMap.values()).sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
@@ -544,35 +542,45 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
       {/* List View - Shows ALL events with lazy loading */}
       {viewMode === 'list' && (
         <div className="space-y-4">
-          {visibleDaysData.length > 0 ? (
-            <>
-              {visibleDaysData.map((day) => (
-                <ListDaySection
-                  key={day.date}
-                  day={day}
-                  onEventClick={setSelectedEvent}
-                  config={config}
-                />
-              ))}
-              
-              {/* Load More Trigger */}
-              {hasMoreDays && (
-                <div ref={loadMoreRef} className="flex items-center justify-center py-6">
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span className="text-sm">Loading more events...</span>
-                  </div>
-                </div>
-              )}
-              
-              {/* End of list indicator */}
-              {!hasMoreDays && allDaysWithEvents.length > 14 && (
-                <div className="text-center py-4 text-sm text-gray-400">
-                  Showing all {allDaysWithEvents.length} days with events
-                </div>
-              )}
-            </>
-          ) : (
+          {/* Show loading if no days yet but events are still loading */}
+          {isLoading && visibleDaysData.length === 0 && (
+            <div className="flex items-center justify-center py-12">
+              <div className="flex items-center gap-2 text-gray-500">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span>Loading events...</span>
+              </div>
+            </div>
+          )}
+          
+          {/* Show days with events */}
+          {visibleDaysData.map((day) => (
+            <ListDaySection
+              key={day.date}
+              day={day}
+              onEventClick={setSelectedEvent}
+              config={config}
+            />
+          ))}
+          
+          {/* Load More Trigger */}
+          {hasMoreDays && (
+            <div ref={loadMoreRef} className="flex items-center justify-center py-6">
+              <div className="flex items-center gap-2 text-gray-500">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span className="text-sm">Loading more events...</span>
+              </div>
+            </div>
+          )}
+          
+          {/* End of list indicator */}
+          {!hasMoreDays && allDaysWithEvents.length > 14 && (
+            <div className="text-center py-4 text-sm text-gray-400">
+              Showing all {allDaysWithEvents.length} days with events
+            </div>
+          )}
+          
+          {/* Empty state - only show when not loading and no events */}
+          {!isLoading && visibleDaysData.length === 0 && (
             <div className="text-center py-12">
               <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">No events found</p>
@@ -671,17 +679,16 @@ function ListDaySection({
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      {/* Day Header - sticky with brand gradient, handoffs to next day */}
-      {/* Position accounts for: main header (57px) + filter bar (~50px) + schedule stats (~50px) */}
+      {/* Day Header - styled with brand gradient */}
       <div 
-        className="sticky top-[155px] sm:top-[155px] z-10 flex items-center gap-3 px-4 py-3 text-white shadow-md"
+        className="flex items-center gap-3 px-4 py-3 text-white"
         style={{ 
           background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
         }}
       >
         <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center shadow-sm bg-white/20">
           <span className="text-xs font-medium text-white/80">
-            {day.dayOfWeek.slice(0, 3)}
+            {day.dayOfWeek?.slice(0, 3) || format(parseISO(day.date), 'EEE')}
           </span>
           <span className="text-lg font-bold text-white">
             {format(parseISO(day.date), 'd')}
