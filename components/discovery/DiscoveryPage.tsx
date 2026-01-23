@@ -440,29 +440,54 @@ export function DiscoveryPage({
   const scheduleData = useMemo(() => {
     if (viewMode !== 'schedule') return null;
     
+    // Helper to convert UTC date to local date string (YYYY-MM-DD) and time string (ISO)
+    const getLocalDateTime = (utcDateStr: string, timezone?: string) => {
+      if (!utcDateStr) return { date: '', startTime: '' };
+      
+      try {
+        const utcDate = new Date(utcDateStr);
+        // Use the provided timezone or default to America/New_York
+        const tz = timezone || 'America/New_York';
+        
+        // Get local date components
+        const localDate = utcDate.toLocaleDateString('en-CA', { timeZone: tz }); // en-CA gives YYYY-MM-DD format
+        
+        // Return the original ISO string for startTime (used for sorting and display)
+        return { date: localDate, startTime: utcDateStr };
+      } catch {
+        // Fallback to simple split if timezone conversion fails
+        return { date: utcDateStr.split('T')[0], startTime: utcDateStr };
+      }
+    };
+    
     // Convert filtered API events to CalendarEvent format
-    const calendarEvents = filteredEvents.map(event => ({
-      id: event.id,
-      programId: event.programId || '',
-      programName: event.programName || event.title,
-      sessionId: event.sessionId || '',
-      sessionName: event.sessionName || '',
-      title: event.title || event.sessionName || event.programName, // Event-specific title
-      date: event.startDate?.split('T')[0] || '',
-      startTime: event.startDate || '',
-      endTime: event.endDate || '',
-      facilityId: '',
-      facilityName: event.facilityName || '',
-      spaceName: event.spaceName || '',  // Resource/court/field
-      sport: event.sport,
-      type: event.type,
-      linkSEO: event.linkSEO,
-      color: getSportGradient(event.sport || ''),
-      maxParticipants: event.maxParticipants,
-      currentParticipants: event.currentParticipants,
-      startingPrice: event.startingPrice,
-      memberPrice: event.memberPrice,
-    }));
+    const calendarEvents = filteredEvents.map(event => {
+      const { date, startTime } = getLocalDateTime(event.startDate, event.timezone);
+      const { startTime: endTime } = getLocalDateTime(event.endDate, event.timezone);
+      
+      return {
+        id: event.id,
+        programId: event.programId || '',
+        programName: event.programName || event.title,
+        sessionId: event.sessionId || '',
+        sessionName: event.sessionName || '',
+        title: event.title || event.sessionName || event.programName, // Event-specific title
+        date,
+        startTime,
+        endTime,
+        facilityId: '',
+        facilityName: event.facilityName || '',
+        spaceName: event.spaceName || '',  // Resource/court/field
+        sport: event.sport,
+        type: event.type,
+        linkSEO: event.linkSEO,
+        color: getSportGradient(event.sport || ''),
+        maxParticipants: event.maxParticipants,
+        currentParticipants: event.currentParticipants,
+        startingPrice: event.startingPrice,
+        memberPrice: event.memberPrice,
+      };
+    });
     
     return buildWeekSchedules(calendarEvents, 8);
   }, [filteredEvents, viewMode]);
