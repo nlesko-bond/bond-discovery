@@ -147,6 +147,9 @@ export function transformSession(raw: any): Session {
     lateRegistrationEndDate: raw.lateRegistrationEndDate,
     cutoffDate: raw.cutoffDate,
     
+    // Registration status
+    registrationWindowStatus: raw.registrationWindowStatus,
+    
     // Capacity
     capacity,
     maxParticipants: raw.maxParticipants,

@@ -110,6 +110,9 @@ export interface Session {
   lateRegistrationEndDate?: string;
   cutoffDate?: string;
   
+  // Registration status
+  registrationWindowStatus?: 'open' | 'closed' | 'not_opened_yet' | 'ended' | string;
+  
   // Capacity
   capacity?: number;
   maxParticipants?: number;

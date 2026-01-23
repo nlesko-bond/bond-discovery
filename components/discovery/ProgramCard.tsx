@@ -318,6 +318,12 @@ function SessionCard({
   // Dynamic colors from config
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
   
+  // Check registration status
+  const isRegistrationOpen = session.registrationWindowStatus === 'open';
+  const isRegistrationClosed = session.registrationWindowStatus === 'closed' || session.registrationWindowStatus === 'ended';
+  const isRegistrationNotYetOpen = session.registrationWindowStatus === 'not_opened_yet';
+  const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
+  
   const facilityName = session.facility?.name;
   const baseLink = session.linkSEO || programLinkSEO;
   
@@ -344,11 +350,21 @@ function SessionCard({
       {/* Session Header with Register Button */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <p className="font-bold text-gray-900 text-sm truncate">
               {session.name || 'Session'}
             </p>
-            {config.features.showAvailability && availability.label && (
+            {isRegistrationClosed && (
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-gray-100 text-gray-600">
+                Registration Closed
+              </span>
+            )}
+            {isRegistrationNotYetOpen && (
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-blue-100 text-blue-600">
+                Coming Soon
+              </span>
+            )}
+            {config.features.showAvailability && availability.label && !isRegistrationUnavailable && (
               <span className={cn(
                 'text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap',
                 availability.color === 'red' && 'bg-red-100 text-red-700',
@@ -409,9 +425,9 @@ function SessionCard({
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-colors"
-              style={{ backgroundColor: secondaryColor }}
+              style={{ backgroundColor: isRegistrationUnavailable ? '#9CA3AF' : secondaryColor }}
             >
-              Register <ExternalLink size={12} />
+              {isRegistrationUnavailable ? 'Learn More' : 'Register'} <ExternalLink size={12} />
             </a>
           )}
         </div>
