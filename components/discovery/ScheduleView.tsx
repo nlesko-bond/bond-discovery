@@ -236,9 +236,9 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
     // Sort events within each day by start time
     result.forEach(day => {
       day.events.sort((a, b) => {
-        const timeA = a.startTime || a.date || '';
-        const timeB = b.startTime || b.date || '';
-        return new Date(timeA).getTime() - new Date(timeB).getTime();
+        if (!a.startTime) return 1;
+        if (!b.startTime) return -1;
+        return a.startTime.localeCompare(b.startTime);
       });
     });
     
