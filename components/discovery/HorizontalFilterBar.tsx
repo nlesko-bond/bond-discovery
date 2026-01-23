@@ -539,9 +539,9 @@ export function HorizontalFilterBar({
             <div className="py-1">
               {[
                 { value: 'all', label: 'All Genders' },
-                { value: 'coed', label: 'Co-ed / Mixed' },
-                { value: 'male', label: 'Male / Boys' },
-                { value: 'female', label: 'Female / Girls' },
+                { value: 'coed', label: 'Co-ed' },
+                { value: 'male', label: 'Male' },
+                { value: 'female', label: 'Female' },
               ].map(option => (
                 <button
                   key={option.value}
@@ -646,7 +646,7 @@ export function HorizontalFilterBar({
           {/* Gender Chip */}
           {filters.gender && filters.gender !== 'all' && (
             <FilterChip
-              label={filters.gender === 'coed' ? 'Co-ed' : filters.gender === 'male' ? 'Male/Boys' : 'Female/Girls'}
+              label={filters.gender === 'coed' ? 'Co-ed' : filters.gender === 'male' ? 'Male' : 'Female'}
               onRemove={() => clearFilter('gender')}
               brandColor={secondaryColor}
             />

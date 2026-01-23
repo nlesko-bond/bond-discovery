@@ -50,26 +50,19 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   
-  // Detect if mobile (client-side only)
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-  
-  // Use URL scheduleView param first, then config default, then 'list' for mobile or 'week' for desktop
+  // Use URL scheduleView param first, then config default based on device
   const [viewMode, setViewModeState] = useState<ViewMode>(() => {
     const urlScheduleView = searchParams.get('scheduleView') as ViewMode | null;
     if (urlScheduleView && ['list', 'day', 'week', 'month'].includes(urlScheduleView)) {
       return urlScheduleView;
     }
-    // Check for mobile on initial render (SSR fallback to week)
+    // Check for mobile on initial render
     const isMobileInitial = typeof window !== 'undefined' && window.innerWidth < 640;
-    if (isMobileInitial && !config.features.defaultScheduleView) {
-      return 'list';
+    if (isMobileInitial) {
+      // Use mobile default from config, or fallback to 'list'
+      return (config.features.mobileDefaultScheduleView as ViewMode) || 'list';
     }
+    // Desktop: use config default or 'week'
     return (config.features.defaultScheduleView as ViewMode) || 'week';
   });
   
@@ -678,33 +671,27 @@ function ListDaySection({
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      {/* Day Header */}
+      {/* Day Header - sticky with brand gradient, handoffs to next day */}
+      {/* Position accounts for: main header (57px) + filter bar (~50px) + schedule stats (~50px) */}
       <div 
-        className={cn(
-          'flex items-center gap-3 px-4 py-3',
-          !day.isToday && 'bg-gray-50 border-b border-gray-100'
-        )}
-        style={day.isToday ? { 
+        className="sticky top-[155px] sm:top-[155px] z-10 flex items-center gap-3 px-4 py-3 text-white shadow-md"
+        style={{ 
           background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
-          color: 'white'
-        } : undefined}
+        }}
       >
-        <div className={cn(
-          'w-12 h-12 rounded-lg flex flex-col items-center justify-center shadow-sm',
-          day.isToday ? 'bg-white/20' : 'bg-white border border-gray-200'
-        )}>
-          <span className={cn('text-xs font-medium', day.isToday ? 'text-white/80' : 'text-gray-500')}>
+        <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center shadow-sm bg-white/20">
+          <span className="text-xs font-medium text-white/80">
             {day.dayOfWeek.slice(0, 3)}
           </span>
-          <span className={cn('text-lg font-bold', day.isToday ? 'text-white' : 'text-gray-900')}>
+          <span className="text-lg font-bold text-white">
             {format(parseISO(day.date), 'd')}
           </span>
         </div>
         <div className="flex-1">
-          <span className={cn('font-semibold', day.isToday ? 'text-white' : 'text-gray-900')}>
+          <span className="font-semibold text-white">
             {format(parseISO(day.date), 'EEEE, MMMM d')}
           </span>
-          <div className={cn('text-sm', day.isToday ? 'text-white/70' : 'text-gray-500')}>
+          <div className="text-sm text-white/70">
             {day.events.length} event{day.events.length !== 1 ? 's' : ''}
           </div>
         </div>
@@ -818,6 +805,18 @@ function EventCard({
 
           {/* Details row - show space name (most specific) or facility name */}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
+            {/* Program type pill */}
+            {event.programType && (
+              <span 
+                className="text-xs font-medium px-2 py-0.5 rounded-full"
+                style={{ 
+                  backgroundColor: `${secondaryColor}15`, 
+                  color: secondaryColor 
+                }}
+              >
+                {getProgramTypeLabel(event.programType)}
+              </span>
+            )}
             {(event.spaceName || event.facilityName) && (
               <span className="flex items-center gap-1">
                 <MapPin size={13} className="text-gray-400" />

@@ -346,6 +346,7 @@ export interface FeatureConfig {
   enableFilters: FilterType[];
   defaultView: ViewMode;
   defaultScheduleView?: ScheduleViewType; // Default view for schedule tab
+  mobileDefaultScheduleView?: ScheduleViewType; // Default view for mobile (defaults to 'list')
   allowViewToggle: boolean;
 }
 

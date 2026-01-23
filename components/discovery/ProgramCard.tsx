@@ -261,6 +261,7 @@ export function ProgramCard({ program, config, autoExpand = false }: ProgramCard
                   programLinkSEO={program.linkSEO}
                   programId={program.id}
                   programName={program.name}
+                  autoExpandPricing={sessions.length === 1}
                 />
               ))
             ) : (
@@ -295,16 +296,19 @@ function SessionCard({
   config,
   programLinkSEO,
   programId,
-  programName
+  programName,
+  autoExpandPricing = false,
 }: { 
   session: Session; 
   config: DiscoveryConfig;
   programLinkSEO?: string;
   programId: string;
   programName: string;
+  autoExpandPricing?: boolean;
 }) {
   const pathname = usePathname();
-  const [showPricing, setShowPricing] = useState(false);
+  // Auto-expand pricing if there's only one session (autoExpandPricing=true)
+  const [showPricing, setShowPricing] = useState(autoExpandPricing);
   const availability = getAvailabilityInfo(session.spotsRemaining, session.maxParticipants || session.capacity);
   const products = session.products || [];
   
