@@ -39,7 +39,8 @@ interface PageConfig {
     showAgeGender: boolean;
     enableFilters: string[];
     defaultView: 'programs' | 'schedule';
-    defaultScheduleView?: 'list' | 'table' | 'day' | 'week' | 'month'; // Default view for schedule tab
+    defaultScheduleView?: 'list' | 'table' | 'day' | 'week' | 'month'; // Default view for schedule tab (desktop)
+    mobileDefaultScheduleView?: 'list' | 'table' | 'day' | 'week' | 'month'; // Default view for mobile
     allowViewToggle: boolean;
     showTableView?: boolean; // Show table view option on desktop
   };
@@ -504,13 +505,32 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
               </div>
               
               <div>
-                <label className="label">Default Schedule View</label>
+                <label className="label">Default Schedule View (Desktop)</label>
                 <select
                   className="input"
-                  value={config.features.defaultScheduleView || 'week'}
+                  value={config.features.defaultScheduleView || 'list'}
                   onChange={(e) => setConfig({
                     ...config,
-                    features: { ...config.features, defaultScheduleView: e.target.value as 'list' | 'day' | 'week' | 'month' }
+                    features: { ...config.features, defaultScheduleView: e.target.value as 'list' | 'table' | 'day' | 'week' | 'month' }
+                  })}
+                >
+                  <option value="list">List</option>
+                  <option value="table">Table</option>
+                  <option value="day">Day</option>
+                  <option value="week">Week Grid</option>
+                  <option value="month">Month</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Default view on desktop devices</p>
+              </div>
+              
+              <div>
+                <label className="label">Default Schedule View (Mobile)</label>
+                <select
+                  className="input"
+                  value={config.features.mobileDefaultScheduleView || 'list'}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    features: { ...config.features, mobileDefaultScheduleView: e.target.value as 'list' | 'table' | 'day' | 'week' | 'month' }
                   })}
                 >
                   <option value="list">List</option>
@@ -518,7 +538,7 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   <option value="week">Week Grid</option>
                   <option value="month">Month</option>
                 </select>
-                <p className="text-xs text-gray-500 mt-1">When Schedule tab is selected</p>
+                <p className="text-xs text-gray-500 mt-1">Default view on mobile devices (Table not recommended for mobile)</p>
               </div>
               
               <div>
