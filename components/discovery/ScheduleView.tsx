@@ -477,13 +477,14 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
       </div>
       
       {/* Navigation - for calendar views */}
+      {/* Note: top values account for header (~57px) + filter bar (~52px) = ~109px on desktop */}
       <div className={cn(
-        viewMode !== 'list' && 'sticky top-[105px] sm:top-[57px] z-10'
+        viewMode !== 'list' && viewMode !== 'table' && 'sticky top-[112px] sm:top-[109px] z-10'
       )}>
       {viewMode === 'month' ? (
         /* Month Navigation */
         <div 
-          className="flex items-center justify-between px-3 py-2 text-white rounded-t-lg"
+          className="flex items-center justify-between px-3 py-3 text-white rounded-t-lg"
           style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
         >
           <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
@@ -497,7 +498,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
       ) : viewMode === 'day' && selectedDayDate ? (
         /* Day Navigation */
         <div 
-          className="flex items-center justify-between px-3 py-2 text-white"
+          className="flex items-center justify-between px-3 py-3 text-white rounded-t-lg"
           style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
         >
           <button
@@ -530,7 +531,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
       ) : viewMode === 'list' ? null : (
         /* Week Navigation - Compact */
         <div 
-          className="flex items-center justify-between px-3 py-2 text-white"
+          className="flex items-center justify-between px-3 py-3 text-white rounded-t-lg"
           style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
         >
           <button
