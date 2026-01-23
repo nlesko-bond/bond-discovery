@@ -29,13 +29,19 @@ interface SessionOption {
   programId: string;
 }
 
+interface ProgramFilterOption extends FilterOption {
+  facilityId?: string;
+  facilityName?: string;
+}
+
 interface FilterOptions {
   facilities: FilterOption[];
   programTypes: FilterOption[];
   sports: FilterOption[];
-  programs: FilterOption[];
+  programs: ProgramFilterOption[];
   sessions?: SessionOption[]; // Sessions, filtered by selected programs
   ages: { min: number; max: number }[];
+  hasMultipleFacilities?: boolean;
 }
 
 interface HorizontalFilterBarProps {
@@ -333,22 +339,36 @@ export function HorizontalFilterBar({
             brandColor={secondaryColor}
           >
             <div className="p-2 max-h-64 overflow-y-auto">
-              {filterOptions.programs.map(program => {
+              {filterOptions.programs
+                // Filter by selected facility if any
+                .filter(program => {
+                  if (!filters.facilityIds?.length) return true;
+                  return program.facilityId && filters.facilityIds.includes(program.facilityId);
+                })
+                .map(program => {
                 const isSelected = filters.programIds?.includes(program.id);
                 return (
                   <button
                     key={program.id}
                     onClick={() => handleMultiSelect('programIds', program.id)}
                     className={cn(
-                      'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
+                      'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
                       !isSelected && 'hover:bg-gray-50'
                     )}
                     style={isSelected ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor } : undefined}
                   >
-                    <span className="truncate">{program.name}</span>
-                    {isSelected && (
-                      <Check size={14} style={{ color: secondaryColor }} />
-                    )}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate">{program.name}</span>
+                        {/* Show facility name when multiple facilities exist */}
+                        {filterOptions.hasMultipleFacilities && program.facilityName && (
+                          <span className="block text-xs text-gray-400 truncate">{program.facilityName}</span>
+                        )}
+                      </div>
+                      {isSelected && (
+                        <Check size={14} className="flex-shrink-0" style={{ color: secondaryColor }} />
+                      )}
+                    </div>
                   </button>
                 );
               })}

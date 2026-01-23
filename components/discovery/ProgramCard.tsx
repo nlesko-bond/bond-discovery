@@ -35,6 +35,7 @@ interface ProgramCardProps {
   program: Program;
   config: DiscoveryConfig;
   autoExpand?: boolean; // Auto-expand sessions when viewing single program
+  showFacility?: boolean; // Show facility name when multiple facilities exist
 }
 
 // Sport-specific gradients for visual appeal
@@ -53,7 +54,7 @@ const sportGradients: Record<string, string> = {
   default: 'from-indigo-600 to-purple-600',
 };
 
-export function ProgramCard({ program, config, autoExpand = false }: ProgramCardProps) {
+export function ProgramCard({ program, config, autoExpand = false, showFacility = true }: ProgramCardProps) {
   const [expanded, setExpanded] = useState(autoExpand);
   
   // Dynamic colors from config
@@ -159,8 +160,8 @@ export function ProgramCard({ program, config, autoExpand = false }: ProgramCard
           <span className="group-hover:opacity-80">{program.name}</span>
         </h3>
 
-        {/* Facility & Location */}
-        {facilityName && (
+        {/* Facility & Location - only show when multiple facilities exist */}
+        {showFacility && facilityName && (
           <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-2">
             <MapPin size={14} className="text-gray-400 flex-shrink-0" />
             <span className="truncate">{facilityName}</span>

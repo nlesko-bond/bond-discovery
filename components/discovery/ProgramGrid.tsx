@@ -7,9 +7,10 @@ import { Search, SlidersHorizontal } from 'lucide-react';
 interface ProgramGridProps {
   programs: Program[];
   config: DiscoveryConfig;
+  hasMultipleFacilities?: boolean;
 }
 
-export function ProgramGrid({ programs, config }: ProgramGridProps) {
+export function ProgramGrid({ programs, config, hasMultipleFacilities }: ProgramGridProps) {
   if (programs.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -51,6 +52,7 @@ export function ProgramGrid({ programs, config }: ProgramGridProps) {
             program={program}
             config={config}
             autoExpand={programs.length === 1} // Auto-expand when viewing single program
+            showFacility={hasMultipleFacilities}
           />
         ))}
       </div>

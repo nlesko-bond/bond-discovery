@@ -37,9 +37,10 @@ interface ScheduleViewProps {
   isLoading?: boolean;
   error?: string | null;
   totalEvents?: number;
+  hasMultipleFacilities?: boolean;
 }
 
-export function ScheduleView({ schedule, config, isLoading, error, totalEvents }: ScheduleViewProps) {
+export function ScheduleView({ schedule, config, isLoading, error, totalEvents, hasMultipleFacilities }: ScheduleViewProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -584,6 +585,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
               day={day}
               onEventClick={setSelectedEvent}
               config={config}
+              hasMultipleFacilities={hasMultipleFacilities}
             />
           ))}
           
@@ -692,8 +694,10 @@ function ListDaySection({
   day,
   onEventClick,
   config,
+  hasMultipleFacilities,
 }: {
   day: DaySchedule;
+  hasMultipleFacilities?: boolean;
   onEventClick: (event: CalendarEvent) => void;
   config: DiscoveryConfig;
 }) {
@@ -745,6 +749,7 @@ function ListDaySection({
             event={event}
             onClick={() => onEventClick(event)}
             config={config}
+            showFacility={hasMultipleFacilities}
           />
         ))}
       </div>
@@ -757,10 +762,12 @@ function EventCard({
   event,
   onClick,
   config,
+  showFacility = true,
 }: {
   event: CalendarEvent;
   onClick: () => void;
   config: DiscoveryConfig;
+  showFacility?: boolean;
 }) {
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
@@ -868,10 +875,21 @@ function EventCard({
                 {getProgramTypeLabel(event.programType)}
               </span>
             )}
-            {(event.spaceName || event.facilityName) && (
+            {(event.spaceName || (showFacility && event.facilityName)) && (
               <span className="flex items-center gap-1">
                 <MapPin size={13} className="text-gray-400" />
-                {event.spaceName || event.facilityName}
+                {/* Show both facility and space when multiple facilities */}
+                {showFacility && event.facilityName && event.spaceName 
+                  ? `${event.facilityName} - ${event.spaceName}`
+                  : (event.spaceName || event.facilityName)
+                }
+              </span>
+            )}
+            {/* Waitlist indicator */}
+            {event.isWaitlistEnabled && (
+              <span className="flex items-center gap-1 text-xs text-purple-600">
+                <Users size={12} />
+                Waitlist
               </span>
             )}
             

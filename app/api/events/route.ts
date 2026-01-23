@@ -52,6 +52,9 @@ interface TransformedEvent {
   // Pricing
   startingPrice?: number;
   memberPrice?: number;
+  // Waitlist
+  isWaitlistEnabled?: boolean;
+  waitlistCount?: number;
 }
 
 /**
@@ -204,6 +207,9 @@ export async function GET(request: Request) {
                   currentParticipants: event.currentParticipants,
                   startingPrice,
                   memberPrice,
+                  // Waitlist - get from session or event
+                  isWaitlistEnabled: session.isWaitlistEnabled || session.waitlistEnabled || event.isWaitlistEnabled,
+                  waitlistCount: session.waitlistCount || event.waitlistCount,
                 };
                 
                 // Apply date filtering if provided

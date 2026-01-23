@@ -487,6 +487,8 @@ export function DiscoveryPage({
         startingPrice: event.startingPrice,
         memberPrice: event.memberPrice,
         registrationWindowStatus: event.registrationWindowStatus,
+        isWaitlistEnabled: event.isWaitlistEnabled,
+        waitlistCount: event.waitlistCount,
       };
     });
     
@@ -498,24 +500,10 @@ export function DiscoveryPage({
     const facilities = new Map<string, { id: string; name: string; count: number }>();
     const sports = new Map<string, number>();
     const programTypes = new Map<string, number>();
-    const programs: { id: string; name: string }[] = [];
+    const programs: { id: string; name: string; facilityId?: string; facilityName?: string }[] = [];
     const sessions: { id: string; name: string; programId: string }[] = [];
 
     initialPrograms.forEach(p => {
-      // Add program to list
-      programs.push({ id: p.id, name: p.name });
-      
-      // Add sessions from this program
-      if (p.sessions) {
-        p.sessions.forEach(s => {
-          sessions.push({
-            id: s.id,
-            name: s.name || `Session ${s.id}`,
-            programId: p.id,
-          });
-        });
-      }
-      
       // Get facility from program level or from sessions
       let facilityId = p.facilityId;
       let facilityName = p.facilityName;
@@ -527,6 +515,25 @@ export function DiscoveryPage({
           facilityId = String(sessionWithFacility.facility.id);
           facilityName = sessionWithFacility.facility.name;
         }
+      }
+      
+      // Add program to list with facility info
+      programs.push({ 
+        id: p.id, 
+        name: p.name,
+        facilityId,
+        facilityName,
+      });
+      
+      // Add sessions from this program
+      if (p.sessions) {
+        p.sessions.forEach(s => {
+          sessions.push({
+            id: s.id,
+            name: s.name || `Session ${s.id}`,
+            programId: p.id,
+          });
+        });
       }
       
       if (facilityId) {
@@ -549,8 +556,11 @@ export function DiscoveryPage({
       }
     });
 
+    const facilitiesList = Array.from(facilities.values()).sort((a, b) => a.name.localeCompare(b.name));
+    
     return {
-      facilities: Array.from(facilities.values()).sort((a, b) => a.name.localeCompare(b.name)),
+      facilities: facilitiesList,
+      hasMultipleFacilities: facilitiesList.length > 1,
       sports: Array.from(sports.entries())
         .map(([id, count]) => ({ id, label: id, count }))
         .sort((a, b) => b.count - a.count),
@@ -772,6 +782,7 @@ export function DiscoveryPage({
             <ProgramGrid 
               programs={filteredPrograms} 
               config={config}
+              hasMultipleFacilities={filterOptions.hasMultipleFacilities}
             />
           ) : (
             <ScheduleView 
@@ -780,6 +791,7 @@ export function DiscoveryPage({
               isLoading={eventsLoading}
               error={eventsError}
               totalEvents={filteredEvents.length}
+              hasMultipleFacilities={filterOptions.hasMultipleFacilities}
             />
           )}
         </main>

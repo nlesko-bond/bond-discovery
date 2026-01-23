@@ -441,6 +441,10 @@ export interface CalendarEvent {
   // Registration status
   registrationWindowStatus?: 'open' | 'closed' | 'upcoming' | 'ended' | string;
   type?: string;
+  
+  // Waitlist
+  isWaitlistEnabled?: boolean;
+  waitlistCount?: number;
 }
 
 export interface DaySchedule {
