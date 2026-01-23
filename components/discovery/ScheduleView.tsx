@@ -211,18 +211,6 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
     setShowExportMenu(false);
   }, [allEvents]);
   
-  // Debug: Log schedule changes
-  useEffect(() => {
-    const totalEvents = schedule.reduce((sum, week) => 
-      sum + week.days.reduce((daySum, day) => daySum + day.events.length, 0), 0
-    );
-    console.log('[ScheduleView] Schedule updated:', {
-      weeks: schedule.length,
-      totalEvents,
-      firstWeekEvents: schedule[0]?.days?.map(d => d.events.length).join(','),
-    });
-  }, [schedule]);
-
   // Get all days with events (for list view), grouped by date
   const allDaysWithEvents = useMemo(() => {
     const dayMap = new Map<string, DaySchedule>();
@@ -240,22 +228,14 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
       });
     });
     
-    const result = Array.from(dayMap.values()).sort((a, b) => 
+    return Array.from(dayMap.values()).sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
-    
-    console.log('[ScheduleView] allDaysWithEvents:', result.length, 'days');
-    return result;
   }, [schedule]);
   
   // Visible days for lazy loading
   const visibleDaysData = useMemo(() => {
-    const result = allDaysWithEvents.slice(0, visibleDays);
-    console.log('[ScheduleView] visibleDaysData:', result.length, 'of', allDaysWithEvents.length, 'days');
-    if (result.length > 0) {
-      console.log('[ScheduleView] First day:', result[0].date, 'with', result[0].events.length, 'events');
-    }
-    return result;
+    return allDaysWithEvents.slice(0, visibleDays);
   }, [allDaysWithEvents, visibleDays]);
   
   const hasMoreDays = visibleDays < allDaysWithEvents.length;
@@ -695,41 +675,42 @@ function ListDaySection({
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
   
-  console.log('[ListDaySection] Rendering day:', day.date, 'with', day.events.length, 'events');
-  
   if (day.events.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <section 
+      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+      aria-label={`Events for ${format(parseISO(day.date), 'EEEE, MMMM d')}`}
+    >
       {/* Day Header - styled with brand gradient */}
-      <div 
+      <header 
         className="flex items-center gap-3 px-4 py-3 text-white"
         style={{ 
           background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
         }}
       >
         <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center shadow-sm bg-white/20">
-          <span className="text-xs font-medium text-white/80">
+          <span className="text-xs font-medium text-white/80" aria-hidden="true">
             {day.dayOfWeek?.slice(0, 3) || format(parseISO(day.date), 'EEE')}
           </span>
-          <span className="text-lg font-bold text-white">
+          <span className="text-lg font-bold text-white" aria-hidden="true">
             {format(parseISO(day.date), 'd')}
           </span>
         </div>
         <div className="flex-1">
-          <span className="font-semibold text-white">
+          <h3 className="font-semibold text-white text-base">
             {format(parseISO(day.date), 'EEEE, MMMM d')}
-          </span>
-          <div className="text-sm text-white/70">
+          </h3>
+          <p className="text-sm text-white/70">
             {day.events.length} event{day.events.length !== 1 ? 's' : ''}
-          </div>
+          </p>
         </div>
         {day.isToday && (
           <span className="text-xs bg-white/20 px-3 py-1 rounded-full font-medium">
             Today
           </span>
         )}
-      </div>
+      </header>
       
       {/* Events List - with spacing between cards */}
       <div className="p-2 md:p-3 space-y-2">
@@ -742,7 +723,7 @@ function ListDaySection({
           />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
