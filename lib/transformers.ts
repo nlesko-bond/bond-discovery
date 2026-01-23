@@ -35,6 +35,32 @@ function normalizeArray<T>(data: any): T[] {
 }
 
 /**
+ * Calculate registration window status based on start and end dates
+ */
+function calculateRegistrationStatus(
+  startDate?: string,
+  endDate?: string
+): 'open' | 'closed' | 'not_opened_yet' | undefined {
+  if (!startDate && !endDate) return undefined;
+  
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  
+  // If registration hasn't started yet
+  if (startDate && startDate > today) {
+    return 'not_opened_yet';
+  }
+  
+  // If registration has ended
+  if (endDate && endDate < today) {
+    return 'closed';
+  }
+  
+  // Registration is open
+  return 'open';
+}
+
+/**
  * Check if a product name/description indicates it's a member-only product
  */
 function isMemberProduct(product: any): boolean {
@@ -147,8 +173,11 @@ export function transformSession(raw: any): Session {
     lateRegistrationEndDate: raw.lateRegistrationEndDate,
     cutoffDate: raw.cutoffDate,
     
-    // Registration status
-    registrationWindowStatus: raw.registrationWindowStatus,
+    // Registration status - calculate from dates if not provided
+    registrationWindowStatus: raw.registrationWindowStatus || calculateRegistrationStatus(
+      raw.registrationStartDate,
+      raw.registrationEndDate
+    ),
     
     // Capacity
     capacity,
