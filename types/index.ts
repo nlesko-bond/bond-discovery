@@ -445,6 +445,11 @@ export interface CalendarEvent {
   // Waitlist
   isWaitlistEnabled?: boolean;
   waitlistCount?: number;
+  
+  // Segment info (for segmented sessions)
+  segmentId?: string;
+  segmentName?: string;
+  isSegmented?: boolean;
 }
 
 export interface DaySchedule {

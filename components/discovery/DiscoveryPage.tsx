@@ -489,6 +489,10 @@ export function DiscoveryPage({
         registrationWindowStatus: event.registrationWindowStatus,
         isWaitlistEnabled: event.isWaitlistEnabled,
         waitlistCount: event.waitlistCount,
+        // Segment info
+        segmentId: event.segmentId,
+        segmentName: event.segmentName,
+        isSegmented: event.isSegmented,
       };
     });
     

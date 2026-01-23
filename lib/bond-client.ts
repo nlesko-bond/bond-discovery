@@ -209,14 +209,64 @@ export class BondClient {
       expand?: string;
     }
   ): Promise<APIResponse<Segment[]>> {
-    const params: Record<string, any> = {
-      expand: options?.expand || 'events',
-    };
+    const params: Record<string, any> = {};
+    if (options?.expand) {
+      params.expand = options.expand;
+    }
 
     return this.fetch<APIResponse<Segment[]>>(
       `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/segments`,
       params
     );
+  }
+
+  /**
+   * Get events for a specific segment (for segmented sessions)
+   */
+  async getSegmentEvents(
+    orgId: string,
+    programId: string,
+    sessionId: string,
+    segmentId: string,
+    options?: { expand?: string }
+  ): Promise<APIResponse<SessionEvent[]>> {
+    const allEvents: SessionEvent[] = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    
+    do {
+      const params: Record<string, string> = { page: String(currentPage) };
+      if (options?.expand) params.expand = options.expand;
+      
+      const response = await this.fetch<APIResponse<SessionEvent[]>>(
+        `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/segments/${segmentId}/events`,
+        params
+      );
+      
+      if (response.data) {
+        allEvents.push(...response.data);
+      }
+      
+      // Check pagination from meta
+      if (response.meta && typeof response.meta === 'object' && 'totalPages' in response.meta) {
+        totalPages = (response.meta as any).totalPages || 1;
+      }
+      
+      currentPage++;
+    } while (currentPage <= totalPages);
+    
+    return {
+      data: allEvents,
+      meta: { 
+        pagination: { 
+          total: allEvents.length, 
+          perPage: allEvents.length, 
+          currentPage: 1, 
+          lastPage: 1, 
+          hasMore: false 
+        } 
+      }
+    };
   }
 
   /**

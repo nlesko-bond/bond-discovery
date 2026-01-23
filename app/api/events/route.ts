@@ -55,6 +55,10 @@ interface TransformedEvent {
   // Waitlist
   isWaitlistEnabled?: boolean;
   waitlistCount?: number;
+  // Segment info (for segmented sessions)
+  segmentId?: string;
+  segmentName?: string;
+  isSegmented?: boolean;
 }
 
 /**
@@ -146,81 +150,130 @@ export async function GET(request: Request) {
               }
             }
             
-            try {
-              // Fetch events with resources expand for court/field names
-              const eventsResponse = await client.getEvents(orgId, program.id, session.id, {
-                expand: 'resources'
-              });
-              const events = eventsResponse.data || [];
-              
-              // Get pricing from session products
-              const products = session.products || [];
-              let startingPrice: number | undefined;
-              let memberPrice: number | undefined;
-              
-              for (const product of products) {
-                const prices = product.prices || [];
-                for (const price of prices) {
-                  const amount = price.price || price.amount || 0;
-                  if (product.membershipRequired || product.isMemberProduct) {
-                    if (memberPrice === undefined || amount < memberPrice) {
-                      memberPrice = amount;
-                    }
-                  } else {
-                    if (startingPrice === undefined || amount < startingPrice) {
-                      startingPrice = amount;
-                    }
+            // Get pricing from session products
+            const products = session.products || [];
+            let startingPrice: number | undefined;
+            let memberPrice: number | undefined;
+            
+            for (const product of products) {
+              const prices = product.prices || [];
+              for (const price of prices) {
+                const amount = price.price || price.amount || 0;
+                if (product.membershipRequired || product.isMemberProduct) {
+                  if (memberPrice === undefined || amount < memberPrice) {
+                    memberPrice = amount;
+                  }
+                } else {
+                  if (startingPrice === undefined || amount < startingPrice) {
+                    startingPrice = amount;
                   }
                 }
               }
+            }
+            
+            // Calculate registration status from SESSION dates (more accurate than event status)
+            const sessionRegistrationStatus = calculateSessionRegistrationStatus(
+              session.registrationStartDate,
+              session.registrationEndDate
+            );
+            
+            // Helper to transform an event
+            const transformEvent = (event: any, segmentId?: string, segmentName?: string): TransformedEvent | null => {
+              // Extract resource names (court/field) from resources array
+              const resourceNames = event.resources && Array.isArray(event.resources) 
+                ? event.resources.map((r: any) => r.name).filter(Boolean).join(', ')
+                : undefined;
               
-              // Transform and add events
-              events.forEach((event: any) => {
-                // Extract resource names (court/field) from resources array
-                const resourceNames = event.resources && Array.isArray(event.resources) 
-                  ? event.resources.map((r: any) => r.name).filter(Boolean).join(', ')
-                  : undefined;
+              const transformedEvent: TransformedEvent = {
+                id: String(event.id),
+                title: event.title || segmentName || session.name || program.name,
+                startDate: event.startDate,
+                endDate: event.endDate,
+                timezone: event.timezone,
+                programId: program.id,
+                programName: program.name,
+                sessionId: session.id,
+                sessionName: segmentName || session.name || '',
+                facilityName: session.facility?.name || program.facilityName,
+                spaceName: resourceNames,  // Resource/court/field from expand=resources
+                sport: program.sport,
+                type: program.type,
+                linkSEO: session.linkSEO || program.linkSEO,
+                registrationWindowStatus: sessionRegistrationStatus,
+                maxParticipants: event.maxParticipants,
+                currentParticipants: event.currentParticipants,
+                startingPrice,
+                memberPrice,
+                // Waitlist - get from session or event
+                isWaitlistEnabled: session.isWaitlistEnabled || session.waitlistEnabled || event.isWaitlistEnabled,
+                waitlistCount: session.waitlistCount || event.waitlistCount,
+                // Segment info
+                segmentId,
+                segmentName,
+                isSegmented: !!segmentId,
+              };
+              
+              // Apply date filtering if provided
+              if (startDate || endDate) {
+                const eventStart = new Date(event.startDate);
+                if (startDate && eventStart < new Date(startDate)) return null;
+                if (endDate && eventStart > new Date(endDate)) return null;
+              }
+              
+              return transformedEvent;
+            };
+            
+            try {
+              // Check if session uses segments
+              if (session.isSegmented) {
+                console.log(`Session ${session.id} is segmented, fetching segments...`);
                 
-                // Calculate registration status from SESSION dates (more accurate than event status)
-                const sessionRegistrationStatus = calculateSessionRegistrationStatus(
-                  session.registrationStartDate,
-                  session.registrationEndDate
-                );
+                // Fetch segments for this session
+                const segmentsResponse = await client.getSegments(orgId, program.id, session.id);
+                const segments = segmentsResponse.data || [];
                 
-                const transformedEvent: TransformedEvent = {
-                  id: String(event.id),
-                  title: event.title || session.name || program.name,
-                  startDate: event.startDate,
-                  endDate: event.endDate,
-                  timezone: event.timezone,
-                  programId: program.id,
-                  programName: program.name,
-                  sessionId: session.id,
-                  sessionName: session.name || '',
-                  facilityName: session.facility?.name || program.facilityName,
-                  spaceName: resourceNames,  // Resource/court/field from expand=resources
-                  sport: program.sport,
-                  type: program.type,
-                  linkSEO: session.linkSEO || program.linkSEO,
-                  registrationWindowStatus: sessionRegistrationStatus,
-                  maxParticipants: event.maxParticipants,
-                  currentParticipants: event.currentParticipants,
-                  startingPrice,
-                  memberPrice,
-                  // Waitlist - get from session or event
-                  isWaitlistEnabled: session.isWaitlistEnabled || session.waitlistEnabled || event.isWaitlistEnabled,
-                  waitlistCount: session.waitlistCount || event.waitlistCount,
-                };
+                console.log(`Found ${segments.length} segments for session ${session.id}`);
                 
-                // Apply date filtering if provided
-                if (startDate || endDate) {
-                  const eventStart = new Date(event.startDate);
-                  if (startDate && eventStart < new Date(startDate)) return;
-                  if (endDate && eventStart > new Date(endDate)) return;
+                // For each segment, fetch events
+                for (const segment of segments) {
+                  try {
+                    const segmentEventsResponse = await client.getSegmentEvents(
+                      orgId, 
+                      program.id, 
+                      session.id, 
+                      segment.id,
+                      { expand: 'resources' }
+                    );
+                    const segmentEvents = segmentEventsResponse.data || [];
+                    
+                    console.log(`Segment ${segment.id} (${segment.name}): ${segmentEvents.length} events`);
+                    
+                    // Transform and add segment events
+                    segmentEvents.forEach((event: any) => {
+                      const transformed = transformEvent(event, segment.id, segment.name);
+                      if (transformed) {
+                        allEvents.push(transformed);
+                      }
+                    });
+                  } catch (err) {
+                    console.error(`Error fetching events for segment ${segment.id}:`, err);
+                  }
                 }
+              } else {
+                // Non-segmented session - fetch events directly
+                const eventsResponse = await client.getEvents(orgId, program.id, session.id, {
+                  expand: 'resources'
+                });
+                const events = eventsResponse.data || [];
                 
-                allEvents.push(transformedEvent);
-              });
+                // Transform and add events
+                events.forEach((event: any) => {
+                  const transformed = transformEvent(event);
+                  if (transformed) {
+                    allEvents.push(transformed);
+                  }
+                });
+              }
             } catch (err) {
               console.error(`Error fetching events for session ${session.id}:`, err);
             }
