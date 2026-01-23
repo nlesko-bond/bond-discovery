@@ -701,8 +701,8 @@ export function DiscoveryPage({
         </div>
       </header>
 
-      {/* Horizontal Filter Bar - visible on all screen sizes, sticky below header */}
-      <div className="w-full px-3 sm:px-4 lg:px-6 py-2 bg-gray-50 sticky top-[57px] z-30">
+      {/* Horizontal Filter Bar - visible on all screen sizes */}
+      <div className="w-full px-3 sm:px-4 lg:px-6 py-2 bg-gray-50 border-b border-gray-200">
         <div className="overflow-x-auto sm:overflow-visible">
           <HorizontalFilterBar
             filters={filters}

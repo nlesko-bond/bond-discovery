@@ -228,9 +228,21 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
       });
     });
     
-    return Array.from(dayMap.values()).sort((a, b) => 
+    // Sort days chronologically, and sort events within each day by start time
+    const result = Array.from(dayMap.values()).sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
+    
+    // Sort events within each day by start time
+    result.forEach(day => {
+      day.events.sort((a, b) => {
+        const timeA = a.startTime || a.date || '';
+        const timeB = b.startTime || b.date || '';
+        return new Date(timeA).getTime() - new Date(timeB).getTime();
+      });
+    });
+    
+    return result;
   }, [schedule]);
   
   // Visible days for lazy loading
@@ -304,8 +316,8 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
 
   return (
     <div>
-      {/* Header with stats and controls - sticks below main header */}
-      <div className="sticky top-[57px] z-20 bg-gray-50 px-3 py-2 border-b border-gray-200 -mx-3 sm:-mx-4 lg:-mx-6">
+      {/* Header with stats and controls */}
+      <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 -mx-3 sm:-mx-4 lg:-mx-6 mb-4">
         <div className="flex items-center justify-between gap-2">
           {/* Event count - compact */}
           <div className="flex items-center gap-1.5 text-xs text-gray-500">
@@ -425,9 +437,9 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
         </div>
       </div>
       
-      {/* Navigation - sticky on mobile for calendar views */}
+      {/* Navigation - for calendar views */}
       <div className={cn(
-        viewMode !== 'list' && 'sticky top-[105px] sm:top-[57px] z-10'
+        viewMode !== 'list' && 'sticky top-[57px] z-10'
       )}>
       {viewMode === 'month' ? (
         /* Month Navigation */
@@ -679,12 +691,12 @@ function ListDaySection({
 
   return (
     <section 
-      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+      className="relative"
       aria-label={`Events for ${format(parseISO(day.date), 'EEEE, MMMM d')}`}
     >
-      {/* Day Header - styled with brand gradient */}
+      {/* Day Header - sticky with brand gradient */}
       <header 
-        className="flex items-center gap-3 px-4 py-3 text-white"
+        className="sticky top-[57px] z-20 flex items-center gap-3 px-4 py-3 text-white rounded-t-xl shadow-md"
         style={{ 
           background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
         }}
@@ -712,8 +724,8 @@ function ListDaySection({
         )}
       </header>
       
-      {/* Events List - with spacing between cards */}
-      <div className="p-2 md:p-3 space-y-2">
+      {/* Events List */}
+      <div className="bg-white rounded-b-xl shadow-sm border border-gray-200 border-t-0 p-2 md:p-3 space-y-2">
         {day.events.map((event) => (
           <EventCard
             key={event.id}
