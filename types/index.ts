@@ -342,7 +342,7 @@ export interface BrandingConfig {
   fontFamily?: string; // e.g., 'Inter', 'Roboto', 'Open Sans'
 }
 
-export type ScheduleViewType = 'list' | 'day' | 'week' | 'month';
+export type ScheduleViewType = 'list' | 'table' | 'day' | 'week' | 'month';
 
 export interface FeatureConfig {
   showPricing: boolean;
@@ -354,6 +354,7 @@ export interface FeatureConfig {
   defaultScheduleView?: ScheduleViewType; // Default view for schedule tab
   mobileDefaultScheduleView?: ScheduleViewType; // Default view for mobile (defaults to 'list')
   allowViewToggle: boolean;
+  showTableView?: boolean; // Show table view option on desktop
 }
 
 export type FilterType = 

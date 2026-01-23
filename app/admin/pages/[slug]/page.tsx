@@ -39,8 +39,9 @@ interface PageConfig {
     showAgeGender: boolean;
     enableFilters: string[];
     defaultView: 'programs' | 'schedule';
-    defaultScheduleView?: 'list' | 'day' | 'week' | 'month'; // Default view for schedule tab
+    defaultScheduleView?: 'list' | 'table' | 'day' | 'week' | 'month'; // Default view for schedule tab
     allowViewToggle: boolean;
+    showTableView?: boolean; // Show table view option on desktop
   };
   defaultParams?: Record<string, string>;
   cacheTtl?: number;
@@ -455,6 +456,18 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   })}
                 />
                 <span>Allow switching between Programs and Schedule view</span>
+              </label>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300"
+                  checked={config.features.showTableView || false}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    features: { ...config.features, showTableView: e.target.checked }
+                  })}
+                />
+                <span>Show Table view option on desktop (great for high-volume events)</span>
               </label>
             </div>
           </div>

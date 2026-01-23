@@ -21,7 +21,10 @@ import {
   Download,
   FileText,
   CalendarPlus,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Table2,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { WeekSchedule, DaySchedule, CalendarEvent, DiscoveryConfig } from '@/types';
 import { formatDate, formatTime, formatPrice, getSportLabel, getProgramTypeLabel, buildRegistrationUrl, cn } from '@/lib/utils';
@@ -29,7 +32,7 @@ import { format, parseISO, startOfMonth, addMonths, subMonths, isToday, isSameDa
 import { DayView, WeekGridView, MonthView } from './calendar';
 import { ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 
-type ViewMode = 'list' | 'day' | 'week' | 'month';
+type ViewMode = 'list' | 'table' | 'day' | 'week' | 'month';
 
 interface ScheduleViewProps {
   schedule: WeekSchedule[];
@@ -355,6 +358,23 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
               <List size={16} />
               <span className="hidden sm:inline">List</span>
             </button>
+            {/* Table View - desktop only when enabled */}
+            {config.features.showTableView && (
+              <button
+                onClick={() => setViewMode('table')}
+                className={cn(
+                  'hidden lg:flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1.5 sm:px-3 sm:py-1.5 rounded-md text-sm font-medium transition-all',
+                  viewMode === 'table'
+                    ? 'bg-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                )}
+                style={viewMode === 'table' ? { color: primaryColor } : undefined}
+                title="Table View"
+              >
+                <Table2 size={16} />
+                <span className="hidden sm:inline">Table</span>
+              </button>
+            )}
             <button
               onClick={() => {
                 setSelectedDayDate(currentWeek?.days[0]?.date || new Date().toISOString().split('T')[0]);
@@ -614,6 +634,17 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
             </div>
           )}
         </div>
+      )}
+
+      {/* Table View - Desktop only */}
+      {viewMode === 'table' && (
+        <TableView
+          events={allDaysWithEvents.flatMap(day => day.events)}
+          onEventClick={setSelectedEvent}
+          config={config}
+          hasMultipleFacilities={hasMultipleFacilities}
+          isLoading={isLoading}
+        />
       )}
 
       {/* Empty State - only for week mode */}
@@ -1125,6 +1156,322 @@ function EventDetailModal({
             {isRegistrationUnavailable ? 'Learn More' : 'Register Now'} <ExternalLink size={16} />
           </a>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Table View Component - Desktop only
+function TableView({
+  events,
+  onEventClick,
+  config,
+  hasMultipleFacilities,
+  isLoading,
+}: {
+  events: CalendarEvent[];
+  onEventClick: (event: CalendarEvent) => void;
+  config: DiscoveryConfig;
+  hasMultipleFacilities?: boolean;
+  isLoading?: boolean;
+}) {
+  const [sortField, setSortField] = useState<'date' | 'time' | 'program' | 'price'>('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [visibleCount, setVisibleCount] = useState(50);
+  
+  const primaryColor = config.branding.primaryColor || '#1E2761';
+  const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  
+  // Sort events
+  const sortedEvents = useMemo(() => {
+    const sorted = [...events].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'date':
+          comparison = new Date(a.date + 'T' + a.startTime).getTime() - new Date(b.date + 'T' + b.startTime).getTime();
+          break;
+        case 'time':
+          comparison = a.startTime.localeCompare(b.startTime);
+          break;
+        case 'program':
+          comparison = (a.programName || '').localeCompare(b.programName || '');
+          break;
+        case 'price':
+          comparison = (a.startingPrice || 0) - (b.startingPrice || 0);
+          break;
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+    
+    return sorted.slice(0, visibleCount);
+  }, [events, sortField, sortDirection, visibleCount]);
+  
+  const handleSort = (field: typeof sortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+  
+  const SortIcon = ({ field }: { field: typeof sortField }) => {
+    if (sortField !== field) return null;
+    return sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
+  };
+  
+  if (isLoading && events.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex items-center gap-2 text-gray-500">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span>Loading events...</span>
+        </div>
+      </div>
+    );
+  }
+  
+  if (events.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+        <p className="text-gray-500">No events found</p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-200 bg-gray-50">
+              <th 
+                className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={() => handleSort('date')}
+              >
+                <span className="flex items-center gap-1">
+                  Date <SortIcon field="date" />
+                </span>
+              </th>
+              <th 
+                className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={() => handleSort('time')}
+              >
+                <span className="flex items-center gap-1">
+                  Time <SortIcon field="time" />
+                </span>
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Event
+              </th>
+              <th 
+                className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={() => handleSort('program')}
+              >
+                <span className="flex items-center gap-1">
+                  Program <SortIcon field="program" />
+                </span>
+              </th>
+              {hasMultipleFacilities && (
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Location
+                </th>
+              )}
+              {config.features.showAvailability && (
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Spots
+                </th>
+              )}
+              {config.features.showPricing && (
+                <th 
+                  className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('price')}
+                >
+                  <span className="flex items-center gap-1">
+                    Price <SortIcon field="price" />
+                  </span>
+                </th>
+              )}
+              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {sortedEvents.map((event) => {
+              const isRegistrationClosed = event.registrationWindowStatus === 'closed' || event.registrationWindowStatus === 'ended';
+              const isRegistrationNotYetOpen = event.registrationWindowStatus === 'not_opened_yet';
+              const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
+              const isFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 0;
+              const isAlmostFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 5 && !isFull;
+              
+              return (
+                <tr 
+                  key={event.id} 
+                  className={cn(
+                    'hover:bg-gray-50 transition-colors cursor-pointer',
+                    isFull && 'opacity-60'
+                  )}
+                  onClick={() => onEventClick(event)}
+                >
+                  {/* Date */}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {format(parseISO(event.date), 'EEE, MMM d')}
+                    </div>
+                  </td>
+                  
+                  {/* Time */}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="text-sm text-gray-700">
+                      {formatTime(event.startTime) || 'TBD'}
+                      {event.endTime && ` - ${formatTime(event.endTime)}`}
+                    </div>
+                  </td>
+                  
+                  {/* Event Title */}
+                  <td className="px-4 py-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                        {event.title || event.sessionName || event.programName}
+                      </div>
+                      {event.sessionName && event.sessionName !== event.title && (
+                        <div className="text-xs text-gray-500 truncate max-w-xs">
+                          {event.sessionName}
+                        </div>
+                      )}
+                      {/* Status badges */}
+                      <div className="flex items-center gap-1 mt-0.5">
+                        {isRegistrationClosed && (
+                          <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">Closed</span>
+                        )}
+                        {isRegistrationNotYetOpen && (
+                          <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded">Coming Soon</span>
+                        )}
+                        {event.isWaitlistEnabled && (
+                          <span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-600 rounded flex items-center gap-0.5">
+                            <Users size={10} />Waitlist
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  
+                  {/* Program */}
+                  <td className="px-4 py-3">
+                    <div className="text-sm text-gray-700 truncate max-w-[150px]">
+                      {event.programName}
+                    </div>
+                    {event.programType && (
+                      <span 
+                        className="text-xs px-1.5 py-0.5 rounded mt-0.5 inline-block"
+                        style={{ backgroundColor: `${secondaryColor}15`, color: secondaryColor }}
+                      >
+                        {getProgramTypeLabel(event.programType)}
+                      </span>
+                    )}
+                  </td>
+                  
+                  {/* Location */}
+                  {hasMultipleFacilities && (
+                    <td className="px-4 py-3">
+                      <div className="text-sm text-gray-700 truncate max-w-[150px]">
+                        {event.facilityName}
+                      </div>
+                      {event.spaceName && (
+                        <div className="text-xs text-gray-500 truncate max-w-[150px]">
+                          {event.spaceName}
+                        </div>
+                      )}
+                    </td>
+                  )}
+                  
+                  {/* Availability */}
+                  {config.features.showAvailability && (
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {event.spotsRemaining !== undefined ? (
+                        <span className={cn(
+                          'text-xs font-medium px-2 py-1 rounded-full',
+                          isFull && 'bg-red-100 text-red-700',
+                          isAlmostFull && 'bg-yellow-100 text-yellow-700',
+                          !isFull && !isAlmostFull && 'bg-green-100 text-green-700'
+                        )}>
+                          {isFull ? 'Full' : `${event.spotsRemaining} left`}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
+                  )}
+                  
+                  {/* Price */}
+                  {config.features.showPricing && (
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {event.startingPrice !== undefined ? (
+                        <div>
+                          <span className="text-sm font-semibold text-gray-900">
+                            {event.startingPrice === 0 ? 'Free' : formatPrice(event.startingPrice)}
+                          </span>
+                          {event.memberPrice !== undefined && event.memberPrice < (event.startingPrice || 0) && (
+                            <div className="text-xs text-amber-600">
+                              {event.memberPrice === 0 ? 'Free' : formatPrice(event.memberPrice)} member
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
+                  )}
+                  
+                  {/* Action */}
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    {event.linkSEO && (
+                      <a 
+                        href={buildRegistrationUrl(event.linkSEO)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className={cn(
+                          'inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
+                          isRegistrationUnavailable
+                            ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            : 'text-white hover:opacity-90'
+                        )}
+                        style={!isRegistrationUnavailable ? { backgroundColor: secondaryColor } : undefined}
+                      >
+                        {isRegistrationUnavailable ? 'Details' : 'Register'}
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* Load More */}
+      {visibleCount < events.length && (
+        <div className="p-4 border-t border-gray-100 text-center">
+          <button
+            onClick={() => setVisibleCount(prev => prev + 50)}
+            className="px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors"
+            style={{ color: secondaryColor }}
+          >
+            Load more ({events.length - visibleCount} remaining)
+          </button>
+        </div>
+      )}
+      
+      {/* Summary */}
+      <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 text-xs text-gray-500 text-center">
+        Showing {Math.min(visibleCount, events.length)} of {events.length} events
       </div>
     </div>
   );
