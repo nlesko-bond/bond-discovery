@@ -211,6 +211,18 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
     setShowExportMenu(false);
   }, [allEvents]);
   
+  // Debug: Log schedule changes
+  useEffect(() => {
+    const totalEvents = schedule.reduce((sum, week) => 
+      sum + week.days.reduce((daySum, day) => daySum + day.events.length, 0), 0
+    );
+    console.log('[ScheduleView] Schedule updated:', {
+      weeks: schedule.length,
+      totalEvents,
+      firstWeekEvents: schedule[0]?.days?.map(d => d.events.length).join(','),
+    });
+  }, [schedule]);
+
   // Get all days with events (for list view), grouped by date
   const allDaysWithEvents = useMemo(() => {
     const dayMap = new Map<string, DaySchedule>();
@@ -228,9 +240,12 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
       });
     });
     
-    return Array.from(dayMap.values()).sort((a, b) => 
+    const result = Array.from(dayMap.values()).sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
+    
+    console.log('[ScheduleView] allDaysWithEvents:', result.length, 'days');
+    return result;
   }, [schedule]);
   
   // Visible days for lazy loading
