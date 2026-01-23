@@ -1,14 +1,9 @@
-import { AdminProviders } from '../AdminProviders';
-
 export default function LoginLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Login page has its own simple layout - no sidebar
-  return (
-    <AdminProviders>
-      {children}
-    </AdminProviders>
-  );
+  // Login page renders directly - parent layout handles SessionProvider
+  // The AdminAuthGuard in parent layout skips auth check for /admin/login
+  return <>{children}</>;
 }

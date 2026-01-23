@@ -1,7 +1,40 @@
+import Link from 'next/link';
+import { Tag, Code, Book, ExternalLink } from 'lucide-react';
+
 export default function HelpPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">Help & Documentation</h1>
+      
+      {/* Quick Links */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <Link 
+          href="/admin/help/gtm-setup"
+          className="bg-white rounded-xl border border-gray-200 p-4 hover:border-blue-300 hover:shadow-md transition-all group"
+        >
+          <Tag className="text-blue-500 mb-3" size={24} />
+          <h3 className="font-semibold text-gray-900 group-hover:text-blue-600">GTM Setup Guide</h3>
+          <p className="text-sm text-gray-500 mt-1">Configure Google Tag Manager for analytics</p>
+        </Link>
+        
+        <Link 
+          href="/admin/help#embedding"
+          className="bg-white rounded-xl border border-gray-200 p-4 hover:border-green-300 hover:shadow-md transition-all group"
+        >
+          <Code className="text-green-500 mb-3" size={24} />
+          <h3 className="font-semibold text-gray-900 group-hover:text-green-600">Embedding Guide</h3>
+          <p className="text-sm text-gray-500 mt-1">Embed Discovery pages on your website</p>
+        </Link>
+        
+        <Link 
+          href="/admin/help#deep-linking"
+          className="bg-white rounded-xl border border-gray-200 p-4 hover:border-purple-300 hover:shadow-md transition-all group"
+        >
+          <Book className="text-purple-500 mb-3" size={24} />
+          <h3 className="font-semibold text-gray-900 group-hover:text-purple-600">URL Parameters</h3>
+          <p className="text-sm text-gray-500 mt-1">Deep linking and filtering options</p>
+        </Link>
+      </div>
       
       <div className="space-y-6">
         {/* Overview */}
@@ -74,7 +107,7 @@ export default function HelpPage() {
         </div>
 
         {/* URL Parameters */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div id="deep-linking" className="bg-white rounded-xl border border-gray-200 p-6 scroll-mt-20">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Deep Linking</h2>
           <p className="text-gray-600 mb-4">
             You can pre-filter results using URL parameters:
@@ -89,7 +122,7 @@ export default function HelpPage() {
         </div>
 
         {/* Embedding */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div id="embedding" className="bg-white rounded-xl border border-gray-200 p-6 scroll-mt-20">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Embedding in Webflow</h2>
           <p className="text-gray-600 mb-4">
             Use the /embed/ version for iframe embedding:
