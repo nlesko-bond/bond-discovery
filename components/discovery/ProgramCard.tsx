@@ -94,6 +94,12 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
   
   // Has image?
   const imageUrl = program.imageUrl || program.mainMedia?.url;
+  
+  // Check if all sessions have closed registration
+  const allSessionsClosed = sessions.length > 0 && sessions.every(s => {
+    const status = s.registrationWindowStatus;
+    return status === 'closed' || status === 'ended';
+  });
 
   return (
     <div className="group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-2xl hover:border-gray-300 transition-all duration-300 hover:-translate-y-1">
@@ -281,9 +287,9 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 text-white font-semibold rounded-xl hover:opacity-90 transition-colors"
-                style={{ backgroundColor: primaryColor }}
+                style={{ backgroundColor: allSessionsClosed ? '#6B7280' : primaryColor }}
               >
-                <span>View Program & Register</span>
+                <span>{allSessionsClosed ? 'View Program' : 'View Program & Register'}</span>
                 <ExternalLink size={16} />
               </a>
             </div>
