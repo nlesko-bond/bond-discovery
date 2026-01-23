@@ -13,6 +13,7 @@ export interface DiscoveryPageRow {
   organization_ids: number[];
   facility_ids: number[];
   api_key: string | null;
+  partner_group_id: string | null;
   branding: {
     companyName: string;
     primaryColor: string;
@@ -37,4 +38,8 @@ export interface DiscoveryPageRow {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Joined from partner_groups
+  partner_group?: {
+    api_key: string | null;
+  } | null;
 }

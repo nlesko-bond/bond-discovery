@@ -18,6 +18,9 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
   } else {
     enableFilters = DEFAULT_ENABLED_FILTERS;
   }
+  
+  // Get API key: page-level first, then inherit from partner group
+  const apiKey = row.api_key || row.partner_group?.api_key || undefined;
     
   return {
     id: row.id,
@@ -25,7 +28,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
     slug: row.slug,
     organizationIds: row.organization_ids.map(String),
     facilityIds: row.facility_ids?.map(String) || [],
-    apiKey: row.api_key || undefined,
+    apiKey,
     branding: row.branding,
     features: {
       ...row.features,
@@ -79,7 +82,10 @@ export const defaultConfig: DiscoveryConfig = {
 export async function getAllPageConfigs(): Promise<DiscoveryConfig[]> {
   const { data, error } = await supabase
     .from('discovery_pages')
-    .select('*')
+    .select(`
+      *,
+      partner_group:partner_groups(api_key)
+    `)
     .eq('is_active', true)
     .order('name');
   
@@ -93,11 +99,15 @@ export async function getAllPageConfigs(): Promise<DiscoveryConfig[]> {
 
 /**
  * Get configuration by slug from Supabase
+ * Joins with partner_groups to inherit API key if not set on page
  */
 export async function getConfigBySlug(slug: string): Promise<DiscoveryConfig | null> {
   const { data, error } = await supabase
     .from('discovery_pages')
-    .select('*')
+    .select(`
+      *,
+      partner_group:partner_groups(api_key)
+    `)
     .eq('slug', slug)
     .single();
   
@@ -115,7 +125,10 @@ export async function getConfigBySlug(slug: string): Promise<DiscoveryConfig | n
 export async function getConfig(configId: string = 'default'): Promise<DiscoveryConfig> {
   const { data, error } = await supabase
     .from('discovery_pages')
-    .select('*')
+    .select(`
+      *,
+      partner_group:partner_groups(api_key)
+    `)
     .eq('id', configId)
     .single();
   
