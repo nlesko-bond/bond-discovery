@@ -397,13 +397,43 @@ export function DiscoveryPage({
     
     // Filter by facility
     if (filters.facilityIds && filters.facilityIds.length > 0) {
+      // Build a mapping of facility ID → name from initialPrograms
+      // This handles the case where events have facilityName but not facilityId
+      const facilityIdToName = new Map<string, string>();
+      initialPrograms.forEach(p => {
+        let facilityId = p.facilityId;
+        let facilityName = p.facilityName;
+        if (!facilityId && p.sessions && p.sessions.length > 0) {
+          const sessionWithFacility = p.sessions.find(s => s.facility);
+          if (sessionWithFacility?.facility) {
+            facilityId = String(sessionWithFacility.facility.id);
+            facilityName = sessionWithFacility.facility.name;
+          }
+        }
+        if (facilityId && facilityName) {
+          facilityIdToName.set(facilityId, facilityName.toLowerCase());
+        }
+      });
+      
+      // Build list of facility names to match
+      const selectedFacilityNames = filters.facilityIds
+        .map(id => facilityIdToName.get(id) || id.toLowerCase())
+        .filter(Boolean);
+      
       result = result.filter(event => {
-        // Match facility name or ID
+        const eventFacilityName = event.facilityName?.toLowerCase() || '';
+        const eventFacilityId = event.facilityId ? String(event.facilityId) : '';
+        
         return filters.facilityIds!.some(id => {
-          const facilityName = event.facilityName?.toLowerCase() || '';
-          return facilityName.includes(id.toLowerCase()) || 
-                 String(event.facilityId) === id ||
-                 event.facilityId === id;
+          // Direct ID match
+          if (eventFacilityId === id) return true;
+          
+          // Match event facility name against selected facility names
+          return selectedFacilityNames.some(name => 
+            eventFacilityName === name || 
+            eventFacilityName.includes(name) ||
+            name.includes(eventFacilityName)
+          );
         });
       });
     }
