@@ -696,7 +696,7 @@ function ListDaySection({
   );
 }
 
-// Event Card for List View - Redesigned with better visual hierarchy
+// Event Card for List View
 function EventCard({
   event,
   onClick,
@@ -709,10 +709,10 @@ function EventCard({
   const spotsInfo = event.spotsRemaining !== undefined && event.maxParticipants;
   const isFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 0;
   const isAlmostFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 5 && !isFull;
-  const eventColor = event.color || '#6366F1';
 
   // Get start time - try multiple sources
   const startTimeStr = formatTime(event.startTime) || formatTime(event.date) || '';
+  const endTimeStr = event.endTime ? formatTime(event.endTime) : '';
   
   return (
     <button
@@ -722,100 +722,97 @@ function EventCard({
         isFull && 'opacity-60'
       )}
     >
-      {/* Card with left accent border - using border-l instead of separate div */}
-      <div 
-        className="bg-white hover:bg-blue-50/50 rounded-lg border border-gray-200 p-3 sm:p-4 transition-colors"
-        style={{ 
-          borderLeftWidth: '4px',
-          borderLeftColor: eventColor 
-        }}
-      >
-        {/* Top row: Time prominently + badges */}
-        <div className="flex items-start sm:items-center justify-between gap-2 mb-2 flex-wrap sm:flex-nowrap">
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Time badge - prominent with background */}
-            <span 
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold px-2.5 py-1 rounded-md text-white"
-              style={{ backgroundColor: eventColor }}
-            >
-              <Clock size={12} />
-              {startTimeStr || 'Time TBD'}
-            </span>
-            {event.endTime && (
-              <span className="text-xs sm:text-sm text-gray-500">
-                → {formatTime(event.endTime)}
+      {/* Card with prominent left accent */}
+      <div className="flex rounded-lg overflow-hidden border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all hover:shadow-sm">
+        {/* Left accent bar - 6px wide, indigo/purple gradient */}
+        <div className="w-1.5 bg-gradient-to-b from-indigo-500 to-purple-600 flex-shrink-0" />
+        
+        {/* Content */}
+        <div className="flex-1 p-3 sm:p-4">
+          {/* Top row: Time + badges */}
+          <div className="flex items-start sm:items-center justify-between gap-2 mb-1.5 flex-wrap sm:flex-nowrap">
+            {/* Time - simple text, matches end time style */}
+            <div className="flex items-center gap-1.5 text-sm text-gray-700">
+              <Clock size={14} className="text-gray-400" />
+              <span className="font-semibold">
+                {startTimeStr || 'TBD'}
               </span>
-            )}
+              {endTimeStr && (
+                <span className="text-gray-400">
+                  – {endTimeStr}
+                </span>
+              )}
+            </div>
+            
+            {/* Badges */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {config.features.showAvailability && spotsInfo && (
+                <span className={cn(
+                  'text-xs font-medium px-2 py-0.5 rounded-full',
+                  isFull && 'bg-red-100 text-red-700',
+                  isAlmostFull && 'bg-yellow-100 text-yellow-700',
+                  !isFull && !isAlmostFull && 'bg-green-100 text-green-700'
+                )}>
+                  {isFull ? 'Full' : `${event.spotsRemaining} left`}
+                </span>
+              )}
+              {config.features.showMembershipBadges && event.membershipRequired && (
+                <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                  <Shield size={10} />
+                  Member
+                </span>
+              )}
+            </div>
           </div>
           
-          {/* Badges */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            {config.features.showAvailability && spotsInfo && (
-              <span className={cn(
-                'text-xs font-medium px-2 py-1 rounded-full',
-                isFull && 'bg-red-100 text-red-700',
-                isAlmostFull && 'bg-yellow-100 text-yellow-700',
-                !isFull && !isAlmostFull && 'bg-green-100 text-green-700'
-              )}>
-                {isFull ? 'Full' : `${event.spotsRemaining} left`}
-              </span>
-            )}
-            {config.features.showMembershipBadges && event.membershipRequired && (
-              <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
-                <Shield size={10} />
-                Member
-              </span>
-            )}
-          </div>
-        </div>
-        
-        {/* Event title */}
-        <h4 className="font-bold text-gray-900 line-clamp-1 text-base group-hover:text-toca-purple transition-colors">
-          {event.title || event.programName}
-        </h4>
-        
-        {/* Session name if different */}
-        {event.sessionName && event.sessionName !== event.programName && event.sessionName !== event.title && (
-          <p className="text-sm text-gray-600 line-clamp-1 mt-0.5">
-            {event.sessionName}
-          </p>
-        )}
+          {/* Event title */}
+          <h4 className="font-bold text-gray-900 line-clamp-1 text-base group-hover:text-indigo-600 transition-colors">
+            {event.title || event.programName}
+          </h4>
+          
+          {/* Session name if different */}
+          {event.sessionName && event.sessionName !== event.programName && event.sessionName !== event.title && (
+            <p className="text-sm text-gray-500 line-clamp-1">
+              {event.sessionName}
+            </p>
+          )}
 
-        {/* Details row */}
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600">
-          {(event.facilityName || event.spaceName) && (
-            <span className="flex items-center gap-1">
-              <MapPin size={12} className="text-gray-400" />
-              {event.facilityName}
-              {event.spaceName && event.facilityName && ' · '}
-              {event.spaceName}
-            </span>
-          )}
-          
-          {config.features.showPricing && event.startingPrice !== undefined && (
-            <span className="font-bold text-toca-navy">
-              {event.startingPrice === 0 
-                ? (event.memberPrice === 0 ? 'Included' : 'FREE')
-                : formatPrice(event.startingPrice)}
-            </span>
-          )}
-          {config.features.showPricing && event.memberPrice === 0 && event.startingPrice !== 0 && (
-            <span className="text-xs text-amber-600 font-medium">Free for Members</span>
-          )}
+          {/* Details row */}
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
+            {(event.facilityName || event.spaceName) && (
+              <span className="flex items-center gap-1">
+                <MapPin size={13} className="text-gray-400" />
+                {event.facilityName}
+                {event.spaceName && event.facilityName && ' · '}
+                {event.spaceName}
+              </span>
+            )}
+            
+            {config.features.showPricing && event.startingPrice !== undefined && (
+              <span className="font-bold text-gray-900">
+                {event.startingPrice === 0 
+                  ? (event.memberPrice === 0 ? 'Included' : 'FREE')
+                  : formatPrice(event.startingPrice)}
+              </span>
+            )}
+            {config.features.showPricing && event.memberPrice === 0 && event.startingPrice !== 0 && (
+              <span className="text-xs text-amber-600 font-medium">Free for Members</span>
+            )}
+            
+            {/* Register link inline */}
+            {event.linkSEO && (
+              <a 
+                href={buildRegistrationUrl(event.linkSEO)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium ml-auto"
+              >
+                Register <ExternalLink size={12} />
+              </a>
+            )}
+          </div>
         </div>
-        
-        {/* Register link */}
-        {event.linkSEO && (
-          <a 
-            href={buildRegistrationUrl(event.linkSEO)}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1 mt-2.5 text-sm text-toca-purple hover:text-toca-purple-dark font-semibold"
-          >
-            Register <ExternalLink size={12} />
-          </a>
-        )}
       </div>
     </button>
   );
