@@ -250,7 +250,12 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
   
   // Visible days for lazy loading
   const visibleDaysData = useMemo(() => {
-    return allDaysWithEvents.slice(0, visibleDays);
+    const result = allDaysWithEvents.slice(0, visibleDays);
+    console.log('[ScheduleView] visibleDaysData:', result.length, 'of', allDaysWithEvents.length, 'days');
+    if (result.length > 0) {
+      console.log('[ScheduleView] First day:', result[0].date, 'with', result[0].events.length, 'events');
+    }
+    return result;
   }, [allDaysWithEvents, visibleDays]);
   
   const hasMoreDays = visibleDays < allDaysWithEvents.length;
@@ -689,6 +694,8 @@ function ListDaySection({
 }) {
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  
+  console.log('[ListDaySection] Rendering day:', day.date, 'with', day.events.length, 'events');
   
   if (day.events.length === 0) return null;
 
