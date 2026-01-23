@@ -30,6 +30,7 @@ interface PageConfig {
   };
   organizationIds: string[];
   facilityIds?: string[];
+  excludedProgramIds?: string[]; // Programs to exclude from this page
   apiKey?: string; // Per-page API key
   features: {
     showPricing: boolean;
@@ -136,7 +137,7 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
         </div>
         <div className="flex items-center gap-3">
           <Link
-            href={`/${config.slug}`}
+            href={`${process.env.NEXT_PUBLIC_DISCOVERY_DOMAIN || ''}/${config.slug}`}
             target="_blank"
             className="btn-secondary flex items-center gap-2"
           >
@@ -534,6 +535,24 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   })}
                 />
                 <p className="text-xs text-gray-500 mt-1">Restrict to specific facilities</p>
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="label">Excluded Program IDs (Optional)</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="e.g., 12345, 67890"
+                  value={config.excludedProgramIds?.join(', ') || ''}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    excludedProgramIds: e.target.value ? e.target.value.split(',').map(s => s.trim()).filter(Boolean) : undefined
+                  })}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Comma-separated list of program IDs to hide from this discovery page. 
+                  Find program IDs in Bond Sports admin or from URLs.
+                </p>
               </div>
             </div>
             

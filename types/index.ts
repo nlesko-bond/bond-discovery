@@ -304,6 +304,9 @@ export interface DiscoveryConfig {
   organizationIds: string[];
   facilityIds: string[];
   
+  // Program filtering (optional)
+  excludedProgramIds?: string[]; // Programs to exclude from this page
+  
   // Branding
   branding: BrandingConfig;
   

@@ -391,7 +391,7 @@ export default function PagesPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
                       <Link
-                        href={`/${page.slug}`}
+                        href={`${process.env.NEXT_PUBLIC_DISCOVERY_DOMAIN || ''}/${page.slug}`}
                         target="_blank"
                         className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                         title="View page"

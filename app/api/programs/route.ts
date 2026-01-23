@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createBondClient, DEFAULT_API_KEY, DEFAULT_ORG_IDS } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
 import { cached, programsCacheKey } from '@/lib/cache';
+import { getConfigBySlug } from '@/lib/config';
 import { Program } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -9,6 +10,11 @@ export const revalidate = 300; // 5 minutes
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+  
+  // Get slug to look up page config for excludedProgramIds
+  const slug = searchParams.get('slug');
+  const pageConfig = slug ? await getConfigBySlug(slug) : null;
+  const excludedProgramIds = pageConfig?.excludedProgramIds || [];
   
   // Get org IDs from query params or use defaults
   const orgIdsParam = searchParams.get('orgIds');
@@ -67,11 +73,17 @@ export async function GET(request: Request) {
     const results = await Promise.all(promises);
     results.forEach(programs => allPrograms.push(...programs));
 
+    // Filter out excluded programs if specified in page config
+    const filteredPrograms = excludedProgramIds.length > 0
+      ? allPrograms.filter(p => !excludedProgramIds.includes(p.id))
+      : allPrograms;
+
     return NextResponse.json({
-      data: allPrograms,
+      data: filteredPrograms,
       meta: {
         totalOrganizations: orgIds.length,
-        totalPrograms: allPrograms.length,
+        totalPrograms: filteredPrograms.length,
+        excludedPrograms: excludedProgramIds.length,
         cachedAt: new Date().toISOString(),
       }
     }, {

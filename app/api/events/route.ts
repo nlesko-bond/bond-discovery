@@ -69,7 +69,10 @@ export async function GET(request: Request) {
     ? searchParams.get('orgIds')!.split(/[_,]/).filter(Boolean) 
     : DEFAULT_ORG_IDS;
   
-  // If slug is provided, look up config to get API key and org IDs
+  // Excluded program IDs from config
+  let excludedProgramIds: string[] = [];
+  
+  // If slug is provided, look up config to get API key, org IDs, and excluded programs
   if (slug) {
     const config = await getConfigBySlug(slug);
     if (config) {
@@ -77,6 +80,7 @@ export async function GET(request: Request) {
       if (config.organizationIds.length > 0) {
         orgIds = config.organizationIds;
       }
+      excludedProgramIds = config.excludedProgramIds || [];
       // Using config API key for this slug
     }
   } else if (orgIds.length > 0) {
@@ -122,6 +126,11 @@ export async function GET(request: Request) {
         
         // For each program's sessions, fetch events
         for (const program of programs) {
+          // Skip excluded programs
+          if (excludedProgramIds.includes(program.id)) {
+            continue;
+          }
+          
           const sessions = program.sessions || [];
           
           for (const session of sessions) {
