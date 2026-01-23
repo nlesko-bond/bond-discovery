@@ -34,6 +34,7 @@ export function DiscoveryPage({
   initialViewMode,
   searchParams 
 }: DiscoveryPageProps) {
+  
   const router = useRouter();
   const pathname = usePathname();
   const urlSearchParams = useSearchParams();
@@ -320,11 +321,9 @@ export function DiscoveryPage({
       setEventsLoading(true);
       setEventsError(null);
       
-      // Build URL with organization IDs from config and API key
-      const orgIds = config.organizationIds.join(',');
+      // Build URL with slug to let API look up config
       const params = new URLSearchParams();
-      if (orgIds) params.set('orgIds', orgIds);
-      if (config.apiKey) params.set('apiKey', config.apiKey);
+      params.set('slug', config.slug);
       const url = `/api/events?${params.toString()}`;
       
       fetch(url)
@@ -343,7 +342,7 @@ export function DiscoveryPage({
           setEventsLoading(false);
         });
     }
-  }, [viewMode, eventsFetched, eventsLoading, config.organizationIds]);
+  }, [viewMode, eventsFetched, eventsLoading, config.slug]);
   
   // Filter events based on current filters
   const filteredEvents = useMemo(() => {

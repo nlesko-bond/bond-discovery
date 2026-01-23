@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createBondClient, DEFAULT_API_KEY, DEFAULT_ORG_IDS } from '@/lib/bond-client';
+import { getConfigBySlug } from '@/lib/config';
 import { transformProgram } from '@/lib/transformers';
 import { Program, Session, SessionEvent } from '@/types';
 
@@ -36,11 +37,40 @@ interface TransformedEvent {
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const orgIds = searchParams.get('orgIds') 
+  
+  // Get slug to look up config (for API key inheritance)
+  const slug = searchParams.get('slug');
+  let apiKey = searchParams.get('apiKey') || DEFAULT_API_KEY;
+  let orgIds = searchParams.get('orgIds') 
     ? searchParams.get('orgIds')!.split(/[_,]/).filter(Boolean) 
     : DEFAULT_ORG_IDS;
+  
+  // If slug is provided, look up config to get API key and org IDs
+  if (slug) {
+    const config = await getConfigBySlug(slug);
+    if (config) {
+      apiKey = config.apiKey || apiKey;
+      if (config.organizationIds.length > 0) {
+        orgIds = config.organizationIds;
+      }
+      // Using config API key for this slug
+    }
+  } else if (orgIds.length > 0) {
+    // Fallback: Look up config by orgIds if no slug provided
+    // This is for backwards compatibility with old client code
+    const { getAllPageConfigs } = await import('@/lib/config');
+    const allConfigs = await getAllPageConfigs();
+    const matchingConfig = allConfigs.find(c => 
+      c.organizationIds.length === orgIds.length &&
+      c.organizationIds.every(id => orgIds.includes(id))
+    );
+    if (matchingConfig?.apiKey) {
+      apiKey = matchingConfig.apiKey;
+      // Using inherited API key from config for orgIds
+    }
+  }
+  
   const facilityId = searchParams.get('facilityId') || undefined;
-  const apiKey = searchParams.get('apiKey') || DEFAULT_API_KEY;
   
   // Default to today if no startDate specified (don't fetch past events)
   const today = new Date().toISOString().split('T')[0];

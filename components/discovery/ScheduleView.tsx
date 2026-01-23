@@ -738,6 +738,9 @@ function EventCard({
   onClick: () => void;
   config: DiscoveryConfig;
 }) {
+  const primaryColor = config.branding.primaryColor || '#1E2761';
+  const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  
   const spotsInfo = event.spotsRemaining !== undefined && event.maxParticipants;
   const isFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 0;
   const isAlmostFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 5 && !isFull;
@@ -756,8 +759,11 @@ function EventCard({
     >
       {/* Card with prominent left accent */}
       <div className="flex rounded-lg overflow-hidden border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all hover:shadow-sm">
-        {/* Left accent bar - 6px wide, indigo/purple gradient */}
-        <div className="w-1.5 bg-gradient-to-b from-indigo-500 to-purple-600 flex-shrink-0" />
+        {/* Left accent bar - uses brand gradient */}
+        <div 
+          className="w-1.5 flex-shrink-0" 
+          style={{ background: `linear-gradient(to bottom, ${primaryColor}, ${secondaryColor})` }}
+        />
         
         {/* Content */}
         <div className="flex-1 p-3 sm:p-4">
@@ -794,8 +800,11 @@ function EventCard({
           </div>
           
           {/* Event title */}
-          <h4 className="font-bold text-gray-900 line-clamp-1 text-base group-hover:text-indigo-600 transition-colors">
-            {event.title || event.programName}
+          <h4 
+            className="font-bold text-gray-900 line-clamp-1 text-base transition-colors"
+            style={{ '--hover-color': secondaryColor } as React.CSSProperties}
+          >
+            <span className="group-hover:opacity-80">{event.title || event.programName}</span>
           </h4>
           
           {/* Session name if different */}
@@ -834,7 +843,8 @@ function EventCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium ml-auto"
+                className="inline-flex items-center gap-1 font-medium ml-auto hover:opacity-80"
+                style={{ color: secondaryColor }}
               >
                 Register <ExternalLink size={12} />
               </a>
