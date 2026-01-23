@@ -50,21 +50,29 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents }
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   
-  // Use URL scheduleView param first, then config default based on device
+  // Use URL scheduleView param first, then config default
+  // Note: We use a consistent default for SSR to avoid hydration mismatch
   const [viewMode, setViewModeState] = useState<ViewMode>(() => {
     const urlScheduleView = searchParams.get('scheduleView') as ViewMode | null;
     if (urlScheduleView && ['list', 'day', 'week', 'month'].includes(urlScheduleView)) {
       return urlScheduleView;
     }
-    // Check for mobile on initial render
-    const isMobileInitial = typeof window !== 'undefined' && window.innerWidth < 640;
-    if (isMobileInitial) {
-      // Use mobile default from config, or fallback to 'list'
-      return (config.features.mobileDefaultScheduleView as ViewMode) || 'list';
-    }
-    // Desktop: use config default or 'week'
-    return (config.features.defaultScheduleView as ViewMode) || 'week';
+    // Use list as default since it works well on both mobile and desktop
+    // This avoids hydration mismatch from window.innerWidth check
+    return (config.features.defaultScheduleView as ViewMode) || 'list';
   });
+  
+  // After hydration, check if we should switch to mobile default
+  const [hasCheckedMobile, setHasCheckedMobile] = useState(false);
+  useEffect(() => {
+    if (!hasCheckedMobile && !searchParams.get('scheduleView')) {
+      setHasCheckedMobile(true);
+      const isMobile = window.innerWidth < 640;
+      if (isMobile && config.features.mobileDefaultScheduleView) {
+        setViewModeState(config.features.mobileDefaultScheduleView as ViewMode);
+      }
+    }
+  }, [hasCheckedMobile, searchParams, config.features.mobileDefaultScheduleView]);
   
   // Update URL when view mode changes
   const setViewMode = useCallback((newMode: ViewMode) => {
