@@ -25,6 +25,10 @@ const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => i + 6);
 export function WeekGridView({ days, config, onEventClick, onDayClick }: WeekGridViewProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const currentTimeRef = useRef<HTMLDivElement>(null);
+  
+  // Get brand colors from config
+  const primaryColor = config.branding.primaryColor || '#1E2761';
+  const secondaryColor = config.branding.secondaryColor || '#6366F1';
 
   // Auto-scroll to current time on mount
   useEffect(() => {
@@ -79,29 +83,31 @@ export function WeekGridView({ days, config, onEventClick, onDayClick }: WeekGri
                 <div
                   key={day.date}
                   onClick={() => onDayClick?.(day.date)}
-                  className={cn(
-                    'p-2 sm:p-3 text-center border-r border-gray-200 last:border-r-0 cursor-pointer hover:bg-gray-100 transition-colors',
-                    isCurrent && 'bg-toca-purple/10'
-                  )}
+                  className="p-2 sm:p-3 text-center border-r border-gray-200 last:border-r-0 cursor-pointer hover:bg-gray-100 transition-colors"
+                  style={{ backgroundColor: isCurrent ? `${secondaryColor}10` : undefined }}
                 >
-                  <div className={cn(
-                    'text-[10px] sm:text-xs font-semibold uppercase tracking-wide',
-                    isCurrent ? 'text-toca-purple' : 'text-gray-500'
-                  )}>
+                  <div 
+                    className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide"
+                    style={{ color: isCurrent ? secondaryColor : '#6B7280' }}
+                  >
                     {format(dayDate, 'EEE')}
                   </div>
-                  <div className={cn(
-                    'mt-0.5 sm:mt-1 font-bold text-base sm:text-lg',
-                    isCurrent 
-                      ? 'text-white bg-toca-purple w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mx-auto text-sm sm:text-base' 
-                      : 'text-gray-900'
-                  )}>
+                  <div 
+                    className={cn(
+                      'mt-0.5 sm:mt-1 font-bold text-base sm:text-lg',
+                      isCurrent && 'w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mx-auto text-sm sm:text-base'
+                    )}
+                    style={{ 
+                      color: isCurrent ? 'white' : '#111827',
+                      backgroundColor: isCurrent ? secondaryColor : undefined
+                    }}
+                  >
                     {format(dayDate, 'd')}
                   </div>
-                  <div className={cn(
-                    'text-[9px] sm:text-[10px] mt-0.5 sm:mt-1',
-                    isCurrent ? 'text-toca-purple' : 'text-gray-400'
-                  )}>
+                  <div 
+                    className="text-[9px] sm:text-[10px] mt-0.5 sm:mt-1"
+                    style={{ color: isCurrent ? secondaryColor : '#9CA3AF' }}
+                  >
                     {format(dayDate, 'MMM')}
                   </div>
                 </div>
@@ -128,13 +134,11 @@ export function WeekGridView({ days, config, onEventClick, onDayClick }: WeekGri
                 const firstEvent = hourEvents[0];
                 const moreCount = hourEvents.length - 1;
 
-                return (
+                  return (
                   <div
                     key={`${day.date}-${hour}`}
-                    className={cn(
-                      'border-r border-gray-100 last:border-r-0 min-h-[65px] p-1 relative',
-                      isCurrent && 'bg-toca-purple/5'
-                    )}
+                    className="border-r border-gray-100 last:border-r-0 min-h-[65px] p-1 relative"
+                    style={{ backgroundColor: isCurrent ? `${secondaryColor}08` : undefined }}
                   >
                     {firstEvent && (
                       <EventBlock
@@ -142,6 +146,7 @@ export function WeekGridView({ days, config, onEventClick, onDayClick }: WeekGri
                         onClick={() => onEventClick?.(firstEvent)}
                         moreCount={moreCount}
                         onMoreClick={() => onDayClick?.(day.date)}
+                        brandColor={secondaryColor}
                       />
                     )}
                   </div>
@@ -168,13 +173,16 @@ function EventBlock({
   onClick,
   moreCount,
   onMoreClick,
+  brandColor = '#6366F1',
 }: {
   event: CalendarEvent;
   onClick?: () => void;
   moreCount?: number;
   onMoreClick?: () => void;
+  brandColor?: string;
 }) {
   const startTime = formatTime(event.startTime);
+  const eventColor = event.color || brandColor;
   
   // Determine display name: prefer title, then sessionName if different from programName, then programName
   const displayName = event.title || event.programName;
@@ -190,9 +198,9 @@ function EventBlock({
           'overflow-hidden'
         )}
         style={{ 
-          borderLeftColor: event.color || '#6366F1',
+          borderLeftColor: eventColor,
           borderLeftWidth: '3px',
-          backgroundColor: `${event.color || '#6366F1'}10`
+          backgroundColor: `${eventColor}10`
         }}
         title={`${displayName}${showSession ? ` - ${event.sessionName}` : ''} - ${startTime}`}
       >
@@ -211,7 +219,8 @@ function EventBlock({
       {typeof moreCount === 'number' && moreCount > 0 && (
         <button
           onClick={onMoreClick}
-          className="w-full text-center text-[10px] text-toca-purple font-medium py-1 hover:bg-toca-purple/10 rounded transition-colors"
+          className="w-full text-center text-[10px] font-medium py-1 rounded transition-colors hover:opacity-70"
+          style={{ color: brandColor }}
         >
           +{moreCount} more
         </button>

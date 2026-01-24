@@ -40,6 +40,9 @@ export function MonthView({
   onDayClick,
   onEventClick 
 }: MonthViewProps) {
+  // Get brand colors from config
+  const primaryColor = config.branding.primaryColor || '#1E2761';
+  const secondaryColor = config.branding.secondaryColor || '#6366F1';
   // Generate calendar days for the month view
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
@@ -107,29 +110,40 @@ export function MonthView({
                   className={cn(
                     'min-h-[80px] sm:min-h-[100px] p-1 sm:p-2 border-r border-b border-gray-200 transition-colors',
                     !isCurrentMonth && 'bg-gray-50',
-                    hasEvents && 'cursor-pointer hover:bg-toca-purple/5',
-                    isCurrent && 'bg-toca-purple/10'
+                    hasEvents && 'cursor-pointer'
                   )}
+                  style={{ 
+                    backgroundColor: isCurrent 
+                      ? `${secondaryColor}15` 
+                      : !isCurrentMonth 
+                        ? '#F9FAFB' 
+                        : undefined 
+                  }}
                 >
                   {/* Date Number */}
                   <div className="flex items-center justify-between mb-1">
-                    <span className={cn(
-                      'text-sm font-medium w-6 h-6 flex items-center justify-center rounded-full',
-                      isCurrent && 'bg-toca-purple text-white',
-                      !isCurrent && isCurrentMonth && 'text-gray-900',
-                      !isCurrent && !isCurrentMonth && 'text-gray-400'
-                    )}>
+                    <span 
+                      className={cn(
+                        'text-sm font-medium w-6 h-6 flex items-center justify-center rounded-full',
+                        !isCurrent && !isCurrentMonth && 'text-gray-400'
+                      )}
+                      style={{ 
+                        backgroundColor: isCurrent ? secondaryColor : undefined,
+                        color: isCurrent ? 'white' : isCurrentMonth ? '#111827' : '#9CA3AF'
+                      }}
+                    >
                       {format(date, 'd')}
                     </span>
 
                     {/* Event Count Badge */}
                     {dayEvents.length > 0 && (
-                      <span className={cn(
-                        'text-xs font-semibold px-1.5 py-0.5 rounded-full',
-                        dayEvents.length > 5 
-                          ? 'bg-toca-purple text-white'
-                          : 'bg-toca-purple/10 text-toca-purple'
-                      )}>
+                      <span 
+                        className="text-xs font-semibold px-1.5 py-0.5 rounded-full"
+                        style={{ 
+                          backgroundColor: dayEvents.length > 5 ? secondaryColor : `${secondaryColor}15`,
+                          color: dayEvents.length > 5 ? 'white' : secondaryColor
+                        }}
+                      >
                         {dayEvents.length}
                       </span>
                     )}
@@ -141,6 +155,7 @@ export function MonthView({
                       <EventDot
                         key={event.id}
                         event={event}
+                        brandColor={secondaryColor}
                         onClick={(e) => {
                           e.stopPropagation();
                           onEventClick?.(event);
@@ -166,9 +181,11 @@ export function MonthView({
 // Event Dot / Mini Preview
 function EventDot({ 
   event, 
+  brandColor = '#6366F1',
   onClick 
 }: { 
   event: CalendarEvent; 
+  brandColor?: string;
   onClick?: (e: React.MouseEvent) => void;
 }) {
   return (
@@ -178,7 +195,7 @@ function EventDot({
     >
       <div 
         className="w-2 h-2 rounded-full flex-shrink-0"
-        style={{ backgroundColor: event.color || '#6366F1' }}
+        style={{ backgroundColor: event.color || brandColor }}
       />
       <span className="text-xs text-gray-700 truncate hidden sm:block">
         {event.title || event.programName}

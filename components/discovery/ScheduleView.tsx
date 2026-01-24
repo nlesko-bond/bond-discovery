@@ -32,6 +32,7 @@ import { format, parseISO, startOfMonth, addMonths, subMonths, isToday, isSameDa
 import { DayView, WeekGridView, MonthView } from './calendar';
 import { ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
+import { bondAnalytics } from '@/lib/analytics';
 
 type ViewMode = 'list' | 'table' | 'day' | 'week' | 'month';
 
@@ -964,6 +965,12 @@ function EventCard({
                       sessionId: event.sessionId,
                       sessionName: event.sessionName,
                     });
+                    bondAnalytics.clickRegister(config.slug, {
+                      programId: event.programId,
+                      programName: event.programName,
+                      sessionId: event.sessionId,
+                      sessionName: event.sessionName,
+                    });
                   }
                 }}
                 className="inline-flex items-center gap-1 font-medium ml-auto hover:opacity-80"
@@ -1178,6 +1185,12 @@ function EventDetailModal({
                   sessionId: event.sessionId,
                   sessionName: event.sessionName,
                 });
+                bondAnalytics.clickRegister(config.slug, {
+                  programId: event.programId,
+                  programName: event.programName,
+                  sessionId: event.sessionId,
+                  sessionName: event.sessionName,
+                });
               }
             }}
             className="w-full py-3.5 text-white font-semibold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg"
@@ -1277,14 +1290,14 @@ function TableView({
   }
   
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden print:shadow-none print:border-0">
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
+      <div className="overflow-x-auto print:overflow-visible">
+        <table className="w-full print:text-xs">
           <thead>
-            <tr className="border-b border-gray-200 bg-gray-50">
+            <tr className="border-b border-gray-200 bg-gray-50 print:bg-gray-100">
               <th 
-                className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors print:px-2 print:py-1"
                 onClick={() => handleSort('date')}
               >
                 <span className="flex items-center gap-1">
@@ -1292,18 +1305,18 @@ function TableView({
                 </span>
               </th>
               <th 
-                className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors print:px-2 print:py-1"
                 onClick={() => handleSort('time')}
               >
                 <span className="flex items-center gap-1">
                   Time <SortIcon field="time" />
                 </span>
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider print:px-2 print:py-1">
                 Event
               </th>
               <th 
-                className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors print:px-2 print:py-1"
                 onClick={() => handleSort('program')}
               >
                 <span className="flex items-center gap-1">
@@ -1311,26 +1324,16 @@ function TableView({
                 </span>
               </th>
               {hasMultipleFacilities && (
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider print:px-2 print:py-1">
                   Location
                 </th>
               )}
               {config.features.showAvailability && (
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider print:hidden">
                   Spots
                 </th>
               )}
-              {config.features.showPricing && (
-                <th 
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                  onClick={() => handleSort('price')}
-                >
-                  <span className="flex items-center gap-1">
-                    Price <SortIcon field="price" />
-                  </span>
-                </th>
-              )}
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider print:hidden">
                 Action
               </th>
             </tr>
@@ -1353,14 +1356,14 @@ function TableView({
                   onClick={() => onEventClick(event)}
                 >
                   {/* Date */}
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-4 py-3 whitespace-nowrap print:px-2 print:py-1">
                     <div className="text-sm font-medium text-gray-900">
                       {format(parseISO(event.date), 'EEE, MMM d')}
                     </div>
                   </td>
                   
                   {/* Time */}
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-4 py-3 whitespace-nowrap print:px-2 print:py-1">
                     <div className="text-sm text-gray-700">
                       {formatTime(event.startTime) || 'TBD'}
                       {event.endTime && ` - ${formatTime(event.endTime)}`}
@@ -1368,18 +1371,18 @@ function TableView({
                   </td>
                   
                   {/* Event Title */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 print:px-2 print:py-1">
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                      <div className="text-sm font-medium text-gray-900 line-clamp-2 print:whitespace-normal">
                         {event.title || event.sessionName || event.programName}
                       </div>
                       {event.sessionName && event.sessionName !== event.title && (
-                        <div className="text-xs text-gray-500 truncate max-w-xs">
+                        <div className="text-xs text-gray-500 line-clamp-1 print:whitespace-normal">
                           {event.sessionName}
                         </div>
                       )}
-                      {/* Status badges */}
-                      <div className="flex items-center gap-1 mt-0.5">
+                      {/* Status badges - hide in print */}
+                      <div className="flex items-center gap-1 mt-0.5 print:hidden">
                         {isRegistrationClosed && (
                           <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">Closed</span>
                         )}
@@ -1396,13 +1399,16 @@ function TableView({
                   </td>
                   
                   {/* Program */}
-                  <td className="px-4 py-3">
-                    <div className="text-sm text-gray-700 truncate max-w-[150px]">
+                  <td className="px-4 py-3 print:px-2 print:py-1">
+                    <div 
+                      className="text-sm text-gray-700 line-clamp-2 max-w-[200px] hover:line-clamp-none cursor-default print:whitespace-normal"
+                      title={event.programName}
+                    >
                       {event.programName}
                     </div>
                     {event.programType && (
                       <span 
-                        className="text-xs px-1.5 py-0.5 rounded mt-0.5 inline-block"
+                        className="text-xs px-1.5 py-0.5 rounded mt-0.5 inline-block print:hidden"
                         style={{ backgroundColor: `${secondaryColor}15`, color: secondaryColor }}
                       >
                         {getProgramTypeLabel(event.programType)}
@@ -1426,7 +1432,7 @@ function TableView({
                   
                   {/* Availability */}
                   {config.features.showAvailability && (
-                    <td className="px-4 py-3 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap print:hidden">
                       {event.spotsRemaining !== undefined ? (
                         <span className={cn(
                           'text-xs font-medium px-2 py-1 rounded-full',
@@ -1442,28 +1448,8 @@ function TableView({
                     </td>
                   )}
                   
-                  {/* Price */}
-                  {config.features.showPricing && (
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {event.startingPrice !== undefined ? (
-                        <div>
-                          <span className="text-sm font-semibold text-gray-900">
-                            {event.startingPrice === 0 ? 'Free' : formatPrice(event.startingPrice)}
-                          </span>
-                          {event.memberPrice !== undefined && event.memberPrice < (event.startingPrice || 0) && (
-                            <div className="text-xs text-amber-600">
-                              {event.memberPrice === 0 ? 'Free' : formatPrice(event.memberPrice)} member
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-400">—</span>
-                      )}
-                    </td>
-                  )}
-                  
                   {/* Action */}
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                  <td className="px-4 py-3 text-right whitespace-nowrap print:hidden">
                     {event.linkSEO && (
                       <a 
                         href={buildRegistrationUrl(event.linkSEO)}
@@ -1478,10 +1464,16 @@ function TableView({
                               sessionId: event.sessionId,
                               sessionName: event.sessionName,
                             });
+                            bondAnalytics.clickRegister(config.slug, {
+                              programId: event.programId,
+                              programName: event.programName,
+                              sessionId: event.sessionId,
+                              sessionName: event.sessionName,
+                            });
                           }
                         }}
                         className={cn(
-                          'inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
+                          'inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors print:hidden',
                           isRegistrationUnavailable
                             ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             : 'text-white hover:opacity-90'

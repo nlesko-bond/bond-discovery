@@ -29,6 +29,7 @@ import {
 } from '@/lib/utils';
 import Link from 'next/link';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
+import { bondAnalytics } from '@/lib/analytics';
 import { usePathname } from 'next/navigation';
 import { PricingCarousel } from './PricingCarousel';
 
@@ -294,6 +295,10 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
                     programId: program.id,
                     programName: program.name,
                   });
+                  bondAnalytics.clickRegister(config.slug, {
+                    programId: program.id,
+                    programName: program.name,
+                  });
                 }}
               >
                 <span>{allSessionsClosed ? 'View Program' : 'View Program & Register'}</span>
@@ -454,6 +459,13 @@ function SessionCard({
                   sessionName: session.name,
                   productId: singleProduct?.id,
                   price: singleProductPrice,
+                });
+                bondAnalytics.clickRegister(config.slug, {
+                  programId,
+                  programName,
+                  sessionId: session.id,
+                  sessionName: session.name,
+                  productId: singleProduct?.id,
                 });
               }}
             >

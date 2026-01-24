@@ -26,6 +26,10 @@ const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => i + 6); // 6-22 (6am to 
 export function DayView({ events, date, config, onEventClick }: DayViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const currentTimeRef = useRef<HTMLDivElement>(null);
+  
+  // Get brand colors from config
+  const primaryColor = config.branding.primaryColor || '#1E2761';
+  const secondaryColor = config.branding.secondaryColor || '#6366F1';
 
   // Filter events for this day
   const dayEvents = useMemo(() => {
@@ -72,13 +76,16 @@ export function DayView({ events, date, config, onEventClick }: DayViewProps) {
     <div className="h-full flex flex-col">
       {/* Day Header */}
       <div className="sticky top-0 bg-white z-10 border-b border-gray-200 p-4">
-        <h3 className={cn(
-          'text-xl font-bold',
-          isCurrentDay ? 'text-toca-purple' : 'text-gray-900'
-        )}>
+        <h3 
+          className="text-xl font-bold"
+          style={{ color: isCurrentDay ? secondaryColor : '#111827' }}
+        >
           {format(parseISO(date), 'EEEE, MMMM d')}
           {isCurrentDay && (
-            <span className="ml-2 text-sm font-normal text-toca-purple bg-toca-purple/10 px-2 py-0.5 rounded-full">
+            <span 
+              className="ml-2 text-sm font-normal px-2 py-0.5 rounded-full"
+              style={{ color: secondaryColor, backgroundColor: `${secondaryColor}15` }}
+            >
               Today
             </span>
           )}
@@ -105,10 +112,10 @@ export function DayView({ events, date, config, onEventClick }: DayViewProps) {
                 <div key={hour} className="relative flex">
                   {/* Time Label */}
                   <div className="w-16 flex-shrink-0 pr-3 py-3 text-right">
-                    <span className={cn(
-                      'text-xs font-medium',
-                      isCurrentHour ? 'text-toca-purple' : 'text-gray-400'
-                    )}>
+                    <span 
+                      className="text-xs font-medium"
+                      style={{ color: isCurrentHour ? secondaryColor : '#9CA3AF' }}
+                    >
                       {format(new Date().setHours(hour, 0, 0, 0), 'h a')}
                     </span>
                   </div>
@@ -161,20 +168,21 @@ function EventCard({
   const startTime = formatTime(event.startTime);
   const endTime = formatTime(event.endTime);
   const registrationUrl = buildRegistrationUrl(event.linkSEO);
+  const secondaryColor = config.branding.secondaryColor || '#6366F1';
 
   return (
     <div
       onClick={onClick}
-      className={cn(
-        'group p-3 rounded-lg border-l-4 bg-white shadow-sm hover:shadow-md transition-all cursor-pointer',
-        event.color ? `border-l-[${event.color}]` : 'border-l-toca-purple'
-      )}
-      style={{ borderLeftColor: event.color || '#6366F1' }}
+      className="group p-3 rounded-lg border-l-4 bg-white shadow-sm hover:shadow-md transition-all cursor-pointer"
+      style={{ borderLeftColor: event.color || secondaryColor }}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           {/* Event/Program Name */}
-          <h4 className="font-bold text-gray-900 text-sm group-hover:text-toca-purple transition-colors line-clamp-1">
+          <h4 
+            className="font-bold text-gray-900 text-sm transition-colors line-clamp-1 group-hover:opacity-80"
+            style={{ '--hover-color': secondaryColor } as React.CSSProperties}
+          >
             {event.title || event.programName}
           </h4>
           
@@ -188,18 +196,18 @@ function EventCard({
           {/* Time & Location */}
           <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-500">
             <span className="flex items-center gap-1">
-              <Clock size={12} className="text-toca-purple" />
+              <Clock size={12} style={{ color: secondaryColor }} />
               {startTime} - {endTime}
             </span>
             {event.facilityName && (
               <span className="flex items-center gap-1">
-                <MapPin size={12} className="text-toca-purple" />
+                <MapPin size={12} style={{ color: secondaryColor }} />
                 {event.facilityName}
               </span>
             )}
             {event.spotsRemaining !== undefined && (
               <span className="flex items-center gap-1">
-                <Users size={12} className="text-toca-purple" />
+                <Users size={12} style={{ color: secondaryColor }} />
                 {event.spotsRemaining} spots
               </span>
             )}
@@ -213,7 +221,11 @@ function EventCard({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="flex-shrink-0 p-2 rounded-lg bg-toca-purple/10 text-toca-purple hover:bg-toca-purple hover:text-white transition-colors"
+            className="flex-shrink-0 p-2 rounded-lg transition-all hover:opacity-90"
+            style={{ 
+              backgroundColor: secondaryColor, 
+              color: 'white',
+            }}
           >
             <ExternalLink size={14} />
           </a>
