@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { X, ChevronDown, Search } from 'lucide-react';
 import { DiscoveryFilters, FilterType, FilterOption } from '@/types';
 import { getProgramTypeLabel, getSportLabel, cn } from '@/lib/utils';
+import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 
 interface MobileFiltersProps {
   isOpen: boolean;
@@ -129,6 +130,9 @@ export function MobileFilters({
                           ? [...(filters.facilityIds || []), facility.id]
                           : (filters.facilityIds || []).filter(f => f !== facility.id);
                         onFiltersChange({ ...filters, facilityIds: updated });
+                        if (e.target.checked) {
+                          gtmEvent.filterApplied('facility', facility.name);
+                        }
                       }}
                       className="w-5 h-5 accent-toca-purple rounded"
                     />
@@ -155,6 +159,9 @@ export function MobileFilters({
                           ? (filters.programTypes || []).filter(t => t !== type.id)
                           : [...(filters.programTypes || []), type.id as any];
                         onFiltersChange({ ...filters, programTypes: updated });
+                        if (!isSelected) {
+                          gtmEvent.filterApplied('programType', getProgramTypeLabel(type.id));
+                        }
                       }}
                       className={cn(
                         'px-4 py-2 rounded-full text-sm font-medium transition-colors',
@@ -186,6 +193,9 @@ export function MobileFilters({
                           ? (filters.sports || []).filter(s => s !== sport.id)
                           : [...(filters.sports || []), sport.id];
                         onFiltersChange({ ...filters, sports: updated });
+                        if (!isSelected) {
+                          gtmEvent.filterApplied('sport', getSportLabel(sport.id));
+                        }
                       }}
                       className={cn(
                         'px-4 py-2 rounded-full text-sm font-medium transition-colors capitalize',
@@ -290,7 +300,12 @@ export function MobileFilters({
                       type="radio"
                       name="availability"
                       checked={filters.availability === option.id || (!filters.availability && option.id === 'all')}
-                      onChange={() => onFiltersChange({ ...filters, availability: option.id as any })}
+                      onChange={() => {
+                        onFiltersChange({ ...filters, availability: option.id as any });
+                        if (option.id !== 'all') {
+                          gtmEvent.filterApplied('availability', option.label);
+                        }
+                      }}
                       className="w-5 h-5 accent-toca-purple"
                     />
                     <span className="text-base text-gray-700">{option.label}</span>

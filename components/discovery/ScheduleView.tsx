@@ -31,6 +31,7 @@ import { formatDate, formatTime, formatPrice, getSportLabel, getProgramTypeLabel
 import { format, parseISO, startOfMonth, addMonths, subMonths, isToday, isSameDay } from 'date-fns';
 import { DayView, WeekGridView, MonthView } from './calendar';
 import { ScheduleViewSkeleton } from '@/components/ui/Skeleton';
+import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 
 type ViewMode = 'list' | 'table' | 'day' | 'week' | 'month';
 
@@ -954,7 +955,17 @@ function EventCard({
                 href={buildRegistrationUrl(event.linkSEO)}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isRegistrationUnavailable) {
+                    gtmEvent.clickRegister({
+                      programId: event.programId,
+                      programName: event.programName,
+                      sessionId: event.sessionId,
+                      sessionName: event.sessionName,
+                    });
+                  }
+                }}
                 className="inline-flex items-center gap-1 font-medium ml-auto hover:opacity-80"
                 style={{ color: isRegistrationUnavailable ? '#6B7280' : secondaryColor }}
               >
@@ -1159,6 +1170,16 @@ function EventDetailModal({
             href={event.linkSEO ? buildRegistrationUrl(event.linkSEO) : '#'}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => {
+              if (!isRegistrationUnavailable) {
+                gtmEvent.clickRegister({
+                  programId: event.programId,
+                  programName: event.programName,
+                  sessionId: event.sessionId,
+                  sessionName: event.sessionName,
+                });
+              }
+            }}
             className="w-full py-3.5 text-white font-semibold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg"
             style={{ 
               background: isRegistrationUnavailable 
@@ -1448,7 +1469,17 @@ function TableView({
                         href={buildRegistrationUrl(event.linkSEO)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isRegistrationUnavailable) {
+                            gtmEvent.clickRegister({
+                              programId: event.programId,
+                              programName: event.programName,
+                              sessionId: event.sessionId,
+                              sessionName: event.sessionName,
+                            });
+                          }
+                        }}
                         className={cn(
                           'inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
                           isRegistrationUnavailable

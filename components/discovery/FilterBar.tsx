@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ChevronDown, X, Search } from 'lucide-react';
 import { DiscoveryFilters, FilterType, FilterOption } from '@/types';
 import { getProgramTypeLabel, getSportLabel, cn } from '@/lib/utils';
+import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 
 interface FilterBarProps {
   filters: DiscoveryFilters;
@@ -111,6 +112,9 @@ export function FilterBar({
                         ? [...(filters.facilityIds || []), facility.id]
                         : (filters.facilityIds || []).filter(f => f !== facility.id);
                       onFiltersChange({ ...filters, facilityIds: updated });
+                      if (e.target.checked) {
+                        gtmEvent.filterApplied('facility', facility.name);
+                      }
                     }}
                     className="w-4 h-4 accent-toca-purple rounded"
                   />
@@ -141,6 +145,9 @@ export function FilterBar({
                         ? [...(filters.programTypes || []), type.id as any]
                         : (filters.programTypes || []).filter(t => t !== type.id);
                       onFiltersChange({ ...filters, programTypes: updated });
+                      if (e.target.checked) {
+                        gtmEvent.filterApplied('programType', getProgramTypeLabel(type.id));
+                      }
                     }}
                     className="w-4 h-4 accent-toca-purple rounded"
                   />
@@ -173,6 +180,9 @@ export function FilterBar({
                         ? [...(filters.sports || []), sport.id]
                         : (filters.sports || []).filter(s => s !== sport.id);
                       onFiltersChange({ ...filters, sports: updated });
+                      if (e.target.checked) {
+                        gtmEvent.filterApplied('sport', getSportLabel(sport.id));
+                      }
                     }}
                     className="w-4 h-4 accent-toca-purple rounded"
                   />
@@ -286,7 +296,12 @@ export function FilterBar({
                     type="radio"
                     name="availability"
                     checked={filters.availability === option.id || (!filters.availability && option.id === 'all')}
-                    onChange={() => onFiltersChange({ ...filters, availability: option.id as any })}
+                    onChange={() => {
+                      onFiltersChange({ ...filters, availability: option.id as any });
+                      if (option.id !== 'all') {
+                        gtmEvent.filterApplied('availability', option.label);
+                      }
+                    }}
                     className="w-4 h-4 accent-toca-purple"
                   />
                   <span className="text-sm text-gray-700">{option.label}</span>
