@@ -82,9 +82,11 @@ export const defaultConfig: DiscoveryConfig = {
 
 /**
  * Get all page configurations from Supabase
+ * Uses admin client to access partner_groups join (blocked by RLS for anon)
  */
 export async function getAllPageConfigs(): Promise<DiscoveryConfig[]> {
-  const { data, error } = await supabase
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data, error } = await supabaseAdmin
     .from('discovery_pages')
     .select(`
       *,
@@ -104,9 +106,11 @@ export async function getAllPageConfigs(): Promise<DiscoveryConfig[]> {
 /**
  * Get configuration by slug from Supabase
  * Joins with partner_groups to inherit API key if not set on page
+ * Uses admin client to access partner_groups join (blocked by RLS for anon)
  */
 export async function getConfigBySlug(slug: string): Promise<DiscoveryConfig | null> {
-  const { data, error } = await supabase
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data, error } = await supabaseAdmin
     .from('discovery_pages')
     .select(`
       *,
@@ -125,9 +129,11 @@ export async function getConfigBySlug(slug: string): Promise<DiscoveryConfig | n
 
 /**
  * Get configuration by ID
+ * Uses admin client to access partner_groups join (blocked by RLS for anon)
  */
 export async function getConfig(configId: string = 'default'): Promise<DiscoveryConfig> {
-  const { data, error } = await supabase
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data, error } = await supabaseAdmin
     .from('discovery_pages')
     .select(`
       *,

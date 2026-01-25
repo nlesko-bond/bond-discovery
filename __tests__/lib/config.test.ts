@@ -80,21 +80,22 @@ describe('Config Library', () => {
 
   describe('getConfigBySlug', () => {
     it('returns config for valid slug', async () => {
-      mockFrom.mockReturnValue(createChainableMock({
+      // getConfigBySlug uses admin client
+      mockAdminFrom.mockReturnValue(createChainableMock({
         data: mockDiscoveryPageRow,
         error: null,
       }));
 
       const config = await getConfigBySlug('test-page');
 
-      expect(mockFrom).toHaveBeenCalledWith('discovery_pages');
+      expect(mockAdminFrom).toHaveBeenCalledWith('discovery_pages');
       expect(mockEq).toHaveBeenCalledWith('slug', 'test-page');
       expect(config).not.toBeNull();
       expect(config?.slug).toBe('test-page');
     });
 
     it('returns null for non-existent slug', async () => {
-      mockFrom.mockReturnValue(createChainableMock({
+      mockAdminFrom.mockReturnValue(createChainableMock({
         data: null,
         error: { message: 'Not found' },
       }));
@@ -105,7 +106,7 @@ describe('Config Library', () => {
     });
 
     it('converts database row to DiscoveryConfig', async () => {
-      mockFrom.mockReturnValue(createChainableMock({
+      mockAdminFrom.mockReturnValue(createChainableMock({
         data: mockDiscoveryPageRow,
         error: null,
       }));
@@ -121,7 +122,7 @@ describe('Config Library', () => {
     });
 
     it('inherits GTM ID from partner group if page has none', async () => {
-      mockFrom.mockReturnValue(createChainableMock({
+      mockAdminFrom.mockReturnValue(createChainableMock({
         data: mockDiscoveryPageRowNoGtm,
         error: null,
       }));
@@ -132,7 +133,7 @@ describe('Config Library', () => {
     });
 
     it('uses page GTM ID over partner group', async () => {
-      mockFrom.mockReturnValue(createChainableMock({
+      mockAdminFrom.mockReturnValue(createChainableMock({
         data: mockDiscoveryPageRow,
         error: null,
       }));
@@ -143,7 +144,7 @@ describe('Config Library', () => {
     });
 
     it('applies default filters when enableFilters is empty', async () => {
-      mockFrom.mockReturnValue(createChainableMock({
+      mockAdminFrom.mockReturnValue(createChainableMock({
         data: mockDiscoveryPageRowEmptyFilters,
         error: null,
       }));
@@ -158,7 +159,8 @@ describe('Config Library', () => {
 
   describe('getConfig', () => {
     it('returns config by ID', async () => {
-      mockFrom.mockReturnValue(createChainableMock({
+      // getConfig uses admin client
+      mockAdminFrom.mockReturnValue(createChainableMock({
         data: mockDiscoveryPageRow,
         error: null,
       }));
@@ -170,7 +172,7 @@ describe('Config Library', () => {
     });
 
     it('returns defaultConfig when not found', async () => {
-      mockFrom.mockReturnValue(createChainableMock({
+      mockAdminFrom.mockReturnValue(createChainableMock({
         data: null,
         error: { message: 'Not found' },
       }));
@@ -184,11 +186,12 @@ describe('Config Library', () => {
 
   describe('getAllPageConfigs', () => {
     it('returns array of configs', async () => {
+      // getAllPageConfigs uses admin client
       mockOrder.mockResolvedValue({
         data: [mockDiscoveryPageRow, { ...mockDiscoveryPageRow, id: 'config-2', slug: 'page-2' }],
         error: null,
       });
-      mockFrom.mockReturnValue({
+      mockAdminFrom.mockReturnValue({
         select: mockSelect.mockReturnThis(),
         eq: mockEq.mockReturnThis(),
         order: mockOrder,
@@ -205,7 +208,7 @@ describe('Config Library', () => {
         data: null,
         error: { message: 'Database error' },
       });
-      mockFrom.mockReturnValue({
+      mockAdminFrom.mockReturnValue({
         select: mockSelect.mockReturnThis(),
         eq: mockEq.mockReturnThis(),
         order: mockOrder,
@@ -218,7 +221,7 @@ describe('Config Library', () => {
 
     it('filters by is_active', async () => {
       mockOrder.mockResolvedValue({ data: [], error: null });
-      mockFrom.mockReturnValue({
+      mockAdminFrom.mockReturnValue({
         select: mockSelect.mockReturnThis(),
         eq: mockEq.mockReturnThis(),
         order: mockOrder,

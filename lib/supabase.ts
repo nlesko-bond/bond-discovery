@@ -6,14 +6,17 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOi
 // Public client with anon key - for read operations
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Admin client with service key - for write operations (lazy init to avoid build errors)
+// Admin client with service key - for privileged operations (lazy init to avoid build errors)
 let _supabaseAdmin: SupabaseClient | null = null;
 
 export function getSupabaseAdmin(): SupabaseClient {
   if (!_supabaseAdmin) {
     const serviceKey = process.env.SUPABASE_SERVICE_KEY;
     if (!serviceKey) {
-      throw new Error('SUPABASE_SERVICE_KEY is not configured');
+      // During build time, service key may not be available
+      // Fall back to anon client (limited by RLS, but allows build to complete)
+      console.warn('SUPABASE_SERVICE_KEY not available, falling back to anon client');
+      return supabase;
     }
     _supabaseAdmin = createClient(supabaseUrl, serviceKey);
   }
