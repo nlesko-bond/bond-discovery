@@ -571,6 +571,7 @@ export function DiscoveryPage({
         date,
         startTime,
         endTime,
+        timezone: event.timezone,  // Pass through timezone from Bond API
         facilityId: '',
         facilityName: event.facilityName || '',
         spaceName: event.spaceName || '',  // Resource/court/field

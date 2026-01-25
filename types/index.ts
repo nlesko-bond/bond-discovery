@@ -421,6 +421,7 @@ export interface CalendarEvent {
   date: string;
   startTime: string;
   endTime: string;
+  timezone?: string;
   
   // Where
   facilityId: string;

@@ -137,6 +137,24 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
     );
   }, [schedule]);
   
+  // Get timezone from events (use first event's timezone as representative)
+  const displayTimezone = useMemo(() => {
+    const firstEventWithTz = allEvents.find(e => e.timezone);
+    if (!firstEventWithTz?.timezone) return null;
+    
+    // Convert timezone ID to friendly name
+    const tzMap: Record<string, string> = {
+      'America/New_York': 'ET',
+      'America/Chicago': 'CT',
+      'America/Denver': 'MT',
+      'America/Los_Angeles': 'PT',
+      'America/Phoenix': 'AZ',
+      'America/Anchorage': 'AK',
+      'Pacific/Honolulu': 'HT',
+    };
+    return tzMap[firstEventWithTz.timezone] || firstEventWithTz.timezone;
+  }, [allEvents]);
+  
   // Generate iCal content
   const generateICal = useCallback(() => {
     const events = allEvents;
@@ -342,10 +360,15 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
       {/* Header with stats and controls */}
       <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 -mx-3 sm:-mx-4 lg:-mx-6 mb-4">
         <div className="flex items-center justify-between gap-2">
-          {/* Event count - compact */}
-          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: secondaryColor }} />
-            <span><span className="font-semibold" style={{ color: primaryColor }}>{totalEvents?.toLocaleString() || 0}</span> events</span>
+          {/* Event count and timezone - compact */}
+          <div className="flex items-center gap-3 text-xs text-gray-500">
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: secondaryColor }} />
+              <span><span className="font-semibold" style={{ color: primaryColor }}>{totalEvents?.toLocaleString() || 0}</span> events</span>
+            </div>
+            {displayTimezone && (
+              <span className="text-gray-400">All times {displayTimezone}</span>
+            )}
           </div>
           
           {/* View Toggle - consistent button sizes */}
