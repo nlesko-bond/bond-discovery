@@ -224,16 +224,30 @@ export async function updatePageConfig(slug: string, updates: Partial<DiscoveryC
   if (updates.cacheTtl !== undefined) updateData.cache_ttl = updates.cacheTtl;
   if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
   
-  const { data, error } = await supabase
+  // Perform the update (don't use .single() to avoid RLS issues)
+  const { error: updateError } = await supabase
     .from('discovery_pages')
     .update(updateData)
+    .eq('slug', slug);
+  
+  if (updateError) {
+    console.error('Error updating page config:', updateError);
+    throw new Error(updateError.message);
+  }
+  
+  // Fetch the updated record separately
+  const { data, error: fetchError } = await supabase
+    .from('discovery_pages')
+    .select(`
+      *,
+      partner_group:partner_groups(api_key, gtm_id)
+    `)
     .eq('slug', slug)
-    .select()
     .single();
   
-  if (error) {
-    console.error('Error updating page config:', error);
-    throw new Error(error.message);
+  if (fetchError || !data) {
+    console.error('Error fetching updated config:', fetchError);
+    throw new Error(fetchError?.message || 'Page not found after update');
   }
   
   return rowToConfig(data);
