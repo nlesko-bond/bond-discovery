@@ -285,7 +285,7 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
           {program.linkSEO && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <a
-                href={buildRegistrationUrl(program.linkSEO)}
+                href={buildRegistrationUrl(program.linkSEO, { isRegistrationOpen: !allSessionsClosed })}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 text-white font-semibold rounded-xl hover:opacity-90 transition-colors"
@@ -349,8 +349,8 @@ function SessionCard({
   // For single product, deep link directly to that product
   const singleProduct = products.length === 1 ? products[0] : null;
   const registrationLink = singleProduct 
-    ? buildRegistrationUrl(baseLink, { productId: singleProduct.id })
-    : buildRegistrationUrl(baseLink);
+    ? buildRegistrationUrl(baseLink, { productId: singleProduct.id, isRegistrationOpen })
+    : buildRegistrationUrl(baseLink, { isRegistrationOpen });
   
   // Get price for single product
   const singleProductPrice = singleProduct?.prices?.[0]?.price ?? singleProduct?.prices?.[0]?.amount;
@@ -488,6 +488,7 @@ function SessionCard({
             products={products}
             baseRegistrationUrl={baseLink}
             config={config}
+            isRegistrationOpen={isRegistrationOpen}
           />
         </div>
       )}

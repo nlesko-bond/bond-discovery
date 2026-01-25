@@ -264,12 +264,18 @@ export function truncate(text: string, maxLength: number): string {
  * Build registration URL with deep linking parameters
  * - skipToProducts=true bypasses landing page and goes to package selection
  * - productId={id} pre-selects a specific product
+ * - isRegistrationOpen: when false, returns plain URL without deep-link params
  */
 export function buildRegistrationUrl(
   linkSEO: string | undefined,
-  options?: { skipToProducts?: boolean; productId?: string }
+  options?: { skipToProducts?: boolean; productId?: string; isRegistrationOpen?: boolean }
 ): string | undefined {
   if (!linkSEO) return undefined;
+  
+  // If registration is closed, return plain URL without deep-link parameters
+  if (options?.isRegistrationOpen === false) {
+    return linkSEO;
+  }
   
   try {
     const url = new URL(linkSEO);

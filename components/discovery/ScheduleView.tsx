@@ -976,7 +976,7 @@ function EventCard({
             {/* Register/Learn More link inline */}
             {event.linkSEO && (
               <a 
-                href={buildRegistrationUrl(event.linkSEO)}
+                href={buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => {
@@ -1021,6 +1021,7 @@ function EventDetailModal({
 }) {
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  const isRegistrationOpen = event.registrationWindowStatus === 'open';
   const isRegistrationClosed = event.registrationWindowStatus === 'closed' || event.registrationWindowStatus === 'ended';
   const isRegistrationNotYetOpen = event.registrationWindowStatus === 'not_opened_yet';
   const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
@@ -1197,7 +1198,7 @@ function EventDetailModal({
         {/* Footer */}
         <div className="p-4 border-t border-gray-200 bg-white">
           <a 
-            href={event.linkSEO ? buildRegistrationUrl(event.linkSEO) : '#'}
+            href={event.linkSEO ? buildRegistrationUrl(event.linkSEO, { isRegistrationOpen }) : '#'}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => {
@@ -1363,6 +1364,7 @@ function TableView({
           </thead>
           <tbody className="divide-y divide-gray-100">
             {sortedEvents.map((event) => {
+              const isRegistrationOpen = event.registrationWindowStatus === 'open';
               const isRegistrationClosed = event.registrationWindowStatus === 'closed' || event.registrationWindowStatus === 'ended';
               const isRegistrationNotYetOpen = event.registrationWindowStatus === 'not_opened_yet';
               const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
@@ -1475,7 +1477,7 @@ function TableView({
                   <td className="px-4 py-3 text-right whitespace-nowrap print:hidden">
                     {event.linkSEO && (
                       <a 
-                        href={buildRegistrationUrl(event.linkSEO)}
+                        href={buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => {

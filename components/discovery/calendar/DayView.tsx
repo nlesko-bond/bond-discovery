@@ -167,7 +167,8 @@ function EventCard({
 }) {
   const startTime = formatTime(event.startTime, event.timezone);
   const endTime = formatTime(event.endTime, event.timezone);
-  const registrationUrl = buildRegistrationUrl(event.linkSEO);
+  const isRegistrationOpen = event.registrationWindowStatus === 'open';
+  const registrationUrl = buildRegistrationUrl(event.linkSEO, { isRegistrationOpen });
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
 
   return (

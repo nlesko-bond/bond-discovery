@@ -10,6 +10,7 @@ interface PricingCarouselProps {
   baseRegistrationUrl?: string;
   className?: string;
   config?: DiscoveryConfig;
+  isRegistrationOpen?: boolean;
 }
 
 /**
@@ -24,7 +25,8 @@ export function PricingCarousel({
   products, 
   baseRegistrationUrl, 
   className,
-  config
+  config,
+  isRegistrationOpen = true
 }: PricingCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -105,7 +107,7 @@ export function PricingCarousel({
           <PricingCard
             key={product.id}
             product={product}
-            registrationUrl={buildRegistrationUrl(baseRegistrationUrl, { productId: product.id })}
+            registrationUrl={buildRegistrationUrl(baseRegistrationUrl, { productId: product.id, isRegistrationOpen })}
             isFirstMember={index === regularProducts.length && memberProducts.length > 0}
             primaryColor={primaryColor}
             secondaryColor={secondaryColor}

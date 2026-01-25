@@ -310,4 +310,22 @@ describe('buildRegistrationUrl', () => {
   it('returns undefined for undefined input', () => {
     expect(buildRegistrationUrl(undefined)).toBeUndefined();
   });
+
+  it('returns plain URL when registration is closed', () => {
+    const result = buildRegistrationUrl('https://example.com/register', { isRegistrationOpen: false });
+    expect(result).toBe('https://example.com/register');
+    expect(result).not.toContain('skipToProducts');
+  });
+
+  it('returns plain URL without productId when registration is closed', () => {
+    const result = buildRegistrationUrl('https://example.com/register', { productId: '123', isRegistrationOpen: false });
+    expect(result).toBe('https://example.com/register');
+    expect(result).not.toContain('productId');
+    expect(result).not.toContain('skipToProducts');
+  });
+
+  it('adds params when registration is explicitly open', () => {
+    const result = buildRegistrationUrl('https://example.com/register', { isRegistrationOpen: true });
+    expect(result).toContain('skipToProducts=true');
+  });
 });
