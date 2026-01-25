@@ -1,5 +1,5 @@
 import { DiscoveryConfig, BrandingConfig, FeatureConfig, FilterType } from '@/types';
-import { supabase, DiscoveryPageRow } from './supabase';
+import { supabase, getSupabaseAdmin, DiscoveryPageRow } from './supabase';
 
 /**
  * Convert database row to DiscoveryConfig
@@ -160,7 +160,8 @@ export async function createPageConfig(config: {
   isActive?: boolean;
   partnerGroupId?: string;
 }): Promise<DiscoveryConfig> {
-  const { data, error } = await supabase
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data, error } = await supabaseAdmin
     .from('discovery_pages')
     .insert({
       name: config.name,
@@ -209,6 +210,8 @@ export async function createPageConfig(config: {
  * Update an existing page configuration
  */
 export async function updatePageConfig(slug: string, updates: Partial<DiscoveryConfig>): Promise<DiscoveryConfig> {
+  const supabaseAdmin = getSupabaseAdmin();
+  
   // Build the update object
   const updateData: any = {};
   
@@ -224,8 +227,8 @@ export async function updatePageConfig(slug: string, updates: Partial<DiscoveryC
   if (updates.cacheTtl !== undefined) updateData.cache_ttl = updates.cacheTtl;
   if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
   
-  // Perform the update (don't use .single() to avoid RLS issues)
-  const { error: updateError } = await supabase
+  // Perform the update using admin client
+  const { error: updateError } = await supabaseAdmin
     .from('discovery_pages')
     .update(updateData)
     .eq('slug', slug);
@@ -235,8 +238,8 @@ export async function updatePageConfig(slug: string, updates: Partial<DiscoveryC
     throw new Error(updateError.message);
   }
   
-  // Fetch the updated record separately
-  const { data, error: fetchError } = await supabase
+  // Fetch the updated record using admin client
+  const { data, error: fetchError } = await supabaseAdmin
     .from('discovery_pages')
     .select(`
       *,
@@ -261,7 +264,8 @@ export async function deletePageConfig(slug: string): Promise<boolean> {
     throw new Error('Cannot delete the default TOCA configuration');
   }
   
-  const { error } = await supabase
+  const supabaseAdmin = getSupabaseAdmin();
+  const { error } = await supabaseAdmin
     .from('discovery_pages')
     .delete()
     .eq('slug', slug);

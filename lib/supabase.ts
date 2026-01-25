@@ -1,9 +1,24 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mxketdjzelojxjnzsjgd.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14a2V0ZGp6ZWxvanhqbnpzamdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MTI4NDQsImV4cCI6MjA3NjI4ODg0NH0._zB2_IAm6R4oFSXgfJwUUrL8VOgt91hkmuHfKsG7_yc';
 
+// Public client with anon key - for read operations
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Admin client with service key - for write operations (lazy init to avoid build errors)
+let _supabaseAdmin: SupabaseClient | null = null;
+
+export function getSupabaseAdmin(): SupabaseClient {
+  if (!_supabaseAdmin) {
+    const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+    if (!serviceKey) {
+      throw new Error('SUPABASE_SERVICE_KEY is not configured');
+    }
+    _supabaseAdmin = createClient(supabaseUrl, serviceKey);
+  }
+  return _supabaseAdmin;
+}
 
 // Database types
 export interface DiscoveryPageRow {

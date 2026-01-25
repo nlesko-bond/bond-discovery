@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, getSupabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    // Fetch partners with their pages
+    // Fetch partners with their pages (read operation - use anon client)
     const { data: partners, error } = await supabase
       .from('partner_groups')
       .select(`
@@ -32,7 +32,9 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const { data, error } = await supabase
+    // Write operation - use admin client
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
       .from('partner_groups')
       .insert({
         name: body.name,

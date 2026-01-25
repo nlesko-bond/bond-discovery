@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, getSupabaseAdmin } from '@/lib/supabase';
 
 interface RouteParams {
   params: { id: string };
@@ -7,6 +7,7 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    // Read operation - use anon client
     const { data, error } = await supabase
       .from('partner_groups')
       .select(`
@@ -37,7 +38,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (body.default_features !== undefined) updateData.default_features = body.default_features;
     if (body.is_active !== undefined) updateData.is_active = body.is_active;
     
-    const { data, error } = await supabase
+    // Write operation - use admin client
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
       .from('partner_groups')
       .update(updateData)
       .eq('id', params.id)
@@ -58,14 +61,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    // Write operations - use admin client
+    const supabaseAdmin = getSupabaseAdmin();
+    
     // First delete all pages belonging to this partner
-    await supabase
+    await supabaseAdmin
       .from('discovery_pages')
       .delete()
       .eq('partner_group_id', params.id);
     
     // Then delete the partner
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('partner_groups')
       .delete()
       .eq('id', params.id);
