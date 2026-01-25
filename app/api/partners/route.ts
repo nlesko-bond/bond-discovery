@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    // Fetch partners with their pages (read operation - use anon client)
-    const { data: partners, error } = await supabase
+    // Admin-only route - use admin client for all operations
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: partners, error } = await supabaseAdmin
       .from('partner_groups')
       .select(`
         *,

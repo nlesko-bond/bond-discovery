@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 interface RouteParams {
   params: { id: string };
@@ -7,8 +7,9 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    // Read operation - use anon client
-    const { data, error } = await supabase
+    // Admin-only route - use admin client for all operations
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
       .from('partner_groups')
       .select(`
         *,
