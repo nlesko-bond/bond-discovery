@@ -7,13 +7,10 @@ import { Program, Session, SessionEvent } from '@/types';
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
 
-// Default timezone for events (US Eastern)
-const DEFAULT_TIMEZONE = 'America/New_York';
-
 /**
  * Get today's date in a specific timezone (YYYY-MM-DD format)
  */
-function getTodayInTimezone(timezone: string = DEFAULT_TIMEZONE): string {
+function getTodayInTimezone(timezone: string): string {
   try {
     return new Date().toLocaleDateString('en-CA', { timeZone: timezone });
   } catch {
@@ -25,7 +22,7 @@ function getTodayInTimezone(timezone: string = DEFAULT_TIMEZONE): string {
 /**
  * Get the local date (YYYY-MM-DD) from an ISO date string in a specific timezone
  */
-function getLocalDate(isoDateStr: string, timezone: string = DEFAULT_TIMEZONE): string {
+function getLocalDate(isoDateStr: string, timezone: string): string {
   try {
     const date = new Date(isoDateStr);
     return date.toLocaleDateString('en-CA', { timeZone: timezone });
@@ -42,9 +39,12 @@ function getLocalDate(isoDateStr: string, timezone: string = DEFAULT_TIMEZONE): 
 function calculateSessionRegistrationStatus(
   registrationStartDate?: string,
   registrationEndDate?: string,
-  timezone: string = DEFAULT_TIMEZONE
+  timezone?: string
 ): string {
-  const today = getTodayInTimezone(timezone);
+  // Use provided timezone, or fall back to simple date comparison
+  const today = timezone 
+    ? getTodayInTimezone(timezone)
+    : new Date().toISOString().split('T')[0];
   
   // If registration hasn't started yet
   if (registrationStartDate && registrationStartDate > today) {
@@ -136,10 +136,8 @@ export async function GET(request: Request) {
   
   const facilityId = searchParams.get('facilityId') || undefined;
   
-  // Get today's date in the default timezone (used for filtering)
-  // We use DEFAULT_TIMEZONE since most events are in US Eastern
-  const todayLocal = getTodayInTimezone(DEFAULT_TIMEZONE);
-  const startDateFilter = searchParams.get('startDate') || todayLocal;
+  // Date filters from query params (optional)
+  const startDateFilter = searchParams.get('startDate') || undefined;
   const endDateFilter = searchParams.get('endDate') || undefined;
   const includePast = searchParams.get('includePast') === 'true';
   
@@ -172,10 +170,16 @@ export async function GET(request: Request) {
           
           for (const session of sessions) {
             // Skip sessions that have already ended (unless includePast is true)
-            // Compare using local dates in the default timezone
+            // Use session's timezone if available for accurate comparison
             if (!includePast && session.endDate) {
-              const sessionEndLocalDate = getLocalDate(session.endDate, DEFAULT_TIMEZONE);
-              if (sessionEndLocalDate < todayLocal) {
+              const sessionTimezone = (session as any).timezone;
+              const todayInSessionTz = sessionTimezone 
+                ? getTodayInTimezone(sessionTimezone)
+                : new Date().toISOString().split('T')[0];
+              const sessionEndLocalDate = sessionTimezone
+                ? getLocalDate(session.endDate, sessionTimezone)
+                : session.endDate.split('T')[0];
+              if (sessionEndLocalDate < todayInSessionTz) {
                 continue; // Skip past sessions
               }
             }
@@ -202,16 +206,17 @@ export async function GET(request: Request) {
             }
             
             // Calculate registration status from SESSION dates (more accurate than event status)
+            const sessionTimezone = (session as any).timezone;
             const sessionRegistrationStatus = calculateSessionRegistrationStatus(
               session.registrationStartDate,
               session.registrationEndDate,
-              DEFAULT_TIMEZONE
+              sessionTimezone
             );
             
             // Helper to transform an event
             const transformEvent = (event: any, segmentId?: string, segmentName?: string): TransformedEvent | null => {
-              // Use event's timezone or fall back to default
-              const eventTimezone = event.timezone || DEFAULT_TIMEZONE;
+              // Use event's timezone exactly as Bond returns it (no conversion)
+              const eventTimezone = event.timezone;
               
               // Extract resource names (court/field) from resources array
               const resourceNames = event.resources && Array.isArray(event.resources) 
@@ -221,9 +226,9 @@ export async function GET(request: Request) {
               const transformedEvent: TransformedEvent = {
                 id: String(event.id),
                 title: event.title || segmentName || session.name || program.name,
-                startDate: event.startDate,
-                endDate: event.endDate,
-                timezone: eventTimezone,
+                startDate: event.startDate,   // Pass through exactly as Bond returns
+                endDate: event.endDate,       // Pass through exactly as Bond returns
+                timezone: eventTimezone,      // Pass through exactly as Bond returns
                 programId: program.id,
                 programName: program.name,
                 sessionId: session.id,
@@ -247,9 +252,22 @@ export async function GET(request: Request) {
                 isSegmented: !!segmentId,
               };
               
-              // Apply date filtering using local dates in event's timezone
+              // Filter past events using event's own timezone
+              if (!includePast) {
+                const todayInEventTz = eventTimezone 
+                  ? getTodayInTimezone(eventTimezone)
+                  : new Date().toISOString().split('T')[0];
+                const eventLocalDate = eventTimezone
+                  ? getLocalDate(event.startDate, eventTimezone)
+                  : event.startDate.split('T')[0];
+                if (eventLocalDate < todayInEventTz) return null;
+              }
+              
+              // Apply explicit date filters if provided
               if (startDateFilter || endDateFilter) {
-                const eventLocalDate = getLocalDate(event.startDate, eventTimezone);
+                const eventLocalDate = eventTimezone
+                  ? getLocalDate(event.startDate, eventTimezone)
+                  : event.startDate.split('T')[0];
                 if (startDateFilter && eventLocalDate < startDateFilter) return null;
                 if (endDateFilter && eventLocalDate > endDateFilter) return null;
               }
@@ -328,7 +346,6 @@ export async function GET(request: Request) {
       meta: {
         totalEvents: allEvents.length,
         organizations: orgIds.length,
-        timezone: DEFAULT_TIMEZONE,
         cachedAt: new Date().toISOString(),
       }
     }, {
