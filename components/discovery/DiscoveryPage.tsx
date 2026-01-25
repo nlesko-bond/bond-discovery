@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { 
   LayoutGrid, 
@@ -145,7 +145,7 @@ export function DiscoveryPage({
     if (urlViewMode && urlViewMode !== viewMode) {
       setViewMode(urlViewMode);
     }
-  }, [urlSearchParams]);
+  }, [urlSearchParams, viewMode]);
   
   // Track page view on mount (Bond Analytics)
   useEffect(() => {
@@ -322,40 +322,93 @@ export function DiscoveryPage({
   const [eventsError, setEventsError] = useState<string | null>(null);
   const [eventsFetched, setEventsFetched] = useState(false);
   
+  // Ref to track the current fetch request for cancellation
+  const abortControllerRef = useRef<AbortController | null>(null);
+  
   // Reset events when config changes (different page)
   useEffect(() => {
+    // Cancel any in-flight request when config changes
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
     setEventsFetched(false);
+    setEventsLoading(false);
     setApiEvents([]);
-  }, [config.organizationIds.join(',')]);
+    setEventsError(null);
+  }, [config.slug, config.organizationIds.join(',')]);
   
   // Fetch events from API when schedule view is selected
   useEffect(() => {
-    if (viewMode === 'schedule' && !eventsFetched && !eventsLoading) {
-      setEventsLoading(true);
-      setEventsError(null);
-      
-      // Build URL with slug to let API look up config
-      const params = new URLSearchParams();
-      params.set('slug', config.slug);
-      const url = `/api/events?${params.toString()}`;
-      
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          if (data.data) {
-            setApiEvents(data.data);
-            setEventsFetched(true);
-          }
-        })
-        .catch(err => {
-          console.error('Error fetching events:', err);
-          setEventsError('Failed to load events');
-        })
-        .finally(() => {
-          setEventsLoading(false);
-        });
+    // Only fetch if we're in schedule view and haven't fetched yet
+    if (viewMode !== 'schedule' || eventsFetched) {
+      return;
     }
-  }, [viewMode, eventsFetched, eventsLoading, config.slug]);
+    
+    // Cancel any existing request before starting a new one
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Create new abort controller for this request
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    
+    setEventsLoading(true);
+    setEventsError(null);
+    
+    // Build URL with slug to let API look up config
+    const params = new URLSearchParams();
+    params.set('slug', config.slug);
+    const url = `/api/events?${params.toString()}`;
+    
+    fetch(url, { signal: abortController.signal })
+      .then(res => {
+        // Check if request was successful
+        if (!res.ok) {
+          throw new Error(`API error: ${res.status} ${res.statusText}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        // Don't update state if this request was aborted
+        if (abortController.signal.aborted) return;
+        
+        // Handle successful response - data.data can be an empty array which is valid
+        if (data && Array.isArray(data.data)) {
+          setApiEvents(data.data);
+          setEventsFetched(true);
+        } else {
+          // Unexpected response format
+          console.error('Unexpected API response format:', data);
+          setEventsError('Unexpected response from server');
+          setEventsFetched(true); // Mark as fetched to prevent infinite retries
+        }
+      })
+      .catch(err => {
+        // Don't update state if this request was aborted
+        if (abortController.signal.aborted) return;
+        
+        // Handle AbortError silently (user navigated away)
+        if (err.name === 'AbortError') {
+          return;
+        }
+        
+        console.error('Error fetching events:', err);
+        setEventsError('Failed to load events');
+        setEventsFetched(true); // Mark as fetched to prevent infinite retries
+      })
+      .finally(() => {
+        // Don't update loading state if this request was aborted
+        if (abortController.signal.aborted) return;
+        setEventsLoading(false);
+      });
+    
+    // Cleanup: abort request if component unmounts or dependencies change
+    return () => {
+      abortController.abort();
+    };
+  }, [viewMode, eventsFetched, config.slug]);
   
   // Filter events based on current filters
   const filteredEvents = useMemo(() => {
@@ -695,11 +748,14 @@ export function DiscoveryPage({
                   <BrandLogo config={config} size="md" />
                   {config.branding.tagline && (
                     <div 
-                      className="hidden sm:flex items-center border-l-2 pl-4"
+                      className={cn(
+                        "items-center border-l-2 pl-4",
+                        config.branding.showTaglineOnMobile ? "flex" : "hidden sm:flex"
+                      )}
                       style={{ borderColor: config.branding.primaryColor }}
                     >
                       <span 
-                        className="text-base tracking-tight"
+                        className="text-sm sm:text-base tracking-tight"
                         style={{ 
                           color: config.branding.primaryColor,
                           fontWeight: 700,

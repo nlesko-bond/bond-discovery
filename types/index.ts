@@ -342,6 +342,7 @@ export interface BrandingConfig {
   favicon?: string;
   companyName: string;
   tagline?: string;
+  showTaglineOnMobile?: boolean; // Show tagline on mobile screens (default: false)
   fontFamily?: string; // e.g., 'Inter', 'Roboto', 'Open Sans'
 }
 

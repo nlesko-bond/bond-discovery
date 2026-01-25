@@ -27,6 +27,7 @@ interface PageConfig {
     accentColor?: string;
     logo?: string;
     tagline?: string;
+    showTaglineOnMobile?: boolean;
   };
   organizationIds: string[];
   facilityIds?: string[];
@@ -239,6 +240,20 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                     branding: { ...config.branding, tagline: e.target.value }
                   })}
                 />
+                {config.branding.tagline && (
+                  <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300"
+                      checked={config.branding.showTaglineOnMobile || false}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        branding: { ...config.branding, showTaglineOnMobile: e.target.checked }
+                      })}
+                    />
+                    Show tagline on mobile
+                  </label>
+                )}
               </div>
               
               <div>
