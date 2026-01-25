@@ -4,12 +4,16 @@ import { createClient } from '@supabase/supabase-js';
 // Force dynamic rendering - this route uses request.url
 export const dynamic = 'force-dynamic';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
+// Lazy initialization to avoid build-time errors
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
+  );
+}
 
 export async function GET(request: NextRequest) {
+  const supabase = getSupabase();
   try {
     const { searchParams } = new URL(request.url);
     const pageSlug = searchParams.get('pageSlug');

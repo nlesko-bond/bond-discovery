@@ -5,10 +5,13 @@ import crypto from 'crypto';
 // Force dynamic rendering - this route uses request headers
 export const dynamic = 'force-dynamic';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
+// Lazy initialization to avoid build-time errors
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
+  );
+}
 
 // Hash IP for privacy
 function hashIP(ip: string): string {
@@ -23,6 +26,7 @@ function getClientIP(request: NextRequest): string {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = getSupabase();
   try {
     const body = await request.json();
     const { type, pageSlug, eventType, eventData, viewMode, scheduleView } = body;
