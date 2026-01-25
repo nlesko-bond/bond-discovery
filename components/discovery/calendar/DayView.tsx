@@ -165,8 +165,8 @@ function EventCard({
   onClick?: () => void;
   config: DiscoveryConfig;
 }) {
-  const startTime = formatTime(event.startTime);
-  const endTime = formatTime(event.endTime);
+  const startTime = formatTime(event.startTime, event.timezone);
+  const endTime = formatTime(event.endTime, event.timezone);
   const registrationUrl = buildRegistrationUrl(event.linkSEO);
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
 

@@ -70,9 +70,20 @@ describe('formatDate', () => {
 });
 
 describe('formatTime', () => {
-  it('formats ISO datetime strings', () => {
-    // Note: UTC times are converted to local timezone by parseISO
-    // Using non-Z format to avoid timezone conversion in tests
+  it('formats ISO datetime with timezone conversion', () => {
+    // 15:00 UTC = 9:00 AM Central (America/Chicago is UTC-6 in winter)
+    const result = formatTime('2026-01-25T15:00:00.000Z', 'America/Chicago');
+    expect(result).toBe('9:00 AM');
+  });
+
+  it('formats ISO datetime in Eastern timezone', () => {
+    // 15:00 UTC = 10:00 AM Eastern (America/New_York is UTC-5 in winter)
+    const result = formatTime('2026-01-25T15:00:00.000Z', 'America/New_York');
+    expect(result).toBe('10:00 AM');
+  });
+
+  it('formats ISO datetime strings without timezone (fallback)', () => {
+    // Without timezone, falls back to local timezone
     const result = formatTime('2026-01-15T14:30:00.000Z');
     expect(result).toMatch(/\d{1,2}:\d{2} [AP]M/); // Just verify format
   });

@@ -40,27 +40,31 @@ export function formatDate(dateStr: string, formatStr = 'MMM d, yyyy'): string {
 
 /**
  * Format time string (ISO date, HH:mm:ss, or HH:mm to h:mm a)
- * IMPORTANT: Extracts time as-is from the string without timezone conversion
+ * If timezone is provided, converts UTC time to that timezone
  */
-export function formatTime(timeStr?: string): string {
+export function formatTime(timeStr?: string, timezone?: string): string {
   if (!timeStr) return '';
   
   try {
-    // For ISO date format (2026-01-18T10:00:00-06:00 or 2026-01-18T10:00:00.000Z)
-    // Extract the time portion directly WITHOUT timezone conversion
+    // For ISO date format with timezone conversion
+    if (timeStr.includes('T') && timezone) {
+      const date = new Date(timeStr);
+      if (!isNaN(date.getTime())) {
+        // Use Intl.DateTimeFormat to format in the event's timezone
+        return new Intl.DateTimeFormat('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: timezone,
+        }).format(date);
+      }
+    }
+    
+    // For ISO date format without timezone (fallback to local)
     if (timeStr.includes('T')) {
-      // Extract HH:mm from the ISO string (after T, before timezone offset or Z)
-      const timePart = timeStr.split('T')[1];
-      if (timePart) {
-        // Get HH:mm (first 5 characters, or up to the dot/plus/minus/Z)
-        const match = timePart.match(/^(\d{2}):(\d{2})/);
-        if (match) {
-          const hours = parseInt(match[1], 10);
-          const minutes = match[2];
-          const ampm = hours >= 12 ? 'PM' : 'AM';
-          const displayHours = hours % 12 || 12;
-          return `${displayHours}:${minutes} ${ampm}`;
-        }
+      const parsed = parseISO(timeStr);
+      if (isValid(parsed)) {
+        return format(parsed, 'h:mm a');
       }
     }
     

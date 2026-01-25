@@ -739,7 +739,7 @@ function DayColumn({
             {event.title || event.programName}
           </div>
           <div className="text-gray-500 text-[9px] md:text-[10px]">
-            {formatTime(event.startTime)}
+            {formatTime(event.startTime, event.timezone)}
           </div>
         </button>
       ))}
@@ -852,8 +852,8 @@ function EventCard({
   const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
 
   // Get start time - try multiple sources
-  const startTimeStr = formatTime(event.startTime) || formatTime(event.date) || '';
-  const endTimeStr = event.endTime ? formatTime(event.endTime) : '';
+  const startTimeStr = formatTime(event.startTime, event.timezone) || formatTime(event.date, event.timezone) || '';
+  const endTimeStr = event.endTime ? formatTime(event.endTime, event.timezone) : '';
   
   return (
     <button
@@ -1099,8 +1099,8 @@ function EventDetailModal({
             <div>
               <p className="font-semibold text-gray-900">{formatDate(event.date, 'EEEE, MMMM d, yyyy')}</p>
               <p className="text-sm text-gray-600">
-                {formatTime(event.startTime)}
-                {event.endTime && ` - ${formatTime(event.endTime)}`}
+                {formatTime(event.startTime, event.timezone)}
+                {event.endTime && ` - ${formatTime(event.endTime, event.timezone)}`}
               </p>
             </div>
           </div>
@@ -1388,8 +1388,8 @@ function TableView({
                   {/* Time */}
                   <td className="px-4 py-3 whitespace-nowrap print:px-2 print:py-1">
                     <div className="text-sm text-gray-700">
-                      {formatTime(event.startTime) || 'TBD'}
-                      {event.endTime && ` - ${formatTime(event.endTime)}`}
+                      {formatTime(event.startTime, event.timezone) || 'TBD'}
+                      {event.endTime && ` - ${formatTime(event.endTime, event.timezone)}`}
                     </div>
                   </td>
                   

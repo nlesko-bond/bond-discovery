@@ -181,7 +181,7 @@ function EventBlock({
   onMoreClick?: () => void;
   brandColor?: string;
 }) {
-  const startTime = formatTime(event.startTime);
+  const startTime = formatTime(event.startTime, event.timezone);
   const eventColor = event.color || brandColor;
   
   // Determine display name: prefer title, then sessionName if different from programName, then programName
