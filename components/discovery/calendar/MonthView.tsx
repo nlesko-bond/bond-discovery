@@ -54,11 +54,10 @@ export function MonthView({
     let currentDate = startDate;
 
     while (currentDate <= endDate) {
-      // Use isSameDay for proper timezone handling (matches DayView logic)
-      const filtered = events.filter(event => {
-        const eventDate = parseISO(event.startTime || event.date);
-        return isSameDay(eventDate, currentDate);
-      });
+      // Use event.date (already localized YYYY-MM-DD string) for consistent counting
+      // This matches how buildWeekSchedules groups events
+      const dateStr = format(currentDate, 'yyyy-MM-dd');
+      const filtered = events.filter(event => event.date === dateStr);
       
       // Deduplicate by event ID to ensure count matches rendered items
       const seen = new Set<string>();

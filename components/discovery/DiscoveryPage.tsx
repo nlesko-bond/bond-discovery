@@ -960,6 +960,7 @@ export function DiscoveryPage({
                 hasMultipleFacilities: filterOptions.hasMultipleFacilities,
               }}
               config={config}
+              isScheduleView={viewMode === 'schedule'}
             />
           </div>
           

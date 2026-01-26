@@ -33,11 +33,10 @@ export function DayView({ events, date, config, onEventClick }: DayViewProps) {
 
   // Filter events for this day and deduplicate by ID
   const dayEvents = useMemo(() => {
-    const targetDate = parseISO(date);
-    const filtered = events.filter(event => {
-      const eventDate = parseISO(event.startTime || event.date);
-      return isSameDay(eventDate, targetDate);
-    });
+    // Use event.date (already localized YYYY-MM-DD string) for consistent counting
+    // Extract just the date part from the prop in case it's a full ISO string
+    const targetDateStr = date.split('T')[0];
+    const filtered = events.filter(event => event.date === targetDateStr);
     
     // Deduplicate by event ID to ensure count matches rendered items
     const seen = new Set<string>();

@@ -50,6 +50,7 @@ interface HorizontalFilterBarProps {
   onFilterChange: (filters: DiscoveryFilters) => void;
   filterOptions: FilterOptions;
   config: DiscoveryConfig;
+  isScheduleView?: boolean; // When true, hides age filter (not applicable to events)
 }
 
 export function HorizontalFilterBar({
@@ -57,6 +58,7 @@ export function HorizontalFilterBar({
   onFilterChange,
   filterOptions,
   config,
+  isScheduleView = false,
 }: HorizontalFilterBarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(filters.search || '');
@@ -96,7 +98,11 @@ export function HorizontalFilterBar({
   }, [filters.search]);
   
   // Get enabled filters from config
-  const enabledFilters = config.features.enableFilters || ['search', 'facility', 'programType', 'sport', 'age', 'dateRange', 'program'];
+  // Exclude 'age' filter on schedule view since age data isn't on events
+  const configFilters = config.features.enableFilters || ['search', 'facility', 'programType', 'sport', 'age', 'dateRange', 'program'];
+  const enabledFilters = isScheduleView 
+    ? configFilters.filter(f => f !== 'age')
+    : configFilters;
   
   // Search suggestions based on query
   const searchSuggestions = useMemo(() => {
@@ -129,13 +135,13 @@ export function HorizontalFilterBar({
     return suggestions.slice(0, 8); // Limit to 8 suggestions
   }, [searchQuery, filterOptions]);
 
-  // Count active filters
+  // Count active filters (exclude age on schedule view since it doesn't apply to events)
   const activeFilterCount = [
     filters.facilityIds?.length || 0,
     filters.programIds?.length || 0,
     filters.programTypes?.length || 0,
     filters.sports?.length || 0,
-    (filters.ageRange?.min || filters.ageRange?.max) ? 1 : 0,
+    (!isScheduleView && (filters.ageRange?.min || filters.ageRange?.max)) ? 1 : 0,
     (filters.gender && filters.gender !== 'all') ? 1 : 0,
     filters.dateRange?.start || filters.dateRange?.end ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
@@ -687,8 +693,8 @@ export function HorizontalFilterBar({
             />
           ))}
 
-          {/* Age Chip */}
-          {(filters.ageRange?.min || filters.ageRange?.max) && (
+          {/* Age Chip - hide on schedule view since age doesn't apply to events */}
+          {!isScheduleView && (filters.ageRange?.min || filters.ageRange?.max) && (
             <FilterChip
               label={`Ages ${filters.ageRange?.min || 0}-${filters.ageRange?.max || '∞'}`}
               onRemove={() => clearFilter('age')}
