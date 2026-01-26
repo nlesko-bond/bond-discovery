@@ -83,8 +83,8 @@ export class BondClient {
     }
   ): Promise<APIResponse<Program[]>> {
     const params: Record<string, any> = {
-      // Full expand to get all nested data: sessions, products, prices, and facility
-      expand: options?.expand || 'sessions,sessions.products,sessions.products.prices,sessions.facility',
+      // Full expand to get all nested data: sessions, products, and prices
+      expand: options?.expand || 'sessions,sessions.products,sessions.products.prices',
       page: options?.page || 1,
       per_page: options?.perPage || 100,
     };
