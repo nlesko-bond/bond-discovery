@@ -390,8 +390,8 @@ export function HorizontalFilterBar({
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <span className="block truncate">{program.name}</span>
-                        {/* Show facility name when multiple facilities exist */}
-                        {filterOptions.hasMultipleFacilities && program.facilityName && (
+                        {/* Show facility name when multiple facilities are selected OR no facility filter and multiple exist */}
+                        {((filters.facilityIds?.length || 0) > 1 || (!filters.facilityIds?.length && filterOptions.hasMultipleFacilities)) && program.facilityName && (
                           <span className="block text-xs text-gray-400 truncate">{program.facilityName}</span>
                         )}
                       </div>
