@@ -414,13 +414,12 @@ export function DiscoveryPage({
   const filteredEvents = useMemo(() => {
     let result = [...apiEvents];
     
-    // Filter by program - match by ID first, then fallback to name
+    // Filter by program - match by ID first, then fallback to name+facility
     if (filters.programIds && filters.programIds.length > 0) {
-      // Get program names for the selected IDs from initialPrograms
+      // Get selected programs with their facility info
       const selectedPrograms = initialPrograms.filter(p => 
         filters.programIds!.includes(p.id)
       );
-      const selectedProgramNames = selectedPrograms.map(p => p.name.toLowerCase().trim());
       
       result = result.filter(event => {
         // First try to match by program ID directly
@@ -428,9 +427,52 @@ export function DiscoveryPage({
           return true;
         }
         
-        // Fallback to matching by program name
+        // Fallback to matching by program name + facility
+        // This ensures we don't show events from other facilities with the same program name
         const eventProgramName = (event.programName || '').toLowerCase().trim();
-        return selectedProgramNames.some(name => name === eventProgramName);
+        const eventFacilityName = (event.facilityName || '').toLowerCase().trim();
+        
+        return selectedPrograms.some(p => {
+          const programName = p.name.toLowerCase().trim();
+          
+          // Program name must match first
+          if (programName !== eventProgramName) {
+            return false;
+          }
+          
+          // Get facility info from the program (from initialPrograms which has facilityName from transformer)
+          const programFacilityName = (p.facilityName || '').toLowerCase().trim();
+          
+          // If both have facility names, they must match
+          if (programFacilityName && eventFacilityName) {
+            // Extract the location part after the first dash (e.g., "toca - denver, co" -> "denver, co")
+            const getPrimaryLocation = (name: string) => {
+              const parts = name.split('-');
+              // Get the most specific part (usually after the brand name like "TOCA")
+              return parts.length > 1 ? parts.slice(1).join('-').trim() : parts[0].trim();
+            };
+            
+            const programLocation = getPrimaryLocation(programFacilityName);
+            const eventLocation = getPrimaryLocation(eventFacilityName);
+            
+            // Locations must match (e.g., "denver, co" === "denver, co")
+            // Allow partial matching for cases like "denver, co" vs "denver"
+            const facilityMatch = programLocation === eventLocation ||
+                                  programLocation.startsWith(eventLocation) ||
+                                  eventLocation.startsWith(programLocation);
+            return facilityMatch;
+          }
+          
+          // If event has no facility name but program does, don't match
+          // (prevents matching events from unknown facilities)
+          if (programFacilityName && !eventFacilityName) {
+            return false;
+          }
+          
+          // If program has no facility name (shouldn't happen after transformer fix), 
+          // match by name only as last resort
+          return true;
+        });
       });
     }
     
@@ -915,6 +957,7 @@ export function DiscoveryPage({
                 ),
                 sessions: filterOptions.sessions,
                 ages: [],
+                hasMultipleFacilities: filterOptions.hasMultipleFacilities,
               }}
               config={config}
             />

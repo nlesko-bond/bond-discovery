@@ -388,10 +388,10 @@ export function HorizontalFilterBar({
                     style={isSelected ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor } : undefined}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0 flex-1" suppressHydrationWarning>
                         <span className="block truncate">{program.name}</span>
-                        {/* Show facility name when multiple facilities exist (unless single facility is selected) */}
-                        {filterOptions.hasMultipleFacilities && (filters.facilityIds?.length || 0) !== 1 && program.facilityName && (
+                        {/* Show facility name when multiple facilities exist */}
+                        {filterOptions.hasMultipleFacilities && program.facilityName && (
                           <span className="block text-xs text-gray-400 truncate">{program.facilityName}</span>
                         )}
                       </div>

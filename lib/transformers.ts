@@ -85,8 +85,8 @@ export function transformProgram(raw: any): Program {
     longDescription: stripHtml(raw.longDescription),
     type: raw.type?.toLowerCase(),
     sport: raw.sport?.toLowerCase(),
-    facilityId: raw.facility_id ? String(raw.facility_id) : (facilityFromSession?.id ? String(facilityFromSession.id) : undefined),
-    facilityName: raw.facility?.name || raw.facility_name || facilityFromSession?.name,
+    facilityId: (raw.facilityId || raw.facility_id) ? String(raw.facilityId || raw.facility_id) : (facilityFromSession?.id ? String(facilityFromSession.id) : undefined),
+    facilityName: raw.facilityName || raw.facility?.name || raw.facility_name || facilityFromSession?.name,
     organizationId: raw.organizationId ? String(raw.organizationId) : (raw.organization_id ? String(raw.organization_id) : undefined),
     
     // Image from mainMedia
