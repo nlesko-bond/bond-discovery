@@ -609,12 +609,12 @@ export function DiscoveryPage({
       let facilityId = p.facilityId;
       let facilityName = p.facilityName;
       
-      // If not on program, check sessions
-      if (!facilityId && p.sessions && p.sessions.length > 0) {
+      // If facility info not on program, check sessions
+      if ((!facilityId || !facilityName) && p.sessions && p.sessions.length > 0) {
         const sessionWithFacility = p.sessions.find(s => s.facility);
         if (sessionWithFacility?.facility) {
-          facilityId = String(sessionWithFacility.facility.id);
-          facilityName = sessionWithFacility.facility.name;
+          facilityId = facilityId || String(sessionWithFacility.facility.id);
+          facilityName = facilityName || sessionWithFacility.facility.name;
         }
       }
       
