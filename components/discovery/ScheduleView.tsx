@@ -130,11 +130,18 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
   // Count events for this week
   const weekEventCount = currentWeek?.days.reduce((sum, day) => sum + day.events.length, 0) || 0;
 
-  // Flatten all events for month view
+  // Flatten all events for month view (deduplicated by ID)
   const allEvents = useMemo(() => {
-    return schedule.flatMap(week => 
+    const all = schedule.flatMap(week => 
       week.days.flatMap(day => day.events)
     );
+    // Deduplicate by event ID to prevent React key conflicts
+    const seen = new Set<string>();
+    return all.filter(event => {
+      if (seen.has(event.id)) return false;
+      seen.add(event.id);
+      return true;
+    });
   }, [schedule]);
   
   // Get timezone from events (use first event's timezone as representative)
@@ -256,7 +263,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
         if (day.events.length > 0) {
           const existing = dayMap.get(day.date);
           if (existing) {
-            // Add more events to existing day
+            // Add more events to existing day (will dedupe below)
             existing.events.push(...day.events);
           } else {
             // Create new day entry with a COPY of the events array
@@ -274,8 +281,17 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
     
-    // Sort events within each day by start time
+    // Deduplicate and sort events within each day
     result.forEach(day => {
+      // Deduplicate by event ID
+      const seen = new Set<string>();
+      day.events = day.events.filter(event => {
+        if (seen.has(event.id)) return false;
+        seen.add(event.id);
+        return true;
+      });
+      
+      // Sort by start time
       day.events.sort((a, b) => {
         if (!a.startTime) return 1;
         if (!b.startTime) return -1;

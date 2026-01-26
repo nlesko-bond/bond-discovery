@@ -482,8 +482,16 @@ export function buildWeekSchedules(events: CalendarEvent[], weeksToShow: number 
     
     const daySchedules: DaySchedule[] = days.map(day => {
       const dateStr = format(day, 'yyyy-MM-dd');
-      const dayEvents = events
-        .filter(event => event.date === dateStr)
+      const filtered = events.filter(event => event.date === dateStr);
+      
+      // Deduplicate by event ID to prevent count/render mismatches
+      const seen = new Set<string>();
+      const dayEvents = filtered
+        .filter(event => {
+          if (seen.has(event.id)) return false;
+          seen.add(event.id);
+          return true;
+        })
         .sort((a, b) => {
           if (!a.startTime) return 1;
           if (!b.startTime) return -1;

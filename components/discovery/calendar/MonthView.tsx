@@ -55,9 +55,17 @@ export function MonthView({
 
     while (currentDate <= endDate) {
       // Use isSameDay for proper timezone handling (matches DayView logic)
-      const dayEvents = events.filter(event => {
+      const filtered = events.filter(event => {
         const eventDate = parseISO(event.startTime || event.date);
         return isSameDay(eventDate, currentDate);
+      });
+      
+      // Deduplicate by event ID to ensure count matches rendered items
+      const seen = new Set<string>();
+      const dayEvents = filtered.filter(event => {
+        if (seen.has(event.id)) return false;
+        seen.add(event.id);
+        return true;
       });
 
       days.push({

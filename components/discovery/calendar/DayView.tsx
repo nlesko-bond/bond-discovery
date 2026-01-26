@@ -31,13 +31,23 @@ export function DayView({ events, date, config, onEventClick }: DayViewProps) {
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
 
-  // Filter events for this day
+  // Filter events for this day and deduplicate by ID
   const dayEvents = useMemo(() => {
     const targetDate = parseISO(date);
-    return events.filter(event => {
+    const filtered = events.filter(event => {
       const eventDate = parseISO(event.startTime || event.date);
       return isSameDay(eventDate, targetDate);
-    }).sort((a, b) => {
+    });
+    
+    // Deduplicate by event ID to ensure count matches rendered items
+    const seen = new Set<string>();
+    const deduped = filtered.filter(event => {
+      if (seen.has(event.id)) return false;
+      seen.add(event.id);
+      return true;
+    });
+    
+    return deduped.sort((a, b) => {
       const aTime = new Date(a.startTime || a.date).getTime();
       const bTime = new Date(b.startTime || b.date).getTime();
       return aTime - bTime;

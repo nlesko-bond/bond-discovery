@@ -1,0 +1,197 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - generic [ref=e6]:
+            - img "TOCA Soccer" [ref=e7]
+            - generic [ref=e9]: Evanston
+          - button "Copy link to clipboard" [ref=e11] [cursor=pointer]:
+            - img [ref=e12]
+        - generic [ref=e15]:
+          - button "Programs" [ref=e16] [cursor=pointer]:
+            - img [ref=e17]
+            - text: Programs
+          - button "Schedule" [ref=e22] [cursor=pointer]:
+            - img [ref=e23]
+            - text: Schedule
+    - generic [ref=e29]:
+      - generic [ref=e31]:
+        - img [ref=e32]
+        - textbox "Search events..." [ref=e35]
+      - button "Program" [ref=e37] [cursor=pointer]:
+        - img [ref=e38]
+        - generic [ref=e41]: Program
+        - img [ref=e42]
+      - button "Type" [ref=e45] [cursor=pointer]:
+        - img [ref=e46]
+        - generic [ref=e50]: Type
+        - img [ref=e51]
+      - button "Activity" [ref=e54] [cursor=pointer]:
+        - img [ref=e55]
+        - generic [ref=e57]: Activity
+        - img [ref=e58]
+      - button "Age" [ref=e61] [cursor=pointer]:
+        - img [ref=e62]
+        - generic [ref=e67]: Age
+        - img [ref=e68]
+      - button "Gender" [ref=e71] [cursor=pointer]:
+        - img [ref=e72]
+        - generic [ref=e77]: Gender
+        - img [ref=e78]
+    - main [ref=e81]:
+      - generic [ref=e82]:
+        - paragraph [ref=e85]: Showing 4 programs
+        - generic [ref=e86]:
+          - generic [ref=e87]:
+            - generic [ref=e88]:
+              - img "Adult Pickup Soccer" [ref=e89]
+              - generic [ref=e92]: Class
+              - generic [ref=e93]:
+                - generic [ref=e95]: Soccer
+                - generic [ref=e96]:
+                  - img [ref=e97]
+                  - text: Member Pricing
+            - generic [ref=e99]:
+              - heading "Adult Pickup Soccer" [level=3] [ref=e100]
+              - paragraph [ref=e101]: Ages 18+
+              - paragraph [ref=e102]: A Casual (But Competitive) Way to Play
+              - generic [ref=e104]:
+                - img [ref=e105]
+                - generic [ref=e107]: 1 session
+              - generic [ref=e109]:
+                - generic [ref=e111]:
+                  - generic [ref=e112]:
+                    - generic [ref=e113]: From
+                    - generic [ref=e114]: $20
+                  - generic [ref=e115]:
+                    - img [ref=e116]
+                    - generic [ref=e118]: "Members: FREE"
+                    - generic [ref=e119]: Save 100%
+                - button "Details" [active] [ref=e120] [cursor=pointer]:
+                  - generic [ref=e121]: Details
+                  - img [ref=e122]
+            - generic [ref=e124]:
+              - generic [ref=e126]:
+                - generic [ref=e127]:
+                  - generic [ref=e128]:
+                    - paragraph [ref=e130]: Adult Pickup
+                    - generic [ref=e131]:
+                      - generic [ref=e132]:
+                        - img [ref=e133]
+                        - text: Sep 12, 2025 - Mar 31, 2026
+                      - generic [ref=e135]:
+                        - img [ref=e136]
+                        - text: TOCA - Evanston, IL
+                      - generic [ref=e139]:
+                        - link "Schedule" [ref=e140] [cursor=pointer]:
+                          - /url: /toca-evanston?viewMode=schedule&scheduleView=list&programIds=10629&sessionIds=87667
+                          - img [ref=e141]
+                          - text: Schedule
+                        - generic [ref=e144]: "|"
+                        - button "Hide Pricing" [ref=e145] [cursor=pointer]:
+                          - img [ref=e146]
+                          - text: Hide Pricing
+                  - link "Register" [ref=e149] [cursor=pointer]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
+                    - text: Register
+                    - img [ref=e150]
+                - generic [ref=e154]:
+                  - paragraph [ref=e156]:
+                    - img [ref=e157]
+                    - text: 2 pricing options
+                  - generic [ref=e159]:
+                    - generic [ref=e160]:
+                      - generic [ref=e161]:
+                        - heading "Pickup - Single Session" [level=4] [ref=e162]
+                        - generic [ref=e163]: $20
+                        - link "Select" [ref=e164] [cursor=pointer]:
+                          - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true&productId=111331
+                          - text: Select
+                          - img [ref=e165]
+                      - generic [ref=e169]:
+                        - generic [ref=e170]:
+                          - img [ref=e171]
+                          - text: Member Pricing
+                        - heading "Pickup - Members Rate" [level=4] [ref=e173]
+                        - generic [ref=e174]: FREE
+                        - link "Select" [ref=e175] [cursor=pointer]:
+                          - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true&productId=111330
+                          - text: Select
+                          - img [ref=e176]
+                    - generic [ref=e180]:
+                      - button [ref=e181] [cursor=pointer]
+                      - button [ref=e182] [cursor=pointer]
+              - link "View Program & Register" [ref=e184] [cursor=pointer]:
+                - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629?skipToProducts=true
+                - generic [ref=e185]: View Program & Register
+                - img [ref=e186]
+          - generic [ref=e190]:
+            - generic [ref=e191]:
+              - img "Flag Football" [ref=e192]
+              - generic [ref=e195]: League
+              - generic [ref=e198]: Football
+            - generic [ref=e199]:
+              - heading "Flag Football" [level=3] [ref=e200]
+              - paragraph [ref=e201]: Ages 5-16
+              - paragraph [ref=e202]: NFL Flag, powered by USA Football, the NFL&rsquo;s official youth flag football program for boys and girls ages 5-14. Seasons are 7-8 games long and games are on Saturdays or Sundays.
+              - generic [ref=e204]:
+                - img [ref=e205]
+                - generic [ref=e207]: 3 sessions
+              - generic [ref=e209]:
+                - generic [ref=e212]:
+                  - generic [ref=e213]: From
+                  - generic [ref=e214]: $275
+                - button "Details" [ref=e215] [cursor=pointer]:
+                  - generic [ref=e216]: Details
+                  - img [ref=e217]
+          - generic [ref=e219]:
+            - generic [ref=e220]:
+              - generic [ref=e226]: Camp
+              - generic [ref=e229]: Other
+            - generic [ref=e230]:
+              - heading "Kids Camps" [level=3] [ref=e231]
+              - paragraph [ref=e232]: Ages 5-13
+              - paragraph [ref=e233]: "-"
+              - generic [ref=e234]:
+                - generic [ref=e235]:
+                  - img [ref=e236]
+                  - generic [ref=e238]: 4 sessions
+                - generic [ref=e239]:
+                  - img [ref=e240]
+                  - generic [ref=e245]: 60 spots left
+              - generic [ref=e247]:
+                - generic [ref=e250]:
+                  - generic [ref=e251]: From
+                  - generic [ref=e252]: $100
+                - button "Details" [ref=e253] [cursor=pointer]:
+                  - generic [ref=e254]: Details
+                  - img [ref=e255]
+          - generic [ref=e257]:
+            - generic [ref=e258]:
+              - img "TOCA Premier League" [ref=e259]
+              - generic [ref=e262]: League
+              - generic [ref=e265]: Soccer
+            - generic [ref=e266]:
+              - heading "TOCA Premier League" [level=3] [ref=e267]
+              - paragraph [ref=e268]: Ages 5-18
+              - paragraph [ref=e269]: "Competitive youth league for ages 7U-High School Team Registration Deadline: December 7th Individual Player Registration Deadline: December 17th"
+              - generic [ref=e271]:
+                - img [ref=e272]
+                - generic [ref=e274]: 15 sessions
+              - generic [ref=e276]:
+                - generic [ref=e279]:
+                  - generic [ref=e280]: From
+                  - generic [ref=e281]: $1,245
+                - button "Details" [ref=e282] [cursor=pointer]:
+                  - generic [ref=e283]: Details
+                  - img [ref=e284]
+    - contentinfo [ref=e286]:
+      - generic [ref=e288]:
+        - paragraph [ref=e289]: © 2026 TOCA Soccer
+        - generic [ref=e291]: Powered by Bond Sports
+  - alert [ref=e292]
+```
