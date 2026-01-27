@@ -158,6 +158,44 @@ export function DiscoveryPage({
     };
   }, [config.features.headerDisplay, config.features.disableStickyHeader]);
   
+  // Iframe auto-resize: Send height to parent window for seamless embedding
+  // This allows parent pages (like Webflow) to resize the iframe to fit content
+  useEffect(() => {
+    // Only run if we're in an iframe
+    if (typeof window === 'undefined' || window.self === window.top) return;
+    
+    let resizeTimeout: NodeJS.Timeout;
+    
+    const sendHeight = () => {
+      // Debounce to avoid too many messages during rapid changes
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        const height = document.documentElement.scrollHeight;
+        window.parent.postMessage({
+          type: 'discovery-resize',
+          height: height,
+          slug: config.slug
+        }, '*'); // '*' allows any parent origin - safe because we're only sending, not receiving sensitive data
+      }, 100);
+    };
+    
+    // Send initial height after page settles
+    setTimeout(sendHeight, 500);
+    
+    // Observe body for size changes (content loads, filters applied, view changes, etc.)
+    const resizeObserver = new ResizeObserver(sendHeight);
+    resizeObserver.observe(document.body);
+    
+    // Also send on window resize
+    window.addEventListener('resize', sendHeight);
+    
+    return () => {
+      clearTimeout(resizeTimeout);
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', sendHeight);
+    };
+  }, [config.slug]);
+  
   // Copy current URL to clipboard
   const handleShare = useCallback(async () => {
     const url = window.location.href;
