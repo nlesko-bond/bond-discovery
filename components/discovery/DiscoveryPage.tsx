@@ -116,6 +116,48 @@ export function DiscoveryPage({
   const [filters, setFilters] = useState<DiscoveryFilters>(getInitialFilters);
   const [showCopied, setShowCopied] = useState(false);
   
+  // Refs for measuring header height for sticky positioning
+  const containerRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  
+  // Measure header height and set CSS variable for sticky positioning
+  // This ensures sticky elements position correctly below the header regardless of its responsive height
+  useEffect(() => {
+    const header = headerRef.current;
+    
+    // Determine if header is sticky
+    const headerIsSticky = config.features.headerDisplay !== 'hidden' && 
+                           config.features.headerDisplay !== 'minimal' && 
+                           !config.features.disableStickyHeader;
+    
+    const updateStickyOffset = () => {
+      if (headerIsSticky && header) {
+        const headerHeight = header.getBoundingClientRect().height;
+        document.documentElement.style.setProperty('--sticky-offset', `${headerHeight}px`);
+      } else {
+        document.documentElement.style.setProperty('--sticky-offset', '0px');
+      }
+    };
+    
+    // Initial measurement
+    updateStickyOffset();
+    
+    // Use ResizeObserver to track header size changes (responsive breakpoints, content changes)
+    if (header && headerIsSticky) {
+      const resizeObserver = new ResizeObserver(updateStickyOffset);
+      resizeObserver.observe(header);
+      return () => {
+        resizeObserver.disconnect();
+        // Clean up CSS variable on unmount
+        document.documentElement.style.removeProperty('--sticky-offset');
+      };
+    }
+    
+    return () => {
+      document.documentElement.style.removeProperty('--sticky-offset');
+    };
+  }, [config.features.headerDisplay, config.features.disableStickyHeader]);
+  
   // Copy current URL to clipboard
   const handleShare = useCallback(async () => {
     const url = window.location.href;
@@ -770,6 +812,7 @@ export function DiscoveryPage({
 
   return (
     <div 
+      ref={containerRef}
       className="min-h-screen bg-gray-50"
       style={{ fontFamily: config.branding.fontFamily || 'inherit' }}
     >
@@ -778,11 +821,14 @@ export function DiscoveryPage({
       
       {/* Header - Conditional based on headerDisplay setting */}
       {config.features.headerDisplay !== 'hidden' && (
-        <header className={cn(
-          "bg-white border-b border-gray-200 z-40",
-          // Only sticky if not disabled AND not minimal mode
-          !config.features.disableStickyHeader && config.features.headerDisplay !== 'minimal' && 'sticky top-0'
-        )}>
+        <header 
+          ref={headerRef}
+          className={cn(
+            "bg-white border-b border-gray-200 z-40",
+            // Only sticky if not disabled AND not minimal mode
+            !config.features.disableStickyHeader && config.features.headerDisplay !== 'minimal' && 'sticky top-0'
+          )}
+        >
           <div className="w-full px-3 py-3 sm:px-4 lg:px-6">
             <div className="flex items-center justify-between">
               {/* Logo & Tagline - Only shown in full mode */}

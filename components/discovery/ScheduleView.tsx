@@ -56,6 +56,9 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   
+  // Sticky positioning uses CSS variable --sticky-offset set by parent DiscoveryPage
+  // This dynamically measures the actual header height for proper positioning
+  
   // Use URL scheduleView param first, then config default
   // Note: We use a consistent default for SSR to avoid hydration mismatch
   const validViewModes = ['list', 'table', 'day', 'week', 'month'];
@@ -518,17 +521,13 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
       </div>
       
       {/* Navigation - for calendar views */}
-      {/* Note: top values account for header + filter bar. When header is hidden/minimal, use smaller values */}
-      <div className={cn(
-        viewMode !== 'list' && viewMode !== 'table' && 'sticky z-10',
-        viewMode !== 'list' && viewMode !== 'table' && (
-          config.features.headerDisplay === 'hidden' 
-            ? 'top-[52px] sm:top-[52px]'  // Only filter bar (~52px)
-            : config.features.headerDisplay === 'minimal'
-              ? 'top-[100px] sm:top-[52px]' // Minimal header + filter bar
-              : 'top-[112px] sm:top-[109px]' // Full header + filter bar
-        )
-      )}>
+      {/* Sticky positioning uses CSS variable --sticky-offset from parent for dynamic header height */}
+      <div 
+        className={cn(
+          viewMode !== 'list' && viewMode !== 'table' && 'sticky z-10 bg-gray-50'
+        )}
+        style={viewMode !== 'list' && viewMode !== 'table' ? { top: 'var(--sticky-offset, 0px)' } : undefined}
+      >
       {viewMode === 'month' ? (
         /* Month Navigation */
         <div 
@@ -796,10 +795,11 @@ function ListDaySection({
       className="relative"
       aria-label={`Events for ${format(parseISO(day.date), 'EEEE, MMMM d')}`}
     >
-      {/* Day Header - sticky with brand gradient (top position accounts for header height) */}
+      {/* Day Header - sticky with brand gradient, uses CSS variable for dynamic positioning */}
       <header 
-        className="sticky top-[105px] sm:top-[57px] z-20 flex items-center gap-3 px-4 py-3 text-white rounded-t-xl shadow-md"
+        className="sticky z-20 flex items-center gap-3 px-4 py-3 text-white rounded-t-xl shadow-md"
         style={{ 
+          top: 'var(--sticky-offset, 0px)',
           background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
         }}
       >
@@ -1329,12 +1329,31 @@ function TableView({
     );
   }
   
+  // Get sticky offset from CSS variable (set by parent DiscoveryPage based on header height)
+  const [stickyOffset, setStickyOffset] = useState(0);
+  
+  useEffect(() => {
+    // Read the CSS variable from the nearest ancestor that has it set
+    const updateOffset = () => {
+      const computedStyle = getComputedStyle(document.documentElement);
+      const offset = computedStyle.getPropertyValue('--sticky-offset')?.trim();
+      if (offset) {
+        setStickyOffset(parseInt(offset) || 0);
+      }
+    };
+    
+    updateOffset();
+    // Also listen for resize in case header height changes
+    window.addEventListener('resize', updateOffset);
+    return () => window.removeEventListener('resize', updateOffset);
+  }, []);
+  
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden print:shadow-none print:border-0">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 print:shadow-none print:border-0">
       {/* Table */}
-      <div className="overflow-x-auto print:overflow-visible">
-        <table className="w-full print:text-xs">
-          <thead>
+      <div className="print:overflow-visible">
+        <table className="w-full print:text-xs border-collapse">
+          <thead className="bg-gray-50 sticky z-10" style={{ top: stickyOffset }}>
             <tr className="border-b border-gray-200 bg-gray-50 print:bg-gray-100">
               <th 
                 className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors print:px-2 print:py-1"
