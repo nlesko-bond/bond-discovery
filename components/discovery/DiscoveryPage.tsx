@@ -120,10 +120,22 @@ export function DiscoveryPage({
   const containerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   
+  // Check if sticky is disabled via URL param (for problematic embed scenarios)
+  const disableSticky = urlSearchParams.get('disableSticky') === 'true';
+  
   // Measure header height and set CSS variable for sticky positioning
   // This ensures sticky elements position correctly below the header regardless of its responsive height
   // Also supports embedOffset URL param for external navbars when embedded in other sites
   useEffect(() => {
+    // If sticky is disabled, add a class to disable all sticky behavior
+    if (disableSticky) {
+      document.documentElement.classList.add('disable-sticky');
+      document.documentElement.style.setProperty('--sticky-offset', '0px');
+      return () => {
+        document.documentElement.classList.remove('disable-sticky');
+      };
+    }
+    
     const header = headerRef.current;
     
     // Check for external embed offset (for when embedded in sites with fixed navbars)
@@ -159,7 +171,7 @@ export function DiscoveryPage({
     return () => {
       document.documentElement.style.removeProperty('--sticky-offset');
     };
-  }, [config.features.headerDisplay, config.features.disableStickyHeader, urlSearchParams]);
+  }, [config.features.headerDisplay, config.features.disableStickyHeader, urlSearchParams, disableSticky]);
   
   // Iframe auto-resize: Send height to parent window for seamless embedding
   // This allows parent pages (like Webflow) to resize the iframe to fit content

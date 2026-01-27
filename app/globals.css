@@ -95,6 +95,13 @@
   .gradient-fitness { @apply bg-gradient-to-br from-blue-500 to-indigo-600; }
   .gradient-swimming { @apply bg-gradient-to-br from-cyan-500 to-blue-600; }
   .gradient-default { @apply bg-gradient-to-br from-toca-navy to-toca-purple; }
+  
+  /* Disable all sticky positioning when embedded in problematic contexts */
+  /* Usage: add ?disableSticky=true to URL */
+  .disable-sticky .sticky,
+  .disable-sticky [style*="position: sticky"] {
+    position: relative !important;
+  }
 
   .line-clamp-2 {
     display: -webkit-box;
