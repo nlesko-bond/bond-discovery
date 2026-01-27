@@ -11,6 +11,7 @@ interface PricingCarouselProps {
   className?: string;
   config?: DiscoveryConfig;
   isRegistrationOpen?: boolean;
+  linkTarget?: '_blank' | '_top' | '_self';
 }
 
 /**
@@ -26,7 +27,8 @@ export function PricingCarousel({
   baseRegistrationUrl, 
   className,
   config,
-  isRegistrationOpen = true
+  isRegistrationOpen = true,
+  linkTarget = '_blank'
 }: PricingCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -230,7 +232,7 @@ function PricingCard({
       {registrationUrl && (
         <a
           href={registrationUrl}
-          target="_blank"
+          target={linkTarget}
           rel="noopener noreferrer"
           className="mt-3 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-semibold transition-opacity text-white hover:opacity-90"
           style={{

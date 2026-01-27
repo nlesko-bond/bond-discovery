@@ -38,6 +38,7 @@ interface ProgramCardProps {
   config: DiscoveryConfig;
   autoExpand?: boolean; // Auto-expand sessions when viewing single program
   showFacility?: boolean; // Show facility name when multiple facilities exist
+  linkTarget?: '_blank' | '_top' | '_self'; // Link target for register buttons
 }
 
 // Sport-specific gradients for visual appeal
@@ -56,7 +57,7 @@ const sportGradients: Record<string, string> = {
   default: 'from-indigo-600 to-purple-600',
 };
 
-export function ProgramCard({ program, config, autoExpand = false, showFacility = true }: ProgramCardProps) {
+export function ProgramCard({ program, config, autoExpand = false, showFacility = true, linkTarget = '_blank' }: ProgramCardProps) {
   const [expanded, setExpanded] = useState(autoExpand);
   
   // Dynamic colors from config
@@ -286,7 +287,7 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
             <div className="mt-4 pt-4 border-t border-gray-200">
               <a
                 href={buildRegistrationUrl(program.linkSEO, { isRegistrationOpen: !allSessionsClosed })}
-                target="_blank"
+                target={linkTarget}
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 text-white font-semibold rounded-xl hover:opacity-90 transition-colors"
                 style={{ backgroundColor: allSessionsClosed ? '#6B7280' : primaryColor }}
@@ -447,7 +448,7 @@ function SessionCard({
           {registrationLink && (
             <a
               href={registrationLink}
-              target="_blank"
+              target={linkTarget}
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-colors"
               style={{ backgroundColor: isRegistrationUnavailable ? '#9CA3AF' : secondaryColor }}
@@ -489,6 +490,7 @@ function SessionCard({
             baseRegistrationUrl={baseLink}
             config={config}
             isRegistrationOpen={isRegistrationOpen}
+            linkTarget={linkTarget}
           />
         </div>
       )}
@@ -541,7 +543,7 @@ function ProductCard({
           {registrationUrl && (
             <a
               href={registrationUrl}
-              target="_blank"
+              target={linkTarget}
               rel="noopener noreferrer"
               className={cn(
                 'text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1',

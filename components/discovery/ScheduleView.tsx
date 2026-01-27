@@ -43,9 +43,10 @@ interface ScheduleViewProps {
   error?: string | null;
   totalEvents?: number;
   hasMultipleFacilities?: boolean;
+  linkTarget?: '_blank' | '_top' | '_self';
 }
 
-export function ScheduleView({ schedule, config, isLoading, error, totalEvents, hasMultipleFacilities }: ScheduleViewProps) {
+export function ScheduleView({ schedule, config, isLoading, error, totalEvents, hasMultipleFacilities, linkTarget = '_blank' }: ScheduleViewProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -647,6 +648,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
           date={selectedDayDate}
           config={config}
           onEventClick={setSelectedEvent}
+          linkTarget={linkTarget}
         />
       )}
 
@@ -1026,7 +1028,7 @@ function EventCard({
             {event.linkSEO && (
               <a 
                 href={buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
-                target="_blank"
+                target={linkTarget}
                 rel="noopener noreferrer"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -1248,7 +1250,7 @@ function EventDetailModal({
         <div className="p-4 border-t border-gray-200 bg-white">
           <a 
             href={event.linkSEO ? buildRegistrationUrl(event.linkSEO, { isRegistrationOpen }) : '#'}
-            target="_blank"
+            target={linkTarget}
             rel="noopener noreferrer"
             onClick={() => {
               if (!isRegistrationUnavailable) {
@@ -1546,7 +1548,7 @@ function TableView({
                     {event.linkSEO && (
                       <a 
                         href={buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
-                        target="_blank"
+                        target={linkTarget}
                         rel="noopener noreferrer"
                         onClick={(e) => {
                           e.stopPropagation();

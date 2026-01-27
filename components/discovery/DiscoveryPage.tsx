@@ -115,6 +115,17 @@ export function DiscoveryPage({
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [filters, setFilters] = useState<DiscoveryFilters>(getInitialFilters);
   const [showCopied, setShowCopied] = useState(false);
+  const [isEmbedded, setIsEmbedded] = useState(false);
+  
+  // Detect if we're in an iframe (embedded)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsEmbedded(window.self !== window.top);
+    }
+  }, []);
+  
+  // Link target: _top for embedded (opens in parent window), _blank for standalone (new tab)
+  const linkTarget = isEmbedded ? '_top' : '_blank';
   
   // Refs for measuring header height for sticky positioning
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1080,6 +1091,7 @@ export function DiscoveryPage({
               programs={filteredPrograms} 
               config={config}
               hasMultipleFacilities={filterOptions.hasMultipleFacilities}
+              linkTarget={linkTarget}
             />
           ) : (
             <ScheduleView 
@@ -1089,6 +1101,7 @@ export function DiscoveryPage({
               error={eventsError}
               totalEvents={filteredEvents.length}
               hasMultipleFacilities={filterOptions.hasMultipleFacilities}
+              linkTarget={linkTarget}
             />
           )}
         </main>

@@ -11,6 +11,7 @@ interface DayViewProps {
   date: string; // ISO date string
   config: DiscoveryConfig;
   onEventClick?: (event: CalendarEvent) => void;
+  linkTarget?: '_blank' | '_top' | '_self';
 }
 
 // Time slots from 6am to 10pm
@@ -23,7 +24,7 @@ const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => i + 6); // 6-22 (6am to 
  * Events are positioned based on their start time.
  * Includes current time indicator.
  */
-export function DayView({ events, date, config, onEventClick }: DayViewProps) {
+export function DayView({ events, date, config, onEventClick, linkTarget = '_blank' }: DayViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const currentTimeRef = useRef<HTMLDivElement>(null);
   
@@ -228,7 +229,7 @@ function EventCard({
         {registrationUrl && (
           <a
             href={registrationUrl}
-            target="_blank"
+            target={linkTarget}
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
             className="flex-shrink-0 p-2 rounded-lg transition-all hover:opacity-90"

@@ -8,9 +8,10 @@ interface ProgramGridProps {
   programs: Program[];
   config: DiscoveryConfig;
   hasMultipleFacilities?: boolean;
+  linkTarget?: '_blank' | '_top' | '_self';
 }
 
-export function ProgramGrid({ programs, config, hasMultipleFacilities }: ProgramGridProps) {
+export function ProgramGrid({ programs, config, hasMultipleFacilities, linkTarget = '_blank' }: ProgramGridProps) {
   if (programs.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -53,6 +54,7 @@ export function ProgramGrid({ programs, config, hasMultipleFacilities }: Program
             config={config}
             autoExpand={programs.length === 1} // Auto-expand when viewing single program
             showFacility={hasMultipleFacilities}
+            linkTarget={linkTarget}
           />
         ))}
       </div>
