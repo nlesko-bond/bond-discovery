@@ -48,6 +48,7 @@ interface PageConfig {
     // Embed options
     headerDisplay?: 'full' | 'minimal' | 'hidden';
     disableStickyHeader?: boolean;
+    linkBehavior?: 'new_tab' | 'same_window' | 'in_frame';
   };
   defaultParams?: Record<string, string>;
   cacheTtl?: number;
@@ -532,6 +533,25 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   <p className="text-xs text-gray-500">Calendar navigation headers will still stick for better UX</p>
                 </div>
               </label>
+              
+              <div>
+                <label className="label">Registration Link Behavior</label>
+                <select
+                  className="input"
+                  value={config.features.linkBehavior || 'new_tab'}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    features: { ...config.features, linkBehavior: e.target.value as 'new_tab' | 'same_window' | 'in_frame' }
+                  })}
+                >
+                  <option value="new_tab">Open in new tab (default)</option>
+                  <option value="same_window">Replace current page (for embeds)</option>
+                  <option value="in_frame">Stay in frame (for embeds)</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Controls how Register/Learn More buttons open. Use "Replace current page" for embeds where you want the registration to take over the browser.
+                </p>
+              </div>
             </div>
           </div>
         )}

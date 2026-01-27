@@ -115,17 +115,13 @@ export function DiscoveryPage({
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [filters, setFilters] = useState<DiscoveryFilters>(getInitialFilters);
   const [showCopied, setShowCopied] = useState(false);
-  const [isEmbedded, setIsEmbedded] = useState(false);
   
-  // Detect if we're in an iframe (embedded)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsEmbedded(window.self !== window.top);
-    }
-  }, []);
-  
-  // Link target: _top for embedded (opens in parent window), _blank for standalone (new tab)
-  const linkTarget = isEmbedded ? '_top' : '_blank';
+  // Link target based on config setting
+  // new_tab = _blank (default), same_window = _top, in_frame = _self
+  const linkBehavior = config.features.linkBehavior || 'new_tab';
+  const linkTarget = linkBehavior === 'same_window' ? '_top' 
+                   : linkBehavior === 'in_frame' ? '_self' 
+                   : '_blank';
   
   // Refs for measuring header height for sticky positioning
   const containerRef = useRef<HTMLDivElement>(null);

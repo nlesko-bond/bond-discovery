@@ -348,6 +348,8 @@ export interface BrandingConfig {
 
 export type ScheduleViewType = 'list' | 'table' | 'day' | 'week' | 'month';
 
+export type LinkBehavior = 'new_tab' | 'same_window' | 'in_frame';
+
 export interface FeatureConfig {
   showPricing: boolean;
   showAvailability: boolean;
@@ -362,6 +364,8 @@ export interface FeatureConfig {
   // Embed-friendly options
   headerDisplay?: 'full' | 'minimal' | 'hidden'; // Header visibility mode (default: 'full')
   disableStickyHeader?: boolean; // Disable sticky main header (calendar headers still stick)
+  // Link behavior for registration buttons
+  linkBehavior?: LinkBehavior; // How registration links open (default: 'new_tab')
 }
 
 export type FilterType = 
