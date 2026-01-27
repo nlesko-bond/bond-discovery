@@ -72,17 +72,50 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
     return (config.features.defaultScheduleView as ViewMode) || 'list';
   });
   
-  // After hydration, check if we should switch to mobile default
-  const [hasCheckedMobile, setHasCheckedMobile] = useState(false);
+  // Ref to track current viewMode for resize handler (avoids stale closure)
+  const viewModeRef = useRef(viewMode);
   useEffect(() => {
-    if (!hasCheckedMobile && !searchParams.get('scheduleView')) {
-      setHasCheckedMobile(true);
-      const isMobile = window.innerWidth < 640;
-      if (isMobile && config.features.mobileDefaultScheduleView) {
+    viewModeRef.current = viewMode;
+  }, [viewMode]);
+  
+  // After hydration, check if we should switch to mobile default
+  // Also prevents table view on mobile since it doesn't fit small screens
+  useEffect(() => {
+    const MOBILE_BREAKPOINT = 800;
+    
+    const switchToListOnMobile = () => {
+      const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
+      
+      // Use ref to get current viewMode value
+      if (isMobile && viewModeRef.current === 'table') {
+        // Table view doesn't work on mobile - switch to list and update URL
+        setViewModeState('list');
+        const params = new URLSearchParams(window.location.search);
+        params.set('scheduleView', 'list');
+        window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+      }
+    };
+    
+    // Check on initial load
+    const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
+    if (isMobile) {
+      // Table view doesn't work on mobile - switch to list
+      if (viewModeRef.current === 'table') {
+        setViewModeState('list');
+        const params = new URLSearchParams(window.location.search);
+        params.set('scheduleView', 'list');
+        window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+      } else if (!searchParams.get('scheduleView') && config.features.mobileDefaultScheduleView) {
+        // Apply mobile default if no URL param specified
         setViewModeState(config.features.mobileDefaultScheduleView as ViewMode);
       }
     }
-  }, [hasCheckedMobile, searchParams, config.features.mobileDefaultScheduleView]);
+    
+    // Also check on resize (e.g., orientation change)
+    window.addEventListener('resize', switchToListOnMobile);
+    return () => window.removeEventListener('resize', switchToListOnMobile);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount - uses refs for current values
   
   // Update URL when view mode changes
   const setViewMode = useCallback((newMode: ViewMode) => {
