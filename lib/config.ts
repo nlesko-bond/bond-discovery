@@ -25,6 +25,10 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
   // Get GTM ID: page-level first, then inherit from partner group
   const gtmId = row.gtm_id || row.partner_group?.gtm_id || undefined;
     
+  // Handle linkBehavior - could be stored as linkBehavior or link_behavior in the JSON
+  const features = row.features as Record<string, any>;
+  const linkBehavior = features.linkBehavior || features.link_behavior || 'new_tab';
+  
   return {
     id: row.id,
     name: row.name,
@@ -37,6 +41,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
     features: {
       ...row.features,
       enableFilters,
+      linkBehavior, // Ensure camelCase for frontend
     },
     allowedParams: row.allowed_params || [],
     defaultParams: row.default_params || {},
