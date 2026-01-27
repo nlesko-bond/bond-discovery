@@ -120,32 +120,9 @@ export function DiscoveryPage({
   const containerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   
-  // State for parent navbar height received via postMessage
-  const [parentNavHeight, setParentNavHeight] = useState(0);
-  
-  // Listen for postMessage from parent window (for iframe embeds)
-  // Parent sends navbar height so we can offset our sticky elements
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    const handleMessage = (e: MessageEvent) => {
-      // Validate message structure
-      if (e.data && e.data.type === 'navbar-height' && typeof e.data.height === 'number') {
-        setParentNavHeight(e.data.height);
-      }
-    };
-    
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
-  
   // Measure header height and set CSS variable for sticky positioning
-  // Combines: our header height + parent navbar height (from postMessage) + embedOffset (from URL)
   useEffect(() => {
     const header = headerRef.current;
-    
-    // Check for external embed offset from URL (fallback/override)
-    const embedOffset = parseInt(urlSearchParams.get('embedOffset') || '0') || 0;
     
     // Determine if our header is sticky
     const headerIsSticky = config.features.headerDisplay !== 'hidden' && 
@@ -153,12 +130,11 @@ export function DiscoveryPage({
                            !config.features.disableStickyHeader;
     
     const updateStickyOffset = () => {
-      // Start with parent navbar height (from postMessage) or URL param
-      let offset = parentNavHeight || embedOffset;
+      let offset = 0;
       
       // Add our own header height if it's sticky
       if (headerIsSticky && header) {
-        offset += header.getBoundingClientRect().height;
+        offset = header.getBoundingClientRect().height;
       }
       
       document.documentElement.style.setProperty('--sticky-offset', `${offset}px`);
@@ -180,7 +156,7 @@ export function DiscoveryPage({
     return () => {
       document.documentElement.style.removeProperty('--sticky-offset');
     };
-  }, [config.features.headerDisplay, config.features.disableStickyHeader, urlSearchParams, parentNavHeight]);
+  }, [config.features.headerDisplay, config.features.disableStickyHeader]);
   
   // Iframe auto-resize: Send height to parent window for seamless embedding
   // This allows parent pages (like Webflow) to resize the iframe to fit content
