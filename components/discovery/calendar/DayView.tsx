@@ -151,6 +151,7 @@ export function DayView({ events, date, config, onEventClick, linkTarget = '_bla
                           event={event}
                           onClick={() => onEventClick?.(event)}
                           config={config}
+                          linkTarget={linkTarget}
                         />
                       ))}
                     </div>
@@ -170,10 +171,12 @@ function EventCard({
   event,
   onClick,
   config,
+  linkTarget = '_blank',
 }: {
   event: CalendarEvent;
   onClick?: () => void;
   config: DiscoveryConfig;
+  linkTarget?: '_blank' | '_top' | '_self';
 }) {
   const startTime = formatTime(event.startTime, event.timezone);
   const endTime = formatTime(event.endTime, event.timezone);

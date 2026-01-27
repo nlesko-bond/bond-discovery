@@ -113,6 +113,7 @@ export function PricingCarousel({
             isFirstMember={index === regularProducts.length && memberProducts.length > 0}
             primaryColor={primaryColor}
             secondaryColor={secondaryColor}
+            linkTarget={linkTarget}
           />
         ))}
       </div>
@@ -151,12 +152,14 @@ function PricingCard({
   isFirstMember,
   primaryColor,
   secondaryColor,
+  linkTarget = '_blank',
 }: {
   product: Product;
   registrationUrl?: string;
   isFirstMember?: boolean;
   primaryColor: string;
   secondaryColor: string;
+  linkTarget?: '_blank' | '_top' | '_self';
 }) {
   const lowestPrice = product.prices.reduce(
     (min, p) => (p.price < min ? p.price : min),

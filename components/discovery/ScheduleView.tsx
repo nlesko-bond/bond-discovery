@@ -694,6 +694,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
               onEventClick={setSelectedEvent}
               config={config}
               hasMultipleFacilities={hasMultipleFacilities}
+              linkTarget={linkTarget}
             />
           ))}
           
@@ -732,6 +733,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
           config={config}
           hasMultipleFacilities={hasMultipleFacilities}
           isLoading={isLoading}
+          linkTarget={linkTarget}
         />
       )}
 
@@ -749,6 +751,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
           event={selectedEvent}
           onClose={() => setSelectedEvent(null)}
           config={config}
+          linkTarget={linkTarget}
         />
       )}
     </div>
@@ -814,11 +817,13 @@ function ListDaySection({
   onEventClick,
   config,
   hasMultipleFacilities,
+  linkTarget = '_blank',
 }: {
   day: DaySchedule;
   hasMultipleFacilities?: boolean;
   onEventClick: (event: CalendarEvent) => void;
   config: DiscoveryConfig;
+  linkTarget?: '_blank' | '_top' | '_self';
 }) {
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
@@ -870,6 +875,7 @@ function ListDaySection({
             onClick={() => onEventClick(event)}
             config={config}
             showFacility={hasMultipleFacilities}
+            linkTarget={linkTarget}
           />
         ))}
       </div>
@@ -883,11 +889,13 @@ function EventCard({
   onClick,
   config,
   showFacility = true,
+  linkTarget = '_blank',
 }: {
   event: CalendarEvent;
   onClick: () => void;
   config: DiscoveryConfig;
   showFacility?: boolean;
+  linkTarget?: '_blank' | '_top' | '_self';
 }) {
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
@@ -1065,10 +1073,12 @@ function EventDetailModal({
   event,
   onClose,
   config,
+  linkTarget = '_blank',
 }: {
   event: CalendarEvent;
   onClose: () => void;
   config: DiscoveryConfig;
+  linkTarget?: '_blank' | '_top' | '_self';
 }) {
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
@@ -1290,12 +1300,14 @@ function TableView({
   config,
   hasMultipleFacilities,
   isLoading,
+  linkTarget = '_blank',
 }: {
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
   config: DiscoveryConfig;
   hasMultipleFacilities?: boolean;
   isLoading?: boolean;
+  linkTarget?: '_blank' | '_top' | '_self';
 }) {
   const [sortField, setSortField] = useState<'date' | 'time' | 'program' | 'price'>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');

@@ -275,6 +275,7 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
                   programId={program.id}
                   programName={program.name}
                   autoExpandPricing={sessions.length === 1}
+                  linkTarget={linkTarget}
                 />
               ))
             ) : (
@@ -321,6 +322,7 @@ function SessionCard({
   programId,
   programName,
   autoExpandPricing = false,
+  linkTarget = '_blank',
 }: { 
   session: Session; 
   config: DiscoveryConfig;
@@ -328,6 +330,7 @@ function SessionCard({
   programId: string;
   programName: string;
   autoExpandPricing?: boolean;
+  linkTarget?: '_blank' | '_top' | '_self';
 }) {
   const pathname = usePathname();
   // Auto-expand pricing if there's only one session (autoExpandPricing=true)
@@ -502,11 +505,13 @@ function SessionCard({
 function ProductCard({ 
   product, 
   isMember = false,
-  registrationUrl 
+  registrationUrl,
+  linkTarget = '_blank',
 }: { 
   product: Product; 
   isMember?: boolean;
   registrationUrl?: string;
+  linkTarget?: '_blank' | '_top' | '_self';
 }) {
   const lowestPrice = product.prices.reduce(
     (min, p) => (p.price < min ? p.price : min),
