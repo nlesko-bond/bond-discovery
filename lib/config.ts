@@ -38,7 +38,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
     slug: row.slug,
     organizationIds: row.organization_ids.map(String),
     facilityIds: row.facility_ids?.map(String) || [],
-    excludedProgramIds: (row as any).excluded_program_ids?.map(String) || row.features?.excludedProgramIds || undefined,
+    excludedProgramIds: (row as any).excluded_program_ids?.map(String) || features.excludedProgramIds || undefined,
     includedProgramIds: includedProgramIds?.map ? includedProgramIds.map(String) : includedProgramIds,
     apiKey,
     gtmId,
