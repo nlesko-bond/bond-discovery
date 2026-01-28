@@ -373,6 +373,8 @@ export interface FeatureConfig {
   enabledTabs?: EnabledTab[]; // Which tabs to show (default: ['programs', 'schedule'])
   // Program filtering mode
   programFilterMode?: ProgramFilterMode; // How to filter programs (default: 'all')
+  // Program IDs to include (when programFilterMode is 'include')
+  includedProgramIds?: string[];
   // Custom registration URL (for single-program pages)
   customRegistrationUrl?: string; // Override registration URL for all links
   // Hide registration links

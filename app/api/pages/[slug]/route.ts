@@ -25,6 +25,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     // Note: Auth temporarily disabled for easier setup
     const body = await request.json();
     
+    // Debug: Log what we're receiving
+    console.log('[PATCH] Received features:', JSON.stringify(body.features, null, 2));
+    console.log('[PATCH] includedProgramIds in features:', body.features?.includedProgramIds);
+    
     // Update the page
     const updatedConfig = await updatePageConfig(params.slug, body);
     

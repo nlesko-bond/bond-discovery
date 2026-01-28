@@ -29,8 +29,10 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
   const features = row.features as Record<string, any>;
   const linkBehavior = features.linkBehavior || features.link_behavior || 'new_tab';
   
-  // Get includedProgramIds from features (stored in JSON)
-  const includedProgramIds = features.includedProgramIds || [];
+  // Get includedProgramIds from features (stored in JSON) - ensure it's an array of strings
+  const includedProgramIds = features.includedProgramIds 
+    ? (Array.isArray(features.includedProgramIds) ? features.includedProgramIds.map(String) : [])
+    : [];
   
   return {
     id: row.id,
@@ -39,7 +41,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
     organizationIds: row.organization_ids.map(String),
     facilityIds: row.facility_ids?.map(String) || [],
     excludedProgramIds: (row as any).excluded_program_ids?.map(String) || features.excludedProgramIds || undefined,
-    includedProgramIds: Array.isArray(includedProgramIds) ? includedProgramIds.map(String) : [],
+    includedProgramIds, // Also expose at root for API routes
     apiKey,
     gtmId,
     branding: row.branding,
@@ -47,6 +49,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
       ...row.features,
       enableFilters,
       linkBehavior, // Ensure camelCase for frontend
+      includedProgramIds, // Ensure it's in features for admin UI
     },
     allowedParams: row.allowed_params || [],
     defaultParams: row.default_params || {},
@@ -242,6 +245,9 @@ export async function updatePageConfig(slug: string, updates: Partial<DiscoveryC
   if (updates.defaultParams !== undefined) updateData.default_params = updates.defaultParams;
   if (updates.cacheTtl !== undefined) updateData.cache_ttl = updates.cacheTtl;
   if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
+  
+  // Debug: Log what we're saving
+  console.log('[updatePageConfig] features to save:', JSON.stringify(updateData.features, null, 2));
   
   // Perform the update using admin client
   const { error: updateError } = await supabaseAdmin
