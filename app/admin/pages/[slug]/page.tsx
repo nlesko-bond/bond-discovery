@@ -32,7 +32,6 @@ interface PageConfig {
   organizationIds: string[];
   facilityIds?: string[];
   excludedProgramIds?: string[]; // Programs to exclude from this page
-  includedProgramIds?: string[]; // Programs to include (when using include mode)
   apiKey?: string; // Per-page API key
   gtmId?: string; // Page-level GTM ID (overrides partner group)
   features: {
@@ -50,6 +49,7 @@ interface PageConfig {
     enabledTabs?: ('programs' | 'schedule')[];
     // Program filtering
     programFilterMode?: 'all' | 'exclude' | 'include';
+    includedProgramIds?: string[]; // Program IDs to include (when mode is 'include')
     // Custom registration URL (single-program pages)
     customRegistrationUrl?: string;
     // Hide registration links
@@ -615,7 +615,7 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
               
               {/* Custom Registration URL - only show when exactly 1 program is included */}
               {config.features.programFilterMode === 'include' && 
-               config.includedProgramIds?.length === 1 && (
+               config.features.includedProgramIds?.length === 1 && (
                 <div>
                   <label className="label">Custom Registration URL</label>
                   <input
@@ -808,10 +808,10 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                       onChange={() => setConfig({
                         ...config,
                         excludedProgramIds: undefined,
-                        includedProgramIds: undefined,
                         features: { 
                           ...config.features, 
                           programFilterMode: 'all',
+                          includedProgramIds: undefined,
                           customRegistrationUrl: undefined 
                         }
                       })}
@@ -830,10 +830,10 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                       checked={config.features.programFilterMode === 'exclude'}
                       onChange={() => setConfig({
                         ...config,
-                        includedProgramIds: undefined,
                         features: { 
                           ...config.features, 
                           programFilterMode: 'exclude',
+                          includedProgramIds: undefined,
                           customRegistrationUrl: undefined 
                         }
                       })}
@@ -887,15 +887,14 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                           type="text"
                           className="input"
                           placeholder="e.g., 12345, 67890"
-                          value={config.includedProgramIds?.join(', ') || ''}
+                          value={config.features.includedProgramIds?.join(', ') || ''}
                           onChange={(e) => {
                             const ids = e.target.value ? e.target.value.split(',').map(s => s.trim()).filter(Boolean) : undefined;
                             setConfig({
                               ...config,
-                              includedProgramIds: ids,
-                              // Clear custom URL if not exactly 1 program
                               features: {
                                 ...config.features,
+                                includedProgramIds: ids,
                                 customRegistrationUrl: ids?.length === 1 ? config.features.customRegistrationUrl : undefined
                               }
                             });
@@ -906,7 +905,7 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                         </p>
                       </div>
                       
-                      {config.includedProgramIds?.length === 1 && (
+                      {config.features.includedProgramIds?.length === 1 && (
                         <div className="p-3 bg-blue-50 rounded-lg">
                           <label className="label text-blue-800">Custom Registration URL (Optional)</label>
                           <input

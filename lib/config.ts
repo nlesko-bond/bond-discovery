@@ -30,7 +30,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
   const linkBehavior = features.linkBehavior || features.link_behavior || 'new_tab';
   
   // Get includedProgramIds from features (stored in JSON)
-  const includedProgramIds = features.includedProgramIds || (row as any).included_program_ids || undefined;
+  const includedProgramIds = features.includedProgramIds || [];
   
   return {
     id: row.id,
@@ -39,7 +39,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
     organizationIds: row.organization_ids.map(String),
     facilityIds: row.facility_ids?.map(String) || [],
     excludedProgramIds: (row as any).excluded_program_ids?.map(String) || features.excludedProgramIds || undefined,
-    includedProgramIds: includedProgramIds?.map ? includedProgramIds.map(String) : includedProgramIds,
+    includedProgramIds: Array.isArray(includedProgramIds) ? includedProgramIds.map(String) : [],
     apiKey,
     gtmId,
     branding: row.branding,
