@@ -39,6 +39,8 @@ interface ProgramCardProps {
   autoExpand?: boolean; // Auto-expand sessions when viewing single program
   showFacility?: boolean; // Show facility name when multiple facilities exist
   linkTarget?: '_blank' | '_top' | '_self'; // Link target for register buttons
+  hideRegistrationLinks?: boolean; // Hide all register buttons
+  customRegistrationUrl?: string; // Override registration URL
 }
 
 // Sport-specific gradients for visual appeal
@@ -57,7 +59,7 @@ const sportGradients: Record<string, string> = {
   default: 'from-indigo-600 to-purple-600',
 };
 
-export function ProgramCard({ program, config, autoExpand = false, showFacility = true, linkTarget = '_blank' }: ProgramCardProps) {
+export function ProgramCard({ program, config, autoExpand = false, showFacility = true, linkTarget = '_blank', hideRegistrationLinks = false, customRegistrationUrl }: ProgramCardProps) {
   const [expanded, setExpanded] = useState(autoExpand);
   
   // Dynamic colors from config
@@ -276,6 +278,8 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
                   programName={program.name}
                   autoExpandPricing={sessions.length === 1}
                   linkTarget={linkTarget}
+                  hideRegistrationLinks={hideRegistrationLinks}
+                  customRegistrationUrl={customRegistrationUrl}
                 />
               ))
             ) : (
@@ -284,10 +288,10 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
           </div>
           
           {/* Register CTA */}
-          {program.linkSEO && (
+          {!hideRegistrationLinks && program.linkSEO && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <a
-                href={buildRegistrationUrl(program.linkSEO, { isRegistrationOpen: !allSessionsClosed })}
+                href={customRegistrationUrl || buildRegistrationUrl(program.linkSEO, { isRegistrationOpen: !allSessionsClosed })}
                 target={linkTarget}
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 text-white font-semibold rounded-xl hover:opacity-90 transition-colors"
@@ -323,6 +327,8 @@ function SessionCard({
   programName,
   autoExpandPricing = false,
   linkTarget = '_blank',
+  hideRegistrationLinks = false,
+  customRegistrationUrl,
 }: { 
   session: Session; 
   config: DiscoveryConfig;
@@ -331,6 +337,8 @@ function SessionCard({
   programName: string;
   autoExpandPricing?: boolean;
   linkTarget?: '_blank' | '_top' | '_self';
+  hideRegistrationLinks?: boolean;
+  customRegistrationUrl?: string;
 }) {
   const pathname = usePathname();
   // Auto-expand pricing if there's only one session (autoExpandPricing=true)
@@ -448,9 +456,9 @@ function SessionCard({
             </span>
           )}
           
-          {registrationLink && (
+          {!hideRegistrationLinks && registrationLink && (
             <a
-              href={registrationLink}
+              href={customRegistrationUrl || registrationLink}
               target={linkTarget}
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-colors"
@@ -494,6 +502,8 @@ function SessionCard({
             config={config}
             isRegistrationOpen={isRegistrationOpen}
             linkTarget={linkTarget}
+            hideRegistrationLinks={hideRegistrationLinks}
+            customRegistrationUrl={customRegistrationUrl}
           />
         </div>
       )}

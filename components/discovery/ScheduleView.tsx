@@ -44,9 +44,11 @@ interface ScheduleViewProps {
   totalEvents?: number;
   hasMultipleFacilities?: boolean;
   linkTarget?: '_blank' | '_top' | '_self';
+  hideRegistrationLinks?: boolean;
+  customRegistrationUrl?: string;
 }
 
-export function ScheduleView({ schedule, config, isLoading, error, totalEvents, hasMultipleFacilities, linkTarget = '_blank' }: ScheduleViewProps) {
+export function ScheduleView({ schedule, config, isLoading, error, totalEvents, hasMultipleFacilities, linkTarget = '_blank', hideRegistrationLinks = false, customRegistrationUrl }: ScheduleViewProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -649,6 +651,8 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
           config={config}
           onEventClick={setSelectedEvent}
           linkTarget={linkTarget}
+          hideRegistrationLinks={hideRegistrationLinks}
+          customRegistrationUrl={customRegistrationUrl}
         />
       )}
 
@@ -695,6 +699,8 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
               config={config}
               hasMultipleFacilities={hasMultipleFacilities}
               linkTarget={linkTarget}
+              hideRegistrationLinks={hideRegistrationLinks}
+              customRegistrationUrl={customRegistrationUrl}
             />
           ))}
           
@@ -734,6 +740,8 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
           hasMultipleFacilities={hasMultipleFacilities}
           isLoading={isLoading}
           linkTarget={linkTarget}
+          hideRegistrationLinks={hideRegistrationLinks}
+          customRegistrationUrl={customRegistrationUrl}
         />
       )}
 
@@ -752,6 +760,8 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
           onClose={() => setSelectedEvent(null)}
           config={config}
           linkTarget={linkTarget}
+          hideRegistrationLinks={hideRegistrationLinks}
+          customRegistrationUrl={customRegistrationUrl}
         />
       )}
     </div>
@@ -818,12 +828,16 @@ function ListDaySection({
   config,
   hasMultipleFacilities,
   linkTarget = '_blank',
+  hideRegistrationLinks = false,
+  customRegistrationUrl,
 }: {
   day: DaySchedule;
   hasMultipleFacilities?: boolean;
   onEventClick: (event: CalendarEvent) => void;
   config: DiscoveryConfig;
   linkTarget?: '_blank' | '_top' | '_self';
+  hideRegistrationLinks?: boolean;
+  customRegistrationUrl?: string;
 }) {
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
@@ -876,6 +890,8 @@ function ListDaySection({
             config={config}
             showFacility={hasMultipleFacilities}
             linkTarget={linkTarget}
+            hideRegistrationLinks={hideRegistrationLinks}
+            customRegistrationUrl={customRegistrationUrl}
           />
         ))}
       </div>
@@ -890,12 +906,16 @@ function EventCard({
   config,
   showFacility = true,
   linkTarget = '_blank',
+  hideRegistrationLinks = false,
+  customRegistrationUrl,
 }: {
   event: CalendarEvent;
   onClick: () => void;
   config: DiscoveryConfig;
   showFacility?: boolean;
   linkTarget?: '_blank' | '_top' | '_self';
+  hideRegistrationLinks?: boolean;
+  customRegistrationUrl?: string;
 }) {
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
@@ -1033,9 +1053,9 @@ function EventCard({
             )}
             
             {/* Register/Learn More link inline */}
-            {event.linkSEO && (
+            {!hideRegistrationLinks && event.linkSEO && (
               <a 
-                href={buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
+                href={customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
                 target={linkTarget}
                 rel="noopener noreferrer"
                 onClick={(e) => {
@@ -1074,11 +1094,15 @@ function EventDetailModal({
   onClose,
   config,
   linkTarget = '_blank',
+  hideRegistrationLinks = false,
+  customRegistrationUrl,
 }: {
   event: CalendarEvent;
   onClose: () => void;
   config: DiscoveryConfig;
   linkTarget?: '_blank' | '_top' | '_self';
+  hideRegistrationLinks?: boolean;
+  customRegistrationUrl?: string;
 }) {
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
@@ -1257,37 +1281,39 @@ function EventDetailModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200 bg-white">
-          <a 
-            href={event.linkSEO ? buildRegistrationUrl(event.linkSEO, { isRegistrationOpen }) : '#'}
-            target={linkTarget}
-            rel="noopener noreferrer"
-            onClick={() => {
-              if (!isRegistrationUnavailable) {
-                gtmEvent.clickRegister({
-                  programId: event.programId,
-                  programName: event.programName,
-                  sessionId: event.sessionId,
-                  sessionName: event.sessionName,
-                });
-                bondAnalytics.clickRegister(config.slug, {
-                  programId: event.programId,
-                  programName: event.programName,
-                  sessionId: event.sessionId,
-                  sessionName: event.sessionName,
-                });
-              }
-            }}
-            className="w-full py-3.5 text-white font-semibold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg"
-            style={{ 
-              background: isRegistrationUnavailable 
-                ? '#9CA3AF' 
-                : `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
-            }}
-          >
-            {isRegistrationUnavailable ? 'Learn More' : 'Register Now'} <ExternalLink size={16} />
-          </a>
-        </div>
+        {!hideRegistrationLinks && (
+          <div className="p-4 border-t border-gray-200 bg-white">
+            <a 
+              href={customRegistrationUrl || (event.linkSEO ? buildRegistrationUrl(event.linkSEO, { isRegistrationOpen }) : '#')}
+              target={linkTarget}
+              rel="noopener noreferrer"
+              onClick={() => {
+                if (!isRegistrationUnavailable) {
+                  gtmEvent.clickRegister({
+                    programId: event.programId,
+                    programName: event.programName,
+                    sessionId: event.sessionId,
+                    sessionName: event.sessionName,
+                  });
+                  bondAnalytics.clickRegister(config.slug, {
+                    programId: event.programId,
+                    programName: event.programName,
+                    sessionId: event.sessionId,
+                    sessionName: event.sessionName,
+                  });
+                }
+              }}
+              className="w-full py-3.5 text-white font-semibold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg"
+              style={{ 
+                background: isRegistrationUnavailable 
+                  ? '#9CA3AF' 
+                  : `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
+              }}
+            >
+              {isRegistrationUnavailable ? 'Learn More' : 'Register Now'} <ExternalLink size={16} />
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1301,6 +1327,8 @@ function TableView({
   hasMultipleFacilities,
   isLoading,
   linkTarget = '_blank',
+  hideRegistrationLinks = false,
+  customRegistrationUrl,
 }: {
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
@@ -1308,6 +1336,8 @@ function TableView({
   hasMultipleFacilities?: boolean;
   isLoading?: boolean;
   linkTarget?: '_blank' | '_top' | '_self';
+  hideRegistrationLinks?: boolean;
+  customRegistrationUrl?: string;
 }) {
   const [sortField, setSortField] = useState<'date' | 'time' | 'program' | 'price'>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -1557,9 +1587,9 @@ function TableView({
                   
                   {/* Action */}
                   <td className="px-4 py-3 text-right whitespace-nowrap print:hidden">
-                    {event.linkSEO && (
+                    {!hideRegistrationLinks && event.linkSEO && (
                       <a 
-                        href={buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
+                        href={customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
                         target={linkTarget}
                         rel="noopener noreferrer"
                         onClick={(e) => {

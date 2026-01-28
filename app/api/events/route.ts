@@ -105,10 +105,12 @@ export async function GET(request: Request) {
     ? searchParams.get('orgIds')!.split(/[_,]/).filter(Boolean) 
     : DEFAULT_ORG_IDS;
   
-  // Excluded program IDs from config
+  // Program filtering from config
+  let programFilterMode: 'all' | 'exclude' | 'include' = 'all';
   let excludedProgramIds: string[] = [];
+  let includedProgramIds: string[] = [];
   
-  // If slug is provided, look up config to get API key, org IDs, and excluded programs
+  // If slug is provided, look up config to get API key, org IDs, and program filtering
   if (slug) {
     const config = await getConfigBySlug(slug);
     if (config) {
@@ -116,7 +118,9 @@ export async function GET(request: Request) {
       if (config.organizationIds.length > 0) {
         orgIds = config.organizationIds;
       }
+      programFilterMode = config.features?.programFilterMode || 'all';
       excludedProgramIds = config.excludedProgramIds || [];
+      includedProgramIds = config.includedProgramIds || [];
       // Using config API key for this slug
     }
   } else if (orgIds.length > 0) {
@@ -161,10 +165,19 @@ export async function GET(request: Request) {
         
         // For each program's sessions, fetch events
         for (const program of programs) {
-          // Skip excluded programs
-          if (excludedProgramIds.includes(program.id)) {
-            continue;
+          // Apply program filtering based on mode
+          if (programFilterMode === 'include' && includedProgramIds.length > 0) {
+            // Include mode: only process specified programs
+            if (!includedProgramIds.includes(program.id)) {
+              continue;
+            }
+          } else if (programFilterMode === 'exclude' && excludedProgramIds.length > 0) {
+            // Exclude mode: skip specified programs
+            if (excludedProgramIds.includes(program.id)) {
+              continue;
+            }
           }
+          // 'all' mode: process all programs
           
           const sessions = program.sessions || [];
           

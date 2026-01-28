@@ -32,6 +32,7 @@ interface PageConfig {
   organizationIds: string[];
   facilityIds?: string[];
   excludedProgramIds?: string[]; // Programs to exclude from this page
+  includedProgramIds?: string[]; // Programs to include (when using include mode)
   apiKey?: string; // Per-page API key
   gtmId?: string; // Page-level GTM ID (overrides partner group)
   features: {
@@ -41,10 +42,18 @@ interface PageConfig {
     showAgeGender: boolean;
     enableFilters: string[];
     defaultView: 'programs' | 'schedule';
-    defaultScheduleView?: 'list' | 'table' | 'day' | 'week' | 'month'; // Default view for schedule tab (desktop)
-    mobileDefaultScheduleView?: 'list' | 'table' | 'day' | 'week' | 'month'; // Default view for mobile
+    defaultScheduleView?: 'list' | 'table' | 'day' | 'week' | 'month';
+    mobileDefaultScheduleView?: 'list' | 'table' | 'day' | 'week' | 'month';
     allowViewToggle: boolean;
-    showTableView?: boolean; // Show table view option on desktop
+    showTableView?: boolean;
+    // Tab visibility
+    enabledTabs?: ('programs' | 'schedule')[];
+    // Program filtering
+    programFilterMode?: 'all' | 'exclude' | 'include';
+    // Custom registration URL (single-program pages)
+    customRegistrationUrl?: string;
+    // Hide registration links
+    hideRegistrationLinks?: boolean;
     // Embed options
     headerDisplay?: 'full' | 'minimal' | 'hidden';
     disableStickyHeader?: boolean;
@@ -416,6 +425,98 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
             
             <hr className="my-6" />
             
+            <h3 className="font-semibold text-gray-900 mb-4">Tab Visibility</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Choose which tabs to display. At least one must be enabled.
+            </p>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300"
+                  checked={(config.features.enabledTabs || ['programs', 'schedule']).includes('programs')}
+                  onChange={(e) => {
+                    const currentTabs = config.features.enabledTabs || ['programs', 'schedule'];
+                    let newTabs = e.target.checked 
+                      ? [...currentTabs, 'programs'] 
+                      : currentTabs.filter(t => t !== 'programs');
+                    // Ensure at least one tab is enabled
+                    if (newTabs.length === 0) newTabs = ['schedule'];
+                    // Update default view if needed
+                    let newDefaultView = config.features.defaultView;
+                    if (!newTabs.includes(newDefaultView)) {
+                      newDefaultView = newTabs[0] as 'programs' | 'schedule';
+                    }
+                    setConfig({
+                      ...config,
+                      features: { 
+                        ...config.features, 
+                        enabledTabs: newTabs as ('programs' | 'schedule')[],
+                        defaultView: newDefaultView
+                      }
+                    });
+                  }}
+                />
+                <div>
+                  <span className="font-medium">Programs Tab</span>
+                  <p className="text-sm text-gray-500">Show program cards with details and sessions</p>
+                </div>
+              </label>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300"
+                  checked={(config.features.enabledTabs || ['programs', 'schedule']).includes('schedule')}
+                  onChange={(e) => {
+                    const currentTabs = config.features.enabledTabs || ['programs', 'schedule'];
+                    let newTabs = e.target.checked 
+                      ? [...currentTabs, 'schedule'] 
+                      : currentTabs.filter(t => t !== 'schedule');
+                    // Ensure at least one tab is enabled
+                    if (newTabs.length === 0) newTabs = ['programs'];
+                    // Update default view if needed
+                    let newDefaultView = config.features.defaultView;
+                    if (!newTabs.includes(newDefaultView)) {
+                      newDefaultView = newTabs[0] as 'programs' | 'schedule';
+                    }
+                    setConfig({
+                      ...config,
+                      features: { 
+                        ...config.features, 
+                        enabledTabs: newTabs as ('programs' | 'schedule')[],
+                        defaultView: newDefaultView
+                      }
+                    });
+                  }}
+                />
+                <div>
+                  <span className="font-medium">Schedule Tab</span>
+                  <p className="text-sm text-gray-500">Show calendar/list view of events</p>
+                </div>
+              </label>
+              
+              <div className="mt-4">
+                <label className="label">Default View</label>
+                <select
+                  className="input"
+                  value={config.features.defaultView}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    features: { ...config.features, defaultView: e.target.value as 'programs' | 'schedule' }
+                  })}
+                >
+                  {(config.features.enabledTabs || ['programs', 'schedule']).includes('programs') && (
+                    <option value="programs">Programs</option>
+                  )}
+                  {(config.features.enabledTabs || ['programs', 'schedule']).includes('schedule') && (
+                    <option value="schedule">Schedule</option>
+                  )}
+                </select>
+              </div>
+            </div>
+            
+            <hr className="my-6" />
+            
             <h3 className="font-semibold text-gray-900 mb-4">Display Options</h3>
             <div className="space-y-3">
               <label className="flex items-center gap-3">
@@ -490,6 +591,49 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                 />
                 <span>Show Table view option on desktop (great for high-volume events)</span>
               </label>
+            </div>
+            
+            <hr className="my-6" />
+            
+            <h3 className="font-semibold text-gray-900 mb-4">Registration Options</h3>
+            <div className="space-y-4">
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300"
+                  checked={config.features.hideRegistrationLinks || false}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    features: { ...config.features, hideRegistrationLinks: e.target.checked }
+                  })}
+                />
+                <div>
+                  <span className="font-medium">Hide registration links</span>
+                  <p className="text-sm text-gray-500">Hide all Register/Learn More buttons throughout the page</p>
+                </div>
+              </label>
+              
+              {/* Custom Registration URL - only show when exactly 1 program is included */}
+              {config.features.programFilterMode === 'include' && 
+               config.includedProgramIds?.length === 1 && (
+                <div>
+                  <label className="label">Custom Registration URL</label>
+                  <input
+                    type="url"
+                    className="input"
+                    placeholder="https://example.com/register"
+                    value={config.features.customRegistrationUrl || ''}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      features: { ...config.features, customRegistrationUrl: e.target.value || undefined }
+                    })}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Override the default Bond Sports registration URL with a custom link. 
+                    Only available when filtering to exactly 1 program.
+                  </p>
+                </div>
+              )}
             </div>
             
             <hr className="my-6" />
@@ -653,21 +797,137 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
               </div>
               
               <div className="md:col-span-2">
-                <label className="label">Excluded Program IDs (Optional)</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="e.g., 12345, 67890"
-                  value={config.excludedProgramIds?.join(', ') || ''}
-                  onChange={(e) => setConfig({
-                    ...config,
-                    excludedProgramIds: e.target.value ? e.target.value.split(',').map(s => s.trim()).filter(Boolean) : undefined
-                  })}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Comma-separated list of program IDs to hide from this discovery page. 
-                  Find program IDs in Bond Sports admin or from URLs.
-                </p>
+                <label className="label">Program Filtering</label>
+                <div className="space-y-3 mt-2">
+                  <label className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="programFilterMode"
+                      className="text-indigo-600"
+                      checked={(config.features.programFilterMode || 'all') === 'all'}
+                      onChange={() => setConfig({
+                        ...config,
+                        excludedProgramIds: undefined,
+                        includedProgramIds: undefined,
+                        features: { 
+                          ...config.features, 
+                          programFilterMode: 'all',
+                          customRegistrationUrl: undefined 
+                        }
+                      })}
+                    />
+                    <div>
+                      <span className="font-medium">All Active Programs</span>
+                      <p className="text-sm text-gray-500">Show all published programs from configured organizations</p>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="programFilterMode"
+                      className="text-indigo-600"
+                      checked={config.features.programFilterMode === 'exclude'}
+                      onChange={() => setConfig({
+                        ...config,
+                        includedProgramIds: undefined,
+                        features: { 
+                          ...config.features, 
+                          programFilterMode: 'exclude',
+                          customRegistrationUrl: undefined 
+                        }
+                      })}
+                    />
+                    <div>
+                      <span className="font-medium">Exclude Specific Programs</span>
+                      <p className="text-sm text-gray-500">Show all programs except the ones listed</p>
+                    </div>
+                  </label>
+                  
+                  {config.features.programFilterMode === 'exclude' && (
+                    <div className="ml-7">
+                      <input
+                        type="text"
+                        className="input"
+                        placeholder="e.g., 12345, 67890"
+                        value={config.excludedProgramIds?.join(', ') || ''}
+                        onChange={(e) => setConfig({
+                          ...config,
+                          excludedProgramIds: e.target.value ? e.target.value.split(',').map(s => s.trim()).filter(Boolean) : undefined
+                        })}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Comma-separated list of program IDs to hide
+                      </p>
+                    </div>
+                  )}
+                  
+                  <label className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="programFilterMode"
+                      className="text-indigo-600"
+                      checked={config.features.programFilterMode === 'include'}
+                      onChange={() => setConfig({
+                        ...config,
+                        excludedProgramIds: undefined,
+                        features: { ...config.features, programFilterMode: 'include' }
+                      })}
+                    />
+                    <div>
+                      <span className="font-medium">Include Specific Programs Only</span>
+                      <p className="text-sm text-gray-500">Only show the programs listed (lightweight mode)</p>
+                    </div>
+                  </label>
+                  
+                  {config.features.programFilterMode === 'include' && (
+                    <div className="ml-7 space-y-3">
+                      <div>
+                        <input
+                          type="text"
+                          className="input"
+                          placeholder="e.g., 12345, 67890"
+                          value={config.includedProgramIds?.join(', ') || ''}
+                          onChange={(e) => {
+                            const ids = e.target.value ? e.target.value.split(',').map(s => s.trim()).filter(Boolean) : undefined;
+                            setConfig({
+                              ...config,
+                              includedProgramIds: ids,
+                              // Clear custom URL if not exactly 1 program
+                              features: {
+                                ...config.features,
+                                customRegistrationUrl: ids?.length === 1 ? config.features.customRegistrationUrl : undefined
+                              }
+                            });
+                          }}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Comma-separated list of program IDs to show
+                        </p>
+                      </div>
+                      
+                      {config.includedProgramIds?.length === 1 && (
+                        <div className="p-3 bg-blue-50 rounded-lg">
+                          <label className="label text-blue-800">Custom Registration URL (Optional)</label>
+                          <input
+                            type="url"
+                            className="input"
+                            placeholder="https://example.com/register"
+                            value={config.features.customRegistrationUrl || ''}
+                            onChange={(e) => setConfig({
+                              ...config,
+                              features: { ...config.features, customRegistrationUrl: e.target.value || undefined }
+                            })}
+                          />
+                          <p className="text-xs text-blue-600 mt-1">
+                            Since you have exactly 1 program, you can override registration links with a custom URL.
+                            Great for embedding on partner sites!
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             

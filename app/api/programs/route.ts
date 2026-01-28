@@ -11,10 +11,14 @@ export const revalidate = 300; // 5 minutes
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   
-  // Get slug to look up page config for excludedProgramIds
+  // Get slug to look up page config for program filtering
   const slug = searchParams.get('slug');
   const pageConfig = slug ? await getConfigBySlug(slug) : null;
+  
+  // Program filtering: determine mode and IDs
+  const programFilterMode = pageConfig?.features?.programFilterMode || 'all';
   const excludedProgramIds = pageConfig?.excludedProgramIds || [];
+  const includedProgramIds = pageConfig?.includedProgramIds || [];
   
   // Get org IDs from query params or use defaults
   const orgIdsParam = searchParams.get('orgIds');
@@ -73,17 +77,26 @@ export async function GET(request: Request) {
     const results = await Promise.all(promises);
     results.forEach(programs => allPrograms.push(...programs));
 
-    // Filter out excluded programs if specified in page config
-    const filteredPrograms = excludedProgramIds.length > 0
-      ? allPrograms.filter(p => !excludedProgramIds.includes(p.id))
-      : allPrograms;
+    // Filter programs based on mode
+    let filteredPrograms = allPrograms;
+    
+    if (programFilterMode === 'include' && includedProgramIds.length > 0) {
+      // Include mode: only show specified programs
+      filteredPrograms = allPrograms.filter(p => includedProgramIds.includes(p.id));
+    } else if (programFilterMode === 'exclude' && excludedProgramIds.length > 0) {
+      // Exclude mode: hide specified programs
+      filteredPrograms = allPrograms.filter(p => !excludedProgramIds.includes(p.id));
+    }
+    // 'all' mode: no filtering needed
 
     return NextResponse.json({
       data: filteredPrograms,
       meta: {
         totalOrganizations: orgIds.length,
         totalPrograms: filteredPrograms.length,
-        excludedPrograms: excludedProgramIds.length,
+        programFilterMode,
+        excludedPrograms: programFilterMode === 'exclude' ? excludedProgramIds.length : 0,
+        includedPrograms: programFilterMode === 'include' ? includedProgramIds.length : 0,
         cachedAt: new Date().toISOString(),
       }
     }, {

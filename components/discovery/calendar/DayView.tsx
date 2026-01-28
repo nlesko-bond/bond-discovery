@@ -12,6 +12,8 @@ interface DayViewProps {
   config: DiscoveryConfig;
   onEventClick?: (event: CalendarEvent) => void;
   linkTarget?: '_blank' | '_top' | '_self';
+  hideRegistrationLinks?: boolean;
+  customRegistrationUrl?: string;
 }
 
 // Time slots from 6am to 10pm
@@ -24,7 +26,7 @@ const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => i + 6); // 6-22 (6am to 
  * Events are positioned based on their start time.
  * Includes current time indicator.
  */
-export function DayView({ events, date, config, onEventClick, linkTarget = '_blank' }: DayViewProps) {
+export function DayView({ events, date, config, onEventClick, linkTarget = '_blank', hideRegistrationLinks = false, customRegistrationUrl }: DayViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const currentTimeRef = useRef<HTMLDivElement>(null);
   
@@ -152,6 +154,8 @@ export function DayView({ events, date, config, onEventClick, linkTarget = '_bla
                           onClick={() => onEventClick?.(event)}
                           config={config}
                           linkTarget={linkTarget}
+                          hideRegistrationLinks={hideRegistrationLinks}
+                          customRegistrationUrl={customRegistrationUrl}
                         />
                       ))}
                     </div>
@@ -172,16 +176,20 @@ function EventCard({
   onClick,
   config,
   linkTarget = '_blank',
+  hideRegistrationLinks = false,
+  customRegistrationUrl,
 }: {
   event: CalendarEvent;
   onClick?: () => void;
   config: DiscoveryConfig;
   linkTarget?: '_blank' | '_top' | '_self';
+  hideRegistrationLinks?: boolean;
+  customRegistrationUrl?: string;
 }) {
   const startTime = formatTime(event.startTime, event.timezone);
   const endTime = formatTime(event.endTime, event.timezone);
   const isRegistrationOpen = event.registrationWindowStatus === 'open';
-  const registrationUrl = buildRegistrationUrl(event.linkSEO, { isRegistrationOpen });
+  const registrationUrl = customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen });
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
 
   return (
@@ -229,7 +237,7 @@ function EventCard({
         </div>
 
         {/* Quick Register */}
-        {registrationUrl && (
+        {!hideRegistrationLinks && registrationUrl && (
           <a
             href={registrationUrl}
             target={linkTarget}

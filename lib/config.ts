@@ -29,12 +29,17 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
   const features = row.features as Record<string, any>;
   const linkBehavior = features.linkBehavior || features.link_behavior || 'new_tab';
   
+  // Get includedProgramIds from features (stored in JSON)
+  const includedProgramIds = features.includedProgramIds || (row as any).included_program_ids || undefined;
+  
   return {
     id: row.id,
     name: row.name,
     slug: row.slug,
     organizationIds: row.organization_ids.map(String),
     facilityIds: row.facility_ids?.map(String) || [],
+    excludedProgramIds: (row as any).excluded_program_ids?.map(String) || row.features?.excludedProgramIds || undefined,
+    includedProgramIds: includedProgramIds?.map ? includedProgramIds.map(String) : includedProgramIds,
     apiKey,
     gtmId,
     branding: row.branding,

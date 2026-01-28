@@ -12,6 +12,8 @@ interface PricingCarouselProps {
   config?: DiscoveryConfig;
   isRegistrationOpen?: boolean;
   linkTarget?: '_blank' | '_top' | '_self';
+  hideRegistrationLinks?: boolean;
+  customRegistrationUrl?: string;
 }
 
 /**
@@ -28,7 +30,9 @@ export function PricingCarousel({
   className,
   config,
   isRegistrationOpen = true,
-  linkTarget = '_blank'
+  linkTarget = '_blank',
+  hideRegistrationLinks = false,
+  customRegistrationUrl,
 }: PricingCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -114,6 +118,8 @@ export function PricingCarousel({
             primaryColor={primaryColor}
             secondaryColor={secondaryColor}
             linkTarget={linkTarget}
+            hideRegistrationLinks={hideRegistrationLinks}
+            customRegistrationUrl={customRegistrationUrl}
           />
         ))}
       </div>
@@ -153,6 +159,8 @@ function PricingCard({
   primaryColor,
   secondaryColor,
   linkTarget = '_blank',
+  hideRegistrationLinks = false,
+  customRegistrationUrl,
 }: {
   product: Product;
   registrationUrl?: string;
@@ -160,6 +168,8 @@ function PricingCard({
   primaryColor: string;
   secondaryColor: string;
   linkTarget?: '_blank' | '_top' | '_self';
+  hideRegistrationLinks?: boolean;
+  customRegistrationUrl?: string;
 }) {
   const lowestPrice = product.prices.reduce(
     (min, p) => (p.price < min ? p.price : min),
@@ -232,9 +242,9 @@ function PricingCard({
       </div>
 
       {/* Register Button */}
-      {registrationUrl && (
+      {!hideRegistrationLinks && registrationUrl && (
         <a
-          href={registrationUrl}
+          href={customRegistrationUrl || registrationUrl}
           target={linkTarget}
           rel="noopener noreferrer"
           className="mt-3 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-semibold transition-opacity text-white hover:opacity-90"

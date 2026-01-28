@@ -9,9 +9,11 @@ interface ProgramGridProps {
   config: DiscoveryConfig;
   hasMultipleFacilities?: boolean;
   linkTarget?: '_blank' | '_top' | '_self';
+  hideRegistrationLinks?: boolean;
+  customRegistrationUrl?: string;
 }
 
-export function ProgramGrid({ programs, config, hasMultipleFacilities, linkTarget = '_blank' }: ProgramGridProps) {
+export function ProgramGrid({ programs, config, hasMultipleFacilities, linkTarget = '_blank', hideRegistrationLinks, customRegistrationUrl }: ProgramGridProps) {
   if (programs.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -55,6 +57,8 @@ export function ProgramGrid({ programs, config, hasMultipleFacilities, linkTarge
             autoExpand={programs.length === 1} // Auto-expand when viewing single program
             showFacility={hasMultipleFacilities}
             linkTarget={linkTarget}
+            hideRegistrationLinks={hideRegistrationLinks}
+            customRegistrationUrl={customRegistrationUrl}
           />
         ))}
       </div>

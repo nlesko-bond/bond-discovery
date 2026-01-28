@@ -306,6 +306,7 @@ export interface DiscoveryConfig {
   
   // Program filtering (optional)
   excludedProgramIds?: string[]; // Programs to exclude from this page
+  includedProgramIds?: string[]; // Programs to include (when using include mode)
   
   // Branding
   branding: BrandingConfig;
@@ -349,6 +350,8 @@ export interface BrandingConfig {
 export type ScheduleViewType = 'list' | 'table' | 'day' | 'week' | 'month';
 
 export type LinkBehavior = 'new_tab' | 'same_window' | 'in_frame';
+export type ProgramFilterMode = 'all' | 'exclude' | 'include';
+export type EnabledTab = 'programs' | 'schedule';
 
 export interface FeatureConfig {
   showPricing: boolean;
@@ -366,6 +369,14 @@ export interface FeatureConfig {
   disableStickyHeader?: boolean; // Disable sticky main header (calendar headers still stick)
   // Link behavior for registration buttons
   linkBehavior?: LinkBehavior; // How registration links open (default: 'new_tab')
+  // Tab visibility
+  enabledTabs?: EnabledTab[]; // Which tabs to show (default: ['programs', 'schedule'])
+  // Program filtering mode
+  programFilterMode?: ProgramFilterMode; // How to filter programs (default: 'all')
+  // Custom registration URL (for single-program pages)
+  customRegistrationUrl?: string; // Override registration URL for all links
+  // Hide registration links
+  hideRegistrationLinks?: boolean; // Hide all Register/Learn More buttons (default: false)
 }
 
 export type FilterType = 

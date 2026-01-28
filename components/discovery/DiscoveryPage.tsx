@@ -123,6 +123,12 @@ export function DiscoveryPage({
                    : linkBehavior === 'in_frame' ? '_self' 
                    : '_blank';
   
+  // Tab visibility - which tabs are enabled
+  const enabledTabs = config.features.enabledTabs || ['programs', 'schedule'];
+  const showProgramsTab = enabledTabs.includes('programs');
+  const showScheduleTab = enabledTabs.includes('schedule');
+  const showTabToggle = config.features.allowViewToggle && showProgramsTab && showScheduleTab;
+  
   // Refs for measuring header height for sticky positioning
   const containerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
@@ -909,7 +915,7 @@ export function DiscoveryPage({
                 config.features.headerDisplay === 'minimal' && 'w-full justify-between'
               )}>
                 {/* Desktop View Toggle - shown in header for full/minimal modes */}
-                {config.features.allowViewToggle && (
+                {showTabToggle && (
                   <div className="hidden sm:flex items-center bg-gray-100 rounded-lg p-1">
                     <button
                       onClick={() => handleViewModeChange('programs')}
@@ -958,7 +964,7 @@ export function DiscoveryPage({
             </div>
 
             {/* Mobile View Toggle */}
-            {config.features.allowViewToggle && (
+            {showTabToggle && (
               <div className="sm:hidden mt-3 flex items-center bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => handleViewModeChange('programs')}
@@ -992,7 +998,7 @@ export function DiscoveryPage({
       <div className="w-full px-3 sm:px-4 lg:px-6 py-2 bg-gray-50 border-b border-gray-200">
         <div className="flex items-center gap-3">
           {/* View Toggle - shown here when header is hidden */}
-          {config.features.headerDisplay === 'hidden' && config.features.allowViewToggle && (
+          {config.features.headerDisplay === 'hidden' && showTabToggle && (
             <div className="flex items-center bg-white rounded-lg p-1 border border-gray-200 flex-shrink-0">
               <button
                 onClick={() => handleViewModeChange('programs')}
@@ -1088,6 +1094,8 @@ export function DiscoveryPage({
               config={config}
               hasMultipleFacilities={filterOptions.hasMultipleFacilities}
               linkTarget={linkTarget}
+              hideRegistrationLinks={config.features.hideRegistrationLinks}
+              customRegistrationUrl={config.features.customRegistrationUrl}
             />
           ) : (
             <ScheduleView 
@@ -1098,6 +1106,8 @@ export function DiscoveryPage({
               totalEvents={filteredEvents.length}
               hasMultipleFacilities={filterOptions.hasMultipleFacilities}
               linkTarget={linkTarget}
+              hideRegistrationLinks={config.features.hideRegistrationLinks}
+              customRegistrationUrl={config.features.customRegistrationUrl}
             />
           )}
         </main>
