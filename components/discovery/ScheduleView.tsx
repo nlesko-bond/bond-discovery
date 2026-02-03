@@ -1518,7 +1518,7 @@ function TableView({
                   {/* Time */}
                   {showTimeColumn && (
                     <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1">
-                      <div className="text-xs sm:text-sm text-gray-700 whitespace-nowrap">
+                      <div className="text-xs sm:text-sm text-gray-700 whitespace-nowrap max-[355px]:whitespace-normal">
                         {formatTime(event.startTime, event.timezone) || 'TBD'}
                         {event.endTime && ` - ${formatTime(event.endTime, event.timezone)}`}
                       </div>
