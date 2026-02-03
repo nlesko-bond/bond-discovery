@@ -68,14 +68,18 @@ export function DayView({ events, date, config, onEventClick, linkTarget = '_bla
     return grouped;
   }, [dayEvents]);
 
-  // Scroll to current time on mount
+  // Scroll to current time on mount (only within the day view container, not the page)
   useEffect(() => {
     const targetDate = parseISO(date);
     if (isToday(targetDate) && currentTimeRef.current && scrollRef.current) {
-      const currentHour = new Date().getHours();
-      // Scroll to make current time visible
+      // Use scrollTop on the container instead of scrollIntoView to avoid page jump
       setTimeout(() => {
-        currentTimeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (currentTimeRef.current && scrollRef.current) {
+          const containerTop = scrollRef.current.getBoundingClientRect().top;
+          const elementTop = currentTimeRef.current.getBoundingClientRect().top;
+          const offset = elementTop - containerTop - scrollRef.current.clientHeight / 2;
+          scrollRef.current.scrollTop = offset;
+        }
       }, 100);
     }
   }, [date]);

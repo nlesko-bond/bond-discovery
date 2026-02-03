@@ -1447,7 +1447,7 @@ function TableView({
       <div className="print:overflow-visible">
         <table className="w-full print:text-xs border-collapse">
           <thead 
-            className="sticky z-10 text-white rounded-t-lg" 
+            className="sticky z-20 text-white" 
             style={{ top: stickyOffset, background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
           >
             <tr className="print:bg-gray-100 print:text-gray-600">
