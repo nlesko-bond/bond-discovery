@@ -35,6 +35,7 @@ import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
 
 type ViewMode = 'list' | 'table' | 'day' | 'week' | 'month';
+type TableColumn = 'date' | 'time' | 'event' | 'program' | 'location' | 'spots' | 'action';
 
 interface ScheduleViewProps {
   schedule: WeekSchedule[];
@@ -53,6 +54,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
   const router = useRouter();
   const pathname = usePathname();
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
+  const [isTableAllowed, setIsTableAllowed] = useState(true);
   
   // Dynamic colors from config
   const primaryColor = config.branding.primaryColor || '#1E2761';
@@ -84,13 +86,14 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
   // After hydration, check if we should switch to mobile default
   // Also prevents table view on mobile since it doesn't fit small screens
   useEffect(() => {
-    const MOBILE_BREAKPOINT = 800;
+    const TABLE_VIEW_BREAKPOINT = 550;
     
-    const switchToListOnMobile = () => {
-      const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
+    const updateTableAllowed = () => {
+      const isBelowBreakpoint = window.innerWidth < TABLE_VIEW_BREAKPOINT;
+      setIsTableAllowed(!isBelowBreakpoint);
       
       // Use ref to get current viewMode value
-      if (isMobile && viewModeRef.current === 'table') {
+      if (isBelowBreakpoint && viewModeRef.current === 'table') {
         // Table view doesn't work on mobile - switch to list and update URL
         setViewModeState('list');
         const params = new URLSearchParams(window.location.search);
@@ -100,8 +103,9 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
     };
     
     // Check on initial load
-    const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
-    if (isMobile) {
+    const isBelowBreakpoint = window.innerWidth < TABLE_VIEW_BREAKPOINT;
+    setIsTableAllowed(!isBelowBreakpoint);
+    if (isBelowBreakpoint) {
       // Table view doesn't work on mobile - switch to list
       if (viewModeRef.current === 'table') {
         setViewModeState('list');
@@ -115,8 +119,8 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
     }
     
     // Also check on resize (e.g., orientation change)
-    window.addEventListener('resize', switchToListOnMobile);
-    return () => window.removeEventListener('resize', switchToListOnMobile);
+    window.addEventListener('resize', updateTableAllowed);
+    return () => window.removeEventListener('resize', updateTableAllowed);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount - uses refs for current values
   
@@ -200,6 +204,16 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
     };
     return tzMap[firstEventWithTz.timezone] || firstEventWithTz.timezone;
   }, [allEvents]);
+
+  const defaultTableColumns: TableColumn[] = ['date', 'time', 'event', 'program', 'location', 'spots', 'action'];
+  const tableColumns = (config.features.tableColumns || defaultTableColumns) as TableColumn[];
+  const showDateColumn = tableColumns.includes('date');
+  const showTimeColumn = tableColumns.includes('time');
+  const showEventColumn = tableColumns.includes('event');
+  const showProgramColumn = tableColumns.includes('program');
+  const showLocationColumn = tableColumns.includes('location') && hasMultipleFacilities;
+  const showSpotsColumn = tableColumns.includes('spots') && config.features.showAvailability;
+  const showActionColumn = tableColumns.includes('action') && !hideRegistrationLinks;
   
   // Generate iCal content
   const generateICal = useCallback(() => {
@@ -443,11 +457,11 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
               <span className="hidden sm:inline">List</span>
             </button>
             {/* Table View - desktop only when enabled */}
-            {config.features.showTableView && (
+            {config.features.showTableView && isTableAllowed && (
               <button
                 onClick={() => setViewMode('table')}
                 className={cn(
-                  'hidden lg:flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1.5 sm:px-3 sm:py-1.5 rounded-md text-sm font-medium transition-all',
+                  'flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1.5 sm:px-3 sm:py-1.5 rounded-md text-sm font-medium transition-all',
                   viewMode === 'table'
                     ? 'bg-white shadow-sm'
                     : 'text-gray-600 hover:text-gray-900'
@@ -1346,6 +1360,17 @@ function TableView({
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
   
+  // Table column visibility
+  const defaultTableColumns: TableColumn[] = ['date', 'time', 'event', 'program', 'location', 'spots', 'action'];
+  const tableColumns = (config.features.tableColumns || defaultTableColumns) as TableColumn[];
+  const showDateColumn = tableColumns.includes('date');
+  const showTimeColumn = tableColumns.includes('time');
+  const showEventColumn = tableColumns.includes('event');
+  const showProgramColumn = tableColumns.includes('program');
+  const showLocationColumn = tableColumns.includes('location') && hasMultipleFacilities;
+  const showSpotsColumn = tableColumns.includes('spots') && config.features.showAvailability;
+  const showActionColumn = tableColumns.includes('action') && !hideRegistrationLinks;
+  
   // Sort events
   const sortedEvents = useMemo(() => {
     const sorted = [...events].sort((a, b) => {
@@ -1432,46 +1457,56 @@ function TableView({
         <table className="w-full print:text-xs border-collapse">
           <thead className="bg-gray-50 sticky z-10" style={{ top: stickyOffset }}>
             <tr className="border-b border-gray-200 bg-gray-50 print:bg-gray-100">
-              <th 
+              {showDateColumn && (
+                <th 
                 className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors print:px-2 print:py-1"
                 onClick={() => handleSort('date')}
-              >
-                <span className="flex items-center gap-1">
-                  Date <SortIcon field="date" />
-                </span>
-              </th>
-              <th 
+                >
+                  <span className="flex items-center gap-1">
+                    Date <SortIcon field="date" />
+                  </span>
+                </th>
+              )}
+              {showTimeColumn && (
+                <th 
                 className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors print:px-2 print:py-1"
                 onClick={() => handleSort('time')}
-              >
-                <span className="flex items-center gap-1">
-                  Time <SortIcon field="time" />
-                </span>
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider print:px-2 print:py-1">
-                Event
-              </th>
-              <th 
+                >
+                  <span className="flex items-center gap-1">
+                    Time <SortIcon field="time" />
+                  </span>
+                </th>
+              )}
+              {showEventColumn && (
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider print:px-2 print:py-1">
+                  Event
+                </th>
+              )}
+              {showProgramColumn && (
+                <th 
                 className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors print:px-2 print:py-1"
                 onClick={() => handleSort('program')}
-              >
-                <span className="flex items-center gap-1">
-                  Program <SortIcon field="program" />
-                </span>
-              </th>
-              {hasMultipleFacilities && (
+                >
+                  <span className="flex items-center gap-1">
+                    Program <SortIcon field="program" />
+                  </span>
+                </th>
+              )}
+              {showLocationColumn && (
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider print:px-2 print:py-1">
                   Location
                 </th>
               )}
-              {config.features.showAvailability && (
+              {showSpotsColumn && (
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider print:hidden">
                   Spots
                 </th>
               )}
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider print:hidden">
-                Action
-              </th>
+              {showActionColumn && (
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider print:hidden">
+                  Action
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -1493,68 +1528,76 @@ function TableView({
                   onClick={() => onEventClick(event)}
                 >
                   {/* Date */}
-                  <td className="px-4 py-3 whitespace-nowrap print:px-2 print:py-1">
-                    <div className="text-sm font-medium text-gray-900">
-                      {format(parseISO(event.date), 'EEE, MMM d')}
-                    </div>
-                  </td>
+                  {showDateColumn && (
+                    <td className="px-4 py-3 whitespace-nowrap print:px-2 print:py-1">
+                      <div className="text-sm font-medium text-gray-900">
+                        {format(parseISO(event.date), 'EEE, MMM d')}
+                      </div>
+                    </td>
+                  )}
                   
                   {/* Time */}
-                  <td className="px-4 py-3 whitespace-nowrap print:px-2 print:py-1">
-                    <div className="text-sm text-gray-700">
-                      {formatTime(event.startTime, event.timezone) || 'TBD'}
-                      {event.endTime && ` - ${formatTime(event.endTime, event.timezone)}`}
-                    </div>
-                  </td>
+                  {showTimeColumn && (
+                    <td className="px-4 py-3 whitespace-nowrap print:px-2 print:py-1">
+                      <div className="text-sm text-gray-700">
+                        {formatTime(event.startTime, event.timezone) || 'TBD'}
+                        {event.endTime && ` - ${formatTime(event.endTime, event.timezone)}`}
+                      </div>
+                    </td>
+                  )}
                   
                   {/* Event Title */}
-                  <td className="px-4 py-3 print:px-2 print:py-1">
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-gray-900 line-clamp-2 print:whitespace-normal">
-                        {event.title || event.sessionName || event.programName}
-                      </div>
-                      {event.sessionName && event.sessionName !== event.title && (
-                        <div className="text-xs text-gray-500 line-clamp-1 print:whitespace-normal">
-                          {event.sessionName}
+                  {showEventColumn && (
+                    <td className="px-4 py-3 print:px-2 print:py-1">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-gray-900 line-clamp-2 print:whitespace-normal">
+                          {event.title || event.sessionName || event.programName}
                         </div>
-                      )}
-                      {/* Status badges - hide in print */}
-                      <div className="flex items-center gap-1 mt-0.5 print:hidden">
-                        {isRegistrationClosed && (
-                          <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">Closed</span>
+                        {event.sessionName && event.sessionName !== event.title && (
+                          <div className="text-xs text-gray-500 line-clamp-1 print:whitespace-normal">
+                            {event.sessionName}
+                          </div>
                         )}
-                        {isRegistrationNotYetOpen && (
-                          <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded">Coming Soon</span>
-                        )}
-                        {event.isWaitlistEnabled && (
-                          <span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-600 rounded flex items-center gap-0.5">
-                            <Users size={10} />Waitlist
-                          </span>
-                        )}
+                        {/* Status badges - hide in print */}
+                        <div className="flex items-center gap-1 mt-0.5 print:hidden">
+                          {isRegistrationClosed && (
+                            <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">Closed</span>
+                          )}
+                          {isRegistrationNotYetOpen && (
+                            <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded">Coming Soon</span>
+                          )}
+                          {event.isWaitlistEnabled && (
+                            <span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-600 rounded flex items-center gap-0.5">
+                              <Users size={10} />Waitlist
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
+                  )}
                   
                   {/* Program */}
-                  <td className="px-4 py-3 print:px-2 print:py-1">
-                    <div 
-                      className="text-sm text-gray-700 line-clamp-2 max-w-[200px] hover:line-clamp-none cursor-default print:whitespace-normal"
-                      title={event.programName}
-                    >
-                      {event.programName}
-                    </div>
-                    {event.programType && (
-                      <span 
-                        className="text-xs px-1.5 py-0.5 rounded mt-0.5 inline-block print:hidden"
-                        style={{ backgroundColor: `${secondaryColor}15`, color: secondaryColor }}
+                  {showProgramColumn && (
+                    <td className="px-4 py-3 print:px-2 print:py-1">
+                      <div 
+                        className="text-sm text-gray-700 line-clamp-2 max-w-[200px] hover:line-clamp-none cursor-default print:whitespace-normal"
+                        title={event.programName}
                       >
-                        {getProgramTypeLabel(event.programType)}
-                      </span>
-                    )}
-                  </td>
+                        {event.programName}
+                      </div>
+                      {event.programType && (
+                        <span 
+                          className="text-xs px-1.5 py-0.5 rounded mt-0.5 inline-block print:hidden"
+                          style={{ backgroundColor: `${secondaryColor}15`, color: secondaryColor }}
+                        >
+                          {getProgramTypeLabel(event.programType)}
+                        </span>
+                      )}
+                    </td>
+                  )}
                   
                   {/* Location */}
-                  {hasMultipleFacilities && (
+                  {showLocationColumn && (
                     <td className="px-4 py-3">
                       <div className="text-sm text-gray-700 truncate max-w-[150px]">
                         {event.facilityName}
@@ -1568,7 +1611,7 @@ function TableView({
                   )}
                   
                   {/* Availability */}
-                  {config.features.showAvailability && (
+                  {showSpotsColumn && (
                     <td className="px-4 py-3 whitespace-nowrap print:hidden">
                       {event.spotsRemaining !== undefined ? (
                         <span className={cn(
@@ -1586,42 +1629,44 @@ function TableView({
                   )}
                   
                   {/* Action */}
-                  <td className="px-4 py-3 text-right whitespace-nowrap print:hidden">
-                    {!hideRegistrationLinks && event.linkSEO && (
-                      <a 
-                        href={customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
-                        target={linkTarget}
-                        rel="noopener noreferrer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!isRegistrationUnavailable) {
-                            gtmEvent.clickRegister({
-                              programId: event.programId,
-                              programName: event.programName,
-                              sessionId: event.sessionId,
-                              sessionName: event.sessionName,
-                            });
-                            bondAnalytics.clickRegister(config.slug, {
-                              programId: event.programId,
-                              programName: event.programName,
-                              sessionId: event.sessionId,
-                              sessionName: event.sessionName,
-                            });
-                          }
-                        }}
-                        className={cn(
-                          'inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors print:hidden',
-                          isRegistrationUnavailable
-                            ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            : 'text-white hover:opacity-90'
-                        )}
-                        style={!isRegistrationUnavailable ? { backgroundColor: secondaryColor } : undefined}
-                      >
-                        {isRegistrationUnavailable ? 'Details' : 'Register'}
-                        <ExternalLink size={12} />
-                      </a>
-                    )}
-                  </td>
+                  {showActionColumn && (
+                    <td className="px-4 py-3 text-right whitespace-nowrap print:hidden">
+                      {!hideRegistrationLinks && event.linkSEO && (
+                        <a 
+                          href={customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
+                          target={linkTarget}
+                          rel="noopener noreferrer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isRegistrationUnavailable) {
+                              gtmEvent.clickRegister({
+                                programId: event.programId,
+                                programName: event.programName,
+                                sessionId: event.sessionId,
+                                sessionName: event.sessionName,
+                              });
+                              bondAnalytics.clickRegister(config.slug, {
+                                programId: event.programId,
+                                programName: event.programName,
+                                sessionId: event.sessionId,
+                                sessionName: event.sessionName,
+                              });
+                            }
+                          }}
+                          className={cn(
+                            'inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors print:hidden',
+                            isRegistrationUnavailable
+                              ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              : 'text-white hover:opacity-90'
+                          )}
+                          style={!isRegistrationUnavailable ? { backgroundColor: secondaryColor } : undefined}
+                        >
+                          {isRegistrationUnavailable ? 'Details' : 'Register'}
+                          <ExternalLink size={12} />
+                        </a>
+                      )}
+                    </td>
+                  )}
                 </tr>
               );
             })}

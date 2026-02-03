@@ -348,6 +348,7 @@ export interface BrandingConfig {
 }
 
 export type ScheduleViewType = 'list' | 'table' | 'day' | 'week' | 'month';
+export type ScheduleTableColumn = 'date' | 'time' | 'event' | 'program' | 'location' | 'spots' | 'action';
 
 export type LinkBehavior = 'new_tab' | 'same_window' | 'in_frame';
 export type ProgramFilterMode = 'all' | 'exclude' | 'include';
@@ -364,6 +365,7 @@ export interface FeatureConfig {
   mobileDefaultScheduleView?: ScheduleViewType; // Default view for mobile (defaults to 'list')
   allowViewToggle: boolean;
   showTableView?: boolean; // Show table view option on desktop
+  tableColumns?: ScheduleTableColumn[]; // Columns to show in schedule table view
   // Embed-friendly options
   headerDisplay?: 'full' | 'minimal' | 'hidden'; // Header visibility mode (default: 'full')
   disableStickyHeader?: boolean; // Disable sticky main header (calendar headers still stick)

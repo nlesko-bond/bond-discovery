@@ -49,6 +49,8 @@ export interface DiscoveryPageRow {
     enableFilters: string[];
     defaultView: 'programs' | 'schedule';
     allowViewToggle: boolean;
+    showTableView?: boolean;
+    tableColumns?: string[];
   };
   allowed_params: string[];
   default_params: Record<string, string>;

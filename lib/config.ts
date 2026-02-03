@@ -1,10 +1,11 @@
-import { DiscoveryConfig, BrandingConfig, FeatureConfig, FilterType } from '@/types';
+import { DiscoveryConfig, BrandingConfig, FeatureConfig, FilterType, ScheduleTableColumn } from '@/types';
 import { supabase, getSupabaseAdmin, DiscoveryPageRow } from './supabase';
 
 /**
  * Convert database row to DiscoveryConfig
  */
 const DEFAULT_ENABLED_FILTERS: FilterType[] = ['search', 'facility', 'programType', 'sport', 'age', 'dateRange', 'program'];
+const DEFAULT_TABLE_COLUMNS: ScheduleTableColumn[] = ['date', 'time', 'event', 'program', 'location', 'spots', 'action'];
 
 function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
   // Use defaults if enableFilters is empty or missing
@@ -34,6 +35,9 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
     ? (Array.isArray(features.includedProgramIds) ? features.includedProgramIds.map(String) : [])
     : [];
   
+  // Get tableColumns from features, cast to proper type
+  const tableColumns = (features.tableColumns as ScheduleTableColumn[] | undefined) || undefined;
+  
   return {
     id: row.id,
     name: row.name,
@@ -50,6 +54,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
       enableFilters,
       linkBehavior, // Ensure camelCase for frontend
       includedProgramIds, // Ensure it's in features for admin UI
+      tableColumns, // Cast to proper type
     },
     allowedParams: row.allowed_params || [],
     defaultParams: row.default_params || {},
@@ -84,6 +89,7 @@ export const defaultConfig: DiscoveryConfig = {
     enableFilters: ['search', 'facility', 'programType', 'sport', 'age', 'dateRange', 'program'] as FilterType[],
     defaultView: 'programs',
     allowViewToggle: true,
+    tableColumns: DEFAULT_TABLE_COLUMNS,
   },
   allowedParams: ['viewMode', 'facilityIds', 'programIds', 'programTypes', 'search'],
   defaultParams: {},

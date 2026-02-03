@@ -45,6 +45,7 @@ interface PageConfig {
     mobileDefaultScheduleView?: 'list' | 'table' | 'day' | 'week' | 'month';
     allowViewToggle: boolean;
     showTableView?: boolean;
+    tableColumns?: ('date' | 'time' | 'event' | 'program' | 'location' | 'spots' | 'action')[];
     // Tab visibility
     enabledTabs?: ('programs' | 'schedule')[];
     // Program filtering
@@ -75,6 +76,16 @@ const ALL_FILTERS = [
   { id: 'availability', name: 'Availability', description: 'Filter by spots available' },
   { id: 'price', name: 'Price', description: 'Filter by price range' },
 ];
+
+const TABLE_COLUMNS = [
+  { id: 'date', label: 'Date' },
+  { id: 'time', label: 'Time' },
+  { id: 'event', label: 'Event' },
+  { id: 'program', label: 'Program' },
+  { id: 'location', label: 'Location' },
+  { id: 'spots', label: 'Spots' },
+  { id: 'action', label: 'Action' },
+] as const;
 
 export default function EditPagePage({ params }: { params: { slug: string } }) {
   const router = useRouter();
@@ -135,6 +146,19 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
   }
 
   if (!config) return null;
+
+  const defaultTableColumns = TABLE_COLUMNS.map(column => column.id);
+  const activeTableColumns = (config.features.tableColumns && config.features.tableColumns.length > 0)
+    ? config.features.tableColumns
+    : defaultTableColumns;
+
+  const updateTableColumns = (nextColumns: typeof defaultTableColumns) => {
+    const orderedColumns = defaultTableColumns.filter(columnId => nextColumns.includes(columnId));
+    setConfig({
+      ...config,
+      features: { ...config.features, tableColumns: orderedColumns }
+    });
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -591,6 +615,29 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                 />
                 <span>Show Table view option on desktop (great for high-volume events)</span>
               </label>
+              <div className="rounded-lg border border-gray-200 p-3 bg-gray-50">
+                <div className="text-sm font-medium text-gray-900">Table columns</div>
+                <p className="text-xs text-gray-500 mt-1">Controls which columns appear in schedule table view.</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {TABLE_COLUMNS.map((column) => (
+                    <label key={column.id} className="flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300"
+                        checked={activeTableColumns.includes(column.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            updateTableColumns([...activeTableColumns, column.id]);
+                          } else {
+                            updateTableColumns(activeTableColumns.filter(id => id !== column.id));
+                          }
+                        }}
+                      />
+                      <span>{column.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
             
             <hr className="my-6" />
