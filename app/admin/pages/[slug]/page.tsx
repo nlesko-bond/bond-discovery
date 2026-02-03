@@ -46,6 +46,7 @@ interface PageConfig {
     allowViewToggle: boolean;
     showTableView?: boolean;
     tableColumns?: ('date' | 'time' | 'event' | 'program' | 'location' | 'spots' | 'action')[];
+    allowTableViewOnMobile?: boolean;
     // Tab visibility
     enabledTabs?: ('programs' | 'schedule')[];
     // Program filtering
@@ -637,6 +638,21 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                     </label>
                   ))}
                 </div>
+                <label className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300"
+                    checked={config.features.allowTableViewOnMobile || false}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      features: { ...config.features, allowTableViewOnMobile: e.target.checked }
+                    })}
+                  />
+                  <div>
+                    <span className="font-medium">Allow table view on mobile</span>
+                    <p className="text-xs text-gray-500">Enable for compact tables (2-3 columns) that fit on small screens</p>
+                  </div>
+                </label>
               </div>
             </div>
             
