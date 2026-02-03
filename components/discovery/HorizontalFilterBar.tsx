@@ -265,7 +265,7 @@ export function HorizontalFilterBar({
         } as React.CSSProperties}
       >
         {/* Search Input with Autocomplete */}
-        {enabledFilters.includes('search') && (
+        {enabledFilters.includes('search') && config.features.showSearch !== false && (
           <div ref={searchRef} className="relative">
             <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
               <Search size={14} className="text-gray-400" />

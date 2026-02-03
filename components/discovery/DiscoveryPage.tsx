@@ -943,23 +943,25 @@ export function DiscoveryPage({
                 )}
 
                 {/* Share Button */}
-                <button
-                  onClick={handleShare}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Copy link to clipboard"
-                >
-                  {showCopied ? (
-                    <>
-                      <Check size={16} className="text-green-600" />
-                      <span className="hidden sm:inline text-green-600">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <LinkIcon size={16} />
-                      <span className="hidden sm:inline">Share</span>
-                    </>
-                  )}
-                </button>
+                {config.features.showShareButton !== false && (
+                  <button
+                    onClick={handleShare}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Copy link to clipboard"
+                  >
+                    {showCopied ? (
+                      <>
+                        <Check size={16} className="text-green-600" />
+                        <span className="hidden sm:inline text-green-600">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <LinkIcon size={16} />
+                        <span className="hidden sm:inline">Share</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1062,7 +1064,7 @@ export function DiscoveryPage({
           </div>
           
           {/* Share Button - shown here when header is hidden */}
-          {config.features.headerDisplay === 'hidden' && (
+          {config.features.headerDisplay === 'hidden' && config.features.showShareButton !== false && (
             <button
               onClick={handleShare}
               className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200 flex-shrink-0"
@@ -1122,6 +1124,7 @@ export function DiscoveryPage({
         options={filterOptions}
         enabledFilters={config.features.enableFilters}
         resultCount={filteredPrograms.length}
+        showSearch={config.features.showSearch !== false}
       />
 
       {/* Footer */}

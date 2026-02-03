@@ -18,6 +18,7 @@ interface MobileFiltersProps {
   };
   enabledFilters: FilterType[];
   resultCount: number;
+  showSearch?: boolean; // Override to hide search (default: true)
 }
 
 export function MobileFilters({
@@ -28,6 +29,7 @@ export function MobileFilters({
   options,
   enabledFilters,
   resultCount,
+  showSearch = true,
 }: MobileFiltersProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -91,7 +93,7 @@ export function MobileFilters({
         {/* Filters Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {/* Search */}
-          {isEnabled('search') && (
+          {isEnabled('search') && showSearch && (
             <div>
               <label className="label text-base">Search</label>
               <div className="relative">

@@ -48,6 +48,7 @@ export default function PagesPage() {
     apiKey: '',
   });
   const [creating, setCreating] = useState(false);
+  const [duplicating, setDuplicating] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPages();
@@ -133,6 +134,56 @@ export default function PagesPage() {
       fetchPages();
     } catch (error) {
       console.error('Error updating page:', error);
+    }
+  };
+
+  const duplicatePage = async (slug: string) => {
+    setDuplicating(slug);
+    try {
+      // Fetch the full page config
+      const res = await fetch(`/api/pages/${slug}`);
+      if (!res.ok) throw new Error('Failed to fetch page');
+      const { page } = await res.json();
+      
+      // Generate a unique slug
+      let newSlug = `${slug}-copy`;
+      let counter = 1;
+      // Check if slug already exists
+      while (pages.some(p => p.slug === newSlug)) {
+        newSlug = `${slug}-copy-${counter}`;
+        counter++;
+      }
+      
+      // Create duplicate page with all settings
+      const createRes = await fetch('/api/pages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${page.name} (Copy)`,
+          slug: newSlug,
+          organizationIds: page.organizationIds,
+          facilityIds: page.facilityIds || [],
+          apiKey: page.apiKey,
+          partner_group_id: page.partnerGroupId,
+          branding: page.branding,
+          features: page.features,
+          defaultParams: page.defaultParams,
+          cacheTtl: page.cacheTtl,
+          isActive: false, // Start as draft
+        }),
+      });
+      
+      if (createRes.ok) {
+        fetchPages();
+      } else {
+        const error = await createRes.json();
+        alert(error.error || 'Failed to duplicate page');
+      }
+    } catch (error) {
+      console.error('Error duplicating page:', error);
+      alert('Failed to duplicate page');
+    } finally {
+      setDuplicating(null);
     }
   };
 
@@ -405,6 +456,18 @@ export default function PagesPage() {
                       >
                         <Edit2 size={16} />
                       </Link>
+                      <button
+                        onClick={() => duplicatePage(page.slug)}
+                        disabled={duplicating === page.slug}
+                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-50"
+                        title="Duplicate page"
+                      >
+                        {duplicating === page.slug ? (
+                          <RefreshCw size={16} className="animate-spin" />
+                        ) : (
+                          <Copy size={16} />
+                        )}
+                      </button>
                       {page.slug !== 'toca' && (
                         <button
                           onClick={() => deletePage(page.slug)}

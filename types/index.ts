@@ -359,6 +359,9 @@ export interface FeatureConfig {
   showAvailability: boolean;
   showMembershipBadges: boolean;
   showAgeGender: boolean;
+  showSearch?: boolean; // Show search bar in filters (default: true)
+  showShareButton?: boolean; // Show share/copy link button (default: true)
+  showRegisterIcon?: boolean; // Show icon on Register buttons (default: true)
   enableFilters: FilterType[];
   defaultView: ViewMode;
   defaultScheduleView?: ScheduleViewType; // Default view for schedule tab

@@ -39,6 +39,9 @@ interface PageConfig {
     showAvailability: boolean;
     showMembershipBadges: boolean;
     showAgeGender: boolean;
+    showSearch?: boolean;
+    showShareButton?: boolean;
+    showRegisterIcon?: boolean;
     enableFilters: string[];
     defaultView: 'programs' | 'schedule';
     defaultScheduleView?: 'list' | 'table' | 'day' | 'week' | 'month';
@@ -591,6 +594,42 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   })}
                 />
                 <span>Show age and gender restrictions</span>
+              </label>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300"
+                  checked={config.features.showSearch !== false}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    features: { ...config.features, showSearch: e.target.checked }
+                  })}
+                />
+                <span>Show search bar</span>
+              </label>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300"
+                  checked={config.features.showShareButton !== false}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    features: { ...config.features, showShareButton: e.target.checked }
+                  })}
+                />
+                <span>Show share/copy link button</span>
+              </label>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300"
+                  checked={config.features.showRegisterIcon !== false}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    features: { ...config.features, showRegisterIcon: e.target.checked }
+                  })}
+                />
+                <span>Show icon on Register buttons</span>
               </label>
               <label className="flex items-center gap-3">
                 <input

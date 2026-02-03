@@ -1103,7 +1103,7 @@ function EventCard({
                 className="inline-flex items-center gap-1 font-medium ml-auto hover:opacity-80"
                 style={{ color: isRegistrationUnavailable ? '#6B7280' : secondaryColor }}
               >
-                {isRegistrationUnavailable ? 'Learn More' : 'Register'} <ExternalLink size={12} />
+                {isRegistrationUnavailable ? 'Learn More' : 'Register'} {config.features.showRegisterIcon !== false && <ExternalLink size={12} />}
               </a>
             )}
           </div>
@@ -1335,7 +1335,7 @@ function EventDetailModal({
                   : `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
               }}
             >
-              {isRegistrationUnavailable ? 'Learn More' : 'Register Now'} <ExternalLink size={16} />
+              {isRegistrationUnavailable ? 'Learn More' : 'Register Now'} {config.features.showRegisterIcon !== false && <ExternalLink size={16} />}
             </a>
           </div>
         )}
@@ -1478,7 +1478,7 @@ function TableView({
               )}
               {showSpotsColumn && (
                 <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:hidden w-auto">
-                  Spots
+                  Spots Left
                 </th>
               )}
               {showActionColumn && (
@@ -1640,8 +1640,8 @@ function TableView({
                           )}
                           style={!isRegistrationUnavailable ? { backgroundColor: secondaryColor } : undefined}
                         >
-                          <span className="hidden min-[400px]:inline">{isRegistrationUnavailable ? 'Details' : 'Register'}</span>
-                          <ExternalLink size={12} />
+                          {isRegistrationUnavailable ? 'Details' : 'Register'}
+                          {config.features.showRegisterIcon !== false && <ExternalLink size={12} />}
                         </a>
                       )}
                     </td>
