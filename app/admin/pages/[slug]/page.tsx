@@ -823,11 +823,18 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   })}
                 >
                   <option value="list">List</option>
+                  {config.features.allowTableViewOnMobile && (
+                    <option value="table">Table</option>
+                  )}
                   <option value="day">Day</option>
                   <option value="week">Week Grid</option>
                   <option value="month">Month</option>
                 </select>
-                <p className="text-xs text-gray-500 mt-1">Default view on mobile devices (Table not recommended for mobile)</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {config.features.allowTableViewOnMobile 
+                    ? 'Default view on mobile devices'
+                    : 'Default view on mobile devices (enable "Allow table view on mobile" in Display Options for Table)'}
+                </p>
               </div>
               
               <div>
