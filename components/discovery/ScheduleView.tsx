@@ -581,7 +581,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
         </div>
       </div>
       
-      {/* Navigation - for calendar views */}
+      {/* Navigation - for calendar views (not table - table shows all events flat) */}
       {/* Sticky positioning uses CSS variable --sticky-offset from parent for dynamic header height */}
       <div 
         className={cn(
@@ -636,8 +636,8 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
             <ChevronRight size={20} />
           </button>
         </div>
-      ) : viewMode === 'list' ? null : (
-        /* Week Navigation - Compact */
+      ) : viewMode === 'list' || viewMode === 'table' ? null : (
+        /* Week Navigation - Compact (not for list/table which show all events) */
         <div 
           className="flex items-center justify-between px-3 py-3 text-white rounded-t-lg"
           style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
@@ -1364,7 +1364,6 @@ function TableView({
   hideRegistrationLinks?: boolean;
   customRegistrationUrl?: string;
 }) {
-  const [sortField, setSortField] = useState<'date' | 'time' | 'program' | 'price'>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [visibleCount, setVisibleCount] = useState(50);
   
@@ -1382,43 +1381,24 @@ function TableView({
   const showSpotsColumn = tableColumns.includes('spots') && config.features.showAvailability;
   const showActionColumn = tableColumns.includes('action') && !hideRegistrationLinks;
   
-  // Sort events
+  // Sort events by date + time
   const sortedEvents = useMemo(() => {
     const sorted = [...events].sort((a, b) => {
-      let comparison = 0;
-      
-      switch (sortField) {
-        case 'date':
-          comparison = new Date(a.date + 'T' + a.startTime).getTime() - new Date(b.date + 'T' + b.startTime).getTime();
-          break;
-        case 'time':
-          comparison = a.startTime.localeCompare(b.startTime);
-          break;
-        case 'program':
-          comparison = (a.programName || '').localeCompare(b.programName || '');
-          break;
-        case 'price':
-          comparison = (a.startingPrice || 0) - (b.startingPrice || 0);
-          break;
-      }
-      
+      // Always sort by date first, then by start time
+      const dateA = new Date(a.date + 'T' + (a.startTime || '00:00')).getTime();
+      const dateB = new Date(b.date + 'T' + (b.startTime || '00:00')).getTime();
+      const comparison = dateA - dateB;
       return sortDirection === 'asc' ? comparison : -comparison;
     });
     
     return sorted.slice(0, visibleCount);
-  }, [events, sortField, sortDirection, visibleCount]);
+  }, [events, sortDirection, visibleCount]);
   
-  const handleSort = (field: typeof sortField) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
+  const toggleSortDirection = () => {
+    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
   };
   
-  const SortIcon = ({ field }: { field: typeof sortField }) => {
-    if (sortField !== field) return null;
+  const SortIcon = () => {
     return sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
   };
   
@@ -1466,55 +1446,43 @@ function TableView({
       {/* Table */}
       <div className="print:overflow-visible">
         <table className="w-full print:text-xs border-collapse">
-          <thead className="bg-gray-50 sticky z-10" style={{ top: stickyOffset }}>
-            <tr className="border-b border-gray-200 bg-gray-50 print:bg-gray-100">
+          <thead 
+            className="sticky z-10 text-white rounded-t-lg" 
+            style={{ top: stickyOffset, background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
+          >
+            <tr className="print:bg-gray-100 print:text-gray-600">
               {showDateColumn && (
-                <th 
-                className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors print:px-2 print:py-1"
-                onClick={() => handleSort('date')}
-                >
-                  <span className="flex items-center gap-1">
-                    Date <SortIcon field="date" />
-                  </span>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600 w-auto first:rounded-tl-lg">
+                  Date
                 </th>
               )}
               {showTimeColumn && (
-                <th 
-                className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors print:px-2 print:py-1"
-                onClick={() => handleSort('time')}
-                >
-                  <span className="flex items-center gap-1">
-                    Time <SortIcon field="time" />
-                  </span>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600 w-auto">
+                  Time
                 </th>
               )}
               {showEventColumn && (
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider print:px-2 print:py-1">
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600 w-auto">
                   Event
                 </th>
               )}
               {showProgramColumn && (
-                <th 
-                className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors print:px-2 print:py-1"
-                onClick={() => handleSort('program')}
-                >
-                  <span className="flex items-center gap-1">
-                    Program <SortIcon field="program" />
-                  </span>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600 w-auto">
+                  Program
                 </th>
               )}
               {showLocationColumn && (
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider print:px-2 print:py-1">
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600 w-auto">
                   Location
                 </th>
               )}
               {showSpotsColumn && (
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider print:hidden">
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:hidden w-auto">
                   Spots
                 </th>
               )}
               {showActionColumn && (
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider print:hidden">
+                <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider print:hidden w-20 sm:w-auto last:rounded-tr-lg">
                   Action
                 </th>
               )}
@@ -1540,8 +1508,8 @@ function TableView({
                 >
                   {/* Date */}
                   {showDateColumn && (
-                    <td className="px-4 py-3 whitespace-nowrap print:px-2 print:py-1">
-                      <div className="text-sm font-medium text-gray-900">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1">
+                      <div className="text-xs sm:text-sm font-medium text-gray-900">
                         {format(parseISO(event.date), 'EEE, MMM d')}
                       </div>
                     </td>
@@ -1549,8 +1517,8 @@ function TableView({
                   
                   {/* Time */}
                   {showTimeColumn && (
-                    <td className="px-4 py-3 whitespace-nowrap print:px-2 print:py-1">
-                      <div className="text-sm text-gray-700">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1">
+                      <div className="text-xs sm:text-sm text-gray-700 whitespace-nowrap">
                         {formatTime(event.startTime, event.timezone) || 'TBD'}
                         {event.endTime && ` - ${formatTime(event.endTime, event.timezone)}`}
                       </div>
@@ -1641,7 +1609,7 @@ function TableView({
                   
                   {/* Action */}
                   {showActionColumn && (
-                    <td className="px-4 py-3 text-right whitespace-nowrap print:hidden">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-right whitespace-nowrap print:hidden">
                       {!hideRegistrationLinks && event.linkSEO && (
                         <a 
                           href={customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
@@ -1665,14 +1633,14 @@ function TableView({
                             }
                           }}
                           className={cn(
-                            'inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors print:hidden',
+                            'inline-flex items-center justify-center gap-1 px-2 min-[400px]:px-3 py-1.5 text-xs font-medium rounded-lg transition-colors print:hidden',
                             isRegistrationUnavailable
                               ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                               : 'text-white hover:opacity-90'
                           )}
                           style={!isRegistrationUnavailable ? { backgroundColor: secondaryColor } : undefined}
                         >
-                          {isRegistrationUnavailable ? 'Details' : 'Register'}
+                          <span className="hidden min-[400px]:inline">{isRegistrationUnavailable ? 'Details' : 'Register'}</span>
                           <ExternalLink size={12} />
                         </a>
                       )}
