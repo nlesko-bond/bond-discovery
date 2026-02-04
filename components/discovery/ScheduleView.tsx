@@ -1442,7 +1442,7 @@ function TableView({
   }, []);
   
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 print:shadow-none print:border-0 overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 print:shadow-none print:border-0">
       {/* Table */}
       <div className="print:overflow-visible">
         <table className="w-full print:text-xs border-collapse">
