@@ -1442,7 +1442,7 @@ function TableView({
   }, []);
   
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 print:shadow-none print:border-0">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 print:shadow-none print:border-0 overflow-hidden">
       {/* Table */}
       <div className="print:overflow-visible">
         <table className="w-full print:text-xs border-collapse">
@@ -1452,37 +1452,37 @@ function TableView({
           >
             <tr className="print:bg-gray-100 print:text-gray-600">
               {showDateColumn && (
-                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600 w-auto first:rounded-tl-lg">
+                <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600 first:rounded-tl-lg">
                   Date
                 </th>
               )}
               {showTimeColumn && (
-                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600 w-auto">
+                <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
                   Time
                 </th>
               )}
               {showEventColumn && (
-                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600 w-auto">
+                <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
                   Event
                 </th>
               )}
               {showProgramColumn && (
-                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600 w-auto">
+                <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
                   Program
                 </th>
               )}
               {showLocationColumn && (
-                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600 w-auto">
+                <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
                   Location
                 </th>
               )}
               {showSpotsColumn && (
-                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:hidden w-auto">
+                <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:hidden">
                   Spots Left
                 </th>
               )}
               {showActionColumn && (
-                <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider print:hidden w-20 sm:w-auto last:rounded-tr-lg">
+                <th className="px-2 sm:px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider print:hidden last:rounded-tr-lg">
                   Action
                 </th>
               )}
@@ -1506,21 +1506,31 @@ function TableView({
                   )}
                   onClick={() => onEventClick(event)}
                 >
-                  {/* Date */}
+                  {/* Date - stacks only on very small screens */}
                   {showDateColumn && (
                     <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1">
                       <div className="text-xs sm:text-sm font-medium text-gray-900">
-                        {format(parseISO(event.date), 'EEE, MMM d')}
+                        <span className="hidden min-[480px]:inline whitespace-nowrap">{format(parseISO(event.date), 'EEE, MMM d')}</span>
+                        <span className="min-[480px]:hidden">
+                          <span className="block">{format(parseISO(event.date), 'EEE,')}</span>
+                          <span className="block">{format(parseISO(event.date), 'MMM d')}</span>
+                        </span>
                       </div>
                     </td>
                   )}
                   
-                  {/* Time */}
+                  {/* Time - stacks only on very small screens */}
                   {showTimeColumn && (
                     <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1">
-                      <div className="text-xs sm:text-sm text-gray-700 whitespace-nowrap max-[355px]:whitespace-normal">
-                        {formatTime(event.startTime, event.timezone) || 'TBD'}
-                        {event.endTime && ` - ${formatTime(event.endTime, event.timezone)}`}
+                      <div className="text-xs sm:text-sm text-gray-700">
+                        <span className="hidden min-[480px]:inline whitespace-nowrap">
+                          {formatTime(event.startTime, event.timezone) || 'TBD'}
+                          {event.endTime && ` - ${formatTime(event.endTime, event.timezone)}`}
+                        </span>
+                        <span className="min-[480px]:hidden">
+                          <span className="block whitespace-nowrap">{formatTime(event.startTime, event.timezone) || 'TBD'}{event.endTime && ' -'}</span>
+                          {event.endTime && <span className="block whitespace-nowrap">{formatTime(event.endTime, event.timezone)}</span>}
+                        </span>
                       </div>
                     </td>
                   )}
@@ -1591,15 +1601,15 @@ function TableView({
                   
                   {/* Availability */}
                   {showSpotsColumn && (
-                    <td className="px-4 py-3 whitespace-nowrap print:hidden">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 print:hidden">
                       {event.spotsRemaining !== undefined ? (
                         <span className={cn(
-                          'text-xs font-medium px-2 py-1 rounded-full',
+                          'text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap',
                           isFull && 'bg-red-100 text-red-700',
                           isAlmostFull && 'bg-yellow-100 text-yellow-700',
                           !isFull && !isAlmostFull && 'bg-green-100 text-green-700'
                         )}>
-                          {isFull ? 'Full' : `${event.spotsRemaining} left`}
+                          {isFull ? 'Full' : `${event.spotsRemaining}`}
                         </span>
                       ) : (
                         <span className="text-xs text-gray-400">—</span>
@@ -1609,7 +1619,7 @@ function TableView({
                   
                   {/* Action */}
                   {showActionColumn && (
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-right whitespace-nowrap print:hidden">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-right print:hidden">
                       {!hideRegistrationLinks && event.linkSEO && (
                         <a 
                           href={customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
@@ -1633,7 +1643,7 @@ function TableView({
                             }
                           }}
                           className={cn(
-                            'inline-flex items-center justify-center gap-1 px-2 min-[400px]:px-3 py-1.5 text-xs font-medium rounded-lg transition-colors print:hidden',
+                            'inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors print:hidden',
                             isRegistrationUnavailable
                               ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                               : 'text-white hover:opacity-90'
