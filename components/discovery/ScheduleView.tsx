@@ -1477,8 +1477,9 @@ function TableView({
                 </th>
               )}
               {showSpotsColumn && (
-                <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:hidden">
-                  Spots Left
+                <th className="px-1 min-[480px]:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:hidden">
+                  <span className="hidden min-[480px]:inline">Spots Left</span>
+                  <span className="min-[480px]:hidden">Spots<br/>Left</span>
                 </th>
               )}
               {showActionColumn && (
@@ -1506,15 +1507,11 @@ function TableView({
                   )}
                   onClick={() => onEventClick(event)}
                 >
-                  {/* Date - stacks only on very small screens */}
+                  {/* Date - always one line */}
                   {showDateColumn && (
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1 whitespace-nowrap">
                       <div className="text-xs sm:text-sm font-medium text-gray-900">
-                        <span className="hidden min-[480px]:inline whitespace-nowrap">{format(parseISO(event.date), 'EEE, MMM d')}</span>
-                        <span className="min-[480px]:hidden">
-                          <span className="block">{format(parseISO(event.date), 'EEE,')}</span>
-                          <span className="block">{format(parseISO(event.date), 'MMM d')}</span>
-                        </span>
+                        {format(parseISO(event.date), 'EEE, MMM d')}
                       </div>
                     </td>
                   )}
