@@ -1483,7 +1483,7 @@ function TableView({
                 </th>
               )}
               {showActionColumn && (
-                <th className="px-2 sm:px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider print:hidden last:rounded-tr-lg">
+                <th className="px-2 sm:px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider print:hidden last:rounded-tr-lg">
                   Action
                 </th>
               )}
@@ -1616,7 +1616,7 @@ function TableView({
                   
                   {/* Action */}
                   {showActionColumn && (
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-right print:hidden">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-center print:hidden">
                       {!hideRegistrationLinks && event.linkSEO && (
                         <a 
                           href={customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
