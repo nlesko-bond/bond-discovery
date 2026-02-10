@@ -111,7 +111,6 @@ export async function getAllPageConfigs(): Promise<DiscoveryConfig[]> {
       *,
       partner_group:partner_groups(api_key, gtm_id)
     `)
-    .eq('is_active', true)
     .order('name');
   
   if (error) {
