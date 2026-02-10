@@ -830,7 +830,7 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   onChange={(e) => setConfig({ ...config, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })}
                   placeholder="page-url-slug"
                 />
-                <p className="text-xs text-gray-500 mt-1">URL: /{config.slug}</p>
+                <p className="text-xs text-gray-500 mt-1">Page URL: /{config.slug}</p>
               </div>
               
               <div>
