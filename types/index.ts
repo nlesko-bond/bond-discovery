@@ -300,6 +300,9 @@ export interface DiscoveryConfig {
   name: string;
   slug: string; // URL path (e.g., "toca" for /toca)
   
+  // Partner Group (for API key inheritance)
+  partnerGroupId?: string;
+  
   // Organization/Facility
   organizationIds: string[];
   facilityIds: string[];

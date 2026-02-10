@@ -129,6 +129,10 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
       
       if (res.ok) {
         alert('Page saved successfully!');
+        // If slug was changed, redirect to the new URL
+        if (config.slug !== params.slug) {
+          router.push(`/admin/pages/${config.slug}`);
+        }
       } else {
         const error = await res.json();
         alert(error.error || 'Failed to save page');
@@ -815,6 +819,18 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   value={config.name}
                   onChange={(e) => setConfig({ ...config, name: e.target.value })}
                 />
+              </div>
+              
+              <div>
+                <label className="label">URL Slug</label>
+                <input
+                  type="text"
+                  className="input"
+                  value={config.slug}
+                  onChange={(e) => setConfig({ ...config, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })}
+                  placeholder="page-url-slug"
+                />
+                <p className="text-xs text-gray-500 mt-1">URL: /{config.slug}</p>
               </div>
               
               <div>

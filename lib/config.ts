@@ -42,6 +42,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
     id: row.id,
     name: row.name,
     slug: row.slug,
+    partnerGroupId: row.partner_group_id || undefined,
     organizationIds: row.organization_ids.map(String),
     facilityIds: row.facility_ids?.map(String) || [],
     excludedProgramIds: (row as any).excluded_program_ids?.map(String) || features.excludedProgramIds || undefined,
@@ -204,15 +205,13 @@ export async function createPageConfig(config: {
         fontFamily: config.branding?.fontFamily || null,
       },
       features: {
-        showPricing: config.features?.showPricing ?? true,
-        showAvailability: config.features?.showAvailability ?? true,
-        showMembershipBadges: config.features?.showMembershipBadges ?? true,
-        showAgeGender: config.features?.showAgeGender ?? true,
+        // Spread defaults first, then override with provided features
+        ...defaultConfig.features,
+        ...config.features,
+        // Ensure enableFilters has a sensible default if empty/missing
         enableFilters: (config.features?.enableFilters && config.features.enableFilters.length > 0) 
           ? config.features.enableFilters 
-          : ['search', 'facility', 'programType', 'sport', 'age', 'dateRange', 'program'],
-        defaultView: config.features?.defaultView || 'programs',
-        allowViewToggle: config.features?.allowViewToggle ?? true,
+          : defaultConfig.features.enableFilters,
       },
       allowed_params: config.allowedParams || ['viewMode', 'facilityIds', 'programIds', 'programTypes', 'search'],
       default_params: config.defaultParams || {},
@@ -240,6 +239,7 @@ export async function updatePageConfig(slug: string, updates: Partial<DiscoveryC
   const updateData: any = {};
   
   if (updates.name !== undefined) updateData.name = updates.name;
+  if (updates.slug !== undefined) updateData.slug = updates.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
   if (updates.organizationIds !== undefined) updateData.organization_ids = updates.organizationIds.map(Number);
   if (updates.facilityIds !== undefined) updateData.facility_ids = updates.facilityIds.map(Number);
   if (updates.apiKey !== undefined) updateData.api_key = updates.apiKey;
@@ -266,13 +266,15 @@ export async function updatePageConfig(slug: string, updates: Partial<DiscoveryC
   }
   
   // Fetch the updated record using admin client
+  // Use the new slug if it was changed, otherwise use the original
+  const fetchSlug = updateData.slug || slug;
   const { data, error: fetchError } = await supabaseAdmin
     .from('discovery_pages')
     .select(`
       *,
       partner_group:partner_groups(api_key, gtm_id)
     `)
-    .eq('slug', slug)
+    .eq('slug', fetchSlug)
     .single();
   
   if (fetchError || !data) {
