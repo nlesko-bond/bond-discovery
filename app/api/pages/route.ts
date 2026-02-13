@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllPageConfigs, createPageConfig, defaultConfig } from '@/lib/config';
 
+// Disable caching for this route - always fetch fresh data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const pages = await getAllPageConfigs();
-    return NextResponse.json({ pages });
+    return NextResponse.json({ pages }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
   } catch (error) {
     console.error('Error fetching pages:', error);
     return NextResponse.json({ error: 'Failed to fetch pages' }, { status: 500 });

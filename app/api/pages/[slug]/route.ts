@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfigBySlug, updatePageConfig, deletePageConfig } from '@/lib/config';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface RouteParams {
   params: { slug: string };
 }
@@ -13,7 +17,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Page not found' }, { status: 404 });
     }
     
-    return NextResponse.json({ page: config });
+    return NextResponse.json({ page: config }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
   } catch (error) {
     console.error('Error fetching page:', error);
     return NextResponse.json({ error: 'Failed to fetch page' }, { status: 500 });
