@@ -78,6 +78,7 @@ interface TransformedEvent {
   registrationWindowStatus?: string;
   maxParticipants?: number;
   currentParticipants?: number;
+  spotsRemaining?: number;
   // Pricing
   startingPrice?: number;
   memberPrice?: number;
@@ -253,7 +254,8 @@ export async function GET(request: Request) {
                 linkSEO: session.linkSEO || program.linkSEO,
                 registrationWindowStatus: sessionRegistrationStatus,
                 maxParticipants: event.maxParticipants,
-                currentParticipants: event.currentParticipants,
+                currentParticipants: event.participantsNumber || event.currentParticipants || 0,
+                spotsRemaining: event.spotsLeft ?? (event.maxParticipants ? event.maxParticipants - (event.participantsNumber || 0) : undefined),
                 startingPrice,
                 memberPrice,
                 // Waitlist - get from session or event

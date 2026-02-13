@@ -318,7 +318,10 @@ export function transformPrice(raw: any): Price {
  */
 export function transformEvent(raw: any): SessionEvent {
   const maxParticipants = raw.max_participants || raw.maxParticipants || raw.capacity;
-  const currentParticipants = raw.current_participants || raw.currentParticipants || raw.current_enrollment || 0;
+  // Bond API uses participantsNumber for current participants
+  const currentParticipants = raw.participantsNumber || raw.current_participants || raw.currentParticipants || raw.current_enrollment || 0;
+  // Bond API returns spotsLeft directly - use it if available, otherwise calculate
+  const spotsRemaining = raw.spotsLeft ?? (maxParticipants ? Math.max(0, maxParticipants - currentParticipants) : undefined);
   
   return {
     id: String(raw.id),
@@ -335,7 +338,7 @@ export function transformEvent(raw: any): SessionEvent {
     instructor: raw.instructor || raw.instructor_name || raw.instructorName,
     maxParticipants,
     currentParticipants,
-    spotsRemaining: maxParticipants ? Math.max(0, maxParticipants - currentParticipants) : undefined,
+    spotsRemaining,
     status: raw.status || 'scheduled',
   };
 }

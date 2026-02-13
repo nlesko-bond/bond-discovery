@@ -716,6 +716,7 @@ export function DiscoveryPage({
         color: getSportGradient(event.sport || ''),
         maxParticipants: event.maxParticipants,
         currentParticipants: event.currentParticipants,
+        spotsRemaining: event.spotsRemaining,
         startingPrice: event.startingPrice,
         memberPrice: event.memberPrice,
         registrationWindowStatus: event.registrationWindowStatus,
