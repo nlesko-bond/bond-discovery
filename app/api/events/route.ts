@@ -231,6 +231,9 @@ export async function GET(request: Request) {
             const transformEvent = (event: any, segmentId?: string, segmentName?: string): TransformedEvent | null => {
               // Use event's timezone exactly as Bond returns it (no conversion)
               const eventTimezone = event.timezone;
+              const maxParticipants = event.maxParticipants ?? event.max_participants ?? event.capacity;
+              const currentParticipants = event.participantsNumber ?? event.currentParticipants ?? event.current_participants ?? 0;
+              const spotsRemaining = event.spotsLeft ?? event.spots_left ?? (maxParticipants !== undefined && maxParticipants !== null ? Math.max(0, maxParticipants - currentParticipants) : undefined);
               
               // Extract resource names (court/field) from resources array
               const resourceNames = event.resources && Array.isArray(event.resources) 
@@ -253,9 +256,9 @@ export async function GET(request: Request) {
                 type: program.type,
                 linkSEO: session.linkSEO || program.linkSEO,
                 registrationWindowStatus: sessionRegistrationStatus,
-                maxParticipants: event.maxParticipants,
-                currentParticipants: event.participantsNumber || event.currentParticipants || 0,
-                spotsRemaining: event.spotsLeft ?? (event.maxParticipants ? event.maxParticipants - (event.participantsNumber || 0) : undefined),
+                maxParticipants,
+                currentParticipants,
+                spotsRemaining,
                 startingPrice,
                 memberPrice,
                 // Waitlist - get from session or event
@@ -309,7 +312,7 @@ export async function GET(request: Request) {
                       program.id, 
                       session.id, 
                       segment.id,
-                      { expand: 'resources' }
+                      { expand: 'resources,capacity' }
                     );
                     const segmentEvents = segmentEventsResponse.data || [];
                     
@@ -329,7 +332,7 @@ export async function GET(request: Request) {
               } else {
                 // Non-segmented session - fetch events directly
                 const eventsResponse = await client.getEvents(orgId, program.id, session.id, {
-                  expand: 'resources'
+                  expand: 'resources,capacity'
                 });
                 const events = eventsResponse.data || [];
                 

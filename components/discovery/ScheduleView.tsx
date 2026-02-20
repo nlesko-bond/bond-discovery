@@ -945,7 +945,7 @@ function EventCard({
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
   
-  const spotsInfo = event.spotsRemaining !== undefined && event.maxParticipants;
+  const spotsInfo = event.spotsRemaining !== undefined;
   const isFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 0;
   const isAlmostFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 5 && !isFull;
   
@@ -1231,12 +1231,14 @@ function EventDetailModal({
           )}
 
           {/* Capacity */}
-          {config.features.showAvailability && event.maxParticipants && (
+          {config.features.showAvailability && event.spotsRemaining !== undefined && (
             <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
               <Users className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: secondaryColor }} />
               <div>
                 <p className="font-semibold text-gray-900">
-                  {event.currentParticipants || 0} / {event.maxParticipants} Enrolled
+                  {event.maxParticipants !== undefined
+                    ? `${event.currentParticipants || 0} / ${event.maxParticipants} Enrolled`
+                    : `${event.currentParticipants || 0} Enrolled`}
                 </p>
                 {event.spotsRemaining !== undefined && (
                   <p className={cn(
