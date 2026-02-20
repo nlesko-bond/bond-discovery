@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createBondClient, DEFAULT_API_KEY, DEFAULT_ORG_IDS } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
-import { cached, programsCacheKey } from '@/lib/cache';
 import { getConfigBySlug } from '@/lib/config';
 import { Program } from '@/types';
 
@@ -14,6 +13,7 @@ export async function GET(request: Request) {
   // Get slug to look up page config for program filtering
   const slug = searchParams.get('slug');
   const pageConfig = slug ? await getConfigBySlug(slug) : null;
+  const apiKey = pageConfig?.apiKey || searchParams.get('apiKey') || DEFAULT_API_KEY;
   
   // Program filtering: determine mode and IDs
   const programFilterMode = pageConfig?.features?.programFilterMode || 'all';
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
   const today = new Date().toISOString().split('T')[0];
 
   try {
-    const client = createBondClient(DEFAULT_API_KEY);
+    const client = createBondClient(apiKey);
     const allPrograms: Program[] = [];
 
     // Fetch programs from all organizations in parallel

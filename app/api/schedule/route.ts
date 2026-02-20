@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createBondClient, DEFAULT_API_KEY, DEFAULT_ORG_IDS } from '@/lib/bond-client';
 import { transformProgram, programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers';
 import { cached, programsCacheKey, scheduleCacheKey } from '@/lib/cache';
+import { getConfigBySlug } from '@/lib/config';
 import { Program, CalendarEvent, WeekSchedule } from '@/types';
 import { format, addWeeks } from 'date-fns';
 
@@ -10,9 +11,14 @@ export const revalidate = 300;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+  const slug = searchParams.get('slug');
+  const pageConfig = slug ? await getConfigBySlug(slug) : null;
+  const apiKey = pageConfig?.apiKey || searchParams.get('apiKey') || DEFAULT_API_KEY;
   
   const orgIdsParam = searchParams.get('orgIds');
-  const orgIds = orgIdsParam 
+  const orgIds = pageConfig?.organizationIds?.length
+    ? pageConfig.organizationIds
+    : orgIdsParam 
     ? orgIdsParam.split(/[_,]/).filter(Boolean)
     : DEFAULT_ORG_IDS;
   
@@ -25,13 +31,13 @@ export async function GET(request: Request) {
   const endDate = format(addWeeks(today, weeks), 'yyyy-MM-dd');
 
   try {
-    const client = createBondClient(DEFAULT_API_KEY);
+    const client = createBondClient(apiKey);
     const allPrograms: Program[] = [];
 
     // Fetch programs from all organizations in parallel
     const promises = orgIds.map(async (orgId) => {
       try {
-        const cacheKey = programsCacheKey(orgId, facilityId);
+        const cacheKey = programsCacheKey(orgId, facilityId, apiKey);
         
         const response = await cached(
           cacheKey,

@@ -13,13 +13,14 @@ interface PageProps {
 }
 
 async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
-  const client = createBondClient(DEFAULT_API_KEY);
+  const apiKey = config.apiKey || DEFAULT_API_KEY;
+  const client = createBondClient(apiKey);
   const allPrograms: Program[] = [];
   const orgIds = config.organizationIds;
   
   const promises = orgIds.map(async (orgId) => {
     try {
-      const cacheKey = programsCacheKey(orgId);
+      const cacheKey = programsCacheKey(orgId, undefined, apiKey);
       
       const response = await cached(
         cacheKey,

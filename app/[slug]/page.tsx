@@ -24,7 +24,7 @@ async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
   // Fetch programs from all organizations in parallel
   const promises = orgIds.map(async (orgId) => {
     try {
-      const cacheKey = programsCacheKey(orgId);
+      const cacheKey = programsCacheKey(orgId, undefined, apiKey);
       
       const response = await cached(
         cacheKey,

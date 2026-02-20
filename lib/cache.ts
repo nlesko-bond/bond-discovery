@@ -136,10 +136,14 @@ export async function cacheClear(): Promise<void> {
 /**
  * Generate a cache key for programs
  */
-export function programsCacheKey(orgId: string, facilityId?: string): string {
-  return facilityId 
-    ? `programs:${orgId}:${facilityId}` 
-    : `programs:${orgId}`;
+export function programsCacheKey(orgId: string, facilityId?: string, apiKey?: string): string {
+  const keyScope = apiKey
+    ? apiKey.split('').reduce((hash, ch) => ((hash * 31) + ch.charCodeAt(0)) >>> 0, 0).toString(16)
+    : 'default';
+
+  return facilityId
+    ? `programs:${orgId}:${facilityId}:${keyScope}`
+    : `programs:${orgId}:${keyScope}`;
 }
 
 /**
