@@ -63,6 +63,10 @@ interface PageConfig {
     headerDisplay?: 'full' | 'minimal' | 'hidden';
     disableStickyHeader?: boolean;
     linkBehavior?: 'new_tab' | 'same_window' | 'in_frame';
+    // Discovery cache controls
+    discoveryCacheEnabled?: boolean;
+    availabilityCacheTtl?: number;
+    discoveryRefreshPolicy?: '5min' | '15min' | '30min' | '60min';
   };
   defaultParams?: Record<string, string>;
   cacheTtl?: number;
@@ -1083,6 +1087,58 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                     onChange={(e) => setConfig({ ...config, cacheTtl: parseInt(e.target.value) || 300 })}
                   />
                   <p className="text-xs text-gray-500 mt-1">How long to cache API data</p>
+                </div>
+
+                <div>
+                  <label className="label">Discovery Cache Mode</label>
+                  <label className="flex items-center gap-3 mt-2">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300"
+                      checked={config.features.discoveryCacheEnabled !== false}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        features: { ...config.features, discoveryCacheEnabled: e.target.checked }
+                      })}
+                    />
+                    <div>
+                      <span className="font-medium">Enable cache-first schedule</span>
+                      <p className="text-xs text-gray-500">Uses warmed cache for fast loads with fresh availability overlay</p>
+                    </div>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="label">Availability Cache TTL (seconds)</label>
+                  <input
+                    type="number"
+                    min={15}
+                    className="input"
+                    value={config.features.availabilityCacheTtl || 60}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      features: { ...config.features, availabilityCacheTtl: parseInt(e.target.value) || 60 }
+                    })}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Short TTL for spots/waitlist freshness</p>
+                </div>
+
+                <div>
+                  <label className="label">Cache Warm Policy</label>
+                  <select
+                    className="input"
+                    value={config.features.discoveryRefreshPolicy || '15min'}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      features: { ...config.features, discoveryRefreshPolicy: e.target.value as '5min' | '15min' | '30min' | '60min' }
+                    })}
+                  >
+                    <option value="5min">Every 5 minutes</option>
+                    <option value="15min">Every 15 minutes</option>
+                    <option value="30min">Every 30 minutes</option>
+                    <option value="60min">Every 60 minutes</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">How often cron should refresh this page cache</p>
                 </div>
                 
                 <div>

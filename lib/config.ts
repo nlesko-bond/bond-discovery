@@ -56,7 +56,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
       linkBehavior, // Ensure camelCase for frontend
       includedProgramIds, // Ensure it's in features for admin UI
       tableColumns, // Cast to proper type
-      discoveryCacheEnabled: features.discoveryCacheEnabled ?? false,
+      discoveryCacheEnabled: features.discoveryCacheEnabled ?? true,
       availabilityCacheTtl: typeof features.availabilityCacheTtl === 'number' ? features.availabilityCacheTtl : 60,
       discoveryRefreshPolicy: features.discoveryRefreshPolicy || '15min',
     },
@@ -94,7 +94,7 @@ export const defaultConfig: DiscoveryConfig = {
     defaultView: 'programs',
     allowViewToggle: true,
     tableColumns: DEFAULT_TABLE_COLUMNS,
-    discoveryCacheEnabled: false,
+    discoveryCacheEnabled: true,
     availabilityCacheTtl: 60,
     discoveryRefreshPolicy: '15min',
   },
