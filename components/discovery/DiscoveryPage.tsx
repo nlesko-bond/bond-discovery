@@ -25,6 +25,8 @@ import { bondAnalytics } from '@/lib/analytics';
 
 interface DiscoveryPageProps {
   initialPrograms: Program[];
+  initialScheduleEvents?: any[];
+  initialEventsFetched?: boolean;
   config: DiscoveryConfig;
   initialViewMode: ViewMode;
   searchParams: { [key: string]: string | string[] | undefined };
@@ -32,6 +34,8 @@ interface DiscoveryPageProps {
 
 export function DiscoveryPage({ 
   initialPrograms, 
+  initialScheduleEvents = [],
+  initialEventsFetched = false,
   config, 
   initialViewMode,
   searchParams 
@@ -410,10 +414,11 @@ export function DiscoveryPage({
   }, [initialPrograms, filters]);
 
   // State for real events from API
-  const [apiEvents, setApiEvents] = useState<any[]>([]);
+  const [apiEvents, setApiEvents] = useState<any[]>(initialScheduleEvents);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [eventsError, setEventsError] = useState<string | null>(null);
-  const [eventsFetched, setEventsFetched] = useState(false);
+  const [eventsFetched, setEventsFetched] = useState(initialEventsFetched);
+  const cacheV2Enabled = config.features.discoveryCacheEnabled === true;
   
   // Ref to track the current fetch request for cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -425,11 +430,11 @@ export function DiscoveryPage({
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
-    setEventsFetched(false);
+    setEventsFetched(initialEventsFetched);
     setEventsLoading(false);
-    setApiEvents([]);
+    setApiEvents(initialScheduleEvents);
     setEventsError(null);
-  }, [config.slug, config.organizationIds.join(',')]);
+  }, [config.slug, config.organizationIds.join(','), initialEventsFetched, initialScheduleEvents]);
   
   // Fetch events from API when schedule view is selected
   useEffect(() => {
@@ -502,6 +507,52 @@ export function DiscoveryPage({
       abortController.abort();
     };
   }, [viewMode, eventsFetched, config.slug]);
+
+  // Keep waitlist/spots data fresher with a lightweight availability overlay.
+  useEffect(() => {
+    if (!cacheV2Enabled || apiEvents.length === 0) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const params = new URLSearchParams();
+    params.set('slug', config.slug);
+    params.set('mode', 'availability');
+
+    fetch(`/api/events?${params.toString()}`, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Availability API error: ${res.status}`);
+        return res.json();
+      })
+      .then((payload) => {
+        if (!payload?.data || !Array.isArray(payload.data)) return;
+        const availabilityById = new Map<string, any>();
+        payload.data.forEach((item: any) => {
+          availabilityById.set(String(item.id), item);
+        });
+
+        setApiEvents((prev) =>
+          prev.map((event) => {
+            const availability = availabilityById.get(String(event.id));
+            if (!availability) return event;
+            return {
+              ...event,
+              spotsRemaining: availability.spotsRemaining,
+              maxParticipants: availability.maxParticipants,
+              currentParticipants: availability.currentParticipants,
+              isWaitlistEnabled: availability.isWaitlistEnabled,
+              waitlistCount: availability.waitlistCount,
+            };
+          })
+        );
+      })
+      .catch((error) => {
+        if (controller.signal.aborted || error?.name === 'AbortError') return;
+        console.error('Availability refresh error:', error);
+      });
+
+    return () => controller.abort();
+  }, [cacheV2Enabled, config.slug, viewMode, apiEvents.length]);
   
   // Filter events based on current filters
   const filteredEvents = useMemo(() => {
@@ -841,11 +892,21 @@ export function DiscoveryPage({
 
   // Handle view mode change
   const handleViewModeChange = useCallback((newMode: ViewMode) => {
+    if (newMode === viewMode) return;
+
     // Track view mode change (GTM + Bond Analytics)
     gtmEvent.viewModeChanged(viewMode, newMode);
     bondAnalytics.viewModeChanged(config.slug, viewMode, newMode);
     setViewMode(newMode);
     updateUrl(filters, newMode);
+
+    // Keep tab switches feeling intentional by anchoring at page top.
+    // Without this, large content-height differences can feel jumpy.
+    if (typeof window !== 'undefined') {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      });
+    }
   }, [config.slug, filters, updateUrl, viewMode]);
 
   // Count active filters

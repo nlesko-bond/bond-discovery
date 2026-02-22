@@ -1403,6 +1403,26 @@ function TableView({
   const SortIcon = () => {
     return sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
   };
+
+  // Get sticky offset from CSS variable (set by parent DiscoveryPage based on header height)
+  // Must be declared before any conditional return to keep hook order stable.
+  const [stickyOffset, setStickyOffset] = useState(0);
+  
+  useEffect(() => {
+    // Read the CSS variable from the nearest ancestor that has it set
+    const updateOffset = () => {
+      const computedStyle = getComputedStyle(document.documentElement);
+      const offset = computedStyle.getPropertyValue('--sticky-offset')?.trim();
+      if (offset) {
+        setStickyOffset(parseInt(offset) || 0);
+      }
+    };
+    
+    updateOffset();
+    // Also listen for resize in case header height changes
+    window.addEventListener('resize', updateOffset);
+    return () => window.removeEventListener('resize', updateOffset);
+  }, []);
   
   if (isLoading && events.length === 0) {
     return (
@@ -1423,25 +1443,6 @@ function TableView({
       </div>
     );
   }
-  
-  // Get sticky offset from CSS variable (set by parent DiscoveryPage based on header height)
-  const [stickyOffset, setStickyOffset] = useState(0);
-  
-  useEffect(() => {
-    // Read the CSS variable from the nearest ancestor that has it set
-    const updateOffset = () => {
-      const computedStyle = getComputedStyle(document.documentElement);
-      const offset = computedStyle.getPropertyValue('--sticky-offset')?.trim();
-      if (offset) {
-        setStickyOffset(parseInt(offset) || 0);
-      }
-    };
-    
-    updateOffset();
-    // Also listen for resize in case header height changes
-    window.addEventListener('resize', updateOffset);
-    return () => window.removeEventListener('resize', updateOffset);
-  }, []);
   
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 print:shadow-none print:border-0">

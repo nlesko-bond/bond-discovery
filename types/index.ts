@@ -388,6 +388,12 @@ export interface FeatureConfig {
   customRegistrationUrl?: string; // Override registration URL for all links
   // Hide registration links
   hideRegistrationLinks?: boolean; // Hide all Register/Learn More buttons (default: false)
+  // Rollout flag for cache-first discovery schedule path
+  discoveryCacheEnabled?: boolean;
+  // TTL for availability overlay cache in seconds
+  availabilityCacheTtl?: number;
+  // Warm policy used by cron
+  discoveryRefreshPolicy?: '5min' | '15min' | '30min' | '60min';
 }
 
 export type FilterType = 

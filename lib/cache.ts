@@ -13,6 +13,14 @@ interface CacheOptions {
   tags?: string[]; // Cache tags for invalidation
 }
 
+export type DiscoveryRefreshPolicy = '5min' | '15min' | '30min' | '60min';
+const DISCOVERY_REFRESH_INTERVALS_MS: Record<DiscoveryRefreshPolicy, number> = {
+  '5min': 5 * 60 * 1000,
+  '15min': 15 * 60 * 1000,
+  '30min': 30 * 60 * 1000,
+  '60min': 60 * 60 * 1000,
+};
+
 /**
  * Get a value from cache
  */
@@ -158,6 +166,39 @@ export function scheduleCacheKey(orgId: string, startDate: string, endDate: stri
  */
 export function configCacheKey(configId: string): string {
   return `config:${configId}`;
+}
+
+/**
+ * Discovery events cache keys
+ */
+export function discoveryFullCacheKey(slug: string, scopeHash: string): string {
+  return `discovery:full:${slug}:${scopeHash}`;
+}
+
+export function discoveryAvailabilityCacheKey(slug: string, scopeHash: string): string {
+  return `discovery:availability:${slug}:${scopeHash}`;
+}
+
+export function discoveryLastRefreshedKey(slug: string): string {
+  return `discovery:lastRefreshed:${slug}`;
+}
+
+/**
+ * Discovery refresh policy helpers
+ */
+export async function shouldRefreshDiscovery(
+  slug: string,
+  policy: DiscoveryRefreshPolicy = '15min'
+): Promise<boolean> {
+  const key = discoveryLastRefreshedKey(slug);
+  const lastRefreshed = await cacheGet<number>(key);
+  if (!lastRefreshed) return true;
+  const interval = DISCOVERY_REFRESH_INTERVALS_MS[policy] || DISCOVERY_REFRESH_INTERVALS_MS['15min'];
+  return (Date.now() - lastRefreshed) >= interval;
+}
+
+export async function markDiscoveryRefreshed(slug: string): Promise<void> {
+  await cacheSet(discoveryLastRefreshedKey(slug), Date.now(), { ttl: 48 * 60 * 60 });
 }
 
 /**
