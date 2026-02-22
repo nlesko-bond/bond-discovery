@@ -39,7 +39,9 @@ export async function GET(request: NextRequest) {
   try {
     const configs = await getAllPageConfigs();
     const activeConfigs = configs.filter(
-      (config) => config.isActive && config.features.discoveryCacheEnabled === true
+      (config) =>
+        config.isActive !== false &&
+        config.features.discoveryCacheEnabled !== false
     );
 
     const toWarm: typeof activeConfigs = [];
