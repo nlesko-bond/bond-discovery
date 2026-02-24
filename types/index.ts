@@ -394,6 +394,10 @@ export interface FeatureConfig {
   availabilityCacheTtl?: number;
   // Warm policy used by cron
   discoveryRefreshPolicy?: '5min' | '15min' | '30min' | '60min';
+  // Schedule visual style for experiment packs
+  scheduleThemeStyle?: 'gradient' | 'solid';
+  // Show compact mobile quick chips for key filters
+  mobileQuickFilterChips?: boolean;
 }
 
 export type FilterType = 
