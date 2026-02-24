@@ -239,7 +239,19 @@ export function DiscoveryPage({
   // Sync viewMode with URL params on navigation
   useEffect(() => {
     const urlViewMode = urlSearchParams.get('viewMode') as ViewMode | null;
-    if (urlViewMode && urlViewMode !== viewMode) {
+    if (!urlViewMode) return;
+
+    // During rapid tab switches, ignore stale URL updates until the latest
+    // user-selected mode appears in the URL.
+    if (pendingViewModeRef.current) {
+      if (urlViewMode === pendingViewModeRef.current) {
+        pendingViewModeRef.current = null;
+      } else {
+        return;
+      }
+    }
+
+    if (urlViewMode !== viewMode) {
       setViewMode(urlViewMode);
     }
   }, [urlSearchParams, viewMode]);
@@ -422,6 +434,9 @@ export function DiscoveryPage({
   
   // Ref to track the current fetch request for cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
+  // Tracks the latest user-initiated tab target to avoid URL/state races
+  const pendingViewModeRef = useRef<ViewMode | null>(null);
+  const pendingViewModeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Reset events when config changes (different page)
   useEffect(() => {
@@ -897,6 +912,14 @@ export function DiscoveryPage({
     // Track view mode change (GTM + Bond Analytics)
     gtmEvent.viewModeChanged(viewMode, newMode);
     bondAnalytics.viewModeChanged(config.slug, viewMode, newMode);
+    pendingViewModeRef.current = newMode;
+    if (pendingViewModeTimeoutRef.current) {
+      clearTimeout(pendingViewModeTimeoutRef.current);
+    }
+    pendingViewModeTimeoutRef.current = setTimeout(() => {
+      pendingViewModeRef.current = null;
+      pendingViewModeTimeoutRef.current = null;
+    }, 1500);
     setViewMode(newMode);
     updateUrl(filters, newMode);
 
@@ -908,6 +931,14 @@ export function DiscoveryPage({
       });
     }
   }, [config.slug, filters, updateUrl, viewMode]);
+
+  useEffect(() => {
+    return () => {
+      if (pendingViewModeTimeoutRef.current) {
+        clearTimeout(pendingViewModeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Count active filters
   const activeFilterCount = useMemo(() => {

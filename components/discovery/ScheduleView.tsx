@@ -954,6 +954,7 @@ function EventCard({
   const isRegistrationClosed = event.registrationWindowStatus === 'closed' || event.registrationWindowStatus === 'ended';
   const isRegistrationNotYetOpen = event.registrationWindowStatus === 'not_opened_yet';
   const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
+  const isWaitlistJoinable = Boolean(event.isWaitlistEnabled && isFull && isRegistrationOpen);
 
   // Get start time - try multiple sources
   const startTimeStr = formatTime(event.startTime, event.timezone) || formatTime(event.date, event.timezone) || '';
@@ -964,7 +965,7 @@ function EventCard({
       onClick={onClick}
       className={cn(
         'w-full text-left group transition-all',
-        isFull && 'opacity-60'
+        isFull && !isWaitlistJoinable && 'opacity-60'
       )}
     >
       {/* Card with prominent left accent */}
@@ -1007,7 +1008,7 @@ function EventCard({
                   isAlmostFull && 'bg-yellow-100 text-yellow-700',
                   !isFull && !isAlmostFull && 'bg-green-100 text-green-700'
                 )}>
-                  {isFull ? 'Full' : `${event.spotsRemaining} left`}
+                  {isWaitlistJoinable ? 'Waitlist Open' : (isFull ? 'Full' : `${event.spotsRemaining} left`)}
                 </span>
               )}
               {config.features.showMembershipBadges && event.membershipRequired && (
@@ -1103,7 +1104,7 @@ function EventCard({
                 className="inline-flex items-center gap-1 font-medium ml-auto hover:opacity-80"
                 style={{ color: isRegistrationUnavailable ? '#6B7280' : secondaryColor }}
               >
-                {isRegistrationUnavailable ? 'Learn More' : 'Register'} {config.features.showRegisterIcon !== false && <ExternalLink size={12} />}
+                {isRegistrationUnavailable ? 'Learn More' : (isWaitlistJoinable ? 'Join Waitlist' : 'Register')} {config.features.showRegisterIcon !== false && <ExternalLink size={12} />}
               </a>
             )}
           </div>
@@ -1135,6 +1136,8 @@ function EventDetailModal({
   const isRegistrationClosed = event.registrationWindowStatus === 'closed' || event.registrationWindowStatus === 'ended';
   const isRegistrationNotYetOpen = event.registrationWindowStatus === 'not_opened_yet';
   const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
+  const isFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 0;
+  const isWaitlistJoinable = Boolean(event.isWaitlistEnabled && isFull && isRegistrationOpen);
   
   // Close on escape key
   useEffect(() => {
@@ -1247,7 +1250,9 @@ function EventDetailModal({
                     event.spotsRemaining > 0 && event.spotsRemaining <= 5 && 'text-yellow-600',
                     event.spotsRemaining > 5 && 'text-green-600'
                   )}>
-                    {event.spotsRemaining <= 0 ? 'No spots available' : `${event.spotsRemaining} spots remaining`}
+                    {isWaitlistJoinable
+                      ? 'No spots available - Waitlist open'
+                      : (event.spotsRemaining <= 0 ? 'No spots available' : `${event.spotsRemaining} spots remaining`)}
                   </p>
                 )}
               </div>
@@ -1337,7 +1342,7 @@ function EventDetailModal({
                   : `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
               }}
             >
-              {isRegistrationUnavailable ? 'Learn More' : 'Register Now'} {config.features.showRegisterIcon !== false && <ExternalLink size={16} />}
+              {isRegistrationUnavailable ? 'Learn More' : (isWaitlistJoinable ? 'Join Waitlist' : 'Register Now')} {config.features.showRegisterIcon !== false && <ExternalLink size={16} />}
             </a>
           </div>
         )}
@@ -1500,13 +1505,14 @@ function TableView({
               const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
               const isFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 0;
               const isAlmostFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 5 && !isFull;
+              const isWaitlistJoinable = Boolean(event.isWaitlistEnabled && isFull && isRegistrationOpen);
               
               return (
                 <tr 
                   key={event.id} 
                   className={cn(
                     'hover:bg-gray-50 transition-colors cursor-pointer',
-                    isFull && 'opacity-60'
+                    isFull && !isWaitlistJoinable && 'opacity-60'
                   )}
                   onClick={() => onEventClick(event)}
                 >
@@ -1609,7 +1615,7 @@ function TableView({
                           isAlmostFull && 'bg-yellow-100 text-yellow-700',
                           !isFull && !isAlmostFull && 'bg-green-100 text-green-700'
                         )}>
-                          {isFull ? 'Full' : `${event.spotsRemaining}`}
+                          {isWaitlistJoinable ? 'Waitlist' : (isFull ? 'Full' : `${event.spotsRemaining}`)}
                         </span>
                       ) : (
                         <span className="text-xs text-gray-400">—</span>
@@ -1650,7 +1656,7 @@ function TableView({
                           )}
                           style={!isRegistrationUnavailable ? { backgroundColor: secondaryColor } : undefined}
                         >
-                          {isRegistrationUnavailable ? 'Details' : 'Register'}
+                          {isRegistrationUnavailable ? 'Details' : (isWaitlistJoinable ? 'Join Waitlist' : 'Register')}
                           {config.features.showRegisterIcon !== false && <ExternalLink size={12} />}
                         </a>
                       )}

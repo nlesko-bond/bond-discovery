@@ -354,6 +354,7 @@ function SessionCard({
   const isRegistrationClosed = session.registrationWindowStatus === 'closed' || session.registrationWindowStatus === 'ended';
   const isRegistrationNotYetOpen = session.registrationWindowStatus === 'not_opened_yet';
   const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
+  const isWaitlistJoinable = Boolean(session.isWaitlistEnabled && session.isFull && isRegistrationOpen);
   
   const facilityName = session.facility?.name;
   const baseLink = session.linkSEO || programLinkSEO;
@@ -374,9 +375,9 @@ function SessionCard({
     <div 
       className={cn(
         'p-3 bg-white rounded-xl border transition-all',
-        session.isFull ? 'border-gray-200 opacity-70' : 'border-gray-200 hover:shadow-md'
+        (session.isFull && !isWaitlistJoinable) ? 'border-gray-200 opacity-70' : 'border-gray-200 hover:shadow-md'
       )}
-      style={!session.isFull ? { '--hover-border': `${secondaryColor}50` } as React.CSSProperties : undefined}
+      style={(!session.isFull || isWaitlistJoinable) ? { '--hover-border': `${secondaryColor}50` } as React.CSSProperties : undefined}
     >
       {/* Session Header with Register Button */}
       <div className="flex items-center justify-between gap-3">
@@ -403,7 +404,7 @@ function SessionCard({
                 availability.color === 'green' && 'bg-green-100 text-green-700',
                 availability.color === 'gray' && 'bg-gray-100 text-gray-600'
               )}>
-                {availability.label}
+                {isWaitlistJoinable ? 'Waitlist Open' : availability.label}
               </span>
             )}
           </div>
@@ -481,7 +482,7 @@ function SessionCard({
                 });
               }}
             >
-              {isRegistrationUnavailable ? 'Learn More' : 'Register'} <ExternalLink size={12} />
+              {isRegistrationUnavailable ? 'Learn More' : (isWaitlistJoinable ? 'Join Waitlist' : 'Register')} <ExternalLink size={12} />
             </a>
           )}
         </div>

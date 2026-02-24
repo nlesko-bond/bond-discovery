@@ -49,8 +49,23 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .single();
     
     if (error) throw error;
+
+    let updatedPages = 0;
+    if (body.applyBrandingToPages === true && body.branding) {
+      const { data: updated, error: pageUpdateError } = await supabaseAdmin
+        .from('discovery_pages')
+        .update({ branding: body.branding })
+        .eq('partner_group_id', params.id)
+        .select('id');
+
+      if (pageUpdateError) {
+        throw pageUpdateError;
+      }
+
+      updatedPages = updated?.length || 0;
+    }
     
-    return NextResponse.json({ partner: data });
+    return NextResponse.json({ partner: data, updatedPages });
   } catch (error: any) {
     console.error('Error updating partner:', error);
     return NextResponse.json(

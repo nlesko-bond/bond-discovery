@@ -219,7 +219,7 @@ describe('Config Library', () => {
       expect(configs).toEqual([]);
     });
 
-    it('filters by is_active', async () => {
+    it('orders by name without active filter', async () => {
       mockOrder.mockResolvedValue({ data: [], error: null });
       mockAdminFrom.mockReturnValue({
         select: mockSelect.mockReturnThis(),
@@ -229,7 +229,8 @@ describe('Config Library', () => {
 
       await getAllPageConfigs();
 
-      expect(mockEq).toHaveBeenCalledWith('is_active', true);
+      expect(mockOrder).toHaveBeenCalledWith('name');
+      expect(mockEq).not.toHaveBeenCalledWith('is_active', true);
     });
   });
 

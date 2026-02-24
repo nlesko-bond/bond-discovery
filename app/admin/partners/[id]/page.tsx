@@ -45,6 +45,7 @@ export default function EditPartnerPage({ params }: { params: { id: string } }) 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [partner, setPartner] = useState<PartnerGroup | null>(null);
+  const [originalBrandingJson, setOriginalBrandingJson] = useState('');
 
   useEffect(() => {
     fetchPartner();
@@ -56,6 +57,7 @@ export default function EditPartnerPage({ params }: { params: { id: string } }) 
       if (!res.ok) throw new Error('Partner not found');
       const data = await res.json();
       setPartner(data.partner);
+      setOriginalBrandingJson(JSON.stringify(data.partner?.branding || {}));
     } catch (error) {
       console.error('Error fetching partner:', error);
       alert('Partner not found');
@@ -69,6 +71,16 @@ export default function EditPartnerPage({ params }: { params: { id: string } }) 
     if (!partner) return;
     setSaving(true);
     try {
+      const brandingChanged = JSON.stringify(partner.branding || {}) !== originalBrandingJson;
+      const pageCount = partner.pages?.length || 0;
+      let applyBrandingToPages = false;
+
+      if (brandingChanged && pageCount > 0) {
+        applyBrandingToPages = window.confirm(
+          `Apply updated partner styles to ${pageCount} existing page${pageCount === 1 ? '' : 's'} in this group?`
+        );
+      }
+
       const res = await fetch(`/api/partners/${params.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -78,11 +90,18 @@ export default function EditPartnerPage({ params }: { params: { id: string } }) 
           gtm_id: partner.gtm_id,
           branding: partner.branding,
           default_features: partner.default_features,
+          applyBrandingToPages,
         }),
       });
       
       if (res.ok) {
-        alert('Partner saved successfully!');
+        const data = await res.json();
+        setOriginalBrandingJson(JSON.stringify(partner.branding || {}));
+        if (applyBrandingToPages) {
+          alert(`Partner saved. Updated styles on ${data.updatedPages || 0} existing page${(data.updatedPages || 0) === 1 ? '' : 's'}.`);
+        } else {
+          alert('Partner saved successfully!');
+        }
       } else {
         const error = await res.json();
         alert(error.error || 'Failed to save partner');
