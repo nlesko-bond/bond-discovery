@@ -67,6 +67,8 @@ interface PageConfig {
     discoveryCacheEnabled?: boolean;
     availabilityCacheTtl?: number;
     discoveryRefreshPolicy?: '5min' | '15min' | '30min' | '60min';
+    scheduleThemeStyle?: 'gradient' | 'solid';
+    mobileQuickFilterChips?: boolean;
   };
   defaultParams?: Record<string, string>;
   cacheTtl?: number;
@@ -698,6 +700,40 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   <div>
                     <span className="font-medium">Allow table view on mobile</span>
                     <p className="text-xs text-gray-500">Enable for compact tables (2-3 columns) that fit on small screens</p>
+                  </div>
+                </label>
+              </div>
+
+              <div className="rounded-lg border border-gray-200 p-3 bg-gray-50 space-y-3">
+                <div>
+                  <label className="label">Schedule Theme Style</label>
+                  <select
+                    className="input"
+                    value={config.features.scheduleThemeStyle || 'solid'}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      features: { ...config.features, scheduleThemeStyle: e.target.value as 'solid' | 'gradient' }
+                    })}
+                  >
+                    <option value="solid">Solid</option>
+                    <option value="gradient">Gradient</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Controls schedule header and CTA styling</p>
+                </div>
+
+                <label className="flex items-center gap-2 pt-3 border-t border-gray-200 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300"
+                    checked={config.features.mobileQuickFilterChips !== false}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      features: { ...config.features, mobileQuickFilterChips: e.target.checked }
+                    })}
+                  />
+                  <div>
+                    <span className="font-medium">Enable mobile quick chips</span>
+                    <p className="text-xs text-gray-500">Shows compact Type/Gender chip rows on mobile schedule</p>
                   </div>
                 </label>
               </div>

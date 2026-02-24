@@ -51,6 +51,8 @@ interface HorizontalFilterBarProps {
   filterOptions: FilterOptions;
   config: DiscoveryConfig;
   isScheduleView?: boolean; // When true, hides age filter (not applicable to events)
+  hideMobileFilterGroups?: Array<'programType' | 'gender'>;
+  hideMobileActiveChipsFor?: Array<'programType' | 'gender'>;
 }
 
 export function HorizontalFilterBar({
@@ -59,12 +61,18 @@ export function HorizontalFilterBar({
   filterOptions,
   config,
   isScheduleView = false,
+  hideMobileFilterGroups = [],
+  hideMobileActiveChipsFor = [],
 }: HorizontalFilterBarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(filters.search || '');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const hideProgramTypeDropdownOnMobile = hideMobileFilterGroups.includes('programType');
+  const hideGenderDropdownOnMobile = hideMobileFilterGroups.includes('gender');
+  const hideProgramTypeActiveChipOnMobile = hideMobileActiveChipsFor.includes('programType');
+  const hideGenderActiveChipOnMobile = hideMobileActiveChipsFor.includes('gender');
   
   // Dynamic colors from config
   const primaryColor = config.branding.primaryColor || '#1E2761';
@@ -451,42 +459,44 @@ export function HorizontalFilterBar({
 
         {/* Program Type Filter - only show if enabled */}
         {enabledFilters.includes('programType') && filterOptions.programTypes.length > 0 && (
-          <FilterDropdown
-            label="Type"
-            icon={<Layers size={14} />}
-            isOpen={openDropdown === 'type'}
-            onToggle={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
-            hasSelection={(filters.programTypes?.length || 0) > 0}
-            selectionCount={filters.programTypes?.length}
-            brandColor={secondaryColor}
-          >
-            <div className="p-2">
-              {filterOptions.programTypes.map(type => {
-                const isSelected = (filters.programTypes as string[] | undefined)?.includes(type.id);
-                return (
-                  <button
-                    key={type.id}
-                    onClick={() => handleMultiSelect('programTypes', type.id)}
-                    className={cn(
-                      'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
-                      !isSelected && 'hover:bg-gray-50'
-                    )}
-                    style={isSelected ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor } : undefined}
-                  >
-                    <span>{getProgramTypeLabel(type.id as any)}</span>
-                    <div className="flex items-center gap-2">
-                      {type.count !== undefined && (
-                        <span className="text-xs text-gray-400">{type.count}</span>
+          <div className={cn(hideProgramTypeDropdownOnMobile && 'hidden sm:block')}>
+            <FilterDropdown
+              label="Type"
+              icon={<Layers size={14} />}
+              isOpen={openDropdown === 'type'}
+              onToggle={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
+              hasSelection={(filters.programTypes?.length || 0) > 0}
+              selectionCount={filters.programTypes?.length}
+              brandColor={secondaryColor}
+            >
+              <div className="p-2">
+                {filterOptions.programTypes.map(type => {
+                  const isSelected = (filters.programTypes as string[] | undefined)?.includes(type.id);
+                  return (
+                    <button
+                      key={type.id}
+                      onClick={() => handleMultiSelect('programTypes', type.id)}
+                      className={cn(
+                        'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
+                        !isSelected && 'hover:bg-gray-50'
                       )}
-                      {isSelected && (
-                        <Check size={14} style={{ color: secondaryColor }} />
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </FilterDropdown>
+                      style={isSelected ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor } : undefined}
+                    >
+                      <span>{getProgramTypeLabel(type.id as any)}</span>
+                      <div className="flex items-center gap-2">
+                        {type.count !== undefined && (
+                          <span className="text-xs text-gray-400">{type.count}</span>
+                        )}
+                        {isSelected && (
+                          <Check size={14} style={{ color: secondaryColor }} />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </FilterDropdown>
+          </div>
         )}
 
         {/* Sport Filter - only show if enabled */}
@@ -584,52 +594,54 @@ export function HorizontalFilterBar({
 
         {/* Gender Filter - only show if enabled */}
         {enabledFilters.includes('gender') && (
-          <FilterDropdown
-            label="Gender"
-            icon={<Users size={14} />}
-            isOpen={openDropdown === 'gender'}
-            onToggle={() => setOpenDropdown(openDropdown === 'gender' ? null : 'gender')}
-            hasSelection={!!(filters.gender && filters.gender !== 'all')}
-            brandColor={secondaryColor}
-          >
-            <div className="py-1">
-              {[
-                { value: 'all', label: 'All Genders' },
-                { value: 'coed', label: 'Co-ed' },
-                { value: 'male', label: 'Male' },
-                { value: 'female', label: 'Female' },
-              ].map(option => (
-                <button
-                  key={option.value}
-                  onClick={() => {
-                    onFilterChange({
-                      ...filters,
-                      gender: option.value === 'all' ? undefined : option.value as any,
-                    });
-                    if (option.value !== 'all') {
-                      gtmEvent.filterApplied('gender', option.label);
+          <div className={cn(hideGenderDropdownOnMobile && 'hidden sm:block')}>
+            <FilterDropdown
+              label="Gender"
+              icon={<Users size={14} />}
+              isOpen={openDropdown === 'gender'}
+              onToggle={() => setOpenDropdown(openDropdown === 'gender' ? null : 'gender')}
+              hasSelection={!!(filters.gender && filters.gender !== 'all')}
+              brandColor={secondaryColor}
+            >
+              <div className="py-1">
+                {[
+                  { value: 'all', label: 'All Genders' },
+                  { value: 'coed', label: 'Co-ed' },
+                  { value: 'male', label: 'Male' },
+                  { value: 'female', label: 'Female' },
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      onFilterChange({
+                        ...filters,
+                        gender: option.value === 'all' ? undefined : option.value as any,
+                      });
+                      if (option.value !== 'all') {
+                        gtmEvent.filterApplied('gender', option.label);
+                      }
+                      setOpenDropdown(null);
+                    }}
+                    className={cn(
+                      'w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center justify-between',
+                      (filters.gender === option.value || (!filters.gender && option.value === 'all'))
+                        ? 'font-medium'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    )}
+                    style={(filters.gender === option.value || (!filters.gender && option.value === 'all'))
+                      ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor }
+                      : undefined
                     }
-                    setOpenDropdown(null);
-                  }}
-                  className={cn(
-                    'w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center justify-between',
-                    (filters.gender === option.value || (!filters.gender && option.value === 'all'))
-                      ? 'font-medium'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  )}
-                  style={(filters.gender === option.value || (!filters.gender && option.value === 'all'))
-                    ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor }
-                    : undefined
-                  }
-                >
-                  {option.label}
-                  {(filters.gender === option.value || (!filters.gender && option.value === 'all')) && (
-                    <Check size={14} style={{ color: secondaryColor }} />
-                  )}
-                </button>
-              ))}
-            </div>
-          </FilterDropdown>
+                  >
+                    {option.label}
+                    {(filters.gender === option.value || (!filters.gender && option.value === 'all')) && (
+                      <Check size={14} style={{ color: secondaryColor }} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </FilterDropdown>
+          </div>
         )}
 
         {/* Clear All */}
@@ -675,12 +687,16 @@ export function HorizontalFilterBar({
 
           {/* Type Chips */}
           {filters.programTypes?.map(type => (
-            <FilterChip
+            <span
               key={`type-${type}`}
-              label={getProgramTypeLabel(type as any)}
-              onRemove={() => handleMultiSelect('programTypes', type)}
-              brandColor={secondaryColor}
-            />
+              className={cn(hideProgramTypeActiveChipOnMobile && 'hidden sm:inline-flex')}
+            >
+              <FilterChip
+                label={getProgramTypeLabel(type as any)}
+                onRemove={() => handleMultiSelect('programTypes', type)}
+                brandColor={secondaryColor}
+              />
+            </span>
           ))}
 
           {/* Sport Chips */}
@@ -704,11 +720,13 @@ export function HorizontalFilterBar({
 
           {/* Gender Chip */}
           {filters.gender && filters.gender !== 'all' && (
-            <FilterChip
-              label={filters.gender === 'coed' ? 'Co-ed' : filters.gender === 'male' ? 'Male' : 'Female'}
-              onRemove={() => clearFilter('gender')}
-              brandColor={secondaryColor}
-            />
+            <span className={cn(hideGenderActiveChipOnMobile && 'hidden sm:inline-flex')}>
+              <FilterChip
+                label={filters.gender === 'coed' ? 'Co-ed' : filters.gender === 'male' ? 'Male' : 'Female'}
+                onRemove={() => clearFilter('gender')}
+                brandColor={secondaryColor}
+              />
+            </span>
           )}
 
           {/* Date Chip */}

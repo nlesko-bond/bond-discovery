@@ -40,6 +40,7 @@ type TableColumn = 'date' | 'time' | 'event' | 'program' | 'location' | 'spots' 
 interface ScheduleViewProps {
   schedule: WeekSchedule[];
   config: DiscoveryConfig;
+  scheduleThemeStyle?: 'gradient' | 'solid';
   isLoading?: boolean;
   error?: string | null;
   totalEvents?: number;
@@ -49,7 +50,18 @@ interface ScheduleViewProps {
   customRegistrationUrl?: string;
 }
 
-export function ScheduleView({ schedule, config, isLoading, error, totalEvents, hasMultipleFacilities, linkTarget = '_blank', hideRegistrationLinks = false, customRegistrationUrl }: ScheduleViewProps) {
+export function ScheduleView({
+  schedule,
+  config,
+  scheduleThemeStyle,
+  isLoading,
+  error,
+  totalEvents,
+  hasMultipleFacilities,
+  linkTarget = '_blank',
+  hideRegistrationLinks = false,
+  customRegistrationUrl,
+}: ScheduleViewProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -59,6 +71,11 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
   // Dynamic colors from config
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  const resolvedThemeStyle = scheduleThemeStyle || config.features.scheduleThemeStyle || 'gradient';
+  const themeHeaderBackground =
+    resolvedThemeStyle === 'solid'
+      ? primaryColor
+      : `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`;
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   
   // Sticky positioning uses CSS variable --sticky-offset set by parent DiscoveryPage
@@ -593,7 +610,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
         /* Month Navigation */
         <div 
           className="flex items-center justify-between px-3 py-3 text-white rounded-t-lg"
-          style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
+          style={{ background: themeHeaderBackground }}
         >
           <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
             <ChevronLeft size={20} />
@@ -607,7 +624,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
         /* Day Navigation */
         <div 
           className="flex items-center justify-between px-3 py-3 text-white rounded-t-lg"
-          style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
+          style={{ background: themeHeaderBackground }}
         >
           <button
             onClick={() => {
@@ -640,7 +657,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
         /* Week Navigation - Compact (not for list/table which show all events) */
         <div 
           className="flex items-center justify-between px-3 py-3 text-white rounded-t-lg"
-          style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
+          style={{ background: themeHeaderBackground }}
         >
           <button
             onClick={() => setCurrentWeekIndex(Math.max(0, currentWeekIndex - 1))}
@@ -722,6 +739,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
               day={day}
               onEventClick={setSelectedEvent}
               config={config}
+              scheduleThemeStyle={resolvedThemeStyle}
               hasMultipleFacilities={hasMultipleFacilities}
               linkTarget={linkTarget}
               hideRegistrationLinks={hideRegistrationLinks}
@@ -762,6 +780,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
           events={allDaysWithEvents.flatMap(day => day.events)}
           onEventClick={setSelectedEvent}
           config={config}
+          scheduleThemeStyle={resolvedThemeStyle}
           hasMultipleFacilities={hasMultipleFacilities}
           isLoading={isLoading}
           linkTarget={linkTarget}
@@ -784,6 +803,7 @@ export function ScheduleView({ schedule, config, isLoading, error, totalEvents, 
           event={selectedEvent}
           onClose={() => setSelectedEvent(null)}
           config={config}
+          scheduleThemeStyle={resolvedThemeStyle}
           linkTarget={linkTarget}
           hideRegistrationLinks={hideRegistrationLinks}
           customRegistrationUrl={customRegistrationUrl}
@@ -851,6 +871,7 @@ function ListDaySection({
   day,
   onEventClick,
   config,
+  scheduleThemeStyle = 'gradient',
   hasMultipleFacilities,
   linkTarget = '_blank',
   hideRegistrationLinks = false,
@@ -860,12 +881,17 @@ function ListDaySection({
   hasMultipleFacilities?: boolean;
   onEventClick: (event: CalendarEvent) => void;
   config: DiscoveryConfig;
+  scheduleThemeStyle?: 'gradient' | 'solid';
   linkTarget?: '_blank' | '_top' | '_self';
   hideRegistrationLinks?: boolean;
   customRegistrationUrl?: string;
 }) {
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  const dayHeaderBackground =
+    scheduleThemeStyle === 'solid'
+      ? primaryColor
+      : `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`;
   
   if (day.events.length === 0) return null;
 
@@ -879,7 +905,7 @@ function ListDaySection({
         className="sticky z-20 flex items-center gap-3 px-4 py-3 text-white rounded-t-xl shadow-md"
         style={{ 
           top: 'var(--sticky-offset, 0px)',
-          background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
+          background: dayHeaderBackground,
         }}
       >
         <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center shadow-sm bg-white/20">
@@ -913,6 +939,7 @@ function ListDaySection({
             event={event}
             onClick={() => onEventClick(event)}
             config={config}
+            scheduleThemeStyle={scheduleThemeStyle}
             showFacility={hasMultipleFacilities}
             linkTarget={linkTarget}
             hideRegistrationLinks={hideRegistrationLinks}
@@ -929,6 +956,7 @@ function EventCard({
   event,
   onClick,
   config,
+  scheduleThemeStyle = 'gradient',
   showFacility = true,
   linkTarget = '_blank',
   hideRegistrationLinks = false,
@@ -937,6 +965,7 @@ function EventCard({
   event: CalendarEvent;
   onClick: () => void;
   config: DiscoveryConfig;
+  scheduleThemeStyle?: 'gradient' | 'solid';
   showFacility?: boolean;
   linkTarget?: '_blank' | '_top' | '_self';
   hideRegistrationLinks?: boolean;
@@ -944,6 +973,10 @@ function EventCard({
 }) {
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  const accentBackground =
+    scheduleThemeStyle === 'solid'
+      ? secondaryColor
+      : `linear-gradient(to bottom, ${primaryColor}, ${secondaryColor})`;
   
   const spotsInfo = event.spotsRemaining !== undefined;
   const isFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 0;
@@ -973,7 +1006,7 @@ function EventCard({
         {/* Left accent bar - uses brand gradient */}
         <div 
           className="w-1.5 flex-shrink-0" 
-          style={{ background: `linear-gradient(to bottom, ${primaryColor}, ${secondaryColor})` }}
+          style={{ background: accentBackground }}
         />
         
         {/* Content */}
@@ -1119,6 +1152,7 @@ function EventDetailModal({
   event,
   onClose,
   config,
+  scheduleThemeStyle = 'gradient',
   linkTarget = '_blank',
   hideRegistrationLinks = false,
   customRegistrationUrl,
@@ -1126,12 +1160,21 @@ function EventDetailModal({
   event: CalendarEvent;
   onClose: () => void;
   config: DiscoveryConfig;
+  scheduleThemeStyle?: 'gradient' | 'solid';
   linkTarget?: '_blank' | '_top' | '_self';
   hideRegistrationLinks?: boolean;
   customRegistrationUrl?: string;
 }) {
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  const modalHeaderBackground =
+    scheduleThemeStyle === 'solid'
+      ? primaryColor
+      : `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`;
+  const ctaBackground =
+    scheduleThemeStyle === 'solid'
+      ? primaryColor
+      : `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`;
   const isRegistrationOpen = event.registrationWindowStatus === 'open';
   const isRegistrationClosed = event.registrationWindowStatus === 'closed' || event.registrationWindowStatus === 'ended';
   const isRegistrationNotYetOpen = event.registrationWindowStatus === 'not_opened_yet';
@@ -1160,7 +1203,7 @@ function EventDetailModal({
         {/* Header with program info */}
         <div 
           className="p-5 text-white relative"
-          style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}
+          style={{ background: modalHeaderBackground }}
         >
           {/* Close button */}
           <button
@@ -1339,7 +1382,7 @@ function EventDetailModal({
               style={{ 
                 background: isRegistrationUnavailable 
                   ? '#9CA3AF' 
-                  : `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
+                  : ctaBackground 
               }}
             >
               {isRegistrationUnavailable ? 'Learn More' : (isWaitlistJoinable ? 'Join Waitlist' : 'Register Now')} {config.features.showRegisterIcon !== false && <ExternalLink size={16} />}
@@ -1356,6 +1399,7 @@ function TableView({
   events,
   onEventClick,
   config,
+  scheduleThemeStyle = 'gradient',
   hasMultipleFacilities,
   isLoading,
   linkTarget = '_blank',
@@ -1365,6 +1409,7 @@ function TableView({
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
   config: DiscoveryConfig;
+  scheduleThemeStyle?: 'gradient' | 'solid';
   hasMultipleFacilities?: boolean;
   isLoading?: boolean;
   linkTarget?: '_blank' | '_top' | '_self';
@@ -1376,6 +1421,10 @@ function TableView({
   
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  const tableHeaderBackground =
+    scheduleThemeStyle === 'solid'
+      ? primaryColor
+      : `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`;
   
   // Table column visibility
   const defaultTableColumns: TableColumn[] = ['date', 'time', 'event', 'program', 'location', 'spots', 'action'];
@@ -1456,7 +1505,7 @@ function TableView({
         <table className="w-full print:text-xs border-collapse">
           <thead 
             className="sticky z-20 text-white" 
-            style={{ top: stickyOffset, background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
+            style={{ top: stickyOffset, background: tableHeaderBackground }}
           >
             <tr className="print:bg-gray-100 print:text-gray-600">
               {showDateColumn && (
