@@ -10,7 +10,8 @@ import {
   HelpCircle,
   LogOut,
   User,
-  BarChart3
+  BarChart3,
+  CreditCard
 } from 'lucide-react';
 import { AdminProviders } from './AdminProviders';
 import { AdminAuthGuard } from './AdminAuthGuard';
@@ -74,6 +75,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </NavLink>
             <NavLink href="/admin/pages" icon={FileText}>
               Discovery Pages
+            </NavLink>
+            <NavLink href="/admin/memberships" icon={CreditCard}>
+              Memberships
             </NavLink>
             <NavLink href="/admin/analytics" icon={BarChart3}>
               Analytics

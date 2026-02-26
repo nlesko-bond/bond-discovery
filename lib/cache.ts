@@ -202,6 +202,31 @@ export async function markDiscoveryRefreshed(slug: string): Promise<void> {
 }
 
 /**
+ * Membership cache keys
+ */
+export function membershipsCacheKey(slug: string): string {
+  return `memberships:${slug}`;
+}
+
+export function membershipsLastRefreshedKey(slug: string): string {
+  return `memberships:lastRefreshed:${slug}`;
+}
+
+export async function shouldRefreshMemberships(
+  slug: string,
+  ttlSeconds: number = 900
+): Promise<boolean> {
+  const key = membershipsLastRefreshedKey(slug);
+  const lastRefreshed = await cacheGet<number>(key);
+  if (!lastRefreshed) return true;
+  return (Date.now() - lastRefreshed) >= ttlSeconds * 1000;
+}
+
+export async function markMembershipsRefreshed(slug: string): Promise<void> {
+  await cacheSet(membershipsLastRefreshedKey(slug), Date.now(), { ttl: 48 * 60 * 60 });
+}
+
+/**
  * Wrapper function to get or set cache
  */
 export async function cached<T>(
