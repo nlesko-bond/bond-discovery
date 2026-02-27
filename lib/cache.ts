@@ -208,6 +208,10 @@ export function membershipsCacheKey(slug: string): string {
   return `memberships:${slug}`;
 }
 
+export function membershipsLastGoodKey(slug: string): string {
+  return `memberships:lastGood:${slug}`;
+}
+
 export function membershipsLastRefreshedKey(slug: string): string {
   return `memberships:lastRefreshed:${slug}`;
 }

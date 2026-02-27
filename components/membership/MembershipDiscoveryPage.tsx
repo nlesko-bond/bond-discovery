@@ -108,10 +108,20 @@ export function MembershipDiscoveryPage({ config, initialData }: Props) {
           {filteredMemberships.map((membership) => (
             <MembershipRow key={membership.id} membership={membership} />
           ))}
-          {filteredMemberships.length === 0 && (
+          {filteredMemberships.length === 0 && initialData.totalCount > 0 && (
             <p className="text-center text-gray-500 py-12">
               No memberships available for this category.
             </p>
+          )}
+          {initialData.totalCount === 0 && (
+            <div className="text-center py-16 px-6">
+              <p className="text-xl font-semibold text-gray-700 mb-2">
+                No active memberships available right now
+              </p>
+              <p className="text-gray-500">
+                Please check back soon — new membership options are on the way.
+              </p>
+            </div>
           )}
         </div>
       </div>

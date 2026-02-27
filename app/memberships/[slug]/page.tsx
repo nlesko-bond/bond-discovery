@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { getMembershipConfigBySlug, getActiveMembershipConfigs } from '@/lib/membership-config';
 import { getAllMemberships } from '@/lib/membership-client';
 import { transformMemberships } from '@/lib/membership-transformer';
-import { cacheGet, cacheSet, membershipsCacheKey, markMembershipsRefreshed } from '@/lib/cache';
+import { cacheGet, cacheSet, membershipsCacheKey, membershipsLastGoodKey, markMembershipsRefreshed } from '@/lib/cache';
 import { MembershipPageData } from '@/types/membership';
 import { MembershipDiscoveryPage } from '@/components/membership/MembershipDiscoveryPage';
 
@@ -16,11 +16,13 @@ interface PageProps {
 async function getMembershipData(slug: string): Promise<{
   config: NonNullable<Awaited<ReturnType<typeof getMembershipConfigBySlug>>>;
   pageData: MembershipPageData;
+  stale?: boolean;
 } | null> {
   const config = await getMembershipConfigBySlug(slug);
   if (!config || !config.is_active) return null;
 
   const cacheKey = membershipsCacheKey(slug);
+  const lastGoodKey = membershipsLastGoodKey(slug);
   const cached = await cacheGet<MembershipPageData>(cacheKey);
 
   if (cached) {
@@ -32,13 +34,35 @@ async function getMembershipData(slug: string): Promise<{
     const pageData = transformMemberships(apiResponse.data, config);
 
     await cacheSet(cacheKey, pageData, { ttl: config.cache_ttl });
+    await cacheSet(lastGoodKey, pageData, { ttl: 7 * 24 * 60 * 60 }); // 7-day backup
     await markMembershipsRefreshed(slug);
 
     return { config, pageData };
   } catch (error) {
     console.error(`[MembershipPage] Error fetching for ${slug}:`, error);
-    return null;
+
+    const lastGood = await cacheGet<MembershipPageData>(lastGoodKey);
+    if (lastGood) {
+      console.log(`[MembershipPage] Serving stale data for ${slug}`);
+      return { config, pageData: lastGood, stale: true };
+    }
+
+    return { config, pageData: emptyPageData() };
   }
+}
+
+function emptyPageData(): MembershipPageData {
+  return {
+    memberships: [],
+    categories: [],
+    categoryLabels: { all: 'All Plans' },
+    seasonDateRange: null,
+    registrationDeadline: null,
+    ageRange: null,
+    priceRange: null,
+    isTaxInclusive: false,
+    totalCount: 0,
+  };
 }
 
 export async function generateStaticParams() {
@@ -83,3 +107,5 @@ export default async function MembershipPage({ params }: PageProps) {
     />
   );
 }
+
+export { emptyPageData };

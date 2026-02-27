@@ -3,9 +3,10 @@ import { notFound } from 'next/navigation';
 import { getMembershipConfigBySlug, getActiveMembershipConfigs } from '@/lib/membership-config';
 import { getAllMemberships } from '@/lib/membership-client';
 import { transformMemberships } from '@/lib/membership-transformer';
-import { cacheGet, cacheSet, membershipsCacheKey, markMembershipsRefreshed } from '@/lib/cache';
+import { cacheGet, cacheSet, membershipsCacheKey, membershipsLastGoodKey, markMembershipsRefreshed } from '@/lib/cache';
 import { MembershipPageData } from '@/types/membership';
 import { MembershipDiscoveryPage } from '@/components/membership/MembershipDiscoveryPage';
+import { emptyPageData } from '@/app/memberships/[slug]/page';
 
 export const revalidate = 300;
 
@@ -35,6 +36,7 @@ export default async function EmbedMembershipPage({ params }: PageProps) {
   }
 
   const cacheKey = membershipsCacheKey(slug);
+  const lastGoodKey = membershipsLastGoodKey(slug);
   let pageData = await cacheGet<MembershipPageData>(cacheKey);
 
   if (!pageData) {
@@ -42,10 +44,12 @@ export default async function EmbedMembershipPage({ params }: PageProps) {
       const apiResponse = await getAllMemberships(config.organization_id);
       pageData = transformMemberships(apiResponse.data, config);
       await cacheSet(cacheKey, pageData, { ttl: config.cache_ttl });
+      await cacheSet(lastGoodKey, pageData, { ttl: 7 * 24 * 60 * 60 });
       await markMembershipsRefreshed(slug);
     } catch (error) {
       console.error(`[EmbedMembership] Error for ${slug}:`, error);
-      notFound();
+      pageData = await cacheGet<MembershipPageData>(lastGoodKey);
+      if (!pageData) pageData = emptyPageData();
     }
   }
 

@@ -5,6 +5,7 @@ import { transformMemberships } from '@/lib/membership-transformer';
 import {
   cacheSet,
   membershipsCacheKey,
+  membershipsLastGoodKey,
   shouldRefreshMemberships,
   markMembershipsRefreshed,
 } from '@/lib/cache';
@@ -39,6 +40,9 @@ export async function GET(request: NextRequest) {
 
         await cacheSet(membershipsCacheKey(config.slug), pageData, {
           ttl: config.cache_ttl,
+        });
+        await cacheSet(membershipsLastGoodKey(config.slug), pageData, {
+          ttl: 7 * 24 * 60 * 60,
         });
         await markMembershipsRefreshed(config.slug);
 
