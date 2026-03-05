@@ -35,932 +35,956 @@
         - img [ref=e56]
         - generic [ref=e58]: Activity
         - img [ref=e59]
-      - button "Age" [ref=e62] [cursor=pointer]:
+      - button "Gender" [ref=e62] [cursor=pointer]:
         - img [ref=e63]
-        - generic [ref=e68]: Age
+        - generic [ref=e68]: Gender
         - img [ref=e69]
-      - button "Gender" [ref=e72] [cursor=pointer]:
-        - img [ref=e73]
-        - generic [ref=e78]: Gender
-        - img [ref=e79]
-    - main [ref=e82]:
-      - generic [ref=e83]:
-        - generic [ref=e85]:
-          - generic [ref=e86]:
-            - generic [ref=e89]: 671 events
-            - generic [ref=e90]: All times CT
-          - generic [ref=e91]:
-            - button "List" [ref=e92] [cursor=pointer]:
-              - img [ref=e93]
-              - generic [ref=e94]: List
-            - button "Table" [ref=e95] [cursor=pointer]:
-              - img [ref=e96]
-              - generic [ref=e98]: Table
-            - button "Day" [ref=e99] [cursor=pointer]:
-              - img [ref=e100]
-              - generic [ref=e103]: Day
-            - button "Week" [ref=e104] [cursor=pointer]:
-              - img [ref=e105]
-              - generic [ref=e107]: Week
-            - button "Month" [ref=e108] [cursor=pointer]:
-              - img [ref=e109]
-              - generic [ref=e114]: Month
-          - generic [ref=e115]:
-            - button "Export" [active] [ref=e116] [cursor=pointer]:
-              - img [ref=e117]
-              - generic [ref=e120]: Export
-            - generic [ref=e121]:
-              - button "Add to Calendar Download .ics file" [ref=e122] [cursor=pointer]:
-                - img [ref=e123]
-                - generic [ref=e125]:
-                  - generic [ref=e126]: Add to Calendar
-                  - generic [ref=e127]: Download .ics file
-              - button "Export to CSV Excel compatible" [ref=e128] [cursor=pointer]:
-                - img [ref=e129]
-                - generic [ref=e132]:
-                  - generic [ref=e133]: Export to CSV
-                  - generic [ref=e134]: Excel compatible
-              - button "Print / PDF Save as PDF" [ref=e135] [cursor=pointer]:
-                - img [ref=e136]
-                - generic [ref=e139]:
-                  - generic [ref=e140]: Print / PDF
-                  - generic [ref=e141]: Save as PDF
-        - generic [ref=e143]:
-          - button [disabled] [ref=e144]:
-            - img [ref=e145]
-          - generic [ref=e147]:
-            - heading "Jan 25 - Jan 31, 2026" [level=2] [ref=e148]
-            - paragraph [ref=e149]: Week 1 of 30 • 43 events
-          - button [ref=e150] [cursor=pointer]:
-            - img [ref=e151]
-        - generic [ref=e153]:
-          - table [ref=e155]:
-            - rowgroup [ref=e156]:
-              - row "Date Time Event Program Spots Action" [ref=e157]:
-                - columnheader "Date" [ref=e158] [cursor=pointer]:
-                  - generic [ref=e159]:
-                    - text: Date
-                    - img [ref=e160]
-                - columnheader "Time" [ref=e162] [cursor=pointer]:
-                  - generic [ref=e163]: Time
-                - columnheader "Event" [ref=e164]
-                - columnheader "Program" [ref=e165] [cursor=pointer]:
-                  - generic [ref=e166]: Program
-                - columnheader "Spots" [ref=e167]
-                - columnheader "Action" [ref=e168]
-            - rowgroup [ref=e169]:
-              - row "Tue, Jan 27 1:30 PM - 3:30 PM Adult Pickup Adult Pickup Soccer — Register" [ref=e170] [cursor=pointer]:
-                - cell "Tue, Jan 27" [ref=e171]:
-                  - generic [ref=e172]: Tue, Jan 27
-                - cell "1:30 PM - 3:30 PM" [ref=e173]:
-                  - generic [ref=e174]: 1:30 PM - 3:30 PM
-                - cell "Adult Pickup" [ref=e175]:
-                  - generic [ref=e177]: Adult Pickup
-                - cell "Adult Pickup Soccer" [ref=e178]:
-                  - generic "Adult Pickup Soccer" [ref=e179]
-                - cell "—" [ref=e180]
-                - cell "Register" [ref=e181]:
-                  - link "Register" [ref=e182]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
-                    - text: Register
-                    - img [ref=e183]
-              - row "Wed, Jan 28 9:00 PM - 10:30 PM Adult Pickup Adult Pickup Soccer — Register" [ref=e187] [cursor=pointer]:
-                - cell "Wed, Jan 28" [ref=e188]:
-                  - generic [ref=e189]: Wed, Jan 28
-                - cell "9:00 PM - 10:30 PM" [ref=e190]:
-                  - generic [ref=e191]: 9:00 PM - 10:30 PM
-                - cell "Adult Pickup" [ref=e192]:
-                  - generic [ref=e194]: Adult Pickup
-                - cell "Adult Pickup Soccer" [ref=e195]:
-                  - generic "Adult Pickup Soccer" [ref=e196]
-                - cell "—" [ref=e197]
-                - cell "Register" [ref=e198]:
-                  - link "Register" [ref=e199]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
-                    - text: Register
-                    - img [ref=e200]
-              - row "Thu, Jan 29 5:00 PM - 5:45 PM JaHbat 2011/10 vs Northwind 2011 Girls Premier Girls High School TOCA Premier League — Register" [ref=e204] [cursor=pointer]:
-                - cell "Thu, Jan 29" [ref=e205]:
-                  - generic [ref=e206]: Thu, Jan 29
-                - cell "5:00 PM - 5:45 PM" [ref=e207]:
-                  - generic [ref=e208]: 5:00 PM - 5:45 PM
-                - cell "JaHbat 2011/10 vs Northwind 2011 Girls Premier Girls High School" [ref=e209]:
-                  - generic [ref=e210]:
-                    - generic [ref=e211]: JaHbat 2011/10 vs Northwind 2011 Girls Premier
-                    - generic [ref=e212]: Girls High School
-                - cell "TOCA Premier League" [ref=e213]:
-                  - generic "TOCA Premier League" [ref=e214]
-                - cell "—" [ref=e215]
-                - cell "Register" [ref=e216]:
-                  - link "Register" [ref=e217]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%20High%20School/93911?skipToProducts=true
-                    - text: Register
-                    - img [ref=e218]
-              - row "Thu, Jan 29 5:45 PM - 6:30 PM Chicago Celtic SC HS Girls vs ESFC 2010/11 Girls Girls High School TOCA Premier League — Register" [ref=e222] [cursor=pointer]:
-                - cell "Thu, Jan 29" [ref=e223]:
-                  - generic [ref=e224]: Thu, Jan 29
-                - cell "5:45 PM - 6:30 PM" [ref=e225]:
-                  - generic [ref=e226]: 5:45 PM - 6:30 PM
-                - cell "Chicago Celtic SC HS Girls vs ESFC 2010/11 Girls Girls High School" [ref=e227]:
-                  - generic [ref=e228]:
-                    - generic [ref=e229]: Chicago Celtic SC HS Girls vs ESFC 2010/11 Girls
-                    - generic [ref=e230]: Girls High School
-                - cell "TOCA Premier League" [ref=e231]:
-                  - generic "TOCA Premier League" [ref=e232]
-                - cell "—" [ref=e233]
-                - cell "Register" [ref=e234]:
-                  - link "Register" [ref=e235]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%20High%20School/93911?skipToProducts=true
-                    - text: Register
-                    - img [ref=e236]
-              - row "Thu, Jan 29 6:30 PM - 7:15 PM PSG U15 Girls High School vs Northwind 2010 Girls Premier 2 Girls High School TOCA Premier League — Register" [ref=e240] [cursor=pointer]:
-                - cell "Thu, Jan 29" [ref=e241]:
-                  - generic [ref=e242]: Thu, Jan 29
-                - cell "6:30 PM - 7:15 PM" [ref=e243]:
-                  - generic [ref=e244]: 6:30 PM - 7:15 PM
-                - cell "PSG U15 Girls High School vs Northwind 2010 Girls Premier 2 Girls High School" [ref=e245]:
-                  - generic [ref=e246]:
-                    - generic [ref=e247]: PSG U15 Girls High School vs Northwind 2010 Girls Premier 2
-                    - generic [ref=e248]: Girls High School
-                - cell "TOCA Premier League" [ref=e249]:
-                  - generic "TOCA Premier League" [ref=e250]
-                - cell "—" [ref=e251]
-                - cell "Register" [ref=e252]:
-                  - link "Register" [ref=e253]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%20High%20School/93911?skipToProducts=true
-                    - text: Register
-                    - img [ref=e254]
-              - row "Thu, Jan 29 7:15 PM - 8:45 PM Adult Pickup Adult Pickup Soccer — Register" [ref=e258] [cursor=pointer]:
-                - cell "Thu, Jan 29" [ref=e259]:
-                  - generic [ref=e260]: Thu, Jan 29
-                - cell "7:15 PM - 8:45 PM" [ref=e261]:
-                  - generic [ref=e262]: 7:15 PM - 8:45 PM
-                - cell "Adult Pickup" [ref=e263]:
-                  - generic [ref=e265]: Adult Pickup
-                - cell "Adult Pickup Soccer" [ref=e266]:
-                  - generic "Adult Pickup Soccer" [ref=e267]
-                - cell "—" [ref=e268]
-                - cell "Register" [ref=e269]:
-                  - link "Register" [ref=e270]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
-                    - text: Register
-                    - img [ref=e271]
-              - row "Fri, Jan 30 4:30 PM - 6:00 PM Adult Pickup Adult Pickup Soccer — Register" [ref=e275] [cursor=pointer]:
-                - cell "Fri, Jan 30" [ref=e276]:
-                  - generic [ref=e277]: Fri, Jan 30
-                - cell "4:30 PM - 6:00 PM" [ref=e278]:
-                  - generic [ref=e279]: 4:30 PM - 6:00 PM
-                - cell "Adult Pickup" [ref=e280]:
-                  - generic [ref=e282]: Adult Pickup
-                - cell "Adult Pickup Soccer" [ref=e283]:
-                  - generic "Adult Pickup Soccer" [ref=e284]
-                - cell "—" [ref=e285]
-                - cell "Register" [ref=e286]:
-                  - link "Register" [ref=e287]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
-                    - text: Register
-                    - img [ref=e288]
-              - row "Fri, Jan 30 7:15 PM - 8:00 PM Chicago City 2010 Boys II/Loop vs Chaldean Lions Boys High School TOCA Premier League — Register" [ref=e292] [cursor=pointer]:
-                - cell "Fri, Jan 30" [ref=e293]:
-                  - generic [ref=e294]: Fri, Jan 30
-                - cell "7:15 PM - 8:00 PM" [ref=e295]:
-                  - generic [ref=e296]: 7:15 PM - 8:00 PM
-                - cell "Chicago City 2010 Boys II/Loop vs Chaldean Lions Boys High School" [ref=e297]:
+    - main [ref=e72]:
+      - generic [ref=e73]:
+        - generic [ref=e75]:
+          - generic [ref=e76]:
+            - generic [ref=e79]: 415 events
+            - generic [ref=e80]: All times CT
+          - generic [ref=e81]:
+            - button "List" [ref=e82] [cursor=pointer]:
+              - img [ref=e83]
+              - generic [ref=e84]: List
+            - button "Table" [ref=e85] [cursor=pointer]:
+              - img [ref=e86]
+              - generic [ref=e88]: Table
+            - button "Day" [ref=e89] [cursor=pointer]:
+              - img [ref=e90]
+              - generic [ref=e93]: Day
+            - button "Week" [ref=e94] [cursor=pointer]:
+              - img [ref=e95]
+              - generic [ref=e97]: Week
+            - button "Month" [ref=e98] [cursor=pointer]:
+              - img [ref=e99]
+              - generic [ref=e104]: Month
+          - generic [ref=e105]:
+            - button "Export" [active] [ref=e106] [cursor=pointer]:
+              - img [ref=e107]
+              - generic [ref=e110]: Export
+            - generic [ref=e111]:
+              - button "Add to Calendar Download .ics file" [ref=e112] [cursor=pointer]:
+                - img [ref=e113]
+                - generic [ref=e115]:
+                  - generic [ref=e116]: Add to Calendar
+                  - generic [ref=e117]: Download .ics file
+              - button "Export to CSV Excel compatible" [ref=e118] [cursor=pointer]:
+                - img [ref=e119]
+                - generic [ref=e122]:
+                  - generic [ref=e123]: Export to CSV
+                  - generic [ref=e124]: Excel compatible
+              - button "Print / PDF Save as PDF" [ref=e125] [cursor=pointer]:
+                - img [ref=e126]
+                - generic [ref=e129]:
+                  - generic [ref=e130]: Print / PDF
+                  - generic [ref=e131]: Save as PDF
+        - generic [ref=e132]:
+          - table [ref=e134]:
+            - rowgroup [ref=e135]:
+              - row "Date Time Event Program Spots Left Action" [ref=e136]:
+                - columnheader "Date" [ref=e137]
+                - columnheader "Time" [ref=e138]
+                - columnheader "Event" [ref=e139]
+                - columnheader "Program" [ref=e140]
+                - columnheader "Spots Left" [ref=e141]
+                - columnheader "Action" [ref=e142]
+            - rowgroup [ref=e143]:
+              - row "Sun, Feb 22 9:00 AM - 10:00 AM 10U Cincinnati Bengals vs 10U Chicago Bears Winter 2 - 10U Coed Closed Flag Football — Details" [ref=e144] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e145]:
+                  - generic [ref=e146]: Sun, Feb 22
+                - cell "9:00 AM - 10:00 AM" [ref=e147]:
+                  - generic [ref=e149]: 9:00 AM - 10:00 AM
+                - cell "10U Cincinnati Bengals vs 10U Chicago Bears Winter 2 - 10U Coed Closed" [ref=e150]:
+                  - generic [ref=e151]:
+                    - generic [ref=e152]: 10U Cincinnati Bengals vs 10U Chicago Bears
+                    - generic [ref=e153]: Winter 2 - 10U Coed
+                    - generic [ref=e155]: Closed
+                - cell "Flag Football" [ref=e156]:
+                  - generic "Flag Football" [ref=e157]
+                - cell "—" [ref=e158]
+                - cell "Details" [ref=e159]:
+                  - link "Details" [ref=e160]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2010U%20Coed/94095
+                    - text: Details
+                    - img [ref=e161]
+              - row "Sun, Feb 22 9:00 AM - 10:00 AM 12U Chicago Bears vs 12U New Orleans Saints Winter 2 - 12U Coed Closed Flag Football — Details" [ref=e165] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e166]:
+                  - generic [ref=e167]: Sun, Feb 22
+                - cell "9:00 AM - 10:00 AM" [ref=e168]:
+                  - generic [ref=e170]: 9:00 AM - 10:00 AM
+                - cell "12U Chicago Bears vs 12U New Orleans Saints Winter 2 - 12U Coed Closed" [ref=e171]:
+                  - generic [ref=e172]:
+                    - generic [ref=e173]: 12U Chicago Bears vs 12U New Orleans Saints
+                    - generic [ref=e174]: Winter 2 - 12U Coed
+                    - generic [ref=e176]: Closed
+                - cell "Flag Football" [ref=e177]:
+                  - generic "Flag Football" [ref=e178]
+                - cell "—" [ref=e179]
+                - cell "Details" [ref=e180]:
+                  - link "Details" [ref=e181]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2012U%20Coed/94094
+                    - text: Details
+                    - img [ref=e182]
+              - row "Sun, Feb 22 9:00 AM - 10:00 AM 12U LA Chargers vs 12U Jacksonville Jaguars Winter 2 - 12U Coed Closed Flag Football — Details" [ref=e186] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e187]:
+                  - generic [ref=e188]: Sun, Feb 22
+                - cell "9:00 AM - 10:00 AM" [ref=e189]:
+                  - generic [ref=e191]: 9:00 AM - 10:00 AM
+                - cell "12U LA Chargers vs 12U Jacksonville Jaguars Winter 2 - 12U Coed Closed" [ref=e192]:
+                  - generic [ref=e193]:
+                    - generic [ref=e194]: 12U LA Chargers vs 12U Jacksonville Jaguars
+                    - generic [ref=e195]: Winter 2 - 12U Coed
+                    - generic [ref=e197]: Closed
+                - cell "Flag Football" [ref=e198]:
+                  - generic "Flag Football" [ref=e199]
+                - cell "—" [ref=e200]
+                - cell "Details" [ref=e201]:
+                  - link "Details" [ref=e202]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2012U%20Coed/94094
+                    - text: Details
+                    - img [ref=e203]
+              - row "Sun, Feb 22 10:00 AM - 11:00 AM 10U Denver Broncos vs 10U Detroit Lions Winter 2 - 10U Coed Closed Flag Football — Details" [ref=e207] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e208]:
+                  - generic [ref=e209]: Sun, Feb 22
+                - cell "10:00 AM - 11:00 AM" [ref=e210]:
+                  - generic [ref=e212]: 10:00 AM - 11:00 AM
+                - cell "10U Denver Broncos vs 10U Detroit Lions Winter 2 - 10U Coed Closed" [ref=e213]:
+                  - generic [ref=e214]:
+                    - generic [ref=e215]: 10U Denver Broncos vs 10U Detroit Lions
+                    - generic [ref=e216]: Winter 2 - 10U Coed
+                    - generic [ref=e218]: Closed
+                - cell "Flag Football" [ref=e219]:
+                  - generic "Flag Football" [ref=e220]
+                - cell "—" [ref=e221]
+                - cell "Details" [ref=e222]:
+                  - link "Details" [ref=e223]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2010U%20Coed/94095
+                    - text: Details
+                    - img [ref=e224]
+              - row "Sun, Feb 22 10:00 AM - 11:00 AM 12U LA Rams vs 12U Cincinnati Bengals Winter 2 - 12U Coed Closed Flag Football — Details" [ref=e228] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e229]:
+                  - generic [ref=e230]: Sun, Feb 22
+                - cell "10:00 AM - 11:00 AM" [ref=e231]:
+                  - generic [ref=e233]: 10:00 AM - 11:00 AM
+                - cell "12U LA Rams vs 12U Cincinnati Bengals Winter 2 - 12U Coed Closed" [ref=e234]:
+                  - generic [ref=e235]:
+                    - generic [ref=e236]: 12U LA Rams vs 12U Cincinnati Bengals
+                    - generic [ref=e237]: Winter 2 - 12U Coed
+                    - generic [ref=e239]: Closed
+                - cell "Flag Football" [ref=e240]:
+                  - generic "Flag Football" [ref=e241]
+                - cell "—" [ref=e242]
+                - cell "Details" [ref=e243]:
+                  - link "Details" [ref=e244]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2012U%20Coed/94094
+                    - text: Details
+                    - img [ref=e245]
+              - row "Sun, Feb 22 11:15 AM - 12:00 PM FC Lakeshore 2015 Boys Premier Red II vs YSIFC 2015 Boys 11U Closed TOCA Premier League — Details" [ref=e249] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e250]:
+                  - generic [ref=e251]: Sun, Feb 22
+                - cell "11:15 AM - 12:00 PM" [ref=e252]:
+                  - generic [ref=e254]: 11:15 AM - 12:00 PM
+                - cell "FC Lakeshore 2015 Boys Premier Red II vs YSIFC 2015 Boys 11U Closed" [ref=e255]:
+                  - generic [ref=e256]:
+                    - generic [ref=e257]: FC Lakeshore 2015 Boys Premier Red II vs YSIFC 2015
+                    - generic [ref=e258]: Boys 11U
+                    - generic [ref=e260]: Closed
+                - cell "TOCA Premier League" [ref=e261]:
+                  - generic "TOCA Premier League" [ref=e262]
+                - cell "—" [ref=e263]
+                - cell "Details" [ref=e264]:
+                  - link "Details" [ref=e265]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                    - text: Details
+                    - img [ref=e266]
+              - row "Sun, Feb 22 11:45 AM - 12:30 PM Chicago Powerstrikers vs PSG U11 Girls Pre Academy Girls 11U Closed TOCA Premier League — Details" [ref=e270] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e271]:
+                  - generic [ref=e272]: Sun, Feb 22
+                - cell "11:45 AM - 12:30 PM" [ref=e273]:
+                  - generic [ref=e275]: 11:45 AM - 12:30 PM
+                - cell "Chicago Powerstrikers vs PSG U11 Girls Pre Academy Girls 11U Closed" [ref=e276]:
+                  - generic [ref=e277]:
+                    - generic [ref=e278]: Chicago Powerstrikers vs PSG U11 Girls Pre Academy
+                    - generic [ref=e279]: Girls 11U
+                    - generic [ref=e281]: Closed
+                - cell "TOCA Premier League" [ref=e282]:
+                  - generic "TOCA Premier League" [ref=e283]
+                - cell "—" [ref=e284]
+                - cell "Details" [ref=e285]:
+                  - link "Details" [ref=e286]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2011U/93350
+                    - text: Details
+                    - img [ref=e287]
+              - row "Sun, Feb 22 12:00 PM - 12:45 PM YSIFC 2016 Blue vs Team Evanston 2016 Boys Orange 3 Boys 10U Closed TOCA Premier League — Details" [ref=e291] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e292]:
+                  - generic [ref=e293]: Sun, Feb 22
+                - cell "12:00 PM - 12:45 PM" [ref=e294]:
+                  - generic [ref=e296]: 12:00 PM - 12:45 PM
+                - cell "YSIFC 2016 Blue vs Team Evanston 2016 Boys Orange 3 Boys 10U Closed" [ref=e297]:
                   - generic [ref=e298]:
-                    - generic [ref=e299]: Chicago City 2010 Boys II/Loop vs Chaldean Lions
-                    - generic [ref=e300]: Boys High School
-                - cell "TOCA Premier League" [ref=e301]:
-                  - generic "TOCA Premier League" [ref=e302]
-                - cell "—" [ref=e303]
-                - cell "Register" [ref=e304]:
-                  - link "Register" [ref=e305]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345?skipToProducts=true
-                    - text: Register
-                    - img [ref=e306]
-              - row "Fri, Jan 30 7:30 PM - 8:15 PM Northwind 2010 Boys Premier 2 vs JaHbat B2010 Boys High School TOCA Premier League — Register" [ref=e310] [cursor=pointer]:
-                - cell "Fri, Jan 30" [ref=e311]:
-                  - generic [ref=e312]: Fri, Jan 30
-                - cell "7:30 PM - 8:15 PM" [ref=e313]:
-                  - generic [ref=e314]: 7:30 PM - 8:15 PM
-                - cell "Northwind 2010 Boys Premier 2 vs JaHbat B2010 Boys High School" [ref=e315]:
-                  - generic [ref=e316]:
-                    - generic [ref=e317]: Northwind 2010 Boys Premier 2 vs JaHbat B2010
-                    - generic [ref=e318]: Boys High School
-                - cell "TOCA Premier League" [ref=e319]:
-                  - generic "TOCA Premier League" [ref=e320]
-                - cell "—" [ref=e321]
-                - cell "Register" [ref=e322]:
-                  - link "Register" [ref=e323]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345?skipToProducts=true
-                    - text: Register
-                    - img [ref=e324]
-              - row "Fri, Jan 30 8:15 PM - 9:00 PM JaHbat B2007/08/09 vs Chicago Celtic SC HS Boys Boys High School TOCA Premier League — Register" [ref=e328] [cursor=pointer]:
-                - cell "Fri, Jan 30" [ref=e329]:
-                  - generic [ref=e330]: Fri, Jan 30
-                - cell "8:15 PM - 9:00 PM" [ref=e331]:
-                  - generic [ref=e332]: 8:15 PM - 9:00 PM
-                - cell "JaHbat B2007/08/09 vs Chicago Celtic SC HS Boys Boys High School" [ref=e333]:
-                  - generic [ref=e334]:
-                    - generic [ref=e335]: JaHbat B2007/08/09 vs Chicago Celtic SC HS Boys
-                    - generic [ref=e336]: Boys High School
-                - cell "TOCA Premier League" [ref=e337]:
-                  - generic "TOCA Premier League" [ref=e338]
-                - cell "—" [ref=e339]
-                - cell "Register" [ref=e340]:
-                  - link "Register" [ref=e341]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345?skipToProducts=true
-                    - text: Register
-                    - img [ref=e342]
-              - row "Sat, Jan 31 9:30 AM - 10:30 AM 14U Detroit Lions vs 14U Buffalo Bills Winter 2 - 14U Coed Closed Flag Football — Details" [ref=e346] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e347]:
-                  - generic [ref=e348]: Sat, Jan 31
-                - cell "9:30 AM - 10:30 AM" [ref=e349]:
-                  - generic [ref=e350]: 9:30 AM - 10:30 AM
-                - cell "14U Detroit Lions vs 14U Buffalo Bills Winter 2 - 14U Coed Closed" [ref=e351]:
-                  - generic [ref=e352]:
-                    - generic [ref=e353]: 14U Detroit Lions vs 14U Buffalo Bills
-                    - generic [ref=e354]: Winter 2 - 14U Coed
-                    - generic [ref=e356]: Closed
-                - cell "Flag Football" [ref=e357]:
-                  - generic "Flag Football" [ref=e358]
-                - cell "—" [ref=e359]
-                - cell "Details" [ref=e360]:
-                  - link "Details" [ref=e361]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2014U%20Coed/94096
+                    - generic [ref=e299]: YSIFC 2016 Blue vs Team Evanston 2016 Boys Orange 3
+                    - generic [ref=e300]: Boys 10U
+                    - generic [ref=e302]: Closed
+                - cell "TOCA Premier League" [ref=e303]:
+                  - generic "TOCA Premier League" [ref=e304]
+                - cell "—" [ref=e305]
+                - cell "Details" [ref=e306]:
+                  - link "Details" [ref=e307]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
                     - text: Details
-                    - img [ref=e362]
-              - row "Sat, Jan 31 10:00 AM - 10:45 AM Chicago City 2013 Girls I vs ESFC 2013 Girls White Girls 13U TOCA Premier League — Register" [ref=e366] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e367]:
-                  - generic [ref=e368]: Sat, Jan 31
-                - cell "10:00 AM - 10:45 AM" [ref=e369]:
-                  - generic [ref=e370]: 10:00 AM - 10:45 AM
-                - cell "Chicago City 2013 Girls I vs ESFC 2013 Girls White Girls 13U" [ref=e371]:
-                  - generic [ref=e372]:
-                    - generic [ref=e373]: Chicago City 2013 Girls I vs ESFC 2013 Girls White
-                    - generic [ref=e374]: Girls 13U
-                - cell "TOCA Premier League" [ref=e375]:
-                  - generic "TOCA Premier League" [ref=e376]
-                - cell "—" [ref=e377]
-                - cell "Register" [ref=e378]:
-                  - link "Register" [ref=e379]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2013U/93909?skipToProducts=true
-                    - text: Register
-                    - img [ref=e380]
-              - row "Sat, Jan 31 10:30 AM - 11:30 AM 14U Houston Texans vs 14U Chicago Bears Winter 2 - 14U Coed Closed Flag Football — Details" [ref=e384] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e385]:
-                  - generic [ref=e386]: Sat, Jan 31
-                - cell "10:30 AM - 11:30 AM" [ref=e387]:
-                  - generic [ref=e388]: 10:30 AM - 11:30 AM
-                - cell "14U Houston Texans vs 14U Chicago Bears Winter 2 - 14U Coed Closed" [ref=e389]:
-                  - generic [ref=e390]:
-                    - generic [ref=e391]: 14U Houston Texans vs 14U Chicago Bears
-                    - generic [ref=e392]: Winter 2 - 14U Coed
-                    - generic [ref=e394]: Closed
-                - cell "Flag Football" [ref=e395]:
-                  - generic "Flag Football" [ref=e396]
-                - cell "—" [ref=e397]
-                - cell "Details" [ref=e398]:
-                  - link "Details" [ref=e399]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2014U%20Coed/94096
+                    - img [ref=e308]
+              - row "Sun, Feb 22 12:15 PM - 1:00 PM AYSO Extra U10 Boys Orange vs Chicago City 2016 Boys IV Boys 10U Closed TOCA Premier League — Details" [ref=e312] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e313]:
+                  - generic [ref=e314]: Sun, Feb 22
+                - cell "12:15 PM - 1:00 PM" [ref=e315]:
+                  - generic [ref=e317]: 12:15 PM - 1:00 PM
+                - cell "AYSO Extra U10 Boys Orange vs Chicago City 2016 Boys IV Boys 10U Closed" [ref=e318]:
+                  - generic [ref=e319]:
+                    - generic [ref=e320]: AYSO Extra U10 Boys Orange vs Chicago City 2016 Boys IV
+                    - generic [ref=e321]: Boys 10U
+                    - generic [ref=e323]: Closed
+                - cell "TOCA Premier League" [ref=e324]:
+                  - generic "TOCA Premier League" [ref=e325]
+                - cell "—" [ref=e326]
+                - cell "Details" [ref=e327]:
+                  - link "Details" [ref=e328]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
                     - text: Details
-                    - img [ref=e400]
-              - row "Sat, Jan 31 10:45 AM - 11:30 AM JaHbat G2013/14 vs Chicago City 2014 Girls I Girls 13U TOCA Premier League — Register" [ref=e404] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e405]:
-                  - generic [ref=e406]: Sat, Jan 31
-                - cell "10:45 AM - 11:30 AM" [ref=e407]:
-                  - generic [ref=e408]: 10:45 AM - 11:30 AM
-                - cell "JaHbat G2013/14 vs Chicago City 2014 Girls I Girls 13U" [ref=e409]:
-                  - generic [ref=e410]:
-                    - generic [ref=e411]: JaHbat G2013/14 vs Chicago City 2014 Girls I
-                    - generic [ref=e412]: Girls 13U
-                - cell "TOCA Premier League" [ref=e413]:
-                  - generic "TOCA Premier League" [ref=e414]
-                - cell "—" [ref=e415]
-                - cell "Register" [ref=e416]:
-                  - link "Register" [ref=e417]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2013U/93909?skipToProducts=true
+                    - img [ref=e329]
+              - row "Sun, Feb 22 12:30 PM - 1:15 PM Blue Blood Dragons vs PSG U9 Boys Blue II Boys 9U Closed TOCA Premier League — Details" [ref=e333] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e334]:
+                  - generic [ref=e335]: Sun, Feb 22
+                - cell "12:30 PM - 1:15 PM" [ref=e336]:
+                  - generic [ref=e338]: 12:30 PM - 1:15 PM
+                - cell "Blue Blood Dragons vs PSG U9 Boys Blue II Boys 9U Closed" [ref=e339]:
+                  - generic [ref=e340]:
+                    - generic [ref=e341]: Blue Blood Dragons vs PSG U9 Boys Blue II
+                    - generic [ref=e342]: Boys 9U
+                    - generic [ref=e344]: Closed
+                - cell "TOCA Premier League" [ref=e345]:
+                  - generic "TOCA Premier League" [ref=e346]
+                - cell "—" [ref=e347]
+                - cell "Details" [ref=e348]:
+                  - link "Details" [ref=e349]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%209U/93339
+                    - text: Details
+                    - img [ref=e350]
+              - row "Sun, Feb 22 12:45 PM - 1:30 PM YSIFC 2017 Yellow vs JaHbat B2017/18 Boys 9U Closed TOCA Premier League — Details" [ref=e354] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e355]:
+                  - generic [ref=e356]: Sun, Feb 22
+                - cell "12:45 PM - 1:30 PM" [ref=e357]:
+                  - generic [ref=e359]: 12:45 PM - 1:30 PM
+                - cell "YSIFC 2017 Yellow vs JaHbat B2017/18 Boys 9U Closed" [ref=e360]:
+                  - generic [ref=e361]:
+                    - generic [ref=e362]: YSIFC 2017 Yellow vs JaHbat B2017/18
+                    - generic [ref=e363]: Boys 9U
+                    - generic [ref=e365]: Closed
+                - cell "TOCA Premier League" [ref=e366]:
+                  - generic "TOCA Premier League" [ref=e367]
+                - cell "—" [ref=e368]
+                - cell "Details" [ref=e369]:
+                  - link "Details" [ref=e370]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%209U/93339
+                    - text: Details
+                    - img [ref=e371]
+              - row "Sun, Feb 22 1:00 PM - 1:45 PM JaHbat B2016 vs PSG U10 Boys White Boys 10U Closed TOCA Premier League — Details" [ref=e375] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e376]:
+                  - generic [ref=e377]: Sun, Feb 22
+                - cell "1:00 PM - 1:45 PM" [ref=e378]:
+                  - generic [ref=e380]: 1:00 PM - 1:45 PM
+                - cell "JaHbat B2016 vs PSG U10 Boys White Boys 10U Closed" [ref=e381]:
+                  - generic [ref=e382]:
+                    - generic [ref=e383]: JaHbat B2016 vs PSG U10 Boys White
+                    - generic [ref=e384]: Boys 10U
+                    - generic [ref=e386]: Closed
+                - cell "TOCA Premier League" [ref=e387]:
+                  - generic "TOCA Premier League" [ref=e388]
+                - cell "—" [ref=e389]
+                - cell "Details" [ref=e390]:
+                  - link "Details" [ref=e391]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                    - text: Details
+                    - img [ref=e392]
+              - row "Sun, Feb 22 1:15 PM - 2:00 PM PSG U11 Boys Blue vs Northside Athletics Boys 11U Closed TOCA Premier League — Details" [ref=e396] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e397]:
+                  - generic [ref=e398]: Sun, Feb 22
+                - cell "1:15 PM - 2:00 PM" [ref=e399]:
+                  - generic [ref=e401]: 1:15 PM - 2:00 PM
+                - cell "PSG U11 Boys Blue vs Northside Athletics Boys 11U Closed" [ref=e402]:
+                  - generic [ref=e403]:
+                    - generic [ref=e404]: PSG U11 Boys Blue vs Northside Athletics
+                    - generic [ref=e405]: Boys 11U
+                    - generic [ref=e407]: Closed
+                - cell "TOCA Premier League" [ref=e408]:
+                  - generic "TOCA Premier League" [ref=e409]
+                - cell "—" [ref=e410]
+                - cell "Details" [ref=e411]:
+                  - link "Details" [ref=e412]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                    - text: Details
+                    - img [ref=e413]
+              - row "Sun, Feb 22 1:30 PM - 2:15 PM Chicago City 2017 Boys vs PSG Evanston & Northshore 9U Boys Boys 9U Closed TOCA Premier League — Details" [ref=e417] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e418]:
+                  - generic [ref=e419]: Sun, Feb 22
+                - cell "1:30 PM - 2:15 PM" [ref=e420]:
+                  - generic [ref=e422]: 1:30 PM - 2:15 PM
+                - cell "Chicago City 2017 Boys vs PSG Evanston & Northshore 9U Boys Boys 9U Closed" [ref=e423]:
+                  - generic [ref=e424]:
+                    - generic [ref=e425]: Chicago City 2017 Boys vs PSG Evanston & Northshore 9U Boys
+                    - generic [ref=e426]: Boys 9U
+                    - generic [ref=e428]: Closed
+                - cell "TOCA Premier League" [ref=e429]:
+                  - generic "TOCA Premier League" [ref=e430]
+                - cell "—" [ref=e431]
+                - cell "Details" [ref=e432]:
+                  - link "Details" [ref=e433]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%209U/93339
+                    - text: Details
+                    - img [ref=e434]
+              - row "Sun, Feb 22 1:45 PM - 2:30 PM AYSO Extra U10 Boys Navy vs Chicago City 2016 Boys III Boys 10U Closed TOCA Premier League — Details" [ref=e438] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e439]:
+                  - generic [ref=e440]: Sun, Feb 22
+                - cell "1:45 PM - 2:30 PM" [ref=e441]:
+                  - generic [ref=e443]: 1:45 PM - 2:30 PM
+                - cell "AYSO Extra U10 Boys Navy vs Chicago City 2016 Boys III Boys 10U Closed" [ref=e444]:
+                  - generic [ref=e445]:
+                    - generic [ref=e446]: AYSO Extra U10 Boys Navy vs Chicago City 2016 Boys III
+                    - generic [ref=e447]: Boys 10U
+                    - generic [ref=e449]: Closed
+                - cell "TOCA Premier League" [ref=e450]:
+                  - generic "TOCA Premier League" [ref=e451]
+                - cell "—" [ref=e452]
+                - cell "Details" [ref=e453]:
+                  - link "Details" [ref=e454]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                    - text: Details
+                    - img [ref=e455]
+              - row "Sun, Feb 22 2:00 PM - 2:45 PM YSIFC 2016 Yellow vs Wilmette Wings 2016 White Boys Boys 10U Closed TOCA Premier League — Details" [ref=e459] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e460]:
+                  - generic [ref=e461]: Sun, Feb 22
+                - cell "2:00 PM - 2:45 PM" [ref=e462]:
+                  - generic [ref=e464]: 2:00 PM - 2:45 PM
+                - cell "YSIFC 2016 Yellow vs Wilmette Wings 2016 White Boys Boys 10U Closed" [ref=e465]:
+                  - generic [ref=e466]:
+                    - generic [ref=e467]: YSIFC 2016 Yellow vs Wilmette Wings 2016 White Boys
+                    - generic [ref=e468]: Boys 10U
+                    - generic [ref=e470]: Closed
+                - cell "TOCA Premier League" [ref=e471]:
+                  - generic "TOCA Premier League" [ref=e472]
+                - cell "—" [ref=e473]
+                - cell "Details" [ref=e474]:
+                  - link "Details" [ref=e475]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                    - text: Details
+                    - img [ref=e476]
+              - row "Sun, Feb 22 2:15 PM - 3:00 PM FC Stars 2017 Boys vs PSG U9 Boys Blue I Boys 9U Closed TOCA Premier League — Details" [ref=e480] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e481]:
+                  - generic [ref=e482]: Sun, Feb 22
+                - cell "2:15 PM - 3:00 PM" [ref=e483]:
+                  - generic [ref=e485]: 2:15 PM - 3:00 PM
+                - cell "FC Stars 2017 Boys vs PSG U9 Boys Blue I Boys 9U Closed" [ref=e486]:
+                  - generic [ref=e487]:
+                    - generic [ref=e488]: FC Stars 2017 Boys vs PSG U9 Boys Blue I
+                    - generic [ref=e489]: Boys 9U
+                    - generic [ref=e491]: Closed
+                - cell "TOCA Premier League" [ref=e492]:
+                  - generic "TOCA Premier League" [ref=e493]
+                - cell "—" [ref=e494]
+                - cell "Details" [ref=e495]:
+                  - link "Details" [ref=e496]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%209U/93339
+                    - text: Details
+                    - img [ref=e497]
+              - row "Sun, Feb 22 2:30 PM - 3:15 PM PSG U10 Boys - North-Side vs PSG U10 Boys Blue Boys 10U Closed TOCA Premier League — Details" [ref=e501] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e502]:
+                  - generic [ref=e503]: Sun, Feb 22
+                - cell "2:30 PM - 3:15 PM" [ref=e504]:
+                  - generic [ref=e506]: 2:30 PM - 3:15 PM
+                - cell "PSG U10 Boys - North-Side vs PSG U10 Boys Blue Boys 10U Closed" [ref=e507]:
+                  - generic [ref=e508]:
+                    - generic [ref=e509]: PSG U10 Boys - North-Side vs PSG U10 Boys Blue
+                    - generic [ref=e510]: Boys 10U
+                    - generic [ref=e512]: Closed
+                - cell "TOCA Premier League" [ref=e513]:
+                  - generic "TOCA Premier League" [ref=e514]
+                - cell "—" [ref=e515]
+                - cell "Details" [ref=e516]:
+                  - link "Details" [ref=e517]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                    - text: Details
+                    - img [ref=e518]
+              - row "Sun, Feb 22 2:45 PM - 3:30 PM Norridge United U11 Boys Select vs Chicago City 2015 Boys II Boys 11U Closed TOCA Premier League — Details" [ref=e522] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e523]:
+                  - generic [ref=e524]: Sun, Feb 22
+                - cell "2:45 PM - 3:30 PM" [ref=e525]:
+                  - generic [ref=e527]: 2:45 PM - 3:30 PM
+                - cell "Norridge United U11 Boys Select vs Chicago City 2015 Boys II Boys 11U Closed" [ref=e528]:
+                  - generic [ref=e529]:
+                    - generic [ref=e530]: Norridge United U11 Boys Select vs Chicago City 2015 Boys II
+                    - generic [ref=e531]: Boys 11U
+                    - generic [ref=e533]: Closed
+                - cell "TOCA Premier League" [ref=e534]:
+                  - generic "TOCA Premier League" [ref=e535]
+                - cell "—" [ref=e536]
+                - cell "Details" [ref=e537]:
+                  - link "Details" [ref=e538]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                    - text: Details
+                    - img [ref=e539]
+              - row "Sun, Feb 22 3:00 PM - 3:45 PM YSIFC 2017-18 Girls vs PSG U9 Girls Red Girls 9U Closed TOCA Premier League — Details" [ref=e543] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e544]:
+                  - generic [ref=e545]: Sun, Feb 22
+                - cell "3:00 PM - 3:45 PM" [ref=e546]:
+                  - generic [ref=e548]: 3:00 PM - 3:45 PM
+                - cell "YSIFC 2017-18 Girls vs PSG U9 Girls Red Girls 9U Closed" [ref=e549]:
+                  - generic [ref=e550]:
+                    - generic [ref=e551]: YSIFC 2017-18 Girls vs PSG U9 Girls Red
+                    - generic [ref=e552]: Girls 9U
+                    - generic [ref=e554]: Closed
+                - cell "TOCA Premier League" [ref=e555]:
+                  - generic "TOCA Premier League" [ref=e556]
+                - cell "—" [ref=e557]
+                - cell "Details" [ref=e558]:
+                  - link "Details" [ref=e559]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%209U/93348
+                    - text: Details
+                    - img [ref=e560]
+              - row "Sun, Feb 22 3:15 PM - 4:00 PM UA 2016 vs Chicago City 2016 Boys I Boys 10U Closed TOCA Premier League — Details" [ref=e564] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e565]:
+                  - generic [ref=e566]: Sun, Feb 22
+                - cell "3:15 PM - 4:00 PM" [ref=e567]:
+                  - generic [ref=e569]: 3:15 PM - 4:00 PM
+                - cell "UA 2016 vs Chicago City 2016 Boys I Boys 10U Closed" [ref=e570]:
+                  - generic [ref=e571]:
+                    - generic [ref=e572]: UA 2016 vs Chicago City 2016 Boys I
+                    - generic [ref=e573]: Boys 10U
+                    - generic [ref=e575]: Closed
+                - cell "TOCA Premier League" [ref=e576]:
+                  - generic "TOCA Premier League" [ref=e577]
+                - cell "—" [ref=e578]
+                - cell "Details" [ref=e579]:
+                  - link "Details" [ref=e580]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                    - text: Details
+                    - img [ref=e581]
+              - row "Sun, Feb 22 3:30 PM - 4:15 PM PSG U10 Boys Red vs FC Connection 2016 Boys 10U Closed TOCA Premier League — Details" [ref=e585] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e586]:
+                  - generic [ref=e587]: Sun, Feb 22
+                - cell "3:30 PM - 4:15 PM" [ref=e588]:
+                  - generic [ref=e590]: 3:30 PM - 4:15 PM
+                - cell "PSG U10 Boys Red vs FC Connection 2016 Boys 10U Closed" [ref=e591]:
+                  - generic [ref=e592]:
+                    - generic [ref=e593]: PSG U10 Boys Red vs FC Connection 2016
+                    - generic [ref=e594]: Boys 10U
+                    - generic [ref=e596]: Closed
+                - cell "TOCA Premier League" [ref=e597]:
+                  - generic "TOCA Premier League" [ref=e598]
+                - cell "—" [ref=e599]
+                - cell "Details" [ref=e600]:
+                  - link "Details" [ref=e601]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                    - text: Details
+                    - img [ref=e602]
+              - row "Sun, Feb 22 3:45 PM - 4:30 PM Chicago City 2016 Girls I vs JaHbat G2016/17 Girls 10U Closed TOCA Premier League — Details" [ref=e606] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e607]:
+                  - generic [ref=e608]: Sun, Feb 22
+                - cell "3:45 PM - 4:30 PM" [ref=e609]:
+                  - generic [ref=e611]: 3:45 PM - 4:30 PM
+                - cell "Chicago City 2016 Girls I vs JaHbat G2016/17 Girls 10U Closed" [ref=e612]:
+                  - generic [ref=e613]:
+                    - generic [ref=e614]: Chicago City 2016 Girls I vs JaHbat G2016/17
+                    - generic [ref=e615]: Girls 10U
+                    - generic [ref=e617]: Closed
+                - cell "TOCA Premier League" [ref=e618]:
+                  - generic "TOCA Premier League" [ref=e619]
+                - cell "—" [ref=e620]
+                - cell "Details" [ref=e621]:
+                  - link "Details" [ref=e622]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2010U/93349
+                    - text: Details
+                    - img [ref=e623]
+              - row "Sun, Feb 22 4:00 PM - 4:45 PM FC Ole vs Chicago City 2015 Boys I Boys 11U Closed TOCA Premier League — Details" [ref=e627] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e628]:
+                  - generic [ref=e629]: Sun, Feb 22
+                - cell "4:00 PM - 4:45 PM" [ref=e630]:
+                  - generic [ref=e632]: 4:00 PM - 4:45 PM
+                - cell "FC Ole vs Chicago City 2015 Boys I Boys 11U Closed" [ref=e633]:
+                  - generic [ref=e634]:
+                    - generic [ref=e635]: FC Ole vs Chicago City 2015 Boys I
+                    - generic [ref=e636]: Boys 11U
+                    - generic [ref=e638]: Closed
+                - cell "TOCA Premier League" [ref=e639]:
+                  - generic "TOCA Premier League" [ref=e640]
+                - cell "—" [ref=e641]
+                - cell "Details" [ref=e642]:
+                  - link "Details" [ref=e643]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                    - text: Details
+                    - img [ref=e644]
+              - row "Sun, Feb 22 4:15 PM - 5:00 PM Wilmette Wings 2017 Boys vs JOMSC 19 Boys 9U Closed TOCA Premier League — Details" [ref=e648] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e649]:
+                  - generic [ref=e650]: Sun, Feb 22
+                - cell "4:15 PM - 5:00 PM" [ref=e651]:
+                  - generic [ref=e653]: 4:15 PM - 5:00 PM
+                - cell "Wilmette Wings 2017 Boys vs JOMSC 19 Boys 9U Closed" [ref=e654]:
+                  - generic [ref=e655]:
+                    - generic [ref=e656]: Wilmette Wings 2017 Boys vs JOMSC 19
+                    - generic [ref=e657]: Boys 9U
+                    - generic [ref=e659]: Closed
+                - cell "TOCA Premier League" [ref=e660]:
+                  - generic "TOCA Premier League" [ref=e661]
+                - cell "—" [ref=e662]
+                - cell "Details" [ref=e663]:
+                  - link "Details" [ref=e664]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%209U/93339
+                    - text: Details
+                    - img [ref=e665]
+              - row "Sun, Feb 22 4:30 PM - 5:15 PM Chicago City 2016 Girls II vs AYSO Extra U10 Girls Navy Girls 10U Closed TOCA Premier League — Details" [ref=e669] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e670]:
+                  - generic [ref=e671]: Sun, Feb 22
+                - cell "4:30 PM - 5:15 PM" [ref=e672]:
+                  - generic [ref=e674]: 4:30 PM - 5:15 PM
+                - cell "Chicago City 2016 Girls II vs AYSO Extra U10 Girls Navy Girls 10U Closed" [ref=e675]:
+                  - generic [ref=e676]:
+                    - generic [ref=e677]: Chicago City 2016 Girls II vs AYSO Extra U10 Girls Navy
+                    - generic [ref=e678]: Girls 10U
+                    - generic [ref=e680]: Closed
+                - cell "TOCA Premier League" [ref=e681]:
+                  - generic "TOCA Premier League" [ref=e682]
+                - cell "—" [ref=e683]
+                - cell "Details" [ref=e684]:
+                  - link "Details" [ref=e685]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2010U/93349
+                    - text: Details
+                    - img [ref=e686]
+              - row "Sun, Feb 22 5:00 PM - 5:45 PM Chicago City 2015 Boys III vs ESFC 2015 Boys Boys 11U Closed TOCA Premier League — Details" [ref=e690] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e691]:
+                  - generic [ref=e692]: Sun, Feb 22
+                - cell "5:00 PM - 5:45 PM" [ref=e693]:
+                  - generic [ref=e695]: 5:00 PM - 5:45 PM
+                - cell "Chicago City 2015 Boys III vs ESFC 2015 Boys Boys 11U Closed" [ref=e696]:
+                  - generic [ref=e697]:
+                    - generic [ref=e698]: Chicago City 2015 Boys III vs ESFC 2015 Boys
+                    - generic [ref=e699]: Boys 11U
+                    - generic [ref=e701]: Closed
+                - cell "TOCA Premier League" [ref=e702]:
+                  - generic "TOCA Premier League" [ref=e703]
+                - cell "—" [ref=e704]
+                - cell "Details" [ref=e705]:
+                  - link "Details" [ref=e706]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                    - text: Details
+                    - img [ref=e707]
+              - row "Sun, Feb 22 5:15 PM - 6:00 PM Wilmette Wings 2016 White Girls vs YSIFC 2016 Girls Girls 10U Closed TOCA Premier League — Details" [ref=e711] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e712]:
+                  - generic [ref=e713]: Sun, Feb 22
+                - cell "5:15 PM - 6:00 PM" [ref=e714]:
+                  - generic [ref=e716]: 5:15 PM - 6:00 PM
+                - cell "Wilmette Wings 2016 White Girls vs YSIFC 2016 Girls Girls 10U Closed" [ref=e717]:
+                  - generic [ref=e718]:
+                    - generic [ref=e719]: Wilmette Wings 2016 White Girls vs YSIFC 2016 Girls
+                    - generic [ref=e720]: Girls 10U
+                    - generic [ref=e722]: Closed
+                - cell "TOCA Premier League" [ref=e723]:
+                  - generic "TOCA Premier League" [ref=e724]
+                - cell "—" [ref=e725]
+                - cell "Details" [ref=e726]:
+                  - link "Details" [ref=e727]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2010U/93349
+                    - text: Details
+                    - img [ref=e728]
+              - row "Sun, Feb 22 5:45 PM - 6:30 PM PSG U10 Boys - West Town vs Team Evanston 2016 Boys Blue 1 Boys 10U Closed TOCA Premier League — Details" [ref=e732] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e733]:
+                  - generic [ref=e734]: Sun, Feb 22
+                - cell "5:45 PM - 6:30 PM" [ref=e735]:
+                  - generic [ref=e737]: 5:45 PM - 6:30 PM
+                - cell "PSG U10 Boys - West Town vs Team Evanston 2016 Boys Blue 1 Boys 10U Closed" [ref=e738]:
+                  - generic [ref=e739]:
+                    - generic [ref=e740]: PSG U10 Boys - West Town vs Team Evanston 2016 Boys Blue 1
+                    - generic [ref=e741]: Boys 10U
+                    - generic [ref=e743]: Closed
+                - cell "TOCA Premier League" [ref=e744]:
+                  - generic "TOCA Premier League" [ref=e745]
+                - cell "—" [ref=e746]
+                - cell "Details" [ref=e747]:
+                  - link "Details" [ref=e748]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                    - text: Details
+                    - img [ref=e749]
+              - row "Sun, Feb 22 6:00 PM - 6:45 PM Wilmette Wings 2015 White Girls vs JaHbat G2015 Girls 11U Closed TOCA Premier League — Details" [ref=e753] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e754]:
+                  - generic [ref=e755]: Sun, Feb 22
+                - cell "6:00 PM - 6:45 PM" [ref=e756]:
+                  - generic [ref=e758]: 6:00 PM - 6:45 PM
+                - cell "Wilmette Wings 2015 White Girls vs JaHbat G2015 Girls 11U Closed" [ref=e759]:
+                  - generic [ref=e760]:
+                    - generic [ref=e761]: Wilmette Wings 2015 White Girls vs JaHbat G2015
+                    - generic [ref=e762]: Girls 11U
+                    - generic [ref=e764]: Closed
+                - cell "TOCA Premier League" [ref=e765]:
+                  - generic "TOCA Premier League" [ref=e766]
+                - cell "—" [ref=e767]
+                - cell "Details" [ref=e768]:
+                  - link "Details" [ref=e769]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2011U/93350
+                    - text: Details
+                    - img [ref=e770]
+              - row "Sun, Feb 22 6:30 PM - 7:15 PM FC Lakeshore Boys 2015 Premier Red 1 vs Norridge United U11 Boys Premier Boys 11U Closed TOCA Premier League — Details" [ref=e774] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e775]:
+                  - generic [ref=e776]: Sun, Feb 22
+                - cell "6:30 PM - 7:15 PM" [ref=e777]:
+                  - generic [ref=e779]: 6:30 PM - 7:15 PM
+                - cell "FC Lakeshore Boys 2015 Premier Red 1 vs Norridge United U11 Boys Premier Boys 11U Closed" [ref=e780]:
+                  - generic [ref=e781]:
+                    - generic [ref=e782]: FC Lakeshore Boys 2015 Premier Red 1 vs Norridge United U11 Boys Premier
+                    - generic [ref=e783]: Boys 11U
+                    - generic [ref=e785]: Closed
+                - cell "TOCA Premier League" [ref=e786]:
+                  - generic "TOCA Premier League" [ref=e787]
+                - cell "—" [ref=e788]
+                - cell "Details" [ref=e789]:
+                  - link "Details" [ref=e790]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                    - text: Details
+                    - img [ref=e791]
+              - row "Sun, Feb 22 6:45 PM - 7:30 PM FC Lakeshore Girls 2015 Premier Red vs ESFC 2015 Girls Girls 11U Closed TOCA Premier League — Details" [ref=e795] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e796]:
+                  - generic [ref=e797]: Sun, Feb 22
+                - cell "6:45 PM - 7:30 PM" [ref=e798]:
+                  - generic [ref=e800]: 6:45 PM - 7:30 PM
+                - cell "FC Lakeshore Girls 2015 Premier Red vs ESFC 2015 Girls Girls 11U Closed" [ref=e801]:
+                  - generic [ref=e802]:
+                    - generic [ref=e803]: FC Lakeshore Girls 2015 Premier Red vs ESFC 2015 Girls
+                    - generic [ref=e804]: Girls 11U
+                    - generic [ref=e806]: Closed
+                - cell "TOCA Premier League" [ref=e807]:
+                  - generic "TOCA Premier League" [ref=e808]
+                - cell "—" [ref=e809]
+                - cell "Details" [ref=e810]:
+                  - link "Details" [ref=e811]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2011U/93350
+                    - text: Details
+                    - img [ref=e812]
+              - row "Sun, Feb 22 7:15 PM - 8:00 PM FC Lions 2015 vs Chicago City 2016 Boys Academy II Boys 11U Closed TOCA Premier League — Details" [ref=e816] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e817]:
+                  - generic [ref=e818]: Sun, Feb 22
+                - cell "7:15 PM - 8:00 PM" [ref=e819]:
+                  - generic [ref=e821]: 7:15 PM - 8:00 PM
+                - cell "FC Lions 2015 vs Chicago City 2016 Boys Academy II Boys 11U Closed" [ref=e822]:
+                  - generic [ref=e823]:
+                    - generic [ref=e824]: FC Lions 2015 vs Chicago City 2016 Boys Academy II
+                    - generic [ref=e825]: Boys 11U
+                    - generic [ref=e827]: Closed
+                - cell "TOCA Premier League" [ref=e828]:
+                  - generic "TOCA Premier League" [ref=e829]
+                - cell "—" [ref=e830]
+                - cell "Details" [ref=e831]:
+                  - link "Details" [ref=e832]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                    - text: Details
+                    - img [ref=e833]
+              - row "Sun, Feb 22 8:15 PM - 9:15 PM Royals vs Red Winter II 2026 Women's League Women's League Winter — Register" [ref=e837] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e838]:
+                  - generic [ref=e839]: Sun, Feb 22
+                - cell "8:15 PM - 9:15 PM" [ref=e840]:
+                  - generic [ref=e842]: 8:15 PM - 9:15 PM
+                - cell "Royals vs Red Winter II 2026 Women's League" [ref=e843]:
+                  - generic [ref=e844]:
+                    - generic [ref=e845]: Royals vs Red
+                    - generic [ref=e846]: Winter II 2026 Women's League
+                - cell "Women's League Winter" [ref=e847]:
+                  - generic "Women's League Winter" [ref=e848]
+                - cell "—" [ref=e849]
+                - cell "Register" [ref=e850]:
+                  - link "Register" [ref=e851]:
+                    - /url: https://bondsports.co/activity/programs/FEMALE-adult-SOCCER/11267/season/Winter%20II%202026%20Women's%20League/103459?skipToProducts=true
                     - text: Register
-                    - img [ref=e418]
-              - row "Sat, Jan 31 11:30 AM - 12:15 PM Chicago City 2012 Boys Blue vs Chicago City 2012 Boys Loop Boys 14U TOCA Premier League — Register" [ref=e422] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e423]:
-                  - generic [ref=e424]: Sat, Jan 31
-                - cell "11:30 AM - 12:15 PM" [ref=e425]:
-                  - generic [ref=e426]: 11:30 AM - 12:15 PM
-                - cell "Chicago City 2012 Boys Blue vs Chicago City 2012 Boys Loop Boys 14U" [ref=e427]:
-                  - generic [ref=e428]:
-                    - generic [ref=e429]: Chicago City 2012 Boys Blue vs Chicago City 2012 Boys Loop
-                    - generic [ref=e430]: Boys 14U
-                - cell "TOCA Premier League" [ref=e431]:
-                  - generic "TOCA Premier League" [ref=e432]
-                - cell "—" [ref=e433]
-                - cell "Register" [ref=e434]:
-                  - link "Register" [ref=e435]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344?skipToProducts=true
+                    - img [ref=e852]
+              - row "Sun, Feb 22 8:15 PM - 9:15 PM Green vs Yellow Winter II 2026 Women's League Women's League Winter — Register" [ref=e856] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e857]:
+                  - generic [ref=e858]: Sun, Feb 22
+                - cell "8:15 PM - 9:15 PM" [ref=e859]:
+                  - generic [ref=e861]: 8:15 PM - 9:15 PM
+                - cell "Green vs Yellow Winter II 2026 Women's League" [ref=e862]:
+                  - generic [ref=e863]:
+                    - generic [ref=e864]: Green vs Yellow
+                    - generic [ref=e865]: Winter II 2026 Women's League
+                - cell "Women's League Winter" [ref=e866]:
+                  - generic "Women's League Winter" [ref=e867]
+                - cell "—" [ref=e868]
+                - cell "Register" [ref=e869]:
+                  - link "Register" [ref=e870]:
+                    - /url: https://bondsports.co/activity/programs/FEMALE-adult-SOCCER/11267/season/Winter%20II%202026%20Women's%20League/103459?skipToProducts=true
                     - text: Register
-                    - img [ref=e436]
-              - row "Sat, Jan 31 11:45 AM - 12:30 PM Wilmette Wings 2014 Black Boys vs Norridge United U12 Boys Premier Boys 12U TOCA Premier League — Register" [ref=e440] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e441]:
-                  - generic [ref=e442]: Sat, Jan 31
-                - cell "11:45 AM - 12:30 PM" [ref=e443]:
-                  - generic [ref=e444]: 11:45 AM - 12:30 PM
-                - cell "Wilmette Wings 2014 Black Boys vs Norridge United U12 Boys Premier Boys 12U" [ref=e445]:
-                  - generic [ref=e446]:
-                    - generic [ref=e447]: Wilmette Wings 2014 Black Boys vs Norridge United U12 Boys Premier
-                    - generic [ref=e448]: Boys 12U
-                - cell "TOCA Premier League" [ref=e449]:
-                  - generic "TOCA Premier League" [ref=e450]
-                - cell "—" [ref=e451]
-                - cell "Register" [ref=e452]:
-                  - link "Register" [ref=e453]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342?skipToProducts=true
+                    - img [ref=e871]
+              - row "Sun, Feb 22 9:15 PM - 10:15 PM Schwaben A.C. vs Red Winter II 2026 Women's League Women's League Winter — Register" [ref=e875] [cursor=pointer]:
+                - cell "Sun, Feb 22" [ref=e876]:
+                  - generic [ref=e877]: Sun, Feb 22
+                - cell "9:15 PM - 10:15 PM" [ref=e878]:
+                  - generic [ref=e880]: 9:15 PM - 10:15 PM
+                - cell "Schwaben A.C. vs Red Winter II 2026 Women's League" [ref=e881]:
+                  - generic [ref=e882]:
+                    - generic [ref=e883]: Schwaben A.C. vs Red
+                    - generic [ref=e884]: Winter II 2026 Women's League
+                - cell "Women's League Winter" [ref=e885]:
+                  - generic "Women's League Winter" [ref=e886]
+                - cell "—" [ref=e887]
+                - cell "Register" [ref=e888]:
+                  - link "Register" [ref=e889]:
+                    - /url: https://bondsports.co/activity/programs/FEMALE-adult-SOCCER/11267/season/Winter%20II%202026%20Women's%20League/103459?skipToProducts=true
                     - text: Register
-                    - img [ref=e454]
-              - row "Sat, Jan 31 12:15 PM - 1:00 PM ESFC 2013 Girls Blue vs PSG U13 Girls Red Girls 13U TOCA Premier League — Register" [ref=e458] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e459]:
-                  - generic [ref=e460]: Sat, Jan 31
-                - cell "12:15 PM - 1:00 PM" [ref=e461]:
-                  - generic [ref=e462]: 12:15 PM - 1:00 PM
-                - cell "ESFC 2013 Girls Blue vs PSG U13 Girls Red Girls 13U" [ref=e463]:
-                  - generic [ref=e464]:
-                    - generic [ref=e465]: ESFC 2013 Girls Blue vs PSG U13 Girls Red
-                    - generic [ref=e466]: Girls 13U
-                - cell "TOCA Premier League" [ref=e467]:
-                  - generic "TOCA Premier League" [ref=e468]
-                - cell "—" [ref=e469]
-                - cell "Register" [ref=e470]:
-                  - link "Register" [ref=e471]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2013U/93909?skipToProducts=true
-                    - text: Register
-                    - img [ref=e472]
-              - row "Sat, Jan 31 12:30 PM - 1:15 PM PSG U12 Boys Blue vs PSG Evanston & Northshore 12U Boys Boys 12U TOCA Premier League — Register" [ref=e476] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e477]:
-                  - generic [ref=e478]: Sat, Jan 31
-                - cell "12:30 PM - 1:15 PM" [ref=e479]:
-                  - generic [ref=e480]: 12:30 PM - 1:15 PM
-                - cell "PSG U12 Boys Blue vs PSG Evanston & Northshore 12U Boys Boys 12U" [ref=e481]:
-                  - generic [ref=e482]:
-                    - generic [ref=e483]: PSG U12 Boys Blue vs PSG Evanston & Northshore 12U Boys
-                    - generic [ref=e484]: Boys 12U
-                - cell "TOCA Premier League" [ref=e485]:
-                  - generic "TOCA Premier League" [ref=e486]
-                - cell "—" [ref=e487]
-                - cell "Register" [ref=e488]:
-                  - link "Register" [ref=e489]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342?skipToProducts=true
-                    - text: Register
-                    - img [ref=e490]
-              - row "Sat, Jan 31 1:00 PM - 1:45 PM Chicago City 2013 Boys II vs PSG U12 Boys Pre Academy Boys 13U TOCA Premier League — Register" [ref=e494] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e495]:
-                  - generic [ref=e496]: Sat, Jan 31
-                - cell "1:00 PM - 1:45 PM" [ref=e497]:
-                  - generic [ref=e498]: 1:00 PM - 1:45 PM
-                - cell "Chicago City 2013 Boys II vs PSG U12 Boys Pre Academy Boys 13U" [ref=e499]:
-                  - generic [ref=e500]:
-                    - generic [ref=e501]: Chicago City 2013 Boys II vs PSG U12 Boys Pre Academy
-                    - generic [ref=e502]: Boys 13U
-                - cell "TOCA Premier League" [ref=e503]:
-                  - generic "TOCA Premier League" [ref=e504]
-                - cell "—" [ref=e505]
-                - cell "Register" [ref=e506]:
-                  - link "Register" [ref=e507]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343?skipToProducts=true
-                    - text: Register
-                    - img [ref=e508]
-              - row "Sat, Jan 31 1:15 PM - 2:00 PM Norridge United U12 Boys Select vs AYSO Extra U12 Boys Navy Boys 12U TOCA Premier League — Register" [ref=e512] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e513]:
-                  - generic [ref=e514]: Sat, Jan 31
-                - cell "1:15 PM - 2:00 PM" [ref=e515]:
-                  - generic [ref=e516]: 1:15 PM - 2:00 PM
-                - cell "Norridge United U12 Boys Select vs AYSO Extra U12 Boys Navy Boys 12U" [ref=e517]:
-                  - generic [ref=e518]:
-                    - generic [ref=e519]: Norridge United U12 Boys Select vs AYSO Extra U12 Boys Navy
-                    - generic [ref=e520]: Boys 12U
-                - cell "TOCA Premier League" [ref=e521]:
-                  - generic "TOCA Premier League" [ref=e522]
-                - cell "—" [ref=e523]
-                - cell "Register" [ref=e524]:
-                  - link "Register" [ref=e525]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342?skipToProducts=true
-                    - text: Register
-                    - img [ref=e526]
-              - row "Sat, Jan 31 1:15 PM - 2:00 PM 2018 Boys Orange vs PSG U8 Boys Blue - West Town Boys 8U TOCA Premier League — Register" [ref=e530] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e531]:
-                  - generic [ref=e532]: Sat, Jan 31
-                - cell "1:15 PM - 2:00 PM" [ref=e533]:
-                  - generic [ref=e534]: 1:15 PM - 2:00 PM
-                - cell "2018 Boys Orange vs PSG U8 Boys Blue - West Town Boys 8U" [ref=e535]:
-                  - generic [ref=e536]:
-                    - generic [ref=e537]: 2018 Boys Orange vs PSG U8 Boys Blue - West Town
-                    - generic [ref=e538]: Boys 8U
-                - cell "TOCA Premier League" [ref=e539]:
-                  - generic "TOCA Premier League" [ref=e540]
-                - cell "—" [ref=e541]
-                - cell "Register" [ref=e542]:
-                  - link "Register" [ref=e543]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338?skipToProducts=true
-                    - text: Register
-                    - img [ref=e544]
-              - row "Sat, Jan 31 1:45 PM - 2:30 PM ESFC 2012 Boys White vs JaHbat B2012 Premier 2 Boys 14U TOCA Premier League — Register" [ref=e548] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e549]:
-                  - generic [ref=e550]: Sat, Jan 31
-                - cell "1:45 PM - 2:30 PM" [ref=e551]:
-                  - generic [ref=e552]: 1:45 PM - 2:30 PM
-                - cell "ESFC 2012 Boys White vs JaHbat B2012 Premier 2 Boys 14U" [ref=e553]:
-                  - generic [ref=e554]:
-                    - generic [ref=e555]: ESFC 2012 Boys White vs JaHbat B2012 Premier 2
-                    - generic [ref=e556]: Boys 14U
-                - cell "TOCA Premier League" [ref=e557]:
-                  - generic "TOCA Premier League" [ref=e558]
-                - cell "—" [ref=e559]
-                - cell "Register" [ref=e560]:
-                  - link "Register" [ref=e561]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344?skipToProducts=true
-                    - text: Register
-                    - img [ref=e562]
-              - row "Sat, Jan 31 2:00 PM - 2:45 PM Norridge United U13 Boys Premier vs Chicago City 2013 Boys III Boys 13U TOCA Premier League — Register" [ref=e566] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e567]:
-                  - generic [ref=e568]: Sat, Jan 31
-                - cell "2:00 PM - 2:45 PM" [ref=e569]:
-                  - generic [ref=e570]: 2:00 PM - 2:45 PM
-                - cell "Norridge United U13 Boys Premier vs Chicago City 2013 Boys III Boys 13U" [ref=e571]:
-                  - generic [ref=e572]:
-                    - generic [ref=e573]: Norridge United U13 Boys Premier vs Chicago City 2013 Boys III
-                    - generic [ref=e574]: Boys 13U
-                - cell "TOCA Premier League" [ref=e575]:
-                  - generic "TOCA Premier League" [ref=e576]
-                - cell "—" [ref=e577]
-                - cell "Register" [ref=e578]:
-                  - link "Register" [ref=e579]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343?skipToProducts=true
-                    - text: Register
-                    - img [ref=e580]
-              - row "Sat, Jan 31 2:00 PM - 2:45 PM FC Connection 2018 Blue vs PSG u8 Boys Red Boys 8U TOCA Premier League — Register" [ref=e584] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e585]:
-                  - generic [ref=e586]: Sat, Jan 31
-                - cell "2:00 PM - 2:45 PM" [ref=e587]:
-                  - generic [ref=e588]: 2:00 PM - 2:45 PM
-                - cell "FC Connection 2018 Blue vs PSG u8 Boys Red Boys 8U" [ref=e589]:
-                  - generic [ref=e590]:
-                    - generic [ref=e591]: FC Connection 2018 Blue vs PSG u8 Boys Red
-                    - generic [ref=e592]: Boys 8U
-                - cell "TOCA Premier League" [ref=e593]:
-                  - generic "TOCA Premier League" [ref=e594]
-                - cell "—" [ref=e595]
-                - cell "Register" [ref=e596]:
-                  - link "Register" [ref=e597]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338?skipToProducts=true
-                    - text: Register
-                    - img [ref=e598]
-              - row "Sat, Jan 31 2:30 PM - 3:15 PM Chicago City 2013 Boys I vs PSG U13 Boys Pre Academy Boys 14U TOCA Premier League — Register" [ref=e602] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e603]:
-                  - generic [ref=e604]: Sat, Jan 31
-                - cell "2:30 PM - 3:15 PM" [ref=e605]:
-                  - generic [ref=e606]: 2:30 PM - 3:15 PM
-                - cell "Chicago City 2013 Boys I vs PSG U13 Boys Pre Academy Boys 14U" [ref=e607]:
-                  - generic [ref=e608]:
-                    - generic [ref=e609]: Chicago City 2013 Boys I vs PSG U13 Boys Pre Academy
-                    - generic [ref=e610]: Boys 14U
-                - cell "TOCA Premier League" [ref=e611]:
-                  - generic "TOCA Premier League" [ref=e612]
-                - cell "—" [ref=e613]
-                - cell "Register" [ref=e614]:
-                  - link "Register" [ref=e615]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344?skipToProducts=true
-                    - text: Register
-                    - img [ref=e616]
-              - row "Sat, Jan 31 2:45 PM - 3:30 PM ESFC 2014 Boys vs UA 2014 Boys 12U TOCA Premier League — Register" [ref=e620] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e621]:
-                  - generic [ref=e622]: Sat, Jan 31
-                - cell "2:45 PM - 3:30 PM" [ref=e623]:
-                  - generic [ref=e624]: 2:45 PM - 3:30 PM
-                - cell "ESFC 2014 Boys vs UA 2014 Boys 12U" [ref=e625]:
-                  - generic [ref=e626]:
-                    - generic [ref=e627]: ESFC 2014 Boys vs UA 2014
-                    - generic [ref=e628]: Boys 12U
-                - cell "TOCA Premier League" [ref=e629]:
-                  - generic "TOCA Premier League" [ref=e630]
-                - cell "—" [ref=e631]
-                - cell "Register" [ref=e632]:
-                  - link "Register" [ref=e633]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342?skipToProducts=true
-                    - text: Register
-                    - img [ref=e634]
-              - row "Sat, Jan 31 2:45 PM - 3:30 PM PSG U8 Boys Red - West Town vs Norridge United U7 Boys Premier Boys 8U TOCA Premier League — Register" [ref=e638] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e639]:
-                  - generic [ref=e640]: Sat, Jan 31
-                - cell "2:45 PM - 3:30 PM" [ref=e641]:
-                  - generic [ref=e642]: 2:45 PM - 3:30 PM
-                - cell "PSG U8 Boys Red - West Town vs Norridge United U7 Boys Premier Boys 8U" [ref=e643]:
-                  - generic [ref=e644]:
-                    - generic [ref=e645]: PSG U8 Boys Red - West Town vs Norridge United U7 Boys Premier
-                    - generic [ref=e646]: Boys 8U
-                - cell "TOCA Premier League" [ref=e647]:
-                  - generic "TOCA Premier League" [ref=e648]
-                - cell "—" [ref=e649]
-                - cell "Register" [ref=e650]:
-                  - link "Register" [ref=e651]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338?skipToProducts=true
-                    - text: Register
-                    - img [ref=e652]
-              - row "Sat, Jan 31 3:15 PM - 4:00 PM SKOMOR U14/13 Premier vs Chicago City 2012 Boys II Boys 14U TOCA Premier League — Register" [ref=e656] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e657]:
-                  - generic [ref=e658]: Sat, Jan 31
-                - cell "3:15 PM - 4:00 PM" [ref=e659]:
-                  - generic [ref=e660]: 3:15 PM - 4:00 PM
-                - cell "SKOMOR U14/13 Premier vs Chicago City 2012 Boys II Boys 14U" [ref=e661]:
-                  - generic [ref=e662]:
-                    - generic [ref=e663]: SKOMOR U14/13 Premier vs Chicago City 2012 Boys II
-                    - generic [ref=e664]: Boys 14U
-                - cell "TOCA Premier League" [ref=e665]:
-                  - generic "TOCA Premier League" [ref=e666]
-                - cell "—" [ref=e667]
-                - cell "Register" [ref=e668]:
-                  - link "Register" [ref=e669]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344?skipToProducts=true
-                    - text: Register
-                    - img [ref=e670]
-              - row "Sat, Jan 31 3:30 PM - 4:15 PM Wilmette Wings 2014 White Boys vs FC Lakeshore 2014 Boys Premier Boys 12U TOCA Premier League — Register" [ref=e674] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e675]:
-                  - generic [ref=e676]: Sat, Jan 31
-                - cell "3:30 PM - 4:15 PM" [ref=e677]:
-                  - generic [ref=e678]: 3:30 PM - 4:15 PM
-                - cell "Wilmette Wings 2014 White Boys vs FC Lakeshore 2014 Boys Premier Boys 12U" [ref=e679]:
-                  - generic [ref=e680]:
-                    - generic [ref=e681]: Wilmette Wings 2014 White Boys vs FC Lakeshore 2014 Boys Premier
-                    - generic [ref=e682]: Boys 12U
-                - cell "TOCA Premier League" [ref=e683]:
-                  - generic "TOCA Premier League" [ref=e684]
-                - cell "—" [ref=e685]
-                - cell "Register" [ref=e686]:
-                  - link "Register" [ref=e687]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342?skipToProducts=true
-                    - text: Register
-                    - img [ref=e688]
-              - row "Sat, Jan 31 3:30 PM - 4:15 PM PSG Evanston & Northshore 8U Boys vs JaHbat B2018 Boys 8U TOCA Premier League — Register" [ref=e692] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e693]:
-                  - generic [ref=e694]: Sat, Jan 31
-                - cell "3:30 PM - 4:15 PM" [ref=e695]:
-                  - generic [ref=e696]: 3:30 PM - 4:15 PM
-                - cell "PSG Evanston & Northshore 8U Boys vs JaHbat B2018 Boys 8U" [ref=e697]:
-                  - generic [ref=e698]:
-                    - generic [ref=e699]: PSG Evanston & Northshore 8U Boys vs JaHbat B2018
-                    - generic [ref=e700]: Boys 8U
-                - cell "TOCA Premier League" [ref=e701]:
-                  - generic "TOCA Premier League" [ref=e702]
-                - cell "—" [ref=e703]
-                - cell "Register" [ref=e704]:
-                  - link "Register" [ref=e705]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338?skipToProducts=true
-                    - text: Register
-                    - img [ref=e706]
-              - row "Sat, Jan 31 4:00 PM - 4:45 PM Chicago City 2012 Boys navy vs PSG U14 Boys Blue Boys 14U TOCA Premier League — Register" [ref=e710] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e711]:
-                  - generic [ref=e712]: Sat, Jan 31
-                - cell "4:00 PM - 4:45 PM" [ref=e713]:
-                  - generic [ref=e714]: 4:00 PM - 4:45 PM
-                - cell "Chicago City 2012 Boys navy vs PSG U14 Boys Blue Boys 14U" [ref=e715]:
-                  - generic [ref=e716]:
-                    - generic [ref=e717]: Chicago City 2012 Boys navy vs PSG U14 Boys Blue
-                    - generic [ref=e718]: Boys 14U
-                - cell "TOCA Premier League" [ref=e719]:
-                  - generic "TOCA Premier League" [ref=e720]
-                - cell "—" [ref=e721]
-                - cell "Register" [ref=e722]:
-                  - link "Register" [ref=e723]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344?skipToProducts=true
-                    - text: Register
-                    - img [ref=e724]
-              - row "Sat, Jan 31 4:15 PM - 5:00 PM Chicago City 2014/2015 Boys Loop vs AYSO Extra 12U Boys Orange Boys 12U TOCA Premier League — Register" [ref=e728] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e729]:
-                  - generic [ref=e730]: Sat, Jan 31
-                - cell "4:15 PM - 5:00 PM" [ref=e731]:
-                  - generic [ref=e732]: 4:15 PM - 5:00 PM
-                - cell "Chicago City 2014/2015 Boys Loop vs AYSO Extra 12U Boys Orange Boys 12U" [ref=e733]:
-                  - generic [ref=e734]:
-                    - generic [ref=e735]: Chicago City 2014/2015 Boys Loop vs AYSO Extra 12U Boys Orange
-                    - generic [ref=e736]: Boys 12U
-                - cell "TOCA Premier League" [ref=e737]:
-                  - generic "TOCA Premier League" [ref=e738]
-                - cell "—" [ref=e739]
-                - cell "Register" [ref=e740]:
-                  - link "Register" [ref=e741]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342?skipToProducts=true
-                    - text: Register
-                    - img [ref=e742]
-              - row "Sat, Jan 31 4:15 PM - 5:00 PM PSG U8 Boys - North-Side vs YSIFC 2019 Boys 8U TOCA Premier League — Register" [ref=e746] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e747]:
-                  - generic [ref=e748]: Sat, Jan 31
-                - cell "4:15 PM - 5:00 PM" [ref=e749]:
-                  - generic [ref=e750]: 4:15 PM - 5:00 PM
-                - cell "PSG U8 Boys - North-Side vs YSIFC 2019 Boys 8U" [ref=e751]:
-                  - generic [ref=e752]:
-                    - generic [ref=e753]: PSG U8 Boys - North-Side vs YSIFC 2019
-                    - generic [ref=e754]: Boys 8U
-                - cell "TOCA Premier League" [ref=e755]:
-                  - generic "TOCA Premier League" [ref=e756]
-                - cell "—" [ref=e757]
-                - cell "Register" [ref=e758]:
-                  - link "Register" [ref=e759]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338?skipToProducts=true
-                    - text: Register
-                    - img [ref=e760]
-              - row "Sat, Jan 31 4:45 PM - 5:30 PM JOMSC U13 vs JaHbat B2013 Green Boys 13U TOCA Premier League — Register" [ref=e764] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e765]:
-                  - generic [ref=e766]: Sat, Jan 31
-                - cell "4:45 PM - 5:30 PM" [ref=e767]:
-                  - generic [ref=e768]: 4:45 PM - 5:30 PM
-                - cell "JOMSC U13 vs JaHbat B2013 Green Boys 13U" [ref=e769]:
-                  - generic [ref=e770]:
-                    - generic [ref=e771]: JOMSC U13 vs JaHbat B2013 Green
-                    - generic [ref=e772]: Boys 13U
-                - cell "TOCA Premier League" [ref=e773]:
-                  - generic "TOCA Premier League" [ref=e774]
-                - cell "—" [ref=e775]
-                - cell "Register" [ref=e776]:
-                  - link "Register" [ref=e777]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343?skipToProducts=true
-                    - text: Register
-                    - img [ref=e778]
-              - row "Sat, Jan 31 5:00 PM - 5:45 PM Northwind 2012 Girls Premier vs JaHbat G2012 Girls 14U TOCA Premier League — Register" [ref=e782] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e783]:
-                  - generic [ref=e784]: Sat, Jan 31
-                - cell "5:00 PM - 5:45 PM" [ref=e785]:
-                  - generic [ref=e786]: 5:00 PM - 5:45 PM
-                - cell "Northwind 2012 Girls Premier vs JaHbat G2012 Girls 14U" [ref=e787]:
-                  - generic [ref=e788]:
-                    - generic [ref=e789]: Northwind 2012 Girls Premier vs JaHbat G2012
-                    - generic [ref=e790]: Girls 14U
-                - cell "TOCA Premier League" [ref=e791]:
-                  - generic "TOCA Premier League" [ref=e792]
-                - cell "—" [ref=e793]
-                - cell "Register" [ref=e794]:
-                  - link "Register" [ref=e795]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2014U/93910?skipToProducts=true
-                    - text: Register
-                    - img [ref=e796]
-              - row "Sat, Jan 31 5:30 PM - 6:15 PM JOMSC U14 vs Chaldean Lions Boys 14U TOCA Premier League — Register" [ref=e800] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e801]:
-                  - generic [ref=e802]: Sat, Jan 31
-                - cell "5:30 PM - 6:15 PM" [ref=e803]:
-                  - generic [ref=e804]: 5:30 PM - 6:15 PM
-                - cell "JOMSC U14 vs Chaldean Lions Boys 14U" [ref=e805]:
-                  - generic [ref=e806]:
-                    - generic [ref=e807]: JOMSC U14 vs Chaldean Lions
-                    - generic [ref=e808]: Boys 14U
-                - cell "TOCA Premier League" [ref=e809]:
-                  - generic "TOCA Premier League" [ref=e810]
-                - cell "—" [ref=e811]
-                - cell "Register" [ref=e812]:
-                  - link "Register" [ref=e813]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344?skipToProducts=true
-                    - text: Register
-                    - img [ref=e814]
-              - row "Sat, Jan 31 5:45 PM - 6:30 PM Northwind 2014 Girls Premier 2 vs ESFC 2014 Girls White Girls 12U TOCA Premier League — Register" [ref=e818] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e819]:
-                  - generic [ref=e820]: Sat, Jan 31
-                - cell "5:45 PM - 6:30 PM" [ref=e821]:
-                  - generic [ref=e822]: 5:45 PM - 6:30 PM
-                - cell "Northwind 2014 Girls Premier 2 vs ESFC 2014 Girls White Girls 12U" [ref=e823]:
-                  - generic [ref=e824]:
-                    - generic [ref=e825]: Northwind 2014 Girls Premier 2 vs ESFC 2014 Girls White
-                    - generic [ref=e826]: Girls 12U
-                - cell "TOCA Premier League" [ref=e827]:
-                  - generic "TOCA Premier League" [ref=e828]
-                - cell "—" [ref=e829]
-                - cell "Register" [ref=e830]:
-                  - link "Register" [ref=e831]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2012U/93351?skipToProducts=true
-                    - text: Register
-                    - img [ref=e832]
-              - row "Sat, Jan 31 6:15 PM - 7:00 PM PSG U12 Boys Red vs JOMSC U12 Boys 12U TOCA Premier League — Register" [ref=e836] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e837]:
-                  - generic [ref=e838]: Sat, Jan 31
-                - cell "6:15 PM - 7:00 PM" [ref=e839]:
-                  - generic [ref=e840]: 6:15 PM - 7:00 PM
-                - cell "PSG U12 Boys Red vs JOMSC U12 Boys 12U" [ref=e841]:
-                  - generic [ref=e842]:
-                    - generic [ref=e843]: PSG U12 Boys Red vs JOMSC U12
-                    - generic [ref=e844]: Boys 12U
-                - cell "TOCA Premier League" [ref=e845]:
-                  - generic "TOCA Premier League" [ref=e846]
-                - cell "—" [ref=e847]
-                - cell "Register" [ref=e848]:
-                  - link "Register" [ref=e849]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342?skipToProducts=true
-                    - text: Register
-                    - img [ref=e850]
-              - row "Sat, Jan 31 6:30 PM - 7:15 PM ESFC 2014 Girls Blue vs AYSO Extra U12 Girls Navy Girls 12U TOCA Premier League — Register" [ref=e854] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e855]:
-                  - generic [ref=e856]: Sat, Jan 31
-                - cell "6:30 PM - 7:15 PM" [ref=e857]:
-                  - generic [ref=e858]: 6:30 PM - 7:15 PM
-                - cell "ESFC 2014 Girls Blue vs AYSO Extra U12 Girls Navy Girls 12U" [ref=e859]:
-                  - generic [ref=e860]:
-                    - generic [ref=e861]: ESFC 2014 Girls Blue vs AYSO Extra U12 Girls Navy
-                    - generic [ref=e862]: Girls 12U
-                - cell "TOCA Premier League" [ref=e863]:
-                  - generic "TOCA Premier League" [ref=e864]
-                - cell "—" [ref=e865]
-                - cell "Register" [ref=e866]:
-                  - link "Register" [ref=e867]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2012U/93351?skipToProducts=true
-                    - text: Register
-                    - img [ref=e868]
-              - row "Sat, Jan 31 7:00 PM - 8:30 PM Adult Pickup Adult Pickup Soccer — Register" [ref=e872] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e873]:
-                  - generic [ref=e874]: Sat, Jan 31
-                - cell "7:00 PM - 8:30 PM" [ref=e875]:
-                  - generic [ref=e876]: 7:00 PM - 8:30 PM
-                - cell "Adult Pickup" [ref=e877]:
-                  - generic [ref=e879]: Adult Pickup
-                - cell "Adult Pickup Soccer" [ref=e880]:
-                  - generic "Adult Pickup Soccer" [ref=e881]
-                - cell "—" [ref=e882]
-                - cell "Register" [ref=e883]:
-                  - link "Register" [ref=e884]:
+                    - img [ref=e890]
+              - row "Wed, Feb 25 9:00 PM - 10:30 PM Adult Pickup Adult Pickup Soccer 19 Register" [ref=e894] [cursor=pointer]:
+                - cell "Wed, Feb 25" [ref=e895]:
+                  - generic [ref=e896]: Wed, Feb 25
+                - cell "9:00 PM - 10:30 PM" [ref=e897]:
+                  - generic [ref=e899]: 9:00 PM - 10:30 PM
+                - cell "Adult Pickup" [ref=e900]:
+                  - generic [ref=e902]: Adult Pickup
+                - cell "Adult Pickup Soccer" [ref=e903]:
+                  - generic "Adult Pickup Soccer" [ref=e904]
+                - cell "19" [ref=e905]
+                - cell "Register" [ref=e906]:
+                  - link "Register" [ref=e907]:
                     - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
                     - text: Register
-                    - img [ref=e885]
-              - row "Sat, Jan 31 7:00 PM - 7:45 PM YSIFC 2014 Yellow vs PSG U11 Boys Pre Academy Boys 12U TOCA Premier League — Register" [ref=e889] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e890]:
-                  - generic [ref=e891]: Sat, Jan 31
-                - cell "7:00 PM - 7:45 PM" [ref=e892]:
-                  - generic [ref=e893]: 7:00 PM - 7:45 PM
-                - cell "YSIFC 2014 Yellow vs PSG U11 Boys Pre Academy Boys 12U" [ref=e894]:
-                  - generic [ref=e895]:
-                    - generic [ref=e896]: YSIFC 2014 Yellow vs PSG U11 Boys Pre Academy
-                    - generic [ref=e897]: Boys 12U
-                - cell "TOCA Premier League" [ref=e898]:
-                  - generic "TOCA Premier League" [ref=e899]
-                - cell "—" [ref=e900]
-                - cell "Register" [ref=e901]:
-                  - link "Register" [ref=e902]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342?skipToProducts=true
-                    - text: Register
-                    - img [ref=e903]
-              - row "Sat, Jan 31 7:15 PM - 8:00 PM JaHbat B2012 Green vs PSG U14 Boys Red Boys 14U TOCA Premier League — Register" [ref=e907] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e908]:
-                  - generic [ref=e909]: Sat, Jan 31
-                - cell "7:15 PM - 8:00 PM" [ref=e910]:
-                  - generic [ref=e911]: 7:15 PM - 8:00 PM
-                - cell "JaHbat B2012 Green vs PSG U14 Boys Red Boys 14U" [ref=e912]:
-                  - generic [ref=e913]:
-                    - generic [ref=e914]: JaHbat B2012 Green vs PSG U14 Boys Red
-                    - generic [ref=e915]: Boys 14U
-                - cell "TOCA Premier League" [ref=e916]:
-                  - generic "TOCA Premier League" [ref=e917]
-                - cell "—" [ref=e918]
-                - cell "Register" [ref=e919]:
-                  - link "Register" [ref=e920]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344?skipToProducts=true
-                    - text: Register
-                    - img [ref=e921]
-              - row "Sat, Jan 31 7:45 PM - 8:30 PM Chicago City 2014 Girls II vs PSG U12 Girls Pre Academy Girls 12U TOCA Premier League — Register" [ref=e925] [cursor=pointer]:
-                - cell "Sat, Jan 31" [ref=e926]:
-                  - generic [ref=e927]: Sat, Jan 31
-                - cell "7:45 PM - 8:30 PM" [ref=e928]:
-                  - generic [ref=e929]: 7:45 PM - 8:30 PM
-                - cell "Chicago City 2014 Girls II vs PSG U12 Girls Pre Academy Girls 12U" [ref=e930]:
-                  - generic [ref=e931]:
-                    - generic [ref=e932]: Chicago City 2014 Girls II vs PSG U12 Girls Pre Academy
-                    - generic [ref=e933]: Girls 12U
-                - cell "TOCA Premier League" [ref=e934]:
-                  - generic "TOCA Premier League" [ref=e935]
-                - cell "—" [ref=e936]
-                - cell "Register" [ref=e937]:
-                  - link "Register" [ref=e938]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2012U/93351?skipToProducts=true
-                    - text: Register
-                    - img [ref=e939]
-              - row "Sun, Feb 1 9:00 AM - 10:00 AM 10U Cincinnati Bengals vs 10U Denver Broncos Winter 2 - 10U Coed Closed Flag Football — Details" [ref=e943] [cursor=pointer]:
-                - cell "Sun, Feb 1" [ref=e944]:
-                  - generic [ref=e945]: Sun, Feb 1
-                - cell "9:00 AM - 10:00 AM" [ref=e946]:
-                  - generic [ref=e947]: 9:00 AM - 10:00 AM
-                - cell "10U Cincinnati Bengals vs 10U Denver Broncos Winter 2 - 10U Coed Closed" [ref=e948]:
-                  - generic [ref=e949]:
-                    - generic [ref=e950]: 10U Cincinnati Bengals vs 10U Denver Broncos
-                    - generic [ref=e951]: Winter 2 - 10U Coed
-                    - generic [ref=e953]: Closed
-                - cell "Flag Football" [ref=e954]:
-                  - generic "Flag Football" [ref=e955]
-                - cell "—" [ref=e956]
-                - cell "Details" [ref=e957]:
-                  - link "Details" [ref=e958]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2010U%20Coed/94095
+                    - img [ref=e908]
+              - row "Thu, Feb 26 5:00 PM - 5:45 PM JaHbat 2011/2010 vs Chicago Celtic SC HS Girls Girls High School Closed TOCA Premier League — Details" [ref=e912] [cursor=pointer]:
+                - cell "Thu, Feb 26" [ref=e913]:
+                  - generic [ref=e914]: Thu, Feb 26
+                - cell "5:00 PM - 5:45 PM" [ref=e915]:
+                  - generic [ref=e917]: 5:00 PM - 5:45 PM
+                - cell "JaHbat 2011/2010 vs Chicago Celtic SC HS Girls Girls High School Closed" [ref=e918]:
+                  - generic [ref=e919]:
+                    - generic [ref=e920]: JaHbat 2011/2010 vs Chicago Celtic SC HS Girls
+                    - generic [ref=e921]: Girls High School
+                    - generic [ref=e923]: Closed
+                - cell "TOCA Premier League" [ref=e924]:
+                  - generic "TOCA Premier League" [ref=e925]
+                - cell "—" [ref=e926]
+                - cell "Details" [ref=e927]:
+                  - link "Details" [ref=e928]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%20High%20School/93911
                     - text: Details
-                    - img [ref=e959]
-              - row "Sun, Feb 1 9:00 AM - 10:00 AM 12U Cincinnati Bengals vs 12U LA Chargers Winter 2 - 12U Coed Closed Flag Football — Details" [ref=e963] [cursor=pointer]:
-                - cell "Sun, Feb 1" [ref=e964]:
-                  - generic [ref=e965]: Sun, Feb 1
-                - cell "9:00 AM - 10:00 AM" [ref=e966]:
-                  - generic [ref=e967]: 9:00 AM - 10:00 AM
-                - cell "12U Cincinnati Bengals vs 12U LA Chargers Winter 2 - 12U Coed Closed" [ref=e968]:
-                  - generic [ref=e969]:
-                    - generic [ref=e970]: 12U Cincinnati Bengals vs 12U LA Chargers
-                    - generic [ref=e971]: Winter 2 - 12U Coed
-                    - generic [ref=e973]: Closed
-                - cell "Flag Football" [ref=e974]:
-                  - generic "Flag Football" [ref=e975]
-                - cell "—" [ref=e976]
-                - cell "Details" [ref=e977]:
-                  - link "Details" [ref=e978]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2012U%20Coed/94094
+                    - img [ref=e929]
+              - row "Thu, Feb 26 5:45 PM - 6:30 PM Northwind 2011 Girls Premier 2 vs Northwind 2010 Girls Premier 2 Girls High School Closed TOCA Premier League — Details" [ref=e933] [cursor=pointer]:
+                - cell "Thu, Feb 26" [ref=e934]:
+                  - generic [ref=e935]: Thu, Feb 26
+                - cell "5:45 PM - 6:30 PM" [ref=e936]:
+                  - generic [ref=e938]: 5:45 PM - 6:30 PM
+                - cell "Northwind 2011 Girls Premier 2 vs Northwind 2010 Girls Premier 2 Girls High School Closed" [ref=e939]:
+                  - generic [ref=e940]:
+                    - generic [ref=e941]: Northwind 2011 Girls Premier 2 vs Northwind 2010 Girls Premier 2
+                    - generic [ref=e942]: Girls High School
+                    - generic [ref=e944]: Closed
+                - cell "TOCA Premier League" [ref=e945]:
+                  - generic "TOCA Premier League" [ref=e946]
+                - cell "—" [ref=e947]
+                - cell "Details" [ref=e948]:
+                  - link "Details" [ref=e949]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%20High%20School/93911
                     - text: Details
-                    - img [ref=e979]
-              - row "Sun, Feb 1 9:00 AM - 10:00 AM 12U Jacksonville Jaguars vs 12U Chicago Bears Winter 2 - 12U Coed Closed Flag Football — Details" [ref=e983] [cursor=pointer]:
-                - cell "Sun, Feb 1" [ref=e984]:
-                  - generic [ref=e985]: Sun, Feb 1
-                - cell "9:00 AM - 10:00 AM" [ref=e986]:
-                  - generic [ref=e987]: 9:00 AM - 10:00 AM
-                - cell "12U Jacksonville Jaguars vs 12U Chicago Bears Winter 2 - 12U Coed Closed" [ref=e988]:
-                  - generic [ref=e989]:
-                    - generic [ref=e990]: 12U Jacksonville Jaguars vs 12U Chicago Bears
-                    - generic [ref=e991]: Winter 2 - 12U Coed
-                    - generic [ref=e993]: Closed
-                - cell "Flag Football" [ref=e994]:
-                  - generic "Flag Football" [ref=e995]
-                - cell "—" [ref=e996]
-                - cell "Details" [ref=e997]:
-                  - link "Details" [ref=e998]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2012U%20Coed/94094
+                    - img [ref=e950]
+              - row "Thu, Feb 26 6:30 PM - 7:15 PM Northwind 2011 Girls Premier vs PSG U15 Girls High School Girls High School Closed TOCA Premier League — Details" [ref=e954] [cursor=pointer]:
+                - cell "Thu, Feb 26" [ref=e955]:
+                  - generic [ref=e956]: Thu, Feb 26
+                - cell "6:30 PM - 7:15 PM" [ref=e957]:
+                  - generic [ref=e959]: 6:30 PM - 7:15 PM
+                - cell "Northwind 2011 Girls Premier vs PSG U15 Girls High School Girls High School Closed" [ref=e960]:
+                  - generic [ref=e961]:
+                    - generic [ref=e962]: Northwind 2011 Girls Premier vs PSG U15 Girls High School
+                    - generic [ref=e963]: Girls High School
+                    - generic [ref=e965]: Closed
+                - cell "TOCA Premier League" [ref=e966]:
+                  - generic "TOCA Premier League" [ref=e967]
+                - cell "—" [ref=e968]
+                - cell "Details" [ref=e969]:
+                  - link "Details" [ref=e970]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%20High%20School/93911
                     - text: Details
-                    - img [ref=e999]
-              - row "Sun, Feb 1 10:00 AM - 11:00 AM 10U Detroit Lions vs 10U Chicago Bears Winter 2 - 10U Coed Closed Flag Football — Details" [ref=e1003] [cursor=pointer]:
-                - cell "Sun, Feb 1" [ref=e1004]:
-                  - generic [ref=e1005]: Sun, Feb 1
-                - cell "10:00 AM - 11:00 AM" [ref=e1006]:
-                  - generic [ref=e1007]: 10:00 AM - 11:00 AM
-                - cell "10U Detroit Lions vs 10U Chicago Bears Winter 2 - 10U Coed Closed" [ref=e1008]:
-                  - generic [ref=e1009]:
-                    - generic [ref=e1010]: 10U Detroit Lions vs 10U Chicago Bears
-                    - generic [ref=e1011]: Winter 2 - 10U Coed
-                    - generic [ref=e1013]: Closed
-                - cell "Flag Football" [ref=e1014]:
-                  - generic "Flag Football" [ref=e1015]
-                - cell "—" [ref=e1016]
-                - cell "Details" [ref=e1017]:
-                  - link "Details" [ref=e1018]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2010U%20Coed/94095
-                    - text: Details
-                    - img [ref=e1019]
-              - row "Sun, Feb 1 10:00 AM - 11:00 AM 12U LA Rams vs 12U New Orleans Saints Winter 2 - 12U Coed Closed Flag Football — Details" [ref=e1023] [cursor=pointer]:
-                - cell "Sun, Feb 1" [ref=e1024]:
-                  - generic [ref=e1025]: Sun, Feb 1
-                - cell "10:00 AM - 11:00 AM" [ref=e1026]:
-                  - generic [ref=e1027]: 10:00 AM - 11:00 AM
-                - cell "12U LA Rams vs 12U New Orleans Saints Winter 2 - 12U Coed Closed" [ref=e1028]:
-                  - generic [ref=e1029]:
-                    - generic [ref=e1030]: 12U LA Rams vs 12U New Orleans Saints
-                    - generic [ref=e1031]: Winter 2 - 12U Coed
-                    - generic [ref=e1033]: Closed
-                - cell "Flag Football" [ref=e1034]:
-                  - generic "Flag Football" [ref=e1035]
-                - cell "—" [ref=e1036]
-                - cell "Details" [ref=e1037]:
-                  - link "Details" [ref=e1038]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2012U%20Coed/94094
-                    - text: Details
-                    - img [ref=e1039]
-              - row "Sun, Feb 1 11:00 AM - 11:45 AM FC Stars 2017 Boys vs YSIFC 2017 Boys 9U TOCA Premier League — Register" [ref=e1043] [cursor=pointer]:
-                - cell "Sun, Feb 1" [ref=e1044]:
-                  - generic [ref=e1045]: Sun, Feb 1
-                - cell "11:00 AM - 11:45 AM" [ref=e1046]:
-                  - generic [ref=e1047]: 11:00 AM - 11:45 AM
-                - cell "FC Stars 2017 Boys vs YSIFC 2017 Boys 9U" [ref=e1048]:
-                  - generic [ref=e1049]:
-                    - generic [ref=e1050]: FC Stars 2017 Boys vs YSIFC 2017
-                    - generic [ref=e1051]: Boys 9U
-                - cell "TOCA Premier League" [ref=e1052]:
-                  - generic "TOCA Premier League" [ref=e1053]
-                - cell "—" [ref=e1054]
-                - cell "Register" [ref=e1055]:
-                  - link "Register" [ref=e1056]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%209U/93339?skipToProducts=true
+                    - img [ref=e971]
+              - row "Thu, Feb 26 7:15 PM - 8:45 PM Adult Pickup Adult Pickup Soccer 18 Register" [ref=e975] [cursor=pointer]:
+                - cell "Thu, Feb 26" [ref=e976]:
+                  - generic [ref=e977]: Thu, Feb 26
+                - cell "7:15 PM - 8:45 PM" [ref=e978]:
+                  - generic [ref=e980]: 7:15 PM - 8:45 PM
+                - cell "Adult Pickup" [ref=e981]:
+                  - generic [ref=e983]: Adult Pickup
+                - cell "Adult Pickup Soccer" [ref=e984]:
+                  - generic "Adult Pickup Soccer" [ref=e985]
+                - cell "18" [ref=e986]
+                - cell "Register" [ref=e987]:
+                  - link "Register" [ref=e988]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
                     - text: Register
-                    - img [ref=e1057]
-              - row "Sun, Feb 1 11:15 AM - 12:00 PM Chicago City 2016 Boys III vs Team Evanston 2016 Boys Blue 1 Boys 10U TOCA Premier League — Register" [ref=e1061] [cursor=pointer]:
-                - cell "Sun, Feb 1" [ref=e1062]:
-                  - generic [ref=e1063]: Sun, Feb 1
-                - cell "11:15 AM - 12:00 PM" [ref=e1064]:
-                  - generic [ref=e1065]: 11:15 AM - 12:00 PM
-                - cell "Chicago City 2016 Boys III vs Team Evanston 2016 Boys Blue 1 Boys 10U" [ref=e1066]:
-                  - generic [ref=e1067]:
-                    - generic [ref=e1068]: Chicago City 2016 Boys III vs Team Evanston 2016 Boys Blue 1
-                    - generic [ref=e1069]: Boys 10U
-                - cell "TOCA Premier League" [ref=e1070]:
-                  - generic "TOCA Premier League" [ref=e1071]
-                - cell "—" [ref=e1072]
-                - cell "Register" [ref=e1073]:
-                  - link "Register" [ref=e1074]:
-                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340?skipToProducts=true
+                    - img [ref=e989]
+              - row "Fri, Feb 27 4:30 PM - 6:00 PM Adult Pickup Adult Pickup Soccer 12 Register" [ref=e993] [cursor=pointer]:
+                - cell "Fri, Feb 27" [ref=e994]:
+                  - generic [ref=e995]: Fri, Feb 27
+                - cell "4:30 PM - 6:00 PM" [ref=e996]:
+                  - generic [ref=e998]: 4:30 PM - 6:00 PM
+                - cell "Adult Pickup" [ref=e999]:
+                  - generic [ref=e1001]: Adult Pickup
+                - cell "Adult Pickup Soccer" [ref=e1002]:
+                  - generic "Adult Pickup Soccer" [ref=e1003]
+                - cell "12" [ref=e1004]
+                - cell "Register" [ref=e1005]:
+                  - link "Register" [ref=e1006]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
                     - text: Register
-                    - img [ref=e1075]
-          - button "Load more (621 remaining)" [ref=e1080] [cursor=pointer]
-          - generic [ref=e1081]: Showing 50 of 671 events
-    - contentinfo [ref=e1082]:
-      - generic [ref=e1084]:
-        - paragraph [ref=e1085]: © 2026 TOCA Soccer
-        - generic [ref=e1087]: Powered by Bond Sports
-  - alert [ref=e1088]
+                    - img [ref=e1007]
+              - row "Fri, Feb 27 6:00 PM - 6:45 PM Chaldean Lions vs Chicago City 2010 Boys II/Loop Boys High School Closed TOCA Premier League — Details" [ref=e1011] [cursor=pointer]:
+                - cell "Fri, Feb 27" [ref=e1012]:
+                  - generic [ref=e1013]: Fri, Feb 27
+                - cell "6:00 PM - 6:45 PM" [ref=e1014]:
+                  - generic [ref=e1016]: 6:00 PM - 6:45 PM
+                - cell "Chaldean Lions vs Chicago City 2010 Boys II/Loop Boys High School Closed" [ref=e1017]:
+                  - generic [ref=e1018]:
+                    - generic [ref=e1019]: Chaldean Lions vs Chicago City 2010 Boys II/Loop
+                    - generic [ref=e1020]: Boys High School
+                    - generic [ref=e1022]: Closed
+                - cell "TOCA Premier League" [ref=e1023]:
+                  - generic "TOCA Premier League" [ref=e1024]
+                - cell "—" [ref=e1025]
+                - cell "Details" [ref=e1026]:
+                  - link "Details" [ref=e1027]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                    - text: Details
+                    - img [ref=e1028]
+              - row "Fri, Feb 27 6:45 PM - 7:30 PM PSG U16 Boys Red vs Northwind 2010 Boys Premier 2 Boys High School Closed TOCA Premier League — Details" [ref=e1032] [cursor=pointer]:
+                - cell "Fri, Feb 27" [ref=e1033]:
+                  - generic [ref=e1034]: Fri, Feb 27
+                - cell "6:45 PM - 7:30 PM" [ref=e1035]:
+                  - generic [ref=e1037]: 6:45 PM - 7:30 PM
+                - cell "PSG U16 Boys Red vs Northwind 2010 Boys Premier 2 Boys High School Closed" [ref=e1038]:
+                  - generic [ref=e1039]:
+                    - generic [ref=e1040]: PSG U16 Boys Red vs Northwind 2010 Boys Premier 2
+                    - generic [ref=e1041]: Boys High School
+                    - generic [ref=e1043]: Closed
+                - cell "TOCA Premier League" [ref=e1044]:
+                  - generic "TOCA Premier League" [ref=e1045]
+                - cell "—" [ref=e1046]
+                - cell "Details" [ref=e1047]:
+                  - link "Details" [ref=e1048]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                    - text: Details
+                    - img [ref=e1049]
+              - row "Fri, Feb 27 7:15 PM - 8:00 PM JaHbat B2007/08/09 vs Ramblers & Celtics Boys High School Closed TOCA Premier League — Details" [ref=e1053] [cursor=pointer]:
+                - cell "Fri, Feb 27" [ref=e1054]:
+                  - generic [ref=e1055]: Fri, Feb 27
+                - cell "7:15 PM - 8:00 PM" [ref=e1056]:
+                  - generic [ref=e1058]: 7:15 PM - 8:00 PM
+                - cell "JaHbat B2007/08/09 vs Ramblers & Celtics Boys High School Closed" [ref=e1059]:
+                  - generic [ref=e1060]:
+                    - generic [ref=e1061]: JaHbat B2007/08/09 vs Ramblers & Celtics
+                    - generic [ref=e1062]: Boys High School
+                    - generic [ref=e1064]: Closed
+                - cell "TOCA Premier League" [ref=e1065]:
+                  - generic "TOCA Premier League" [ref=e1066]
+                - cell "—" [ref=e1067]
+                - cell "Details" [ref=e1068]:
+                  - link "Details" [ref=e1069]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                    - text: Details
+                    - img [ref=e1070]
+              - row "Fri, Feb 27 7:30 PM - 8:15 PM PSG U14 Boys Pre Academy vs Chicago City 2010 Boys III Boys High School Closed TOCA Premier League — Details" [ref=e1074] [cursor=pointer]:
+                - cell "Fri, Feb 27" [ref=e1075]:
+                  - generic [ref=e1076]: Fri, Feb 27
+                - cell "7:30 PM - 8:15 PM" [ref=e1077]:
+                  - generic [ref=e1079]: 7:30 PM - 8:15 PM
+                - cell "PSG U14 Boys Pre Academy vs Chicago City 2010 Boys III Boys High School Closed" [ref=e1080]:
+                  - generic [ref=e1081]:
+                    - generic [ref=e1082]: PSG U14 Boys Pre Academy vs Chicago City 2010 Boys III
+                    - generic [ref=e1083]: Boys High School
+                    - generic [ref=e1085]: Closed
+                - cell "TOCA Premier League" [ref=e1086]:
+                  - generic "TOCA Premier League" [ref=e1087]
+                - cell "—" [ref=e1088]
+                - cell "Details" [ref=e1089]:
+                  - link "Details" [ref=e1090]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                    - text: Details
+                    - img [ref=e1091]
+              - row "Fri, Feb 27 8:15 PM - 9:00 PM PSG U15 Boys Red vs Northwind 2010 Boys Premier Boys High School Closed TOCA Premier League — Details" [ref=e1095] [cursor=pointer]:
+                - cell "Fri, Feb 27" [ref=e1096]:
+                  - generic [ref=e1097]: Fri, Feb 27
+                - cell "8:15 PM - 9:00 PM" [ref=e1098]:
+                  - generic [ref=e1100]: 8:15 PM - 9:00 PM
+                - cell "PSG U15 Boys Red vs Northwind 2010 Boys Premier Boys High School Closed" [ref=e1101]:
+                  - generic [ref=e1102]:
+                    - generic [ref=e1103]: PSG U15 Boys Red vs Northwind 2010 Boys Premier
+                    - generic [ref=e1104]: Boys High School
+                    - generic [ref=e1106]: Closed
+                - cell "TOCA Premier League" [ref=e1107]:
+                  - generic "TOCA Premier League" [ref=e1108]
+                - cell "—" [ref=e1109]
+                - cell "Details" [ref=e1110]:
+                  - link "Details" [ref=e1111]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                    - text: Details
+                    - img [ref=e1112]
+              - row "Sat, Feb 28 9:15 AM - 10:00 AM Chaldean Lions vs Chicago City 2012 Boys Loop Boys 14U Closed TOCA Premier League — Details" [ref=e1116] [cursor=pointer]:
+                - cell "Sat, Feb 28" [ref=e1117]:
+                  - generic [ref=e1118]: Sat, Feb 28
+                - cell "9:15 AM - 10:00 AM" [ref=e1119]:
+                  - generic [ref=e1121]: 9:15 AM - 10:00 AM
+                - cell "Chaldean Lions vs Chicago City 2012 Boys Loop Boys 14U Closed" [ref=e1122]:
+                  - generic [ref=e1123]:
+                    - generic [ref=e1124]: Chaldean Lions vs Chicago City 2012 Boys Loop
+                    - generic [ref=e1125]: Boys 14U
+                    - generic [ref=e1127]: Closed
+                - cell "TOCA Premier League" [ref=e1128]:
+                  - generic "TOCA Premier League" [ref=e1129]
+                - cell "—" [ref=e1130]
+                - cell "Details" [ref=e1131]:
+                  - link "Details" [ref=e1132]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                    - text: Details
+                    - img [ref=e1133]
+              - row "Sat, Feb 28 9:30 AM - 10:30 AM 14U Detroit Lions vs 14U Houston Texans Winter 2 - 14U Coed Closed Flag Football — Details" [ref=e1137] [cursor=pointer]:
+                - cell "Sat, Feb 28" [ref=e1138]:
+                  - generic [ref=e1139]: Sat, Feb 28
+                - cell "9:30 AM - 10:30 AM" [ref=e1140]:
+                  - generic [ref=e1142]: 9:30 AM - 10:30 AM
+                - cell "14U Detroit Lions vs 14U Houston Texans Winter 2 - 14U Coed Closed" [ref=e1143]:
+                  - generic [ref=e1144]:
+                    - generic [ref=e1145]: 14U Detroit Lions vs 14U Houston Texans
+                    - generic [ref=e1146]: Winter 2 - 14U Coed
+                    - generic [ref=e1148]: Closed
+                - cell "Flag Football" [ref=e1149]:
+                  - generic "Flag Football" [ref=e1150]
+                - cell "—" [ref=e1151]
+                - cell "Details" [ref=e1152]:
+                  - link "Details" [ref=e1153]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2014U%20Coed/94096
+                    - text: Details
+                    - img [ref=e1154]
+              - row "Sat, Feb 28 10:00 AM - 10:45 AM BH Dragons U13 vs Chicago City 2013 Boys II Boys 13U Closed TOCA Premier League — Details" [ref=e1158] [cursor=pointer]:
+                - cell "Sat, Feb 28" [ref=e1159]:
+                  - generic [ref=e1160]: Sat, Feb 28
+                - cell "10:00 AM - 10:45 AM" [ref=e1161]:
+                  - generic [ref=e1163]: 10:00 AM - 10:45 AM
+                - cell "BH Dragons U13 vs Chicago City 2013 Boys II Boys 13U Closed" [ref=e1164]:
+                  - generic [ref=e1165]:
+                    - generic [ref=e1166]: BH Dragons U13 vs Chicago City 2013 Boys II
+                    - generic [ref=e1167]: Boys 13U
+                    - generic [ref=e1169]: Closed
+                - cell "TOCA Premier League" [ref=e1170]:
+                  - generic "TOCA Premier League" [ref=e1171]
+                - cell "—" [ref=e1172]
+                - cell "Details" [ref=e1173]:
+                  - link "Details" [ref=e1174]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343
+                    - text: Details
+                    - img [ref=e1175]
+          - button "Load more (365 remaining)" [ref=e1180] [cursor=pointer]
+          - generic [ref=e1181]: Showing 50 of 415 events
+    - contentinfo [ref=e1182]:
+      - generic [ref=e1184]:
+        - paragraph [ref=e1185]: © 2026 TOCA Soccer
+        - generic [ref=e1187]: Powered by Bond Sports
+  - alert [ref=e1188]
 ```
