@@ -14,6 +14,7 @@ interface DayViewProps {
   linkTarget?: '_blank' | '_top' | '_self';
   hideRegistrationLinks?: boolean;
   customRegistrationUrl?: string;
+  scheduleTimezone?: string;
 }
 
 // Time slots from 6am to 10pm
@@ -26,7 +27,7 @@ const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => i + 6); // 6-22 (6am to 
  * Events are positioned based on their start time.
  * Includes current time indicator.
  */
-export function DayView({ events, date, config, onEventClick, linkTarget = '_blank', hideRegistrationLinks = false, customRegistrationUrl }: DayViewProps) {
+export function DayView({ events, date, config, onEventClick, linkTarget = '_blank', hideRegistrationLinks = false, customRegistrationUrl, scheduleTimezone }: DayViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const currentTimeRef = useRef<HTMLDivElement>(null);
   
@@ -56,21 +57,19 @@ export function DayView({ events, date, config, onEventClick, linkTarget = '_bla
     });
   }, [events, date]);
 
-  // Derive the schedule timezone from the first event that has one
-  const scheduleTimezone = useMemo(() => {
-    return dayEvents.find(e => e.timezone)?.timezone;
-  }, [dayEvents]);
+  // Use the schedule-wide timezone passed from ScheduleView (single source of truth)
 
-  // Group events by hour, using the event's timezone for positioning
+  // Group events by hour using the schedule-wide timezone for consistent positioning
   const eventsByHour = useMemo(() => {
     const grouped: Record<number, CalendarEvent[]> = {};
     dayEvents.forEach(event => {
-      const hour = getHourInTimezone(event.startTime || event.date, event.timezone);
+      const tz = scheduleTimezone || event.timezone;
+      const hour = getHourInTimezone(event.startTime || event.date, tz);
       if (!grouped[hour]) grouped[hour] = [];
       grouped[hour].push(event);
     });
     return grouped;
-  }, [dayEvents]);
+  }, [dayEvents, scheduleTimezone]);
 
   // Scroll to current time on mount (only within the day view container, not the page)
   useEffect(() => {

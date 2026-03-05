@@ -215,12 +215,14 @@ export function ScheduleView({
     });
   }, [schedule]);
   
-  // Get timezone from events (use first event's timezone as representative)
+  // Resolve the canonical IANA timezone from events (single source of truth)
+  const scheduleTimezone = useMemo(() => {
+    return allEvents.find(e => e.timezone)?.timezone ?? undefined;
+  }, [allEvents]);
+
+  // Friendly label for the header
   const displayTimezone = useMemo(() => {
-    const firstEventWithTz = allEvents.find(e => e.timezone);
-    if (!firstEventWithTz?.timezone) return null;
-    
-    // Convert timezone ID to friendly name
+    if (!scheduleTimezone) return null;
     const tzMap: Record<string, string> = {
       'America/New_York': 'ET',
       'America/Chicago': 'CT',
@@ -230,8 +232,8 @@ export function ScheduleView({
       'America/Anchorage': 'AK',
       'Pacific/Honolulu': 'HT',
     };
-    return tzMap[firstEventWithTz.timezone] || firstEventWithTz.timezone;
-  }, [allEvents]);
+    return tzMap[scheduleTimezone] || scheduleTimezone;
+  }, [scheduleTimezone]);
 
   const defaultTableColumns: TableColumn[] = ['date', 'time', 'event', 'program', 'location', 'spots', 'action'];
   const tableColumns = (config.features.tableColumns || defaultTableColumns) as TableColumn[];
@@ -695,6 +697,7 @@ export function ScheduleView({
           linkTarget={linkTarget}
           hideRegistrationLinks={hideRegistrationLinks}
           customRegistrationUrl={customRegistrationUrl}
+          scheduleTimezone={scheduleTimezone}
         />
       )}
 
@@ -705,6 +708,7 @@ export function ScheduleView({
           config={config}
           onEventClick={setSelectedEvent}
           onDayClick={handleDayClick}
+          scheduleTimezone={scheduleTimezone}
         />
       )}
 

@@ -10,6 +10,7 @@ interface WeekGridViewProps {
   config: DiscoveryConfig;
   onEventClick?: (event: CalendarEvent) => void;
   onDayClick?: (date: string) => void;
+  scheduleTimezone?: string;
 }
 
 // Time slots from 6am to 10pm
@@ -22,23 +23,13 @@ const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => i + 6);
  * Shows first event fully and "+X more" for additional events.
  * Auto-scrolls to current time on today.
  */
-export function WeekGridView({ days, config, onEventClick, onDayClick }: WeekGridViewProps) {
+export function WeekGridView({ days, config, onEventClick, onDayClick, scheduleTimezone }: WeekGridViewProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const currentTimeRef = useRef<HTMLDivElement>(null);
   
   // Get brand colors from config
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
-
-  // Derive the schedule timezone from the first event that has one
-  const scheduleTimezone = useMemo(() => {
-    for (const day of days) {
-      for (const event of day.events) {
-        if (event.timezone) return event.timezone;
-      }
-    }
-    return undefined;
-  }, [days]);
 
   // Auto-scroll to current time on mount
   useEffect(() => {
@@ -55,21 +46,22 @@ export function WeekGridView({ days, config, onEventClick, onDayClick }: WeekGri
     }
   }, [days, scheduleTimezone]);
 
-  // Group events by day and hour, using the event's timezone for positioning
+  // Group events by day and hour using the schedule-wide timezone for consistent positioning
   const eventsByDayHour = useMemo(() => {
     const grouped: Record<string, Record<number, CalendarEvent[]>> = {};
     
     days.forEach(day => {
       grouped[day.date] = {};
       day.events.forEach(event => {
-        const hour = getHourInTimezone(event.startTime || event.date, event.timezone);
+        const tz = scheduleTimezone || event.timezone;
+        const hour = getHourInTimezone(event.startTime || event.date, tz);
         if (!grouped[day.date][hour]) grouped[day.date][hour] = [];
         grouped[day.date][hour].push(event);
       });
     });
     
     return grouped;
-  }, [days]);
+  }, [days, scheduleTimezone]);
 
   // Calculate minimum width to ensure columns don't get too squished on mobile
   const minColumnWidth = 80; // Minimum 80px per day column
