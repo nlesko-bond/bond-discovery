@@ -25,26 +25,32 @@ const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => i + 6);
  */
 export function WeekGridView({ days, config, onEventClick, onDayClick, scheduleTimezone }: WeekGridViewProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const currentTimeRef = useRef<HTMLDivElement>(null);
+  const currentTimeRowRef = useRef<HTMLDivElement>(null);
   
   // Get brand colors from config
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
 
-  // Auto-scroll to current time on mount
+  // Current time in schedule timezone
+  const now = new Date();
+  const currentHour = getHourInTimezone(now, scheduleTimezone);
+  const currentMinutes = getMinutesInTimezone(now, scheduleTimezone);
+  const hasTodayInView = days.some(d => isToday(parseISO(d.date)));
+  const todayIndex = days.findIndex(d => isToday(parseISO(d.date)));
+  const timeLabel = scheduleTimezone
+    ? new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: scheduleTimezone }).format(now)
+    : format(now, 'h:mm a');
+
+  // Auto-scroll to current time row on mount
   useEffect(() => {
-    const hasTodayInView = days.some(d => isToday(parseISO(d.date)));
-    if (hasTodayInView && scrollContainerRef.current) {
-      const currentHour = getHourInTimezone(new Date(), scheduleTimezone);
-      if (currentHour >= 6 && currentHour < 22) {
-        const hourIndex = currentHour - 6;
-        const scrollPosition = Math.max(0, hourIndex * 65 - 100);
-        setTimeout(() => {
-          scrollContainerRef.current?.scrollTo({ top: scrollPosition, behavior: 'smooth' });
-        }, 100);
-      }
+    if (hasTodayInView && currentTimeRowRef.current && scrollContainerRef.current) {
+      const rowTop = currentTimeRowRef.current.offsetTop;
+      const scrollPosition = Math.max(0, rowTop - 100);
+      setTimeout(() => {
+        scrollContainerRef.current?.scrollTo({ top: scrollPosition, behavior: 'smooth' });
+      }, 100);
     }
-  }, [days, scheduleTimezone]);
+  }, [days, hasTodayInView]);
 
   // Group events by day and hour using the schedule-wide timezone for consistent positioning
   const eventsByDayHour = useMemo(() => {
@@ -119,8 +125,15 @@ export function WeekGridView({ days, config, onEventClick, onDayClick, scheduleT
           {/* Time Grid - Scrollable */}
           <div ref={scrollContainerRef} className="overflow-y-auto max-h-[600px]">
             <div className="relative">
-          {TIME_SLOTS.map((hour) => (
-            <div key={hour} className="grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[70px_repeat(7,1fr)] border-b border-gray-100 last:border-b-0">
+          {TIME_SLOTS.map((hour) => {
+            const isCurrentTimeRow = hasTodayInView && hour === currentHour && currentHour >= 6 && currentHour < 22;
+
+            return (
+            <div
+              key={hour}
+              ref={isCurrentTimeRow ? currentTimeRowRef : undefined}
+              className="grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[70px_repeat(7,1fr)] border-b border-gray-100 last:border-b-0 relative"
+            >
               {/* Time Label */}
               <div className="p-1 sm:p-2 pr-2 sm:pr-3 text-right border-r border-gray-200 bg-gray-50/50">
                 <span className="text-[10px] sm:text-xs text-gray-500 font-medium">
@@ -153,13 +166,33 @@ export function WeekGridView({ days, config, onEventClick, onDayClick, scheduleT
                   </div>
                 );
               })}
-            </div>
-          ))}
 
-          {/* Current Time Indicator */}
-          {days.some(d => isToday(parseISO(d.date))) && (
-            <CurrentTimeIndicator days={days} timezone={scheduleTimezone} />
-          )}
+              {/* Current Time Indicator - rendered inside matching row for accurate positioning */}
+              {isCurrentTimeRow && (
+                <div
+                  className="absolute left-0 right-0 z-20 pointer-events-none"
+                  style={{ top: `${(currentMinutes / 60) * 100}%` }}
+                >
+                  <div className="absolute left-1 -top-2 text-[10px] font-bold text-red-600 bg-white px-1 rounded">
+                    {timeLabel}
+                  </div>
+                  <div className="absolute h-0.5 bg-red-500/30 left-[50px] sm:left-[70px] right-0" />
+                  {todayIndex >= 0 && (
+                    <div
+                      className="absolute h-0.5 bg-red-500"
+                      style={{
+                        left: `calc(70px + ${todayIndex} * ((100% - 70px) / 7))`,
+                        width: `calc((100% - 70px) / 7)`,
+                      }}
+                    >
+                      <div className="absolute -left-1.5 -top-1.5 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-md" />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            );
+          })}
             </div>
           </div>
         </div>
@@ -226,57 +259,6 @@ function EventBlock({
           +{moreCount} more
         </button>
       )}
-    </div>
-  );
-}
-
-// Current Time Indicator - red line across today's column
-function CurrentTimeIndicator({ days, timezone }: { days: DaySchedule[]; timezone?: string }) {
-  const now = new Date();
-  const currentHour = getHourInTimezone(now, timezone);
-  const currentMinutes = getMinutesInTimezone(now, timezone);
-
-  // Format label in the schedule timezone so it matches the line position
-  const timeLabel = timezone
-    ? new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: timezone }).format(now)
-    : format(now, 'h:mm a');
-  
-  // Find which column index is today
-  const todayIndex = days.findIndex(d => isToday(parseISO(d.date)));
-  if (todayIndex === -1) return null;
-
-  // Only show if current hour is within our time slots
-  if (currentHour < 6 || currentHour >= 22) return null;
-
-  // Calculate position
-  const hoursSince6 = currentHour - 6;
-  const topPosition = hoursSince6 * 65 + (currentMinutes / 60) * 65; // 65px per hour row
-
-  // Calculate left position based on column - span full width for better visibility
-  const columnWidth = `calc((100% - 70px) / 7)`;
-  const leftPosition = `calc(70px + ${todayIndex} * ${columnWidth})`;
-
-  return (
-    <div
-      className="absolute z-20 pointer-events-none"
-      style={{
-        top: `${topPosition}px`,
-        left: 0,
-        right: 0,
-      }}
-    >
-      {/* Time label on left */}
-      <div className="absolute left-1 -top-2 text-[10px] font-bold text-red-600 bg-white px-1 rounded">
-        {timeLabel}
-      </div>
-      {/* Full width line with red dot on today's column */}
-      <div className="absolute h-0.5 bg-red-500/30 left-[70px] right-0" />
-      <div
-        className="absolute h-0.5 bg-red-500"
-        style={{ left: leftPosition, width: columnWidth }}
-      >
-        <div className="absolute -left-1.5 -top-1.5 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-md" />
-      </div>
     </div>
   );
 }
