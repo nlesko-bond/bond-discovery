@@ -28,12 +28,16 @@ import {
   Waves,
   Dumbbell,
   Bike,
-  Snowflake,
   Flame,
-  Target,
-  Sword,
   CircleDot,
   Shirt,
+  Disc,
+  Music,
+  Sparkles,
+  HeartPulse,
+  Medal,
+  Cake,
+  PersonStanding,
   type LucideIcon,
 } from 'lucide-react';
 import { DiscoveryFilters, DiscoveryConfig } from '@/types';
@@ -57,28 +61,35 @@ const SPORT_ICONS: Record<string, LucideIcon> = {
   football: Shirt,
   basketball: Dribbble,
   volleyball: Volleyball,
-  tennis: Target,
-  baseball: Target,
-  softball: Target,
-  hockey: Snowflake,
-  lacrosse: Sword,
+  tennis: Medal,
+  baseball: Trophy,
+  softball: Trophy,
+  hockey: Disc,
+  lacrosse: Medal,
   swimming: Waves,
-  yoga: Flame,
+  yoga: HeartPulse,
   fitness: Dumbbell,
   running: Footprints,
   cycling: Bike,
   track: Footprints,
-  golf: Target,
+  golf: CircleDot,
   wrestling: Swords,
-  gymnastics: Activity,
-  skating: Snowflake,
-  dance: Footprints,
-  martial_arts: Sword,
-  cheer: Activity,
+  gymnastics: PersonStanding,
+  skating: PersonStanding,
+  ice_skating: PersonStanding,
+  dance: Music,
+  martial_arts: Swords,
+  cheer: Sparkles,
+  birthday: Cake,
+  party: Cake,
+  figure_skating: PersonStanding,
 };
 
 function getSportIcon(sportId: string): LucideIcon {
-  return SPORT_ICONS[sportId.toLowerCase()] || Activity;
+  const key = sportId.toLowerCase().replace(/[\s-]+/g, '_');
+  if (SPORT_ICONS[key]) return SPORT_ICONS[key];
+  const match = Object.keys(SPORT_ICONS).find(k => key.includes(k) || k.includes(key));
+  return match ? SPORT_ICONS[match] : Activity;
 }
 
 function getProgramTypeIcon(typeId: string): LucideIcon {
