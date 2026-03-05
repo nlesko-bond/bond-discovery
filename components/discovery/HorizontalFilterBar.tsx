@@ -341,7 +341,7 @@ export function HorizontalFilterBar({
         {/* Search Input with Autocomplete */}
         {enabledFilters.includes('search') && config.features.showSearch !== false && (
           <div ref={searchRef} className="relative">
-            <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-full hover:border-gray-300 transition-colors">
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-full hover:border-gray-300 transition-colors">
               <Search size={14} className="text-gray-400" />
               <input
                 type="text"
@@ -809,7 +809,7 @@ function FilterDropdown({
       <button
         onClick={onToggle}
         className={cn(
-          'flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium border transition-all',
+          'flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium border transition-all',
           !hasSelection && !isOpen && 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
         )}
         style={(hasSelection || isOpen) ? { 
@@ -861,7 +861,7 @@ function ChipToggleButton({
     <button
       onClick={onToggle}
       className={cn(
-        'flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium border transition-all',
+        'flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium border transition-all',
         !isActive && 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
       )}
       style={isActive ? {
@@ -889,13 +889,13 @@ function ChipPanel({
 }) {
   return (
     <div
-      className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 animate-fade-in"
+      className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 animate-fade-in"
       style={{ borderColor: `${brandColor}20` }}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2.5 px-1">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-3 px-1">
         {label}
       </p>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2.5">
         {children}
       </div>
     </div>
@@ -920,8 +920,8 @@ function ChipOption({
     <button
       onClick={onClick}
       className={cn(
-        'flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border transition-all',
-        !isSelected && 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+        'flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium border transition-all',
+        !isSelected && 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:shadow-sm'
       )}
       style={isSelected ? {
         backgroundColor: `${brandColor}12`,
