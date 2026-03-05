@@ -457,86 +457,30 @@ export function HorizontalFilterBar({
           </FilterDropdown>
         )}
 
-        {/* Program Type Filter - only show if enabled */}
+        {/* Program Type Filter - chip toggle */}
         {enabledFilters.includes('programType') && filterOptions.programTypes.length > 0 && (
           <div className={cn(hideProgramTypeDropdownOnMobile && 'hidden sm:block')}>
-            <FilterDropdown
+            <ChipToggleButton
               label="Type"
               icon={<Layers size={14} />}
               isOpen={openDropdown === 'type'}
               onToggle={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
               hasSelection={(filters.programTypes?.length || 0) > 0}
-              selectionCount={filters.programTypes?.length}
               brandColor={secondaryColor}
-            >
-              <div className="p-2">
-                {filterOptions.programTypes.map(type => {
-                  const isSelected = (filters.programTypes as string[] | undefined)?.includes(type.id);
-                  return (
-                    <button
-                      key={type.id}
-                      onClick={() => handleMultiSelect('programTypes', type.id)}
-                      className={cn(
-                        'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
-                        !isSelected && 'hover:bg-gray-50'
-                      )}
-                      style={isSelected ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor } : undefined}
-                    >
-                      <span>{getProgramTypeLabel(type.id as any)}</span>
-                      <div className="flex items-center gap-2">
-                        {type.count !== undefined && (
-                          <span className="text-xs text-gray-400">{type.count}</span>
-                        )}
-                        {isSelected && (
-                          <Check size={14} style={{ color: secondaryColor }} />
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </FilterDropdown>
+            />
           </div>
         )}
 
-        {/* Sport Filter - only show if enabled */}
+        {/* Sport Filter - chip toggle */}
         {enabledFilters.includes('sport') && filterOptions.sports.length > 0 && (
-          <FilterDropdown
+          <ChipToggleButton
             label="Activity"
             icon={<Activity size={14} />}
             isOpen={openDropdown === 'sport'}
             onToggle={() => setOpenDropdown(openDropdown === 'sport' ? null : 'sport')}
             hasSelection={(filters.sports?.length || 0) > 0}
-            selectionCount={filters.sports?.length}
             brandColor={secondaryColor}
-          >
-            <div className="p-2 max-h-64 overflow-y-auto">
-              {filterOptions.sports.map(sport => {
-                const isSelected = filters.sports?.includes(sport.id);
-                return (
-                  <button
-                    key={sport.id}
-                    onClick={() => handleMultiSelect('sports', sport.id)}
-                    className={cn(
-                      'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
-                      !isSelected && 'hover:bg-gray-50'
-                    )}
-                    style={isSelected ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor } : undefined}
-                  >
-                    <span>{getSportLabel(sport.id)}</span>
-                    <div className="flex items-center gap-2">
-                      {sport.count !== undefined && (
-                        <span className="text-xs text-gray-400">{sport.count}</span>
-                      )}
-                      {isSelected && (
-                        <Check size={14} style={{ color: secondaryColor }} />
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </FilterDropdown>
+          />
         )}
 
         {/* Age Filter - only show if enabled */}
@@ -592,55 +536,17 @@ export function HorizontalFilterBar({
           </FilterDropdown>
         )}
 
-        {/* Gender Filter - only show if enabled */}
+        {/* Gender Filter - chip toggle */}
         {enabledFilters.includes('gender') && (
           <div className={cn(hideGenderDropdownOnMobile && 'hidden sm:block')}>
-            <FilterDropdown
+            <ChipToggleButton
               label="Gender"
               icon={<Users size={14} />}
               isOpen={openDropdown === 'gender'}
               onToggle={() => setOpenDropdown(openDropdown === 'gender' ? null : 'gender')}
               hasSelection={!!(filters.gender && filters.gender !== 'all')}
               brandColor={secondaryColor}
-            >
-              <div className="py-1">
-                {[
-                  { value: 'all', label: 'All Genders' },
-                  { value: 'coed', label: 'Co-ed' },
-                  { value: 'male', label: 'Male' },
-                  { value: 'female', label: 'Female' },
-                ].map(option => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      onFilterChange({
-                        ...filters,
-                        gender: option.value === 'all' ? undefined : option.value as any,
-                      });
-                      if (option.value !== 'all') {
-                        gtmEvent.filterApplied('gender', option.label);
-                      }
-                      setOpenDropdown(null);
-                    }}
-                    className={cn(
-                      'w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center justify-between',
-                      (filters.gender === option.value || (!filters.gender && option.value === 'all'))
-                        ? 'font-medium'
-                        : 'text-gray-700 hover:bg-gray-50'
-                    )}
-                    style={(filters.gender === option.value || (!filters.gender && option.value === 'all'))
-                      ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor }
-                      : undefined
-                    }
-                  >
-                    {option.label}
-                    {(filters.gender === option.value || (!filters.gender && option.value === 'all')) && (
-                      <Check size={14} style={{ color: secondaryColor }} />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </FilterDropdown>
+            />
           </div>
         )}
 
@@ -655,6 +561,70 @@ export function HorizontalFilterBar({
           </button>
         )}
       </div>
+
+      {/* Chip Panels - expand below filter bar when toggled */}
+      {openDropdown === 'type' && enabledFilters.includes('programType') && filterOptions.programTypes.length > 0 && (
+        <ChipPanel label="Type" brandColor={secondaryColor}>
+          {filterOptions.programTypes.map(type => {
+            const isSelected = (filters.programTypes as string[] | undefined)?.includes(type.id);
+            return (
+              <ChipOption
+                key={type.id}
+                label={getProgramTypeLabel(type.id as any)}
+                isSelected={isSelected}
+                onClick={() => handleMultiSelect('programTypes', type.id)}
+                brandColor={secondaryColor}
+              />
+            );
+          })}
+        </ChipPanel>
+      )}
+
+      {openDropdown === 'sport' && enabledFilters.includes('sport') && filterOptions.sports.length > 0 && (
+        <ChipPanel label="Activity" brandColor={secondaryColor}>
+          {filterOptions.sports.map(sport => {
+            const isSelected = filters.sports?.includes(sport.id);
+            return (
+              <ChipOption
+                key={sport.id}
+                label={getSportLabel(sport.id)}
+                isSelected={isSelected}
+                onClick={() => handleMultiSelect('sports', sport.id)}
+                brandColor={secondaryColor}
+              />
+            );
+          })}
+        </ChipPanel>
+      )}
+
+      {openDropdown === 'gender' && enabledFilters.includes('gender') && (
+        <ChipPanel label="Gender" brandColor={secondaryColor}>
+          {[
+            { value: 'coed', label: 'Co-Ed' },
+            { value: 'male', label: 'Boys' },
+            { value: 'female', label: 'Girls' },
+          ].map(option => {
+            const isSelected = filters.gender === option.value;
+            return (
+              <ChipOption
+                key={option.value}
+                label={option.label}
+                isSelected={isSelected}
+                onClick={() => {
+                  onFilterChange({
+                    ...filters,
+                    gender: isSelected ? undefined : option.value as any,
+                  });
+                  if (!isSelected) {
+                    gtmEvent.filterApplied('gender', option.label);
+                  }
+                }}
+                brandColor={secondaryColor}
+              />
+            );
+          })}
+        </ChipPanel>
+      )}
 
       {/* Active Filter Chips */}
       {activeFilterCount > 0 && (
@@ -796,6 +766,98 @@ function FilterDropdown({
         </div>
       )}
     </div>
+  );
+}
+
+// Toggle button for chip panel filters (Type, Activity, Gender)
+function ChipToggleButton({
+  label,
+  icon,
+  isOpen,
+  onToggle,
+  hasSelection,
+  brandColor = '#6366F1',
+}: {
+  label: string;
+  icon: React.ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+  hasSelection?: boolean;
+  brandColor?: string;
+}) {
+  const isActive = isOpen || hasSelection;
+  return (
+    <button
+      onClick={onToggle}
+      className={cn(
+        'flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium border transition-all',
+        !isActive && 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+      )}
+      style={isActive ? {
+        backgroundColor: isOpen ? 'white' : `${brandColor}10`,
+        borderColor: brandColor,
+        color: brandColor,
+      } : undefined}
+    >
+      {icon}
+      <span>{label}</span>
+      <ChevronDown size={14} className={cn('transition-transform', isOpen && 'rotate-180')} />
+    </button>
+  );
+}
+
+// Chip panel that expands below the filter bar
+function ChipPanel({
+  label,
+  children,
+  brandColor = '#6366F1',
+}: {
+  label: string;
+  children: React.ReactNode;
+  brandColor?: string;
+}) {
+  return (
+    <div
+      className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 animate-fade-in"
+      style={{ borderColor: `${brandColor}20` }}
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2.5 px-1">
+        {label}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// Individual chip option inside a ChipPanel
+function ChipOption({
+  label,
+  isSelected,
+  onClick,
+  brandColor = '#6366F1',
+}: {
+  label: string;
+  isSelected?: boolean;
+  onClick: () => void;
+  brandColor?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'px-4 py-1.5 rounded-full text-sm font-medium border transition-all',
+        !isSelected && 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+      )}
+      style={isSelected ? {
+        backgroundColor: `${brandColor}12`,
+        borderColor: brandColor,
+        color: brandColor,
+      } : undefined}
+    >
+      {label}
+    </button>
   );
 }
 
