@@ -3,7 +3,7 @@
 import { useMemo, useRef, useEffect } from 'react';
 import { Clock, MapPin, Users, ExternalLink } from 'lucide-react';
 import { CalendarEvent, DiscoveryConfig } from '@/types';
-import { formatTime, buildRegistrationUrl, cn } from '@/lib/utils';
+import { formatTime, buildRegistrationUrl, cn, getHourInTimezone, getMinutesInTimezone } from '@/lib/utils';
 import { format, parseISO, isSameDay, isToday } from 'date-fns';
 
 interface DayViewProps {
@@ -56,12 +56,16 @@ export function DayView({ events, date, config, onEventClick, linkTarget = '_bla
     });
   }, [events, date]);
 
-  // Group events by hour
+  // Derive the schedule timezone from the first event that has one
+  const scheduleTimezone = useMemo(() => {
+    return dayEvents.find(e => e.timezone)?.timezone;
+  }, [dayEvents]);
+
+  // Group events by hour, using the event's timezone for positioning
   const eventsByHour = useMemo(() => {
     const grouped: Record<number, CalendarEvent[]> = {};
     dayEvents.forEach(event => {
-      const eventDate = new Date(event.startTime || event.date);
-      const hour = eventDate.getHours();
+      const hour = getHourInTimezone(event.startTime || event.date, event.timezone);
       if (!grouped[hour]) grouped[hour] = [];
       grouped[hour].push(event);
     });
@@ -84,8 +88,8 @@ export function DayView({ events, date, config, onEventClick, linkTarget = '_bla
     }
   }, [date]);
 
-  const currentHour = new Date().getHours();
-  const currentMinutes = new Date().getMinutes();
+  const currentHour = getHourInTimezone(new Date(), scheduleTimezone);
+  const currentMinutes = getMinutesInTimezone(new Date(), scheduleTimezone);
   const isCurrentDay = isToday(parseISO(date));
 
   return (

@@ -14,7 +14,7 @@ export function cn(...inputs: ClassValue[]) {
  * Note: Bond API returns prices in dollars, not cents!
  */
 export function formatPrice(amountInDollars: number, currency = 'USD'): string {
-  if (amountInDollars === 0) {
+  if (!amountInDollars || !isFinite(amountInDollars)) {
     return 'FREE';
   }
   return new Intl.NumberFormat('en-US', {
@@ -36,6 +36,42 @@ export function formatDate(dateStr: string, formatStr = 'MMM d, yyyy'): string {
   } catch {
     return dateStr;
   }
+}
+
+/**
+ * Get the hour (0-23) of a date in a specific timezone.
+ * Falls back to browser-local if no timezone is provided.
+ */
+export function getHourInTimezone(dateInput: string | Date, timezone?: string): number {
+  const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+  if (!timezone || isNaN(date.getTime())) {
+    return date.getHours();
+  }
+  const parts = new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    hour12: false,
+    timeZone: timezone,
+  }).formatToParts(date);
+  const hourPart = parts.find(p => p.type === 'hour');
+  const h = parseInt(hourPart?.value ?? '0', 10);
+  return h === 24 ? 0 : h;
+}
+
+/**
+ * Get the minutes (0-59) of a date in a specific timezone.
+ * Falls back to browser-local if no timezone is provided.
+ */
+export function getMinutesInTimezone(dateInput: string | Date, timezone?: string): number {
+  const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+  if (!timezone || isNaN(date.getTime())) {
+    return date.getMinutes();
+  }
+  const parts = new Intl.DateTimeFormat('en-US', {
+    minute: 'numeric',
+    timeZone: timezone,
+  }).formatToParts(date);
+  const minutePart = parts.find(p => p.type === 'minute');
+  return parseInt(minutePart?.value ?? '0', 10);
 }
 
 /**

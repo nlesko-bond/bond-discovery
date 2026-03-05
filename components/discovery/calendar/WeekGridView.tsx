@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useEffect } from 'react';
 import { CalendarEvent, DiscoveryConfig, DaySchedule } from '@/types';
-import { formatTime, cn } from '@/lib/utils';
+import { formatTime, cn, getHourInTimezone, getMinutesInTimezone } from '@/lib/utils';
 import { format, parseISO, isToday } from 'date-fns';
 
 interface WeekGridViewProps {
@@ -30,30 +30,39 @@ export function WeekGridView({ days, config, onEventClick, onDayClick }: WeekGri
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
 
+  // Derive the schedule timezone from the first event that has one
+  const scheduleTimezone = useMemo(() => {
+    for (const day of days) {
+      for (const event of day.events) {
+        if (event.timezone) return event.timezone;
+      }
+    }
+    return undefined;
+  }, [days]);
+
   // Auto-scroll to current time on mount
   useEffect(() => {
     const hasTodayInView = days.some(d => isToday(parseISO(d.date)));
     if (hasTodayInView && scrollContainerRef.current) {
-      const currentHour = new Date().getHours();
-      // Only scroll if within visible time range
+      const currentHour = getHourInTimezone(new Date(), scheduleTimezone);
       if (currentHour >= 6 && currentHour < 22) {
         const hourIndex = currentHour - 6;
-        const scrollPosition = Math.max(0, hourIndex * 65 - 100); // 65px per row, offset 100px for visibility
+        const scrollPosition = Math.max(0, hourIndex * 65 - 100);
         setTimeout(() => {
           scrollContainerRef.current?.scrollTo({ top: scrollPosition, behavior: 'smooth' });
         }, 100);
       }
     }
-  }, [days]);
-  // Group events by day and hour for positioning
+  }, [days, scheduleTimezone]);
+
+  // Group events by day and hour, using the event's timezone for positioning
   const eventsByDayHour = useMemo(() => {
     const grouped: Record<string, Record<number, CalendarEvent[]>> = {};
     
     days.forEach(day => {
       grouped[day.date] = {};
       day.events.forEach(event => {
-        const eventDate = new Date(event.startTime || event.date);
-        const hour = eventDate.getHours();
+        const hour = getHourInTimezone(event.startTime || event.date, event.timezone);
         if (!grouped[day.date][hour]) grouped[day.date][hour] = [];
         grouped[day.date][hour].push(event);
       });
@@ -157,7 +166,7 @@ export function WeekGridView({ days, config, onEventClick, onDayClick }: WeekGri
 
           {/* Current Time Indicator */}
           {days.some(d => isToday(parseISO(d.date))) && (
-            <CurrentTimeIndicator days={days} />
+            <CurrentTimeIndicator days={days} timezone={scheduleTimezone} />
           )}
             </div>
           </div>
@@ -230,10 +239,10 @@ function EventBlock({
 }
 
 // Current Time Indicator - red line across today's column
-function CurrentTimeIndicator({ days }: { days: DaySchedule[] }) {
+function CurrentTimeIndicator({ days, timezone }: { days: DaySchedule[]; timezone?: string }) {
   const now = new Date();
-  const currentHour = now.getHours();
-  const currentMinutes = now.getMinutes();
+  const currentHour = getHourInTimezone(now, timezone);
+  const currentMinutes = getMinutesInTimezone(now, timezone);
   
   // Find which column index is today
   const todayIndex = days.findIndex(d => isToday(parseISO(d.date)));

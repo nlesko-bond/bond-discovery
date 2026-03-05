@@ -188,13 +188,12 @@ function PricingCard({
     <div
       className={cn(
         'flex-shrink-0 w-[160px] sm:w-[180px] snap-start p-4 rounded-xl border-2 transition-all flex flex-col',
-        isMember
-          ? 'bg-gradient-to-b from-amber-50 to-white border-amber-200'
-          : 'bg-white border-gray-200 hover:shadow-md'
+        !isMember && 'bg-white border-gray-200 hover:shadow-md'
       )}
-      style={{
-        borderColor: isMember ? undefined : undefined,
-      }}
+      style={isMember 
+        ? { background: `linear-gradient(to bottom, ${secondaryColor}10, white)`, borderColor: `${secondaryColor}30` } 
+        : undefined
+      }
       onMouseEnter={(e) => {
         if (!isMember) {
           e.currentTarget.style.borderColor = `${secondaryColor}40`;
@@ -208,28 +207,23 @@ function PricingCard({
     >
       {/* Member Badge */}
       {isMember && (
-        <div className="flex items-center gap-1 text-xs font-semibold text-amber-600 mb-2">
+        <div className="flex items-center gap-1 text-xs font-semibold mb-2" style={{ color: secondaryColor }}>
           <Star size={12} fill="currentColor" />
           Member Pricing
         </div>
       )}
 
       {/* Product Name */}
-      <h4 className={cn(
-        'font-bold text-sm line-clamp-2 min-h-[40px]',
-        isMember ? 'text-amber-900' : 'text-gray-900'
-      )}>
+      <h4 className="font-bold text-sm line-clamp-2 min-h-[40px] text-gray-900">
         {product.name}
       </h4>
 
       {/* Price */}
       <div className="mt-auto pt-3">
-        <span className={cn(
-          'text-2xl font-black',
-          isFree && 'text-green-600',
-          isMember && !isFree && 'text-amber-600',
-          !isMember && !isFree && 'text-gray-900'
-        )}>
+        <span 
+          className={cn('text-2xl font-black', isFree && 'text-green-600', !isMember && !isFree && 'text-gray-900')}
+          style={isMember && !isFree ? { color: secondaryColor } : undefined}
+        >
           {formatPrice(lowestPrice)}
         </span>
         
@@ -249,9 +243,7 @@ function PricingCard({
           rel="noopener noreferrer"
           className="mt-3 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-semibold transition-opacity text-white hover:opacity-90"
           style={{
-            background: isMember 
-              ? '#D97706' 
-              : `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`
+            background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`
           }}
         >
           Select <ExternalLink size={12} />

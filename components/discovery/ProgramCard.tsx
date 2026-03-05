@@ -153,7 +153,10 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
             )}
           </div>
           {config.features.showMembershipBadges && pricingInfo.hasMemberPricing && (
-            <span className="px-2.5 py-1 text-xs font-bold bg-amber-500 text-white rounded-full shadow-sm flex items-center gap-1">
+            <span 
+              className="px-2.5 py-1 text-xs font-bold text-white rounded-full shadow-sm flex items-center gap-1"
+              style={{ backgroundColor: secondaryColor }}
+            >
               <Star size={12} />
               Member Pricing
             </span>
@@ -230,8 +233,8 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
                     {/* Member price */}
                     {pricingInfo.hasMemberPricing && pricingInfo.memberPrice !== undefined && (
                       <div className="flex items-center gap-2">
-                        <Star size={14} className="text-amber-500" />
-                        <span className="text-sm font-semibold text-amber-600">
+                        <Star size={14} style={{ color: secondaryColor }} />
+                        <span className="text-sm font-semibold" style={{ color: secondaryColor }}>
                           Members: {formatPrice(pricingInfo.memberPrice)}
                         </span>
                         {pricingInfo.regularPrice && pricingInfo.memberPrice < pricingInfo.regularPrice && (
@@ -518,11 +521,13 @@ function ProductCard({
   isMember = false,
   registrationUrl,
   linkTarget = '_blank',
+  secondaryColor = '#6366F1',
 }: { 
   product: Product; 
   isMember?: boolean;
   registrationUrl?: string;
   linkTarget?: '_blank' | '_top' | '_self';
+  secondaryColor?: string;
 }) {
   const lowestPrice = product.prices.reduce(
     (min, p) => (p.price < min ? p.price : min),
@@ -530,16 +535,13 @@ function ProductCard({
   );
 
   return (
-    <div className={cn(
-      'p-3 rounded-lg',
-      isMember ? 'bg-amber-50 border border-amber-100' : 'bg-gray-50'
-    )}>
+    <div 
+      className={cn('p-3 rounded-lg', isMember ? 'border' : 'bg-gray-50')}
+      style={isMember ? { backgroundColor: `${secondaryColor}08`, borderColor: `${secondaryColor}20` } : undefined}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <span className={cn(
-            'font-semibold text-sm',
-            isMember ? 'text-amber-800' : 'text-gray-900'
-          )}>
+          <span className="font-semibold text-sm text-gray-900">
             {product.name}
           </span>
           {product.description && (
@@ -549,11 +551,10 @@ function ProductCard({
           )}
         </div>
         <div className="flex flex-col items-end gap-1.5">
-          <span className={cn(
-            'font-bold text-lg whitespace-nowrap',
-            isMember ? 'text-amber-600' : 'text-gray-900',
-            lowestPrice === 0 && 'text-green-600'
-          )}>
+          <span 
+            className={cn('font-bold text-lg whitespace-nowrap', !isMember && 'text-gray-900', lowestPrice === 0 && 'text-green-600')}
+            style={isMember && lowestPrice !== 0 ? { color: secondaryColor } : undefined}
+          >
             {formatPrice(lowestPrice)}
           </span>
           {registrationUrl && (
@@ -561,12 +562,8 @@ function ProductCard({
               href={registrationUrl}
               target={linkTarget}
               rel="noopener noreferrer"
-              className={cn(
-                'text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1',
-                isMember 
-                  ? 'bg-amber-600 text-white hover:bg-amber-700' 
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
-              )}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-90 flex items-center gap-1 text-white"
+              style={{ backgroundColor: secondaryColor }}
             >
               Select <ExternalLink size={10} />
             </a>
