@@ -12,11 +12,78 @@ import {
   Filter,
   Check,
   Tag,
-  Search
+  Search,
+  GraduationCap,
+  Stethoscope,
+  Tent,
+  BookOpen,
+  Trophy,
+  Swords,
+  UsersRound,
+  DoorOpen,
+  Key,
+  Dribbble,
+  Volleyball,
+  Footprints,
+  Waves,
+  Dumbbell,
+  Bike,
+  Snowflake,
+  Flame,
+  Target,
+  Sword,
+  CircleDot,
+  Shirt,
+  type LucideIcon,
 } from 'lucide-react';
 import { DiscoveryFilters, DiscoveryConfig } from '@/types';
 import { cn, getProgramTypeLabel, getSportLabel } from '@/lib/utils';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
+
+const PROGRAM_TYPE_ICONS: Record<string, LucideIcon> = {
+  class: GraduationCap,
+  clinic: Stethoscope,
+  camp: Tent,
+  lesson: BookOpen,
+  league: Trophy,
+  tournament: Swords,
+  club_team: UsersRound,
+  drop_in: DoorOpen,
+  rental: Key,
+};
+
+const SPORT_ICONS: Record<string, LucideIcon> = {
+  soccer: CircleDot,
+  football: Shirt,
+  basketball: Dribbble,
+  volleyball: Volleyball,
+  tennis: Target,
+  baseball: Target,
+  softball: Target,
+  hockey: Snowflake,
+  lacrosse: Sword,
+  swimming: Waves,
+  yoga: Flame,
+  fitness: Dumbbell,
+  running: Footprints,
+  cycling: Bike,
+  track: Footprints,
+  golf: Target,
+  wrestling: Swords,
+  gymnastics: Activity,
+  skating: Snowflake,
+  dance: Footprints,
+  martial_arts: Sword,
+  cheer: Activity,
+};
+
+function getSportIcon(sportId: string): LucideIcon {
+  return SPORT_ICONS[sportId.toLowerCase()] || Activity;
+}
+
+function getProgramTypeIcon(typeId: string): LucideIcon {
+  return PROGRAM_TYPE_ICONS[typeId] || Layers;
+}
 
 interface FilterOption {
   id: string;
@@ -275,7 +342,7 @@ export function HorizontalFilterBar({
         {/* Search Input with Autocomplete */}
         {enabledFilters.includes('search') && config.features.showSearch !== false && (
           <div ref={searchRef} className="relative">
-            <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+            <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-full hover:border-gray-300 transition-colors">
               <Search size={14} className="text-gray-400" />
               <input
                 type="text"
@@ -567,10 +634,12 @@ export function HorizontalFilterBar({
         <ChipPanel label="Type" brandColor={secondaryColor}>
           {filterOptions.programTypes.map(type => {
             const isSelected = (filters.programTypes as string[] | undefined)?.includes(type.id);
+            const TypeIcon = getProgramTypeIcon(type.id);
             return (
               <ChipOption
                 key={type.id}
                 label={getProgramTypeLabel(type.id as any)}
+                icon={<TypeIcon size={14} />}
                 isSelected={isSelected}
                 onClick={() => handleMultiSelect('programTypes', type.id)}
                 brandColor={secondaryColor}
@@ -584,10 +653,12 @@ export function HorizontalFilterBar({
         <ChipPanel label="Activity" brandColor={secondaryColor}>
           {filterOptions.sports.map(sport => {
             const isSelected = filters.sports?.includes(sport.id);
+            const SportIcon = getSportIcon(sport.id);
             return (
               <ChipOption
                 key={sport.id}
                 label={getSportLabel(sport.id)}
+                icon={<SportIcon size={14} />}
                 isSelected={isSelected}
                 onClick={() => handleMultiSelect('sports', sport.id)}
                 brandColor={secondaryColor}
@@ -600,15 +671,16 @@ export function HorizontalFilterBar({
       {openDropdown === 'gender' && enabledFilters.includes('gender') && (
         <ChipPanel label="Gender" brandColor={secondaryColor}>
           {[
-            { value: 'coed', label: 'Co-Ed' },
-            { value: 'male', label: 'Boys' },
-            { value: 'female', label: 'Girls' },
+            { value: 'coed', label: 'Co-Ed', icon: UsersRound },
+            { value: 'male', label: 'Boys', icon: Users },
+            { value: 'female', label: 'Girls', icon: Users },
           ].map(option => {
             const isSelected = filters.gender === option.value;
             return (
               <ChipOption
                 key={option.value}
                 label={option.label}
+                icon={<option.icon size={14} />}
                 isSelected={isSelected}
                 onClick={() => {
                   onFilterChange({
@@ -738,12 +810,12 @@ function FilterDropdown({
       <button
         onClick={onToggle}
         className={cn(
-          'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-all',
-          !hasSelection && 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+          'flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium border transition-all',
+          !hasSelection && !isOpen && 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
         )}
-        style={hasSelection ? { 
-          backgroundColor: `${brandColor}15`, 
-          borderColor: `${brandColor}30`, 
+        style={(hasSelection || isOpen) ? { 
+          backgroundColor: isOpen ? 'white' : `${brandColor}10`, 
+          borderColor: brandColor, 
           color: brandColor 
         } : undefined}
       >
@@ -834,11 +906,13 @@ function ChipPanel({
 // Individual chip option inside a ChipPanel
 function ChipOption({
   label,
+  icon,
   isSelected,
   onClick,
   brandColor = '#6366F1',
 }: {
   label: string;
+  icon?: React.ReactNode;
   isSelected?: boolean;
   onClick: () => void;
   brandColor?: string;
@@ -847,7 +921,7 @@ function ChipOption({
     <button
       onClick={onClick}
       className={cn(
-        'px-4 py-1.5 rounded-full text-sm font-medium border transition-all',
+        'flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border transition-all',
         !isSelected && 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
       )}
       style={isSelected ? {
@@ -856,6 +930,7 @@ function ChipOption({
         color: brandColor,
       } : undefined}
     >
+      {icon}
       {label}
     </button>
   );
