@@ -243,6 +243,11 @@ function CurrentTimeIndicator({ days, timezone }: { days: DaySchedule[]; timezon
   const now = new Date();
   const currentHour = getHourInTimezone(now, timezone);
   const currentMinutes = getMinutesInTimezone(now, timezone);
+
+  // Format label in the schedule timezone so it matches the line position
+  const timeLabel = timezone
+    ? new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: timezone }).format(now)
+    : format(now, 'h:mm a');
   
   // Find which column index is today
   const todayIndex = days.findIndex(d => isToday(parseISO(d.date)));
@@ -270,7 +275,7 @@ function CurrentTimeIndicator({ days, timezone }: { days: DaySchedule[]; timezon
     >
       {/* Time label on left */}
       <div className="absolute left-1 -top-2 text-[10px] font-bold text-red-600 bg-white px-1 rounded">
-        {format(now, 'h:mm a')}
+        {timeLabel}
       </div>
       {/* Full width line with red dot on today's column */}
       <div className="absolute h-0.5 bg-red-500/30 left-[70px] right-0" />
