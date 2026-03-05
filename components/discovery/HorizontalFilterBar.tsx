@@ -329,10 +329,9 @@ export function HorizontalFilterBar({
   };
 
   return (
-    <div className="space-y-3">
+    <div ref={dropdownRef} className="space-y-3">
       {/* Filter Buttons Row - with CSS variables for colors */}
       <div 
-        ref={dropdownRef} 
         className="flex flex-wrap items-center gap-2"
         style={{ 
           '--brand-primary': primaryColor,
