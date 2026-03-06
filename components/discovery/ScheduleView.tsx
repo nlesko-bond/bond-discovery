@@ -268,10 +268,14 @@ export function ScheduleView({
       lines.push(`UID:${event.id}@bondsports.co`);
       lines.push(`DTSTART:${formatDate(startDate)}`);
       lines.push(`DTEND:${formatDate(endDate)}`);
-      lines.push(`SUMMARY:${event.programName || 'Event'}`);
-      if (event.sessionName) lines.push(`DESCRIPTION:${event.sessionName}`);
+      lines.push(`SUMMARY:${event.title || event.programName || 'Event'}`);
+      const descParts = [event.programName, event.sessionName].filter(Boolean);
+      if (descParts.length > 0) lines.push(`DESCRIPTION:${descParts.join(' - ')}`);
       if (event.facilityName) lines.push(`LOCATION:${event.facilityName}`);
-      if (event.linkSEO) lines.push(`URL:https://app.bondsports.co${event.linkSEO}`);
+      if (event.linkSEO) {
+        const url = event.linkSEO.startsWith('http') ? event.linkSEO : `https://bondsports.co${event.linkSEO}`;
+        lines.push(`URL:${url}`);
+      }
       lines.push('END:VEVENT');
     });
     
