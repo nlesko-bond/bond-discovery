@@ -14,7 +14,6 @@ import {
   Tag,
   Search,
   GraduationCap,
-  Stethoscope,
   Tent,
   BookOpen,
   Trophy,
@@ -60,7 +59,7 @@ import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 
 const PROGRAM_TYPE_ICONS: Record<string, LucideIcon> = {
   class: GraduationCap,
-  clinic: Stethoscope,
+  clinic: Activity,
   camp: Tent,
   lesson: BookOpen,
   league: Trophy,
