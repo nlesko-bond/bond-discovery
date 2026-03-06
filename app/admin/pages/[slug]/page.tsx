@@ -25,6 +25,7 @@ interface PageConfig {
     primaryColor: string;
     secondaryColor: string;
     accentColor?: string;
+    headerBackgroundColor?: string;
     logo?: string;
     tagline?: string;
     showTaglineOnMobile?: boolean;
@@ -397,6 +398,44 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Accents and hover states</p>
               </div>
+
+              <div>
+                <label className="label">Header Background</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    className="w-12 h-12 rounded cursor-pointer border border-gray-200"
+                    value={config.branding.headerBackgroundColor || '#ffffff'}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      branding: { ...config.branding, headerBackgroundColor: e.target.value }
+                    })}
+                  />
+                  <input
+                    type="text"
+                    className="input flex-1"
+                    placeholder="#ffffff (default: white)"
+                    value={config.branding.headerBackgroundColor || ''}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      branding: { ...config.branding, headerBackgroundColor: e.target.value || undefined }
+                    })}
+                  />
+                  {config.branding.headerBackgroundColor && (
+                    <button
+                      type="button"
+                      className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 border border-gray-200 rounded"
+                      onClick={() => setConfig({
+                        ...config,
+                        branding: { ...config.branding, headerBackgroundColor: undefined }
+                      })}
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Custom header bar color (leave empty for white)</p>
+              </div>
             </div>
             
             {/* Color Preview */}
@@ -421,6 +460,17 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                 >
                   Accent
                 </div>
+                {config.branding.headerBackgroundColor && (
+                  <div 
+                    className="w-24 h-16 rounded-lg shadow-sm flex items-center justify-center text-xs font-medium border border-gray-200"
+                    style={{ 
+                      backgroundColor: config.branding.headerBackgroundColor,
+                      color: config.branding.headerBackgroundColor && parseInt(config.branding.headerBackgroundColor.replace('#',''), 16) < 0x808080 ? '#fff' : '#000'
+                    }}
+                  >
+                    Header
+                  </div>
+                )}
               </div>
             </div>
           </div>
