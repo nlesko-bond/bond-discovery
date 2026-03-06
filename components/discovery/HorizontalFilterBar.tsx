@@ -13,7 +13,6 @@ import {
   Check,
   Tag,
   Search,
-  GraduationCap,
   Tent,
   BookOpen,
   Trophy,
@@ -58,7 +57,7 @@ import { cn, getProgramTypeLabel, getSportLabel } from '@/lib/utils';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 
 const PROGRAM_TYPE_ICONS: Record<string, LucideIcon> = {
-  class: GraduationCap,
+  class: Users,
   clinic: Activity,
   camp: Tent,
   lesson: BookOpen,
