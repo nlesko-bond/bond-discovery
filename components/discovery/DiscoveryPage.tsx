@@ -17,7 +17,7 @@ import { ScheduleView } from './ScheduleView';
 import { HorizontalFilterBar } from './HorizontalFilterBar';
 import { MobileFilters } from './MobileFilters';
 import { programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers';
-import { buildUrl, getSportGradient, getProgramTypeLabel, cn } from '@/lib/utils';
+import { buildUrl, getSportGradient, getProgramTypeLabel, cn, isLightColor } from '@/lib/utils';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
@@ -989,14 +989,23 @@ export function DiscoveryPage({
       <GoogleTagManager gtmId={config.gtmId} pageSlug={config.slug} />
       
       {/* Header - Conditional based on headerDisplay setting */}
-      {config.features.headerDisplay !== 'hidden' && (
+      {config.features.headerDisplay !== 'hidden' && (() => {
+        const headerBg = config.branding.headerBackgroundColor;
+        const hasCustomBg = !!headerBg;
+        const headerTextLight = hasCustomBg && !isLightColor(headerBg!);
+        return (
         <header 
           ref={headerRef}
           className={cn(
-            "bg-white border-b border-gray-200 z-40",
-            // Only sticky if not disabled AND not minimal mode
+            "z-40",
+            !hasCustomBg && "bg-white border-b border-gray-200",
+            hasCustomBg && "border-b",
             !config.features.disableStickyHeader && config.features.headerDisplay !== 'minimal' && 'sticky top-0'
           )}
+          style={hasCustomBg ? {
+            backgroundColor: headerBg,
+            borderColor: headerTextLight ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
+          } : undefined}
         >
           <div className="w-full px-3 py-3 sm:px-4 lg:px-6">
             <div className="flex items-center justify-between">
@@ -1010,12 +1019,12 @@ export function DiscoveryPage({
                         "items-center border-l-2 pl-4",
                         config.branding.showTaglineOnMobile ? "flex" : "hidden sm:flex"
                       )}
-                      style={{ borderColor: config.branding.primaryColor }}
+                      style={{ borderColor: headerTextLight ? 'rgba(255,255,255,0.4)' : config.branding.primaryColor }}
                     >
                       <span 
                         className="text-sm sm:text-base tracking-tight"
                         style={{ 
-                          color: config.branding.primaryColor,
+                          color: headerTextLight ? '#ffffff' : config.branding.primaryColor,
                           fontWeight: 700,
                           fontFamily: config.branding.fontFamily || 'inherit'
                         }}
@@ -1034,25 +1043,34 @@ export function DiscoveryPage({
               )}>
                 {/* Desktop View Toggle - shown in header for full/minimal modes */}
                 {showTabToggle && (
-                  <div className="hidden sm:flex items-center bg-gray-100 rounded-lg p-1">
+                  <div className={cn(
+                    "hidden sm:flex items-center rounded-lg p-1",
+                    !hasCustomBg && "bg-gray-100"
+                  )}
+                    style={hasCustomBg ? { backgroundColor: headerTextLight ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)' } : undefined}
+                  >
                     <button
                       onClick={() => handleViewModeChange('programs')}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                         viewMode === 'programs'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                          ? hasCustomBg && headerTextLight ? 'bg-white/25 shadow-sm' : 'bg-white text-gray-900 shadow-sm'
+                          : hasCustomBg && headerTextLight ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+                      )}
+                      style={viewMode === 'programs' && hasCustomBg && headerTextLight ? { color: '#ffffff' } : undefined}
                     >
                       <LayoutGrid size={16} />
                       Programs
                     </button>
                     <button
                       onClick={() => handleViewModeChange('schedule')}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                         viewMode === 'schedule'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                          ? hasCustomBg && headerTextLight ? 'bg-white/25 shadow-sm' : 'bg-white text-gray-900 shadow-sm'
+                          : hasCustomBg && headerTextLight ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+                      )}
+                      style={viewMode === 'schedule' && hasCustomBg && headerTextLight ? { color: '#ffffff' } : undefined}
                     >
                       <Calendar size={16} />
                       Schedule
@@ -1064,7 +1082,12 @@ export function DiscoveryPage({
                 {config.features.showShareButton !== false && (
                   <button
                     onClick={handleShare}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors",
+                      headerTextLight
+                        ? "text-white/70 hover:text-white hover:bg-white/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    )}
                     title="Copy link to clipboard"
                   >
                     {showCopied ? (
@@ -1085,25 +1108,34 @@ export function DiscoveryPage({
 
             {/* Mobile View Toggle */}
             {showTabToggle && (
-              <div className="sm:hidden mt-3 flex items-center bg-gray-100 rounded-lg p-1">
+              <div className={cn(
+                "sm:hidden mt-3 flex items-center rounded-lg p-1",
+                !hasCustomBg && "bg-gray-100"
+              )}
+                style={hasCustomBg ? { backgroundColor: headerTextLight ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)' } : undefined}
+              >
                 <button
                   onClick={() => handleViewModeChange('programs')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all",
                     viewMode === 'programs'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600'
-                  }`}
+                      ? hasCustomBg && headerTextLight ? 'bg-white/25 shadow-sm' : 'bg-white text-gray-900 shadow-sm'
+                      : hasCustomBg && headerTextLight ? 'text-white/70' : 'text-gray-600'
+                  )}
+                  style={viewMode === 'programs' && hasCustomBg && headerTextLight ? { color: '#ffffff' } : undefined}
                 >
                   <LayoutGrid size={16} />
                   Programs
                 </button>
                 <button
                   onClick={() => handleViewModeChange('schedule')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all",
                     viewMode === 'schedule'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600'
-                  }`}
+                      ? hasCustomBg && headerTextLight ? 'bg-white/25 shadow-sm' : 'bg-white text-gray-900 shadow-sm'
+                      : hasCustomBg && headerTextLight ? 'text-white/70' : 'text-gray-600'
+                  )}
+                  style={viewMode === 'schedule' && hasCustomBg && headerTextLight ? { color: '#ffffff' } : undefined}
                 >
                   <Calendar size={16} />
                   Schedule
@@ -1112,7 +1144,8 @@ export function DiscoveryPage({
             )}
           </div>
         </header>
-      )}
+        );
+      })()}
 
       {/* Horizontal Filter Bar - visible on all screen sizes */}
       <div className="w-full px-3 sm:px-4 lg:px-6 py-2 bg-gray-50 border-b border-gray-200">

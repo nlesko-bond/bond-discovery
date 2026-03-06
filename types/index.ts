@@ -342,6 +342,7 @@ export interface BrandingConfig {
   primaryColor: string;
   secondaryColor: string;
   accentColor?: string;
+  headerBackgroundColor?: string; // Hex color for the header bar background (defaults to white)
   logo?: string;
   favicon?: string;
   companyName: string;

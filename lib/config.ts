@@ -210,6 +210,7 @@ export async function createPageConfig(config: {
         primaryColor: config.branding?.primaryColor || '#1E2761',
         secondaryColor: config.branding?.secondaryColor || '#6366F1',
         accentColor: config.branding?.accentColor || '#8B5CF6',
+        headerBackgroundColor: config.branding?.headerBackgroundColor || null,
         logo: config.branding?.logo || null,
         tagline: config.branding?.tagline || null,
         fontFamily: config.branding?.fontFamily || null,
