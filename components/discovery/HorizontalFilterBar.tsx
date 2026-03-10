@@ -257,10 +257,12 @@ export function HorizontalFilterBar({
   const activeFilterCount = [
     filters.facilityIds?.length || 0,
     filters.programIds?.length || 0,
+    filters.sessionIds?.length || 0,
     filters.programTypes?.length || 0,
     filters.sports?.length || 0,
     (!isScheduleView && (filters.ageRange?.min || filters.ageRange?.max)) ? 1 : 0,
     (filters.gender && filters.gender !== 'all') ? 1 : 0,
+    (filters.availability && filters.availability !== 'all') ? 1 : 0,
     filters.dateRange?.start || filters.dateRange?.end ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
 

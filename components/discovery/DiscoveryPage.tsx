@@ -755,6 +755,36 @@ export function DiscoveryPage({
       );
     }
     
+    // Filter by gender - events inherit gender from their program
+    if (filters.gender && filters.gender !== 'all') {
+      const programGenderMap = new Map<string, string>();
+      initialPrograms.forEach(p => {
+        programGenderMap.set(p.id, p.gender || 'all');
+        if (p.name) programGenderMap.set(p.name.toLowerCase(), p.gender || 'all');
+      });
+      result = result.filter(event => {
+        const gender = programGenderMap.get(event.programId) 
+          || programGenderMap.get((event.programName || '').toLowerCase()) 
+          || 'all';
+        return gender === 'all' || gender === filters.gender;
+      });
+    }
+    
+    // Filter by availability - use event-level spotsRemaining
+    if (filters.availability && filters.availability !== 'all') {
+      if (filters.availability === 'available') {
+        result = result.filter(event => 
+          event.spotsRemaining === undefined || event.spotsRemaining > 0
+        );
+      } else if (filters.availability === 'almost_full') {
+        result = result.filter(event => 
+          event.spotsRemaining !== undefined && 
+          event.spotsRemaining > 0 && 
+          event.spotsRemaining <= 5
+        );
+      }
+    }
+    
     return result;
   }, [apiEvents, filters, initialPrograms]);
   
@@ -1280,7 +1310,7 @@ export function DiscoveryPage({
         onFiltersChange={handleFiltersChange}
         options={filterOptions}
         enabledFilters={config.features.enableFilters}
-        resultCount={filteredPrograms.length}
+        resultCount={viewMode === 'schedule' ? filteredEvents.length : filteredPrograms.length}
         showSearch={config.features.showSearch !== false}
         brandColor={config.branding.secondaryColor}
       />

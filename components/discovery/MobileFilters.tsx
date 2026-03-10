@@ -6,6 +6,19 @@ import { DiscoveryFilters, FilterType, FilterOption } from '@/types';
 import { getProgramTypeLabel, getSportLabel, cn } from '@/lib/utils';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 
+interface ProgramFilterOption {
+  id: string;
+  name: string;
+  facilityId?: string;
+  facilityName?: string;
+}
+
+interface SessionFilterOption {
+  id: string;
+  name: string;
+  programId: string;
+}
+
 interface MobileFiltersProps {
   isOpen: boolean;
   onClose: () => void;
@@ -15,6 +28,8 @@ interface MobileFiltersProps {
     facilities: { id: string; name: string; count: number }[];
     sports: FilterOption[];
     programTypes: FilterOption[];
+    programs?: ProgramFilterOption[];
+    sessions?: SessionFilterOption[];
   };
   enabledFilters: FilterType[];
   resultCount: number;
@@ -56,6 +71,8 @@ export function MobileFilters({
     onFiltersChange({
       search: '',
       facilityIds: [],
+      programIds: undefined,
+      sessionIds: undefined,
       programTypes: [],
       sports: [],
       dateRange: {},
@@ -145,6 +162,79 @@ export function MobileFilters({
                     <span className="text-sm text-gray-400">({facility.count})</span>
                   </label>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Program Filter */}
+          {isEnabled('program') && options.programs && options.programs.length > 0 && (
+            <div>
+              <label className="label text-base mb-3">Program</label>
+              <div className="space-y-3 max-h-48 overflow-y-auto">
+                {options.programs
+                  .filter(p => {
+                    if (!filters.facilityIds || filters.facilityIds.length === 0) return true;
+                    return !p.facilityId || filters.facilityIds.includes(p.facilityId);
+                  })
+                  .map((program) => {
+                  const isSelected = filters.programIds?.includes(program.id) || false;
+                  return (
+                    <label key={program.id} className="flex items-center gap-3 cursor-pointer touch-manipulation">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          const updated = e.target.checked
+                            ? [...(filters.programIds || []), program.id]
+                            : (filters.programIds || []).filter(id => id !== program.id);
+                          const extra: Partial<DiscoveryFilters> = {};
+                          if (updated.length === 0) extra.sessionIds = undefined;
+                          onFiltersChange({ ...filters, programIds: updated.length > 0 ? updated : undefined, ...extra });
+                          if (e.target.checked) {
+                            gtmEvent.filterApplied('program', program.name);
+                          }
+                        }}
+                        className="w-5 h-5 rounded"
+                        style={{ accentColor: brandColor }}
+                      />
+                      <span className="text-base text-gray-700 flex-1">{program.name}</span>
+                      {program.facilityName && (
+                        <span className="text-xs text-gray-400 truncate max-w-[120px]">{program.facilityName}</span>
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Session Filter - only when a program is selected */}
+          {filters.programIds && filters.programIds.length > 0 && options.sessions && options.sessions.length > 0 && (
+            <div>
+              <label className="label text-base mb-3">Session</label>
+              <div className="space-y-3 max-h-48 overflow-y-auto">
+                {options.sessions
+                  .filter(s => filters.programIds?.includes(s.programId))
+                  .map((session) => {
+                  const isSelected = filters.sessionIds?.includes(session.id) || false;
+                  return (
+                    <label key={session.id} className="flex items-center gap-3 cursor-pointer touch-manipulation">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          const updated = e.target.checked
+                            ? [...(filters.sessionIds || []), session.id]
+                            : (filters.sessionIds || []).filter(id => id !== session.id);
+                          onFiltersChange({ ...filters, sessionIds: updated.length > 0 ? updated : undefined });
+                        }}
+                        className="w-5 h-5 rounded"
+                        style={{ accentColor: brandColor }}
+                      />
+                      <span className="text-base text-gray-700 flex-1">{session.name}</span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
           )}
