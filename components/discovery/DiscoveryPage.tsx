@@ -1213,6 +1213,7 @@ export function DiscoveryPage({
               isScheduleView={viewMode === 'schedule'}
               hideMobileFilterGroups={[]}
               hideMobileActiveChipsFor={[]}
+              onOpenMobileFilters={() => setShowMobileFilters(true)}
             />
           </div>
           
@@ -1281,6 +1282,7 @@ export function DiscoveryPage({
         enabledFilters={config.features.enableFilters}
         resultCount={filteredPrograms.length}
         showSearch={config.features.showSearch !== false}
+        brandColor={config.branding.secondaryColor}
       />
 
       {/* Footer */}

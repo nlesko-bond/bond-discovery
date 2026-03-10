@@ -158,9 +158,10 @@ interface HorizontalFilterBarProps {
   onFilterChange: (filters: DiscoveryFilters) => void;
   filterOptions: FilterOptions;
   config: DiscoveryConfig;
-  isScheduleView?: boolean; // When true, hides age filter (not applicable to events)
+  isScheduleView?: boolean;
   hideMobileFilterGroups?: Array<'programType' | 'gender'>;
   hideMobileActiveChipsFor?: Array<'programType' | 'gender'>;
+  onOpenMobileFilters?: () => void;
 }
 
 export function HorizontalFilterBar({
@@ -171,6 +172,7 @@ export function HorizontalFilterBar({
   isScheduleView = false,
   hideMobileFilterGroups = [],
   hideMobileActiveChipsFor = [],
+  onOpenMobileFilters,
 }: HorizontalFilterBarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(filters.search || '');
@@ -371,9 +373,71 @@ export function HorizontalFilterBar({
 
   return (
     <div ref={dropdownRef} className="space-y-3">
-      {/* Filter Buttons Row - with CSS variables for colors */}
+      {/* Mobile: compact search + Filters button */}
+      {onOpenMobileFilters && (
+        <div className="flex sm:hidden items-center gap-2">
+          {enabledFilters.includes('search') && config.features.showSearch !== false && (
+            <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-full">
+              <Search size={14} className="text-gray-400 shrink-0" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    onFilterChange({ ...filters, search: searchQuery });
+                  }
+                }}
+                placeholder="Search..."
+                className="flex-1 min-w-0 text-sm bg-transparent border-none outline-none placeholder-gray-400"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    onFilterChange({ ...filters, search: '' });
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          )}
+          <button
+            onClick={onOpenMobileFilters}
+            className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all shrink-0"
+            style={activeFilterCount > 0 ? {
+              backgroundColor: `${secondaryColor}10`,
+              borderColor: secondaryColor,
+              color: secondaryColor,
+            } : {
+              borderColor: '#e5e7eb',
+              color: '#374151',
+            }}
+          >
+            <Filter size={14} />
+            Filters
+            {activeFilterCount > 0 && (
+              <span
+                className="w-5 h-5 flex items-center justify-center rounded-full text-[11px] font-bold text-white"
+                style={{ backgroundColor: secondaryColor }}
+              >
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Desktop: full filter buttons row */}
       <div 
-        className="flex flex-wrap items-center gap-2"
+        className={cn(
+          "flex-wrap items-center gap-2",
+          onOpenMobileFilters ? "hidden sm:flex" : "flex"
+        )}
         style={{ 
           '--brand-primary': primaryColor,
           '--brand-secondary': secondaryColor,
@@ -393,7 +457,6 @@ export function HorizontalFilterBar({
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    // Immediately apply search on Enter
                     onFilterChange({ ...filters, search: searchQuery });
                     setShowSearchResults(false);
                   }
@@ -669,7 +732,7 @@ export function HorizontalFilterBar({
         )}
       </div>
 
-      {/* Chip Panels - expand below filter bar when toggled */}
+      {/* Chip Panels - expand below filter bar when toggled (desktop only) */}
       {openDropdown === 'type' && enabledFilters.includes('programType') && filterOptions.programTypes.length > 0 && (
         <ChipPanel label="Type" brandColor={secondaryColor}>
           {filterOptions.programTypes.map(type => {
