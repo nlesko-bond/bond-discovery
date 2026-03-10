@@ -1211,8 +1211,8 @@ export function DiscoveryPage({
               }}
               config={config}
               isScheduleView={viewMode === 'schedule'}
-              hideMobileFilterGroups={mobileQuickChipsEnabled ? ['programType', 'gender'] : []}
-              hideMobileActiveChipsFor={mobileQuickChipsEnabled ? ['programType', 'gender'] : []}
+              hideMobileFilterGroups={[]}
+              hideMobileActiveChipsFor={[]}
             />
           </div>
           
@@ -1239,76 +1239,7 @@ export function DiscoveryPage({
         </div>
       </div>
 
-      {mobileQuickChipsEnabled && (
-        <div className="sm:hidden w-full px-3 py-2 bg-gray-50 border-b border-gray-200">
-          <div className="space-y-2">
-            {config.features.enableFilters.includes('programType') && (
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-1">Type</p>
-                <div className="flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {filterOptions.programTypes.slice(0, 4).map((type) => {
-                    const active = (filters.programTypes || []).includes(type.id as any);
-                    return (
-                      <button
-                        key={`quick-type-${type.id}`}
-                        onClick={() => {
-                          const current = filters.programTypes || [];
-                          const next = active
-                            ? current.filter((v) => v !== type.id)
-                            : [...current, type.id as any];
-                          handleFiltersChange({
-                            ...filters,
-                            programTypes: next.length > 0 ? next : undefined,
-                          });
-                        }}
-                        className={cn(
-                          'shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors',
-                          active ? 'text-white border-transparent' : 'bg-white text-gray-700 border-gray-200'
-                        )}
-                        style={active ? { backgroundColor: config.branding.secondaryColor } : undefined}
-                      >
-                        {getProgramTypeLabel(type.id as any)}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            {config.features.enableFilters.includes('programType') && config.features.enableFilters.includes('gender') && (
-              <div className="border-t border-gray-200" />
-            )}
-            {config.features.enableFilters.includes('gender') && (
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-1">Gender</p>
-                <div className="flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {(['coed', 'male', 'female'] as const).map((genderValue) => {
-                    const active = filters.gender === genderValue;
-                    const label = genderValue === 'coed' ? 'Co-ed' : genderValue === 'male' ? 'Male' : 'Female';
-                    return (
-                      <button
-                        key={`quick-gender-${genderValue}`}
-                        onClick={() =>
-                          handleFiltersChange({
-                            ...filters,
-                            gender: active ? 'all' : genderValue,
-                          })
-                        }
-                        className={cn(
-                          'shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors',
-                          active ? 'text-white border-transparent' : 'bg-white text-gray-700 border-gray-200'
-                        )}
-                        style={active ? { backgroundColor: config.branding.secondaryColor } : undefined}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Mobile quick chips removed - chip panels in HorizontalFilterBar now handle mobile */}
 
       {/* Main Content */}
       <div className="w-full px-3 sm:px-4 lg:px-6">

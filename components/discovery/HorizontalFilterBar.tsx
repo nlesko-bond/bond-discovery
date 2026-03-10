@@ -929,15 +929,27 @@ function ChipPanel({
   brandColor?: string;
 }) {
   return (
-    <div
-      className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 animate-fade-in"
-      style={{ borderColor: `${brandColor}20` }}
-    >
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-3 px-1">
-        {label}
-      </p>
-      <div className="flex flex-wrap gap-2.5">
-        {children}
+    <div className="animate-fade-in">
+      {/* Desktop: card with flex-wrap */}
+      <div
+        className="hidden sm:block bg-white rounded-2xl border border-gray-200 shadow-sm p-4"
+        style={{ borderColor: `${brandColor}20` }}
+      >
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-3 px-1">
+          {label}
+        </p>
+        <div className="flex flex-wrap gap-2.5">
+          {children}
+        </div>
+      </div>
+      {/* Mobile: compact horizontal scroller */}
+      <div className="sm:hidden">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2 px-1">
+          {label}
+        </p>
+        <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -961,7 +973,8 @@ function ChipOption({
     <button
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium border transition-all',
+        'flex items-center gap-2 shrink-0 rounded-full font-medium border transition-all',
+        'px-4 py-2 text-[13px] sm:px-5 sm:py-2.5 sm:text-sm',
         !isSelected && 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:shadow-sm'
       )}
       style={isSelected ? {
