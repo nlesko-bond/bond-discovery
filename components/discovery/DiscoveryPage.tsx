@@ -1179,10 +1179,49 @@ export function DiscoveryPage({
 
       {/* Horizontal Filter Bar - visible on all screen sizes */}
       <div className="w-full px-3 sm:px-4 lg:px-6 py-2 bg-gray-50 border-b border-gray-200">
+        {/* When header is hidden: show view toggle + share on its own row on mobile */}
+        {config.features.headerDisplay === 'hidden' && showTabToggle && (
+          <div className="flex sm:hidden items-center justify-between mb-2">
+            <div className="flex items-center bg-white rounded-lg p-1 border border-gray-200">
+              <button
+                onClick={() => handleViewModeChange('programs')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  viewMode === 'programs'
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <LayoutGrid size={14} />
+                Programs
+              </button>
+              <button
+                onClick={() => handleViewModeChange('schedule')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  viewMode === 'schedule'
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Calendar size={14} />
+                Schedule
+              </button>
+            </div>
+            {config.features.showShareButton !== false && (
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200"
+                title="Copy link to clipboard"
+              >
+                {showCopied ? <Check size={14} className="text-green-600" /> : <LinkIcon size={14} />}
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center gap-3">
-          {/* View Toggle - shown here when header is hidden */}
+          {/* View Toggle - desktop only when header is hidden */}
           {config.features.headerDisplay === 'hidden' && showTabToggle && (
-            <div className="flex items-center bg-white rounded-lg p-1 border border-gray-200 flex-shrink-0">
+            <div className="hidden sm:flex items-center bg-white rounded-lg p-1 border border-gray-200 flex-shrink-0">
               <button
                 onClick={() => handleViewModeChange('programs')}
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-all ${
@@ -1192,7 +1231,7 @@ export function DiscoveryPage({
                 }`}
               >
                 <LayoutGrid size={14} />
-                <span className="hidden sm:inline">Programs</span>
+                <span>Programs</span>
               </button>
               <button
                 onClick={() => handleViewModeChange('schedule')}
@@ -1203,7 +1242,7 @@ export function DiscoveryPage({
                 }`}
               >
                 <Calendar size={14} />
-                <span className="hidden sm:inline">Schedule</span>
+                <span>Schedule</span>
               </button>
             </div>
           )}
@@ -1213,7 +1252,6 @@ export function DiscoveryPage({
               filters={filters}
               onFilterChange={handleFiltersChange}
               filterOptions={{
-                // Use cascading counts based on filtered programs
                 facilities: filterOptions.facilities.map(f => ({ 
                   id: f.id, 
                   name: f.name, 
@@ -1247,22 +1285,22 @@ export function DiscoveryPage({
             />
           </div>
           
-          {/* Share Button - shown here when header is hidden */}
+          {/* Share Button - desktop only when header is hidden (mobile version in row above) */}
           {config.features.headerDisplay === 'hidden' && config.features.showShareButton !== false && (
             <button
               onClick={handleShare}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200 flex-shrink-0"
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200 flex-shrink-0"
               title="Copy link to clipboard"
             >
               {showCopied ? (
                 <>
                   <Check size={14} className="text-green-600" />
-                  <span className="hidden sm:inline text-green-600">Copied!</span>
+                  <span className="text-green-600">Copied!</span>
                 </>
               ) : (
                 <>
                   <LinkIcon size={14} />
-                  <span className="hidden sm:inline">Share</span>
+                  <span>Share</span>
                 </>
               )}
             </button>
