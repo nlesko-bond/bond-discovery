@@ -96,10 +96,10 @@ export interface DiscoveryEventsResult {
   context: DiscoveryEventsContext;
 }
 
-const DEFAULT_FULL_TTL = 20 * 60;
-const DEFAULT_AVAILABILITY_TTL = 60;
-const PROGRAM_CONCURRENCY = 5;
-const SESSION_CONCURRENCY = 10;
+const DEFAULT_FULL_TTL = 4 * 60 * 60; // 4 hours – cron refreshes every 15 min; this is a safety net
+const DEFAULT_AVAILABILITY_TTL = 30 * 60; // 30 min – cron refreshes every 15 min
+const PROGRAM_CONCURRENCY = 3;
+const SESSION_CONCURRENCY = 5;
 
 function getTodayInTimezone(timezone: string): string {
   try {

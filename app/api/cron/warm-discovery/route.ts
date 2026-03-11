@@ -3,9 +3,12 @@ import { getAllPageConfigs } from '@/lib/config';
 import {
   shouldRefreshDiscovery,
   markDiscoveryRefreshed,
+  programsCacheKey,
+  cacheSet,
   type DiscoveryRefreshPolicy,
 } from '@/lib/cache';
 import { getDiscoveryEvents } from '@/lib/discovery-events';
+import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,6 +65,22 @@ export async function GET(request: NextRequest) {
     await runWithConcurrency(toWarm, MAX_CONCURRENT, async (config) => {
       const itemStart = Date.now();
       try {
+        // Warm programs cache for each org in this config
+        const apiKey = config.apiKey || DEFAULT_API_KEY;
+        const client = createBondClient(apiKey);
+        const programsTtl = config.cacheTtl || 4 * 60 * 60;
+        await Promise.all(
+          config.organizationIds.map(async (orgId: string) => {
+            try {
+              const key = programsCacheKey(orgId, undefined, apiKey);
+              const response = await client.getPrograms(orgId);
+              await cacheSet(key, response, { ttl: programsTtl });
+            } catch (err) {
+              console.error(`[warm-discovery] Failed to warm programs for org ${orgId}:`, err);
+            }
+          })
+        );
+
         const full = await getDiscoveryEvents({
           slug: config.slug,
           mode: 'full',

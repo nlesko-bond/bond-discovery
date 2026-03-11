@@ -30,7 +30,7 @@ async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
       const response = await cached(
         cacheKey,
         () => client.getPrograms(orgId),
-        { ttl: config.cacheTtl || 300 }
+        { ttl: config.cacheTtl || 4 * 60 * 60 }
       );
       
       // Transform and add org ID

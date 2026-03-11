@@ -45,7 +45,7 @@ export async function GET(request: Request) {
             expand: 'sessions,sessions.products,sessions.products.prices,sessions.events,facility',
             facilityId 
           }),
-          { ttl: 300 }
+          { ttl: 4 * 60 * 60 }
         );
 
         const programs = (response.data || []).map(raw => ({

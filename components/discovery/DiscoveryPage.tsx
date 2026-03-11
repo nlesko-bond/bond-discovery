@@ -549,8 +549,10 @@ export function DiscoveryPage({
   }, [viewMode, eventsFetched, config.slug]);
 
   // Keep waitlist/spots data fresher with a lightweight availability overlay.
+  // Fires once when events are loaded; reads from cache only (no Bond API).
+  const eventsCount = apiEvents.length;
   useEffect(() => {
-    if (!cacheV2Enabled || apiEvents.length === 0) {
+    if (!cacheV2Enabled || eventsCount === 0) {
       return;
     }
 
@@ -592,7 +594,7 @@ export function DiscoveryPage({
       });
 
     return () => controller.abort();
-  }, [cacheV2Enabled, config.slug, viewMode, apiEvents.length]);
+  }, [cacheV2Enabled, config.slug, eventsCount]);
   
   // Filter events based on current filters
   const filteredEvents = useMemo(() => {

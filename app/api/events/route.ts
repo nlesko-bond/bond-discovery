@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import { getDiscoveryEvents, type DiscoveryEventsMode } from '@/lib/discovery-events';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 300;
 
 /**
  * GET /api/events
  * Returns full schedule payload or availability overlay.
+ * Always reads from cache (cacheOnly). Only the cron job calls Bond API.
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -25,7 +25,6 @@ export async function GET(request: Request) {
       endDateFilter: searchParams.get('endDate') || undefined,
       includePast: searchParams.get('includePast') === 'true',
       mode,
-      forceFresh: searchParams.get('fresh') === 'true' || searchParams.get('bypass') === '1',
     });
 
     const cacheControl =
