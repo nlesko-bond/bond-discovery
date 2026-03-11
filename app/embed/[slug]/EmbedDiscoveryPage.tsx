@@ -1,14 +1,18 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { ProgramGrid } from '@/components/discovery/ProgramGrid';
 import { ScheduleView } from '@/components/discovery/ScheduleView';
 import { HorizontalFilterBar } from '@/components/discovery/HorizontalFilterBar';
 import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode, CalendarEvent } from '@/types';
+import { buildWeekSchedules } from '@/lib/transformers';
+import { getSportGradient } from '@/lib/utils';
 import { Calendar, Grid3X3, Filter } from 'lucide-react';
 
 interface EmbedDiscoveryPageProps {
   initialPrograms: Program[];
+  initialScheduleEvents?: any[];
+  initialEventsFetched?: boolean;
   config: DiscoveryConfig;
   initialViewMode?: ViewMode;
   searchParams: { [key: string]: string | string[] | undefined };
@@ -16,6 +20,8 @@ interface EmbedDiscoveryPageProps {
 
 export function EmbedDiscoveryPage({
   initialPrograms,
+  initialScheduleEvents = [],
+  initialEventsFetched = false,
   config,
   initialViewMode = 'programs',
   searchParams,
@@ -139,6 +145,95 @@ export function EmbedDiscoveryPage({
     setFilters(newFilters);
   }, []);
 
+  // --- Schedule events state & fetching (mirrors DiscoveryPage) ---
+  const [apiEvents, setApiEvents] = useState<any[]>(initialScheduleEvents);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventsError, setEventsError] = useState<string | null>(null);
+  const [eventsFetched, setEventsFetched] = useState(initialEventsFetched);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (viewMode !== 'schedule' || eventsFetched) return;
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    const ac = new AbortController();
+    abortControllerRef.current = ac;
+    setEventsLoading(true);
+    setEventsError(null);
+
+    const params = new URLSearchParams();
+    params.set('slug', config.slug);
+    fetch(`/api/events?${params.toString()}`, { signal: ac.signal })
+      .then(res => { if (!res.ok) throw new Error(`API error: ${res.status}`); return res.json(); })
+      .then(data => {
+        if (ac.signal.aborted) return;
+        if (data && Array.isArray(data.data)) { setApiEvents(data.data); setEventsFetched(true); }
+      })
+      .catch(err => {
+        if (ac.signal.aborted || err?.name === 'AbortError') return;
+        setEventsError('Failed to load events');
+        setEventsFetched(true);
+      })
+      .finally(() => { if (!ac.signal.aborted) setEventsLoading(false); });
+
+    return () => ac.abort();
+  }, [viewMode, eventsFetched, config.slug]);
+
+  const filteredEvents = useMemo(() => {
+    let result = [...apiEvents];
+    if (filters.programIds && filters.programIds.length > 0) {
+      const selectedPrograms = initialPrograms.filter(p => filters.programIds!.includes(p.id));
+      result = result.filter(event => {
+        if (filters.programIds!.includes(event.programId)) return true;
+        const eventName = (event.programName || '').toLowerCase().trim();
+        return selectedPrograms.some(p => p.name.toLowerCase().trim() === eventName);
+      });
+    }
+    if (filters.sports && filters.sports.length > 0) {
+      result = result.filter(e => e.sport && filters.sports!.includes(e.sport));
+    }
+    if (filters.facilityIds && filters.facilityIds.length > 0) {
+      result = result.filter(e => {
+        if (!e.facilityName) return false;
+        return filters.facilityIds!.some(fid =>
+          initialPrograms.some(p =>
+            (p.facilityId === fid || p.sessions?.some((s: any) => String(s.facility?.id) === fid)) &&
+            p.name.toLowerCase().trim() === (e.programName || '').toLowerCase().trim()
+          )
+        );
+      });
+    }
+    return result;
+  }, [apiEvents, filters, initialPrograms]);
+
+  const scheduleData = useMemo(() => {
+    if (viewMode !== 'schedule') return null;
+    const calendarEvents = filteredEvents.map(event => {
+      const getLocal = (utc: string, tz?: string) => {
+        try {
+          const d = new Date(utc);
+          return { date: d.toLocaleDateString('en-CA', { timeZone: tz || 'America/New_York' }), time: utc };
+        } catch { return { date: utc.split('T')[0], time: utc }; }
+      };
+      const start = getLocal(event.startDate, event.timezone);
+      const end = getLocal(event.endDate, event.timezone);
+      return {
+        id: event.id, programId: event.programId || '', programName: event.programName || event.title,
+        sessionId: event.sessionId || '', sessionName: event.sessionName || '',
+        title: event.title || event.sessionName || event.programName,
+        date: start.date, startTime: start.time, endTime: end.time,
+        timezone: event.timezone, facilityId: '', facilityName: event.facilityName || '',
+        spaceName: event.spaceName || '', sport: event.sport, type: event.type,
+        linkSEO: event.linkSEO, color: getSportGradient(event.sport || ''),
+        maxParticipants: event.maxParticipants, currentParticipants: event.currentParticipants,
+        spotsRemaining: event.spotsRemaining, startingPrice: event.startingPrice,
+        memberPrice: event.memberPrice, registrationWindowStatus: event.registrationWindowStatus,
+        isWaitlistEnabled: event.isWaitlistEnabled, waitlistCount: event.waitlistCount,
+        segmentId: event.segmentId, segmentName: event.segmentName, isSegmented: event.isSegmented,
+      };
+    });
+    return buildWeekSchedules(calendarEvents, 8);
+  }, [filteredEvents, viewMode]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Compact Header for Embed */}
@@ -220,11 +315,11 @@ export function EmbedDiscoveryPage({
           />
         ) : (
           <ScheduleView
-            schedule={[]}
+            schedule={scheduleData || []}
             config={config}
-            isLoading={false}
-            error={null}
-            totalEvents={0}
+            isLoading={eventsLoading}
+            error={eventsError}
+            totalEvents={filteredEvents.length}
           />
         )}
       </main>

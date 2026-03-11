@@ -5,6 +5,7 @@ import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
 import { cached, programsCacheKey } from '@/lib/cache';
 import { Program, DiscoveryConfig } from '@/types';
+import { getDiscoveryEvents, type FullDiscoveryEvent } from '@/lib/discovery-events';
 import { EmbedDiscoveryPage } from './EmbedDiscoveryPage';
 
 interface PageProps {
@@ -62,12 +63,25 @@ export default async function EmbedPage({ params, searchParams }: PageProps) {
   }
   
   const viewMode = (searchParams.viewMode as string) || config.features.defaultView;
-  const programs = await getPrograms(config);
+  const cacheV2Enabled = config.features.discoveryCacheEnabled === true;
+  const scheduleTabEnabled = (config.features.enabledTabs || ['programs', 'schedule']).includes('schedule');
+
+  const [programs, scheduleResult] = await Promise.all([
+    getPrograms(config),
+    cacheV2Enabled && scheduleTabEnabled
+      ? getDiscoveryEvents({ slug: config.slug, mode: 'full', config })
+      : Promise.resolve(null),
+  ]);
+
+  const initialScheduleEvents = (scheduleResult?.payload.data || []) as FullDiscoveryEvent[];
+  const initialEventsFetched = Boolean(scheduleResult);
   
   return (
     <Suspense fallback={<EmbedLoadingState />}>
       <EmbedDiscoveryPage 
         initialPrograms={programs}
+        initialScheduleEvents={initialScheduleEvents}
+        initialEventsFetched={initialEventsFetched}
         config={config}
         initialViewMode={viewMode as 'programs' | 'schedule'}
         searchParams={searchParams}
