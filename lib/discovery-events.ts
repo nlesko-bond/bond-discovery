@@ -175,7 +175,7 @@ async function buildContext(request: DiscoveryEventsRequest): Promise<DiscoveryE
     if (config.organizationIds.length > 0) {
       orgIds = config.organizationIds;
     }
-    fullCacheTtl = config.cacheTtl || fullCacheTtl;
+    fullCacheTtl = Math.max(config.cacheTtl || 0, fullCacheTtl);
     programFilterMode = config.features?.programFilterMode || 'all';
     excludedProgramIds = config.excludedProgramIds || [];
     includedProgramIds = config.includedProgramIds || [];

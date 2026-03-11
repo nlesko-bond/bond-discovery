@@ -26,7 +26,7 @@ async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
       const response = await cached(
         cacheKey,
         () => client.getPrograms(orgId),
-        { ttl: config.cacheTtl || 4 * 60 * 60 }
+        { ttl: Math.max(config.cacheTtl || 0, 4 * 60 * 60) }
       );
       
       const programs = (response.data || []).map(raw => ({

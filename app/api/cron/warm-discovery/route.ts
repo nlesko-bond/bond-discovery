@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
         // Warm programs cache for each org in this config
         const apiKey = config.apiKey || DEFAULT_API_KEY;
         const client = createBondClient(apiKey);
-        const programsTtl = config.cacheTtl || 4 * 60 * 60;
+        const programsTtl = Math.max(config.cacheTtl || 0, 4 * 60 * 60);
         await Promise.all(
           config.organizationIds.map(async (orgId: string) => {
             try {
