@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { DiscoveryConfig, BrandingConfig, FeatureConfig, FilterType, ScheduleTableColumn } from '@/types';
 import { supabase, getSupabaseAdmin, DiscoveryPageRow } from './supabase';
 
@@ -137,7 +138,7 @@ export async function getAllPageConfigs(): Promise<DiscoveryConfig[]> {
  * Joins with partner_groups to inherit API key if not set on page
  * Uses admin client to access partner_groups join (blocked by RLS for anon)
  */
-export async function getConfigBySlug(slug: string): Promise<DiscoveryConfig | null> {
+export const getConfigBySlug = cache(async (slug: string): Promise<DiscoveryConfig | null> => {
   const supabaseAdmin = getSupabaseAdmin();
   const { data, error } = await supabaseAdmin
     .from('discovery_pages')
@@ -154,7 +155,7 @@ export async function getConfigBySlug(slug: string): Promise<DiscoveryConfig | n
   }
   
   return rowToConfig(data);
-}
+});
 
 /**
  * Get configuration by ID

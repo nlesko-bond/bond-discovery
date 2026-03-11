@@ -151,7 +151,7 @@ export class BondClient {
   }
 
   /**
-   * Get events for a session (fetches all pages)
+   * Get events for a session (fetches page 1, then remaining pages in parallel)
    */
   async getEvents(
     orgId: string,
@@ -159,31 +159,27 @@ export class BondClient {
     sessionId: string,
     options?: { expand?: string }
   ): Promise<APIResponse<SessionEvent[]>> {
-    const allEvents: SessionEvent[] = [];
-    let currentPage = 1;
-    let totalPages = 1;
-    
-    do {
-      const params: Record<string, string> = { page: String(currentPage) };
-      if (options?.expand) params.expand = options.expand;
-      
-      const response = await this.fetch<APIResponse<SessionEvent[]>>(
-        `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/events`,
-        params
+    const endpoint = `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/events`;
+    const baseParams: Record<string, string> = {};
+    if (options?.expand) baseParams.expand = options.expand;
+
+    const first = await this.fetch<APIResponse<SessionEvent[]>>(endpoint, { ...baseParams, page: '1' });
+    const allEvents: SessionEvent[] = [...(first.data || [])];
+    const totalPages = (first.meta && typeof first.meta === 'object' && 'totalPages' in first.meta)
+      ? (first.meta as any).totalPages || 1
+      : 1;
+
+    if (totalPages > 1) {
+      const remaining = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, i) =>
+          this.fetch<APIResponse<SessionEvent[]>>(endpoint, { ...baseParams, page: String(i + 2) })
+        )
       );
-      
-      if (response.data) {
-        allEvents.push(...response.data);
+      for (const r of remaining) {
+        if (r.data) allEvents.push(...r.data);
       }
-      
-      // Check pagination from meta
-      if (response.meta && typeof response.meta === 'object' && 'totalPages' in response.meta) {
-        totalPages = (response.meta as any).totalPages || 1;
-      }
-      
-      currentPage++;
-    } while (currentPage <= totalPages);
-    
+    }
+
     return {
       data: allEvents,
       meta: { 
@@ -221,7 +217,7 @@ export class BondClient {
   }
 
   /**
-   * Get events for a specific segment (for segmented sessions)
+   * Get events for a specific segment (fetches page 1, then remaining pages in parallel)
    */
   async getSegmentEvents(
     orgId: string,
@@ -230,31 +226,27 @@ export class BondClient {
     segmentId: string,
     options?: { expand?: string }
   ): Promise<APIResponse<SessionEvent[]>> {
-    const allEvents: SessionEvent[] = [];
-    let currentPage = 1;
-    let totalPages = 1;
-    
-    do {
-      const params: Record<string, string> = { page: String(currentPage) };
-      if (options?.expand) params.expand = options.expand;
-      
-      const response = await this.fetch<APIResponse<SessionEvent[]>>(
-        `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/segments/${segmentId}/events`,
-        params
+    const endpoint = `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/segments/${segmentId}/events`;
+    const baseParams: Record<string, string> = {};
+    if (options?.expand) baseParams.expand = options.expand;
+
+    const first = await this.fetch<APIResponse<SessionEvent[]>>(endpoint, { ...baseParams, page: '1' });
+    const allEvents: SessionEvent[] = [...(first.data || [])];
+    const totalPages = (first.meta && typeof first.meta === 'object' && 'totalPages' in first.meta)
+      ? (first.meta as any).totalPages || 1
+      : 1;
+
+    if (totalPages > 1) {
+      const remaining = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, i) =>
+          this.fetch<APIResponse<SessionEvent[]>>(endpoint, { ...baseParams, page: String(i + 2) })
+        )
       );
-      
-      if (response.data) {
-        allEvents.push(...response.data);
+      for (const r of remaining) {
+        if (r.data) allEvents.push(...r.data);
       }
-      
-      // Check pagination from meta
-      if (response.meta && typeof response.meta === 'object' && 'totalPages' in response.meta) {
-        totalPages = (response.meta as any).totalPages || 1;
-      }
-      
-      currentPage++;
-    } while (currentPage <= totalPages);
-    
+    }
+
     return {
       data: allEvents,
       meta: { 

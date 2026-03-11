@@ -16,6 +16,7 @@ export interface DiscoveryEventsRequest {
   endDateFilter?: string;
   mode?: DiscoveryEventsMode;
   forceFresh?: boolean;
+  config?: DiscoveryConfig | null;
 }
 
 interface DiscoveryEventsContext {
@@ -95,10 +96,10 @@ export interface DiscoveryEventsResult {
   context: DiscoveryEventsContext;
 }
 
-const DEFAULT_FULL_TTL = 15 * 60;
+const DEFAULT_FULL_TTL = 20 * 60;
 const DEFAULT_AVAILABILITY_TTL = 60;
-const PROGRAM_CONCURRENCY = 3;
-const SESSION_CONCURRENCY = 5;
+const PROGRAM_CONCURRENCY = 5;
+const SESSION_CONCURRENCY = 10;
 
 function getTodayInTimezone(timezone: string): string {
   try {
@@ -166,7 +167,9 @@ async function buildContext(request: DiscoveryEventsRequest): Promise<DiscoveryE
   let fullCacheTtl = DEFAULT_FULL_TTL;
   let availabilityCacheTtl = DEFAULT_AVAILABILITY_TTL;
 
-  const config = request.slug ? await getConfigBySlug(request.slug) : null;
+  const config = request.config !== undefined
+    ? request.config
+    : (request.slug ? await getConfigBySlug(request.slug) : null);
   if (config) {
     apiKey = config.apiKey || apiKey;
     if (config.organizationIds.length > 0) {

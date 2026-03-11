@@ -92,6 +92,7 @@ export default async function DiscoverySlugPage({ params, searchParams }: PagePr
       ? getDiscoveryEvents({
           slug: config.slug,
           mode: 'full',
+          config,
         })
       : Promise.resolve(null),
   ]);
