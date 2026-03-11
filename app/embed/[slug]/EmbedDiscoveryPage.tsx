@@ -164,6 +164,7 @@ export function EmbedDiscoveryPage({
 
     const params = new URLSearchParams();
     params.set('slug', config.slug);
+    params.set('startDate', new Date().toISOString().split('T')[0]);
     fetch(`/api/events?${params.toString()}`, { signal: ac.signal })
       .then(res => { if (!res.ok) throw new Error(`API error: ${res.status}`); return res.json(); })
       .then(data => {

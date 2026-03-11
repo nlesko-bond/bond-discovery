@@ -499,9 +499,9 @@ export function DiscoveryPage({
     setEventsLoading(true);
     setEventsError(null);
     
-    // Build URL with slug to let API look up config
     const params = new URLSearchParams();
     params.set('slug', config.slug);
+    params.set('startDate', new Date().toISOString().split('T')[0]);
     const url = `/api/events?${params.toString()}`;
     
     fetch(url, { signal: abortController.signal })
