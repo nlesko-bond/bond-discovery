@@ -23,6 +23,8 @@ import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skele
 import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
 
+const EMPTY_EVENTS: any[] = [];
+
 interface DiscoveryPageProps {
   initialPrograms: Program[];
   initialScheduleEvents?: any[];
@@ -34,7 +36,7 @@ interface DiscoveryPageProps {
 
 export function DiscoveryPage({ 
   initialPrograms, 
-  initialScheduleEvents = [],
+  initialScheduleEvents = EMPTY_EVENTS,
   initialEventsFetched = false,
   config, 
   initialViewMode,
@@ -463,18 +465,20 @@ export function DiscoveryPage({
   const pendingViewModeRef = useRef<ViewMode | null>(null);
   const pendingViewModeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  // Reset events when config changes (different page)
+  // Reset events when the page slug changes (navigating to a different discovery page)
+  const prevSlugRef = useRef(config.slug);
   useEffect(() => {
-    // Cancel any in-flight request when config changes
+    if (prevSlugRef.current === config.slug) return;
+    prevSlugRef.current = config.slug;
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
-    setEventsFetched(initialEventsFetched);
+    setEventsFetched(false);
     setEventsLoading(false);
-    setApiEvents(initialScheduleEvents);
+    setApiEvents(EMPTY_EVENTS);
     setEventsError(null);
-  }, [config.slug, config.organizationIds.join(','), initialEventsFetched, initialScheduleEvents]);
+  }, [config.slug]);
   
   // Fetch events from API when schedule view is selected
   useEffect(() => {

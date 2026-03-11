@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>White Marsh Swim Club — 2026 Pool Memberships</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --black:#1A1A1A;
+    --dark:#222;
+    --copper:#C47B2B;
+    --copper-light:#E8A84C;
+    --copper-bg:rgba(196,123,43,.08);
+    --white:#FFFFFF;
+    --off-white:#F7F7F5;
+    --gray-100:#F2F2F0;
+    --gray-200:#E5E5E3;
+    --gray-400:#AAAAAA;
+    --gray-500:#888888;
+    --gray-700:#555555;
+    --r:8px;
+  }
+
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Open Sans',Helvetica,Arial,sans-serif;
+    background:var(--off-white);color:var(--black);
+    -webkit-font-smoothing:antialiased;
+    font-size:17px;line-height:1.6;
+  }
+
+  /* ═══════════════ TOPBAR ═══════════════ */
+  .topbar{
+    background:var(--black);padding:14px 32px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .topbar-logo{
+    font-family:'Bebas Neue',sans-serif;font-size:22px;
+    color:var(--white);letter-spacing:2px;text-decoration:none;
+    display:flex;align-items:center;gap:10px;
+  }
+  .topbar-logo .copper{color:var(--copper-light)}
+  .topbar-nav{display:flex;gap:24px}
+  .topbar-nav a{
+    font-size:13px;font-weight:700;color:var(--gray-400);
+    text-decoration:none;text-transform:uppercase;letter-spacing:1.5px;
+    transition:color .2s;
+  }
+  .topbar-nav a:hover{color:var(--white)}
+
+  /* ═══════════════ HERO ═══════════════ */
+  .hero{
+    background:var(--black);
+    padding:80px 32px 72px;text-align:center;
+    position:relative;overflow:hidden;
+  }
+  .hero::before{
+    content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:600px;height:600px;
+    background:radial-gradient(circle,rgba(196,123,43,.12) 0%,transparent 70%);
+    pointer-events:none;
+  }
+  .hero-label{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:13px;font-weight:800;color:var(--copper-light);
+    text-transform:uppercase;letter-spacing:2.5px;
+    margin-bottom:20px;position:relative;z-index:1;
+  }
+  .hero-label .dot{
+    width:8px;height:8px;border-radius:50%;background:#4ADE80;
+    animation:blink 2s ease-in-out infinite;
+  }
+  .hero h1{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(56px,10vw,96px);
+    color:var(--white);line-height:.95;
+    letter-spacing:3px;
+    position:relative;z-index:1;
+    margin-bottom:16px;
+  }
+  .hero h1 span{color:var(--copper-light)}
+  .hero-sub{
+    font-size:clamp(18px,3vw,22px);font-weight:400;
+    color:var(--gray-500);position:relative;z-index:1;
+    max-width:480px;margin:0 auto;
+  }
+
+  /* ═══════════════ MAIN WRAP ═══════════════ */
+  .main{max-width:800px;margin:0 auto;padding:48px 24px 64px}
+
+  /* ═══════════════ INFO STRIP ═══════════════ */
+  .info-strip{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+    gap:1px;background:var(--gray-200);
+    border-radius:var(--r);overflow:hidden;
+    margin-bottom:48px;
+    box-shadow:0 1px 4px rgba(0,0,0,.04);
+  }
+  .info-cell{
+    background:var(--white);padding:24px 20px;
+    text-align:center;
+  }
+  .info-cell strong{
+    display:block;font-size:19px;font-weight:800;color:var(--black);
+    margin-bottom:2px;
+  }
+  .info-cell span{
+    font-size:14px;color:var(--gray-500);font-weight:500;
+  }
+
+  /* ═══════════════ SECTION TITLE ═══════════════ */
+  .section-title{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(32px,5vw,44px);letter-spacing:2px;
+    color:var(--black);margin-bottom:8px;
+  }
+  .section-subtitle{
+    font-size:17px;color:var(--gray-500);font-weight:400;
+    margin-bottom:28px;
+  }
+
+  /* ═══════════════ FILTER TABS ═══════════════ */
+  .tabs{
+    display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap;
+  }
+  .tab{
+    padding:12px 24px;font-size:15px;font-weight:700;
+    text-transform:uppercase;letter-spacing:1px;
+    background:var(--white);color:var(--gray-700);
+    border:2px solid var(--gray-200);border-radius:var(--r);
+    cursor:pointer;transition:all .2s ease;user-select:none;
+  }
+  .tab:hover{border-color:var(--copper);color:var(--copper)}
+  .tab.active{
+    background:var(--black);color:var(--white);
+    border-color:var(--black);
+  }
+
+  /* ═══════════════ MEMBERSHIP ROWS ═══════════════ */
+  .memberships{display:flex;flex-direction:column;gap:12px}
+
+  .m-row{
+    display:flex;align-items:center;gap:20px;
+    background:var(--white);border-radius:var(--r);
+    padding:24px 28px;
+    text-decoration:none;color:inherit;
+    border:2px solid transparent;
+    transition:all .25s cubic-bezier(.22,1,.36,1);
+    cursor:pointer;
+    box-shadow:0 1px 3px rgba(0,0,0,.03);
+  }
+  .m-row:hover{
+    border-color:var(--copper);
+    transform:translateY(-2px);
+    box-shadow:0 8px 28px rgba(0,0,0,.07);
+  }
+  .m-row:active{transform:scale(.995)}
+  .m-row.hide{display:none}
+
+  /* Icon badge */
+  .m-badge{
+    width:64px;height:64px;border-radius:var(--r);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    flex-shrink:0;font-weight:800;line-height:1;
+  }
+  .m-badge.fam{background:var(--copper-bg);color:var(--copper)}
+  .m-badge.ind{background:#FFF8E1;color:#E88A00}
+  .m-badge.sr{background:#E8F5E9;color:#2E7D32}
+  .m-badge .b-num{font-size:26px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px}
+  .m-badge .b-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;margin-top:1px;font-weight:800}
+
+  /* Text */
+  .m-text{flex:1;min-width:0}
+  .m-name{font-size:20px;font-weight:700;color:var(--black);line-height:1.3}
+  .m-meta{font-size:15px;color:var(--gray-500);font-weight:400;margin-top:2px}
+
+  /* Price */
+  .m-price-wrap{text-align:right;flex-shrink:0}
+  .m-price{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--black);letter-spacing:1px;line-height:1}
+  .m-pp{font-size:13px;color:var(--gray-500);font-weight:500;margin-top:2px}
+
+  /* Arrow */
+  .m-arrow{
+    flex-shrink:0;width:44px;height:44px;border-radius:50%;
+    background:var(--gray-100);
+    display:flex;align-items:center;justify-content:center;
+    transition:all .25s ease;
+  }
+  .m-arrow svg{width:18px;height:18px;stroke:var(--gray-500);transition:stroke .2s}
+  .m-row:hover .m-arrow{background:var(--black)}
+  .m-row:hover .m-arrow svg{stroke:var(--white)}
+
+  /* ═══════════════ FOOTER ═══════════════ */
+  .footer{
+    text-align:center;padding:40px 24px;
+    border-top:1px solid var(--gray-200);margin-top:16px;
+  }
+  .footer p{font-size:14px;color:var(--gray-500);margin-bottom:4px}
+  .footer a{color:var(--copper);text-decoration:none;font-weight:600}
+  .footer a:hover{text-decoration:underline}
+
+  /* ═══════════════ ANIMATIONS ═══════════════ */
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* ═══════════════ RESPONSIVE ═══════════════ */
+  @media(max-width:640px){
+    .topbar{padding:12px 16px}
+    .topbar-nav{display:none}
+    .hero{padding:56px 20px 52px}
+    .main{padding:32px 16px 48px}
+    .info-strip{grid-template-columns:1fr 1fr}
+    .m-row{padding:18px 16px;gap:14px}
+    .m-badge{width:52px;height:52px}
+    .m-badge .b-num{font-size:22px}
+    .m-name{font-size:18px}
+    .m-price{font-size:26px}
+    .m-arrow{width:36px;height:36px}
+    .m-arrow svg{width:14px;height:14px}
+  }
+  @media(max-width:400px){
+    .info-strip{grid-template-columns:1fr}
+    .m-row{flex-wrap:wrap}
+    .m-price-wrap{flex:1;text-align:left;padding-left:72px}
+    .m-arrow{position:absolute;right:16px;top:50%;transform:translateY(-50%)}
+    .m-row{position:relative}
+  }
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR ── -->
+<div class="topbar">
+  <a class="topbar-logo" href="https://www.gocoppermine.com">
+    <span class="copper">●</span> COPPERMINE
+  </a>
+  <nav class="topbar-nav">
+    <a href="https://www.gocoppermine.com/coppermine/programs/aquatic/">Aquatics</a>
+    <a href="https://www.gocoppermine.com/coppermine/white-marsh-swim-club/">White Marsh</a>
+    <a href="https://www.gocoppermine.com/coppermine/locations/">Locations</a>
+  </nav>
+</div>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-label"><span class="dot"></span> Registration Open Now</div>
+  <h1>WHITE MARSH<br><span>SWIM CLUB</span></h1>
+  <p class="hero-sub">Summer 2026 Pool Memberships — Individual, family, and senior plans for the full season.</p>
+</section>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- Info Strip -->
+  <div class="info-strip">
+    <div class="info-cell">
+      <strong>May 22 – Sep 7</strong>
+      <span>Season Dates</span>
+    </div>
+    <div class="info-cell">
+      <strong>Register by Aug 24</strong>
+      <span>Open Now</span>
+    </div>
+    <div class="info-cell">
+      <strong>Ages 2 – 100</strong>
+      <span>All Ages Welcome</span>
+    </div>
+    <div class="info-cell">
+      <strong>Tax Inclusive</strong>
+      <span>No Hidden Fees</span>
+    </div>
+  </div>
+
+  <!-- Section Title -->
+  <h2 class="section-title">CHOOSE YOUR MEMBERSHIP</h2>
+  <p class="section-subtitle">11 plans from $425 to $1,415 — select one to register.</p>
+
+  <!-- Filter Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-f="all">All Plans</div>
+    <div class="tab" data-f="senior">Senior (65+)</div>
+    <div class="tab" data-f="individual">Individual</div>
+    <div class="tab" data-f="family">Family</div>
+  </div>
+
+  <!-- Membership Rows -->
+  <div class="memberships" id="memberships">
+
+    <!-- Senior Individual -->
+    <a class="m-row" data-cat="senior" href="https://bondsports.co/Coppermine/memberships/White-Marsh-Swim-Club-Senior-Citizen-Individual/1930">
+      <div class="m-badge sr"><span class="b-num">1</span><span class="b-lbl">Person</span></div>
+      <div class="m-text">
+        <div class="m-name">Senior Individual</div>
+        <div class="m-meta">Ages 65+ · 1 member</div>
+      </div>
+      <div class="m-price-wrap">
+        <div class="m-price">$425</div>
+        <div class="m-pp">per season</div>
+      </div>
+      <div class="m-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- Senior Couple -->
+    <a class="m-row" data-cat="senior" href="https://bondsports.co/Coppermine/memberships/White-Marsh-Swim-Club-Senior-Citizen-Couple/1931">
+      <div class="m-badge sr"><span class="b-num">2</span><span class="b-lbl">People</span></div>
+      <div class="m-text">
+        <div class="m-name">Senior Couple</div>
+        <div class="m-meta">Ages 65+ · 2 members</div>
+      </div>
+      <div class="m-price-wrap">
+        <div class="m-price">$550</div>
+        <div class="m-pp">$275 / person</div>
+      </div>
+      <div class="m-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- Individual -->
+    <a class="m-row" data-cat="individual" href="https://bondsports.co/Coppermine/memberships/White-Marsh-Swim-Club-Individual/2008">
+      <div class="m-badge ind"><span class="b-num">1</span><span class="b-lbl">Person</span></div>
+      <div class="m-text">
+        <div class="m-name">Individual</div>
+        <div class="m-meta">Ages 2–64 · 1 member</div>
+      </div>
+      <div class="m-price-wrap">
+        <div class="m-price">$625</div>
+        <div class="m-pp">per season</div>
+      </div>
+      <div class="m-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- 2 Person -->
+    <a class="m-row" data-cat="family" href="https://bondsports.co/Coppermine/memberships/White-Marsh-Swim-Club-2-Person-Membership/2010">
+      <div class="m-badge fam"><span class="b-num">2</span><span class="b-lbl">People</span></div>
+      <div class="m-text">
+        <div class="m-name">2 Person Membership</div>
+        <div class="m-meta">Ages 2–64 · 2 members</div>
+      </div>
+      <div class="m-price-wrap">
+        <div class="m-price">$750</div>
+        <div class="m-pp">$375 / person</div>
+      </div>
+      <div class="m-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- 3 Person -->
+    <a class="m-row" data-cat="family" href="https://bondsports.co/Coppermine/memberships/White-Marsh-Swim-Club-3-Person-Membership/2011">
+      <div class="m-badge fam"><span class="b-num">3</span><span class="b-lbl">People</span></div>
+      <div class="m-text">
+        <div class="m-name">3 Person Membership</div>
+        <div class="m-meta">Ages 2–64 · 3 members</div>
+      </div>
+      <div class="m-price-wrap">
+        <div class="m-price">$845</div>
+        <div class="m-pp">$282 / person</div>
+      </div>
+      <div class="m-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- 4 Person -->
+    <a class="m-row" data-cat="family" href="https://bondsports.co/Coppermine/memberships/White-Marsh-Swim-Club-4-Person-Membership/2012">
+      <div class="m-badge fam"><span class="b-num">4</span><span class="b-lbl">People</span></div>
+      <div class="m-text">
+        <div class="m-name">4 Person Membership</div>
+        <div class="m-meta">Ages 2–64 · 4 members</div>
+      </div>
+      <div class="m-price-wrap">
+        <div class="m-price">$940</div>
+        <div class="m-pp">$235 / person</div>
+      </div>
+      <div class="m-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- 5 Person -->
+    <a class="m-row" data-cat="family" href="https://bondsports.co/Coppermine/memberships/White-Marsh-Swim-Club-5-Person-Membership/2013">
+      <div class="m-badge fam"><span class="b-num">5</span><span class="b-lbl">People</span></div>
+      <div class="m-text">
+        <div class="m-name">5 Person Membership</div>
+        <div class="m-meta">Ages 2–64 · 5 members</div>
+      </div>
+      <div class="m-price-wrap">
+        <div class="m-price">$1,035</div>
+        <div class="m-pp">$207 / person</div>
+      </div>
+      <div class="m-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- 6 Person -->
+    <a class="m-row" data-cat="family" href="https://bondsports.co/Coppermine/memberships/White-Marsh-Swim-Club-6-Person-Membership/2014">
+      <div class="m-badge fam"><span class="b-num">6</span><span class="b-lbl">People</span></div>
+      <div class="m-text">
+        <div class="m-name">6 Person Membership</div>
+        <div class="m-meta">Ages 2–64 · 6 members</div>
+      </div>
+      <div class="m-price-wrap">
+        <div class="m-price">$1,130</div>
+        <div class="m-pp">$188 / person</div>
+      </div>
+      <div class="m-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- 7 Person -->
+    <a class="m-row" data-cat="family" href="https://bondsports.co/Coppermine/memberships/White-Marsh-Swim-Club-7-Person-Membership/2015">
+      <div class="m-badge fam"><span class="b-num">7</span><span class="b-lbl">People</span></div>
+      <div class="m-text">
+        <div class="m-name">7 Person Membership</div>
+        <div class="m-meta">Ages 2–64 · 7 members</div>
+      </div>
+      <div class="m-price-wrap">
+        <div class="m-price">$1,225</div>
+        <div class="m-pp">$175 / person</div>
+      </div>
+      <div class="m-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- 8 Person -->
+    <a class="m-row" data-cat="family" href="https://bondsports.co/Coppermine/memberships/White-Marsh-Swim-Club-8-Person-Membership/2016">
+      <div class="m-badge fam"><span class="b-num">8</span><span class="b-lbl">People</span></div>
+      <div class="m-text">
+        <div class="m-name">8 Person Membership</div>
+        <div class="m-meta">Ages 2–64 · 8 members</div>
+      </div>
+      <div class="m-price-wrap">
+        <div class="m-price">$1,320</div>
+        <div class="m-pp">$165 / person</div>
+      </div>
+      <div class="m-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- 9 Person -->
+    <a class="m-row" data-cat="family" href="https://bondsports.co/Coppermine/memberships/White-Marsh-Swim-Club-9-Person-Membership/2017">
+      <div class="m-badge fam"><span class="b-num">9</span><span class="b-lbl">People</span></div>
+      <div class="m-text">
+        <div class="m-name">9 Person Membership</div>
+        <div class="m-meta">Ages 2–64 · 9 members</div>
+      </div>
+      <div class="m-price-wrap">
+        <div class="m-price">$1,415</div>
+        <div class="m-pp">$157 / person</div>
+      </div>
+      <div class="m-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+  </div><!-- /memberships -->
+
+</div><!-- /main -->
+
+<!-- ── FOOTER ── -->
+<footer class="footer">
+  <p>White Marsh Swim Club · 4719 Beaconsfield Dr, Nottingham, MD 21236</p>
+  <p><a href="mailto:whitemarshpool@gocoppermine.com">whitemarshpool@gocoppermine.com</a> · Powered by <a href="https://bondsports.co" target="_blank">Bond Sports</a></p>
+</footer>
+
+<script>
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const f=t.dataset.f;
+    document.querySelectorAll('.m-row').forEach(r=>{
+      r.classList.toggle('hide',f!=='all'&&r.dataset.cat!==f);
+    });
+  });
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,3736 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - generic [ref=e6]:
+            - img "TOCA Soccer" [ref=e7]
+            - generic [ref=e9]: Evanston
+          - button "Copy link to clipboard" [ref=e11] [cursor=pointer]:
+            - img [ref=e12]
+        - generic [ref=e15]:
+          - button "Programs" [ref=e16] [cursor=pointer]:
+            - img [ref=e17]
+            - text: Programs
+          - button "Schedule" [ref=e22] [cursor=pointer]:
+            - img [ref=e23]
+            - text: Schedule
+    - generic [ref=e29]:
+      - generic [ref=e31]:
+        - img [ref=e32]
+        - textbox "Search events..." [active] [ref=e35]
+      - button "Program" [ref=e37] [cursor=pointer]:
+        - img [ref=e38]
+        - generic [ref=e41]: Program
+        - img [ref=e42]
+      - button "Type" [ref=e45] [cursor=pointer]:
+        - img [ref=e46]
+        - generic [ref=e50]: Type
+        - img [ref=e51]
+      - button "Activity" [ref=e54] [cursor=pointer]:
+        - img [ref=e55]
+        - generic [ref=e57]: Activity
+        - img [ref=e58]
+      - button "Gender" [ref=e61] [cursor=pointer]:
+        - img [ref=e62]
+        - generic [ref=e67]: Gender
+        - img [ref=e68]
+    - main [ref=e71]:
+      - generic [ref=e72]:
+        - generic [ref=e74]:
+          - generic [ref=e75]:
+            - generic [ref=e78]: 379 events
+            - generic [ref=e79]: All times CT
+          - generic [ref=e80]:
+            - button "List View" [ref=e81] [cursor=pointer]:
+              - img [ref=e82]
+            - button "Day View" [ref=e83] [cursor=pointer]:
+              - img [ref=e84]
+            - button "Week View" [ref=e87] [cursor=pointer]:
+              - img [ref=e88]
+            - button "Month View" [ref=e90] [cursor=pointer]:
+              - img [ref=e91]
+          - button "Export schedule" [ref=e97] [cursor=pointer]:
+            - img [ref=e98]
+        - generic [ref=e101]:
+          - region "Events for Wednesday, February 25" [ref=e102]:
+            - generic [ref=e103]:
+              - generic [ref=e104]:
+                - generic [ref=e105]: Wed
+                - generic [ref=e106]: "25"
+              - generic [ref=e107]:
+                - heading "Wednesday, February 25" [level=3] [ref=e108]
+                - paragraph [ref=e109]: 1 event
+            - button "9:00 PM – 10:30 PM 16 left Adult Pickup T3 $20 Free for Members Register" [ref=e111] [cursor=pointer]:
+              - generic [ref=e114]:
+                - generic [ref=e115]:
+                  - generic [ref=e116]:
+                    - img [ref=e117]
+                    - generic [ref=e120]: 9:00 PM – 10:30 PM
+                  - generic [ref=e122]: 16 left
+                - heading "Adult Pickup" [level=4] [ref=e123]
+                - generic [ref=e124]:
+                  - generic [ref=e125]:
+                    - img [ref=e126]
+                    - text: T3
+                  - generic [ref=e129]: $20
+                  - generic [ref=e130]: Free for Members
+                  - link "Register" [ref=e131]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
+                    - text: Register
+                    - img [ref=e132]
+          - region "Events for Thursday, February 26" [ref=e136]:
+            - generic [ref=e137]:
+              - generic [ref=e138]:
+                - generic [ref=e139]: Thu
+                - generic [ref=e140]: "26"
+              - generic [ref=e141]:
+                - heading "Thursday, February 26" [level=3] [ref=e142]
+                - paragraph [ref=e143]: 4 events
+            - generic [ref=e144]:
+              - button "5:00 PM – 5:45 PM Registration Closed JaHbat 2011/2010 vs Chicago Celtic SC HS Girls Girls High School T3 $1,890 Learn More" [ref=e145] [cursor=pointer]:
+                - generic [ref=e148]:
+                  - generic [ref=e149]:
+                    - generic [ref=e150]:
+                      - img [ref=e151]
+                      - generic [ref=e154]: 5:00 PM – 5:45 PM
+                    - generic [ref=e156]: Registration Closed
+                  - heading "JaHbat 2011/2010 vs Chicago Celtic SC HS Girls" [level=4] [ref=e157]
+                  - paragraph [ref=e158]: Girls High School
+                  - generic [ref=e159]:
+                    - generic [ref=e160]:
+                      - img [ref=e161]
+                      - text: T3
+                    - generic [ref=e164]: $1,890
+                    - link "Learn More" [ref=e165]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%20High%20School/93911
+                      - text: Learn More
+                      - img [ref=e166]
+              - button "5:45 PM – 6:30 PM Registration Closed Northwind 2011 Girls Premier 2 vs Northwind 2010 Girls Premier 2 Girls High School T3 $1,890 Learn More" [ref=e170] [cursor=pointer]:
+                - generic [ref=e173]:
+                  - generic [ref=e174]:
+                    - generic [ref=e175]:
+                      - img [ref=e176]
+                      - generic [ref=e179]: 5:45 PM – 6:30 PM
+                    - generic [ref=e181]: Registration Closed
+                  - heading "Northwind 2011 Girls Premier 2 vs Northwind 2010 Girls Premier 2" [level=4] [ref=e182]
+                  - paragraph [ref=e183]: Girls High School
+                  - generic [ref=e184]:
+                    - generic [ref=e185]:
+                      - img [ref=e186]
+                      - text: T3
+                    - generic [ref=e189]: $1,890
+                    - link "Learn More" [ref=e190]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%20High%20School/93911
+                      - text: Learn More
+                      - img [ref=e191]
+              - button "6:30 PM – 7:15 PM Registration Closed Northwind 2011 Girls Premier vs PSG U15 Girls High School Girls High School T3 $1,890 Learn More" [ref=e195] [cursor=pointer]:
+                - generic [ref=e198]:
+                  - generic [ref=e199]:
+                    - generic [ref=e200]:
+                      - img [ref=e201]
+                      - generic [ref=e204]: 6:30 PM – 7:15 PM
+                    - generic [ref=e206]: Registration Closed
+                  - heading "Northwind 2011 Girls Premier vs PSG U15 Girls High School" [level=4] [ref=e207]
+                  - paragraph [ref=e208]: Girls High School
+                  - generic [ref=e209]:
+                    - generic [ref=e210]:
+                      - img [ref=e211]
+                      - text: T3
+                    - generic [ref=e214]: $1,890
+                    - link "Learn More" [ref=e215]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%20High%20School/93911
+                      - text: Learn More
+                      - img [ref=e216]
+              - button "7:15 PM – 8:45 PM 17 left Adult Pickup T3 $20 Free for Members Register" [ref=e220] [cursor=pointer]:
+                - generic [ref=e223]:
+                  - generic [ref=e224]:
+                    - generic [ref=e225]:
+                      - img [ref=e226]
+                      - generic [ref=e229]: 7:15 PM – 8:45 PM
+                    - generic [ref=e231]: 17 left
+                  - heading "Adult Pickup" [level=4] [ref=e232]
+                  - generic [ref=e233]:
+                    - generic [ref=e234]:
+                      - img [ref=e235]
+                      - text: T3
+                    - generic [ref=e238]: $20
+                    - generic [ref=e239]: Free for Members
+                    - link "Register" [ref=e240]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
+                      - text: Register
+                      - img [ref=e241]
+          - region "Events for Friday, February 27" [ref=e245]:
+            - generic [ref=e246]:
+              - generic [ref=e247]:
+                - generic [ref=e248]: Fri
+                - generic [ref=e249]: "27"
+              - generic [ref=e250]:
+                - heading "Friday, February 27" [level=3] [ref=e251]
+                - paragraph [ref=e252]: 6 events
+            - generic [ref=e253]:
+              - button "4:30 PM – 6:00 PM 11 left Adult Pickup T2 $20 Free for Members Register" [ref=e254] [cursor=pointer]:
+                - generic [ref=e257]:
+                  - generic [ref=e258]:
+                    - generic [ref=e259]:
+                      - img [ref=e260]
+                      - generic [ref=e263]: 4:30 PM – 6:00 PM
+                    - generic [ref=e265]: 11 left
+                  - heading "Adult Pickup" [level=4] [ref=e266]
+                  - generic [ref=e267]:
+                    - generic [ref=e268]:
+                      - img [ref=e269]
+                      - text: T2
+                    - generic [ref=e272]: $20
+                    - generic [ref=e273]: Free for Members
+                    - link "Register" [ref=e274]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
+                      - text: Register
+                      - img [ref=e275]
+              - button "6:00 PM – 6:45 PM Registration Closed Chaldean Lions vs Chicago City 2010 Boys II/Loop Boys High School T2 $1,890 Learn More" [ref=e279] [cursor=pointer]:
+                - generic [ref=e282]:
+                  - generic [ref=e283]:
+                    - generic [ref=e284]:
+                      - img [ref=e285]
+                      - generic [ref=e288]: 6:00 PM – 6:45 PM
+                    - generic [ref=e290]: Registration Closed
+                  - heading "Chaldean Lions vs Chicago City 2010 Boys II/Loop" [level=4] [ref=e291]
+                  - paragraph [ref=e292]: Boys High School
+                  - generic [ref=e293]:
+                    - generic [ref=e294]:
+                      - img [ref=e295]
+                      - text: T2
+                    - generic [ref=e298]: $1,890
+                    - link "Learn More" [ref=e299]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e300]
+              - button "6:45 PM – 7:30 PM Registration Closed PSG U16 Boys Red vs Northwind 2010 Boys Premier 2 Boys High School T2 $1,890 Learn More" [ref=e304] [cursor=pointer]:
+                - generic [ref=e307]:
+                  - generic [ref=e308]:
+                    - generic [ref=e309]:
+                      - img [ref=e310]
+                      - generic [ref=e313]: 6:45 PM – 7:30 PM
+                    - generic [ref=e315]: Registration Closed
+                  - heading "PSG U16 Boys Red vs Northwind 2010 Boys Premier 2" [level=4] [ref=e316]
+                  - paragraph [ref=e317]: Boys High School
+                  - generic [ref=e318]:
+                    - generic [ref=e319]:
+                      - img [ref=e320]
+                      - text: T2
+                    - generic [ref=e323]: $1,890
+                    - link "Learn More" [ref=e324]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e325]
+              - button "7:15 PM – 8:00 PM Registration Closed JaHbat B2007/08/09 vs Ramblers & Celtics Boys High School T3 $1,890 Learn More" [ref=e329] [cursor=pointer]:
+                - generic [ref=e332]:
+                  - generic [ref=e333]:
+                    - generic [ref=e334]:
+                      - img [ref=e335]
+                      - generic [ref=e338]: 7:15 PM – 8:00 PM
+                    - generic [ref=e340]: Registration Closed
+                  - heading "JaHbat B2007/08/09 vs Ramblers & Celtics" [level=4] [ref=e341]
+                  - paragraph [ref=e342]: Boys High School
+                  - generic [ref=e343]:
+                    - generic [ref=e344]:
+                      - img [ref=e345]
+                      - text: T3
+                    - generic [ref=e348]: $1,890
+                    - link "Learn More" [ref=e349]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e350]
+              - button "7:30 PM – 8:15 PM Registration Closed PSG U14 Boys Pre Academy vs Chicago City 2010 Boys III Boys High School T2 $1,890 Learn More" [ref=e354] [cursor=pointer]:
+                - generic [ref=e357]:
+                  - generic [ref=e358]:
+                    - generic [ref=e359]:
+                      - img [ref=e360]
+                      - generic [ref=e363]: 7:30 PM – 8:15 PM
+                    - generic [ref=e365]: Registration Closed
+                  - heading "PSG U14 Boys Pre Academy vs Chicago City 2010 Boys III" [level=4] [ref=e366]
+                  - paragraph [ref=e367]: Boys High School
+                  - generic [ref=e368]:
+                    - generic [ref=e369]:
+                      - img [ref=e370]
+                      - text: T2
+                    - generic [ref=e373]: $1,890
+                    - link "Learn More" [ref=e374]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e375]
+              - button "8:15 PM – 9:00 PM Registration Closed PSG U15 Boys Red vs Northwind 2010 Boys Premier Boys High School T2 $1,890 Learn More" [ref=e379] [cursor=pointer]:
+                - generic [ref=e382]:
+                  - generic [ref=e383]:
+                    - generic [ref=e384]:
+                      - img [ref=e385]
+                      - generic [ref=e388]: 8:15 PM – 9:00 PM
+                    - generic [ref=e390]: Registration Closed
+                  - heading "PSG U15 Boys Red vs Northwind 2010 Boys Premier" [level=4] [ref=e391]
+                  - paragraph [ref=e392]: Boys High School
+                  - generic [ref=e393]:
+                    - generic [ref=e394]:
+                      - img [ref=e395]
+                      - text: T2
+                    - generic [ref=e398]: $1,890
+                    - link "Learn More" [ref=e399]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e400]
+          - region "Events for Saturday, February 28" [ref=e404]:
+            - generic [ref=e405]:
+              - generic [ref=e406]:
+                - generic [ref=e407]: Sat
+                - generic [ref=e408]: "28"
+              - generic [ref=e409]:
+                - heading "Saturday, February 28" [level=3] [ref=e410]
+                - paragraph [ref=e411]: 34 events
+            - generic [ref=e412]:
+              - button "9:15 AM – 10:00 AM Registration Closed Chaldean Lions vs Chicago City 2012 Boys Loop Boys 14U T3 $1,890 Learn More" [ref=e413] [cursor=pointer]:
+                - generic [ref=e416]:
+                  - generic [ref=e417]:
+                    - generic [ref=e418]:
+                      - img [ref=e419]
+                      - generic [ref=e422]: 9:15 AM – 10:00 AM
+                    - generic [ref=e424]: Registration Closed
+                  - heading "Chaldean Lions vs Chicago City 2012 Boys Loop" [level=4] [ref=e425]
+                  - paragraph [ref=e426]: Boys 14U
+                  - generic [ref=e427]:
+                    - generic [ref=e428]:
+                      - img [ref=e429]
+                      - text: T3
+                    - generic [ref=e432]: $1,890
+                    - link "Learn More" [ref=e433]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e434]
+              - button "9:30 AM – 10:30 AM Registration Closed 14U Detroit Lions vs 14U Houston Texans Winter 2 - 14U Coed T2 $275 Learn More" [ref=e438] [cursor=pointer]:
+                - generic [ref=e441]:
+                  - generic [ref=e442]:
+                    - generic [ref=e443]:
+                      - img [ref=e444]
+                      - generic [ref=e447]: 9:30 AM – 10:30 AM
+                    - generic [ref=e449]: Registration Closed
+                  - heading "14U Detroit Lions vs 14U Houston Texans" [level=4] [ref=e450]
+                  - paragraph [ref=e451]: Winter 2 - 14U Coed
+                  - generic [ref=e452]:
+                    - generic [ref=e453]:
+                      - img [ref=e454]
+                      - text: T2
+                    - generic [ref=e457]: $275
+                    - link "Learn More" [ref=e458]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2014U%20Coed/94096
+                      - text: Learn More
+                      - img [ref=e459]
+              - button "10:00 AM – 10:45 AM Registration Closed BH Dragons U13 vs Chicago City 2013 Boys II Boys 13U T3 $1,890 Learn More" [ref=e463] [cursor=pointer]:
+                - generic [ref=e466]:
+                  - generic [ref=e467]:
+                    - generic [ref=e468]:
+                      - img [ref=e469]
+                      - generic [ref=e472]: 10:00 AM – 10:45 AM
+                    - generic [ref=e474]: Registration Closed
+                  - heading "BH Dragons U13 vs Chicago City 2013 Boys II" [level=4] [ref=e475]
+                  - paragraph [ref=e476]: Boys 13U
+                  - generic [ref=e477]:
+                    - generic [ref=e478]:
+                      - img [ref=e479]
+                      - text: T3
+                    - generic [ref=e482]: $1,890
+                    - link "Learn More" [ref=e483]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343
+                      - text: Learn More
+                      - img [ref=e484]
+              - button "10:30 AM – 11:30 AM Registration Closed 14U Chicago Bears vs 14U Buffalo Bills Winter 2 - 14U Coed T2 $275 Learn More" [ref=e488] [cursor=pointer]:
+                - generic [ref=e491]:
+                  - generic [ref=e492]:
+                    - generic [ref=e493]:
+                      - img [ref=e494]
+                      - generic [ref=e497]: 10:30 AM – 11:30 AM
+                    - generic [ref=e499]: Registration Closed
+                  - heading "14U Chicago Bears vs 14U Buffalo Bills" [level=4] [ref=e500]
+                  - paragraph [ref=e501]: Winter 2 - 14U Coed
+                  - generic [ref=e502]:
+                    - generic [ref=e503]:
+                      - img [ref=e504]
+                      - text: T2
+                    - generic [ref=e507]: $275
+                    - link "Learn More" [ref=e508]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2014U%20Coed/94096
+                      - text: Learn More
+                      - img [ref=e509]
+              - button "10:45 AM – 11:30 AM Registration Closed ESFC 2013 Girls Blue vs Chicago City 2014 Girls I Girls 13U T3 $1,890 Learn More" [ref=e513] [cursor=pointer]:
+                - generic [ref=e516]:
+                  - generic [ref=e517]:
+                    - generic [ref=e518]:
+                      - img [ref=e519]
+                      - generic [ref=e522]: 10:45 AM – 11:30 AM
+                    - generic [ref=e524]: Registration Closed
+                  - heading "ESFC 2013 Girls Blue vs Chicago City 2014 Girls I" [level=4] [ref=e525]
+                  - paragraph [ref=e526]: Girls 13U
+                  - generic [ref=e527]:
+                    - generic [ref=e528]:
+                      - img [ref=e529]
+                      - text: T3
+                    - generic [ref=e532]: $1,890
+                    - link "Learn More" [ref=e533]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2013U/93909
+                      - text: Learn More
+                      - img [ref=e534]
+              - button "11:30 AM – 12:15 PM Registration Closed Wilmette Wings 2014 Black Boys vs JaHbat B2014 Blue Boys 12U T3 $1,890 Learn More" [ref=e538] [cursor=pointer]:
+                - generic [ref=e541]:
+                  - generic [ref=e542]:
+                    - generic [ref=e543]:
+                      - img [ref=e544]
+                      - generic [ref=e547]: 11:30 AM – 12:15 PM
+                    - generic [ref=e549]: Registration Closed
+                  - heading "Wilmette Wings 2014 Black Boys vs JaHbat B2014 Blue" [level=4] [ref=e550]
+                  - paragraph [ref=e551]: Boys 12U
+                  - generic [ref=e552]:
+                    - generic [ref=e553]:
+                      - img [ref=e554]
+                      - text: T3
+                    - generic [ref=e557]: $1,890
+                    - link "Learn More" [ref=e558]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e559]
+              - button "11:45 AM – 12:30 PM Registration Closed Chicago City 2014 Boys III vs AYSO Extra U12 Boys Navy Boys 12U T2 $1,890 Learn More" [ref=e563] [cursor=pointer]:
+                - generic [ref=e566]:
+                  - generic [ref=e567]:
+                    - generic [ref=e568]:
+                      - img [ref=e569]
+                      - generic [ref=e572]: 11:45 AM – 12:30 PM
+                    - generic [ref=e574]: Registration Closed
+                  - heading "Chicago City 2014 Boys III vs AYSO Extra U12 Boys Navy" [level=4] [ref=e575]
+                  - paragraph [ref=e576]: Boys 12U
+                  - generic [ref=e577]:
+                    - generic [ref=e578]:
+                      - img [ref=e579]
+                      - text: T2
+                    - generic [ref=e582]: $1,890
+                    - link "Learn More" [ref=e583]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e584]
+              - button "12:15 PM – 1:00 PM Registration Closed Chicago City 2012 Boys navy vs PSG U14 Boys Red Boys 14U T3 $1,890 Learn More" [ref=e588] [cursor=pointer]:
+                - generic [ref=e591]:
+                  - generic [ref=e592]:
+                    - generic [ref=e593]:
+                      - img [ref=e594]
+                      - generic [ref=e597]: 12:15 PM – 1:00 PM
+                    - generic [ref=e599]: Registration Closed
+                  - heading "Chicago City 2012 Boys navy vs PSG U14 Boys Red" [level=4] [ref=e600]
+                  - paragraph [ref=e601]: Boys 14U
+                  - generic [ref=e602]:
+                    - generic [ref=e603]:
+                      - img [ref=e604]
+                      - text: T3
+                    - generic [ref=e607]: $1,890
+                    - link "Learn More" [ref=e608]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e609]
+              - button "12:30 PM – 1:15 PM Registration Closed Norridge United U12 Boys Premier vs Wilmette Wings 2014 White Boys Boys 12U T2 $1,890 Learn More" [ref=e613] [cursor=pointer]:
+                - generic [ref=e616]:
+                  - generic [ref=e617]:
+                    - generic [ref=e618]:
+                      - img [ref=e619]
+                      - generic [ref=e622]: 12:30 PM – 1:15 PM
+                    - generic [ref=e624]: Registration Closed
+                  - heading "Norridge United U12 Boys Premier vs Wilmette Wings 2014 White Boys" [level=4] [ref=e625]
+                  - paragraph [ref=e626]: Boys 12U
+                  - generic [ref=e627]:
+                    - generic [ref=e628]:
+                      - img [ref=e629]
+                      - text: T2
+                    - generic [ref=e632]: $1,890
+                    - link "Learn More" [ref=e633]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e634]
+              - button "1:00 PM – 1:45 PM Registration Closed PSG Evanston & Northshore U14 Boys vs JaHbat B2012 Premier 2 Boys 14U T3 $1,890 Learn More" [ref=e638] [cursor=pointer]:
+                - generic [ref=e641]:
+                  - generic [ref=e642]:
+                    - generic [ref=e643]:
+                      - img [ref=e644]
+                      - generic [ref=e647]: 1:00 PM – 1:45 PM
+                    - generic [ref=e649]: Registration Closed
+                  - heading "PSG Evanston & Northshore U14 Boys vs JaHbat B2012 Premier 2" [level=4] [ref=e650]
+                  - paragraph [ref=e651]: Boys 14U
+                  - generic [ref=e652]:
+                    - generic [ref=e653]:
+                      - img [ref=e654]
+                      - text: T3
+                    - generic [ref=e657]: $1,890
+                    - link "Learn More" [ref=e658]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e659]
+              - button "1:15 PM – 2:00 PM Registration Closed Norridge United U13 Boys Select vs PSG U13 Boys Red Boys 13U T2 $1,890 Learn More" [ref=e663] [cursor=pointer]:
+                - generic [ref=e666]:
+                  - generic [ref=e667]:
+                    - generic [ref=e668]:
+                      - img [ref=e669]
+                      - generic [ref=e672]: 1:15 PM – 2:00 PM
+                    - generic [ref=e674]: Registration Closed
+                  - heading "Norridge United U13 Boys Select vs PSG U13 Boys Red" [level=4] [ref=e675]
+                  - paragraph [ref=e676]: Boys 13U
+                  - generic [ref=e677]:
+                    - generic [ref=e678]:
+                      - img [ref=e679]
+                      - text: T2
+                    - generic [ref=e682]: $1,890
+                    - link "Learn More" [ref=e683]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343
+                      - text: Learn More
+                      - img [ref=e684]
+              - button "1:15 PM – 2:00 PM Registration Closed PSG U8 Boys Blue - West Town vs Norridge United U7 Boys Premier Boys 8U T1 $1,245 Learn More" [ref=e688] [cursor=pointer]:
+                - generic [ref=e691]:
+                  - generic [ref=e692]:
+                    - generic [ref=e693]:
+                      - img [ref=e694]
+                      - generic [ref=e697]: 1:15 PM – 2:00 PM
+                    - generic [ref=e699]: Registration Closed
+                  - heading "PSG U8 Boys Blue - West Town vs Norridge United U7 Boys Premier" [level=4] [ref=e700]
+                  - paragraph [ref=e701]: Boys 8U
+                  - generic [ref=e702]:
+                    - generic [ref=e703]:
+                      - img [ref=e704]
+                      - text: T1
+                    - generic [ref=e707]: $1,245
+                    - link "Learn More" [ref=e708]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e709]
+              - button "1:45 PM – 2:30 PM Registration Closed Chicago City 2012 Boys II vs PSG U13 Boys Pre Academy Boys 14U T3 $1,890 Learn More" [ref=e713] [cursor=pointer]:
+                - generic [ref=e716]:
+                  - generic [ref=e717]:
+                    - generic [ref=e718]:
+                      - img [ref=e719]
+                      - generic [ref=e722]: 1:45 PM – 2:30 PM
+                    - generic [ref=e724]: Registration Closed
+                  - heading "Chicago City 2012 Boys II vs PSG U13 Boys Pre Academy" [level=4] [ref=e725]
+                  - paragraph [ref=e726]: Boys 14U
+                  - generic [ref=e727]:
+                    - generic [ref=e728]:
+                      - img [ref=e729]
+                      - text: T3
+                    - generic [ref=e732]: $1,890
+                    - link "Learn More" [ref=e733]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e734]
+              - button "2:00 PM – 2:45 PM Registration Closed UA 2014 vs PSG U12 Boys Red Boys 12U T2 $1,890 Learn More" [ref=e738] [cursor=pointer]:
+                - generic [ref=e741]:
+                  - generic [ref=e742]:
+                    - generic [ref=e743]:
+                      - img [ref=e744]
+                      - generic [ref=e747]: 2:00 PM – 2:45 PM
+                    - generic [ref=e749]: Registration Closed
+                  - heading "UA 2014 vs PSG U12 Boys Red" [level=4] [ref=e750]
+                  - paragraph [ref=e751]: Boys 12U
+                  - generic [ref=e752]:
+                    - generic [ref=e753]:
+                      - img [ref=e754]
+                      - text: T2
+                    - generic [ref=e757]: $1,890
+                    - link "Learn More" [ref=e758]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e759]
+              - button "2:00 PM – 2:45 PM Registration Closed FC Connection 2018 vs 2018 Boys Orange Boys 8U T1 $1,245 Learn More" [ref=e763] [cursor=pointer]:
+                - generic [ref=e766]:
+                  - generic [ref=e767]:
+                    - generic [ref=e768]:
+                      - img [ref=e769]
+                      - generic [ref=e772]: 2:00 PM – 2:45 PM
+                    - generic [ref=e774]: Registration Closed
+                  - heading "FC Connection 2018 vs 2018 Boys Orange" [level=4] [ref=e775]
+                  - paragraph [ref=e776]: Boys 8U
+                  - generic [ref=e777]:
+                    - generic [ref=e778]:
+                      - img [ref=e779]
+                      - text: T1
+                    - generic [ref=e782]: $1,245
+                    - link "Learn More" [ref=e783]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e784]
+              - button "2:30 PM – 3:15 PM Registration Closed ESFC 2012 Boys Blue vs JaHbat B2012 Green Boys 14U T3 $1,890 Learn More" [ref=e788] [cursor=pointer]:
+                - generic [ref=e791]:
+                  - generic [ref=e792]:
+                    - generic [ref=e793]:
+                      - img [ref=e794]
+                      - generic [ref=e797]: 2:30 PM – 3:15 PM
+                    - generic [ref=e799]: Registration Closed
+                  - heading "ESFC 2012 Boys Blue vs JaHbat B2012 Green" [level=4] [ref=e800]
+                  - paragraph [ref=e801]: Boys 14U
+                  - generic [ref=e802]:
+                    - generic [ref=e803]:
+                      - img [ref=e804]
+                      - text: T3
+                    - generic [ref=e807]: $1,890
+                    - link "Learn More" [ref=e808]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e809]
+              - button "2:45 PM – 3:30 PM Registration Closed Chicago City 2014/2015 Boys Loop vs ESFC 2014 Boys Boys 12U T2 $1,890 Learn More" [ref=e813] [cursor=pointer]:
+                - generic [ref=e816]:
+                  - generic [ref=e817]:
+                    - generic [ref=e818]:
+                      - img [ref=e819]
+                      - generic [ref=e822]: 2:45 PM – 3:30 PM
+                    - generic [ref=e824]: Registration Closed
+                  - heading "Chicago City 2014/2015 Boys Loop vs ESFC 2014 Boys" [level=4] [ref=e825]
+                  - paragraph [ref=e826]: Boys 12U
+                  - generic [ref=e827]:
+                    - generic [ref=e828]:
+                      - img [ref=e829]
+                      - text: T2
+                    - generic [ref=e832]: $1,890
+                    - link "Learn More" [ref=e833]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e834]
+              - button "2:45 PM – 3:30 PM Registration Closed PSG Evanston & Northshore 8U Boys vs PSG U8 Boys Red - West Town Boys 8U T1 $1,245 Learn More" [ref=e838] [cursor=pointer]:
+                - generic [ref=e841]:
+                  - generic [ref=e842]:
+                    - generic [ref=e843]:
+                      - img [ref=e844]
+                      - generic [ref=e847]: 2:45 PM – 3:30 PM
+                    - generic [ref=e849]: Registration Closed
+                  - heading "PSG Evanston & Northshore 8U Boys vs PSG U8 Boys Red - West Town" [level=4] [ref=e850]
+                  - paragraph [ref=e851]: Boys 8U
+                  - generic [ref=e852]:
+                    - generic [ref=e853]:
+                      - img [ref=e854]
+                      - text: T1
+                    - generic [ref=e857]: $1,245
+                    - link "Learn More" [ref=e858]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e859]
+              - button "3:15 PM – 4:00 PM Registration Closed ESFC 2012 Boys White vs PSG U14 Boys Blue Boys 14U T3 $1,890 Learn More" [ref=e863] [cursor=pointer]:
+                - generic [ref=e866]:
+                  - generic [ref=e867]:
+                    - generic [ref=e868]:
+                      - img [ref=e869]
+                      - generic [ref=e872]: 3:15 PM – 4:00 PM
+                    - generic [ref=e874]: Registration Closed
+                  - heading "ESFC 2012 Boys White vs PSG U14 Boys Blue" [level=4] [ref=e875]
+                  - paragraph [ref=e876]: Boys 14U
+                  - generic [ref=e877]:
+                    - generic [ref=e878]:
+                      - img [ref=e879]
+                      - text: T3
+                    - generic [ref=e882]: $1,890
+                    - link "Learn More" [ref=e883]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e884]
+              - button "3:30 PM – 4:15 PM Registration Closed FC Connection 2018 Blue vs PSG U8 Boys - Northside Boys 8U T1 $1,245 Learn More" [ref=e888] [cursor=pointer]:
+                - generic [ref=e891]:
+                  - generic [ref=e892]:
+                    - generic [ref=e893]:
+                      - img [ref=e894]
+                      - generic [ref=e897]: 3:30 PM – 4:15 PM
+                    - generic [ref=e899]: Registration Closed
+                  - heading "FC Connection 2018 Blue vs PSG U8 Boys - Northside" [level=4] [ref=e900]
+                  - paragraph [ref=e901]: Boys 8U
+                  - generic [ref=e902]:
+                    - generic [ref=e903]:
+                      - img [ref=e904]
+                      - text: T1
+                    - generic [ref=e907]: $1,245
+                    - link "Learn More" [ref=e908]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e909]
+              - button "3:30 PM – 4:15 PM Registration Closed Chicago City 2012 Girls I vs Northwind 2012 Girls Premier Girls 14U T2 $1,890 Learn More" [ref=e913] [cursor=pointer]:
+                - generic [ref=e916]:
+                  - generic [ref=e917]:
+                    - generic [ref=e918]:
+                      - img [ref=e919]
+                      - generic [ref=e922]: 3:30 PM – 4:15 PM
+                    - generic [ref=e924]: Registration Closed
+                  - heading "Chicago City 2012 Girls I vs Northwind 2012 Girls Premier" [level=4] [ref=e925]
+                  - paragraph [ref=e926]: Girls 14U
+                  - generic [ref=e927]:
+                    - generic [ref=e928]:
+                      - img [ref=e929]
+                      - text: T2
+                    - generic [ref=e932]: $1,890
+                    - link "Learn More" [ref=e933]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2014U/93910
+                      - text: Learn More
+                      - img [ref=e934]
+              - button "4:00 PM – 4:45 PM Registration Closed JaHbat G2013/14 vs ESFC 2013 Girls White Girls 13U T3 $1,890 Learn More" [ref=e938] [cursor=pointer]:
+                - generic [ref=e941]:
+                  - generic [ref=e942]:
+                    - generic [ref=e943]:
+                      - img [ref=e944]
+                      - generic [ref=e947]: 4:00 PM – 4:45 PM
+                    - generic [ref=e949]: Registration Closed
+                  - heading "JaHbat G2013/14 vs ESFC 2013 Girls White" [level=4] [ref=e950]
+                  - paragraph [ref=e951]: Girls 13U
+                  - generic [ref=e952]:
+                    - generic [ref=e953]:
+                      - img [ref=e954]
+                      - text: T3
+                    - generic [ref=e957]: $1,890
+                    - link "Learn More" [ref=e958]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2013U/93909
+                      - text: Learn More
+                      - img [ref=e959]
+              - button "4:15 PM – 5:00 PM Registration Closed PSG u8 Boys Red vs YSIFC 2019 Boys 8U T1 $1,245 Learn More" [ref=e963] [cursor=pointer]:
+                - generic [ref=e966]:
+                  - generic [ref=e967]:
+                    - generic [ref=e968]:
+                      - img [ref=e969]
+                      - generic [ref=e972]: 4:15 PM – 5:00 PM
+                    - generic [ref=e974]: Registration Closed
+                  - heading "PSG u8 Boys Red vs YSIFC 2019" [level=4] [ref=e975]
+                  - paragraph [ref=e976]: Boys 8U
+                  - generic [ref=e977]:
+                    - generic [ref=e978]:
+                      - img [ref=e979]
+                      - text: T1
+                    - generic [ref=e982]: $1,245
+                    - link "Learn More" [ref=e983]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e984]
+              - button "4:15 PM – 5:00 PM Registration Closed Peterson Park 12U Girls Extra vs PSG U12 Girls Pre Academy Girls 12U T2 $1,890 Learn More" [ref=e988] [cursor=pointer]:
+                - generic [ref=e991]:
+                  - generic [ref=e992]:
+                    - generic [ref=e993]:
+                      - img [ref=e994]
+                      - generic [ref=e997]: 4:15 PM – 5:00 PM
+                    - generic [ref=e999]: Registration Closed
+                  - heading "Peterson Park 12U Girls Extra vs PSG U12 Girls Pre Academy" [level=4] [ref=e1000]
+                  - paragraph [ref=e1001]: Girls 12U
+                  - generic [ref=e1002]:
+                    - generic [ref=e1003]:
+                      - img [ref=e1004]
+                      - text: T2
+                    - generic [ref=e1007]: $1,890
+                    - link "Learn More" [ref=e1008]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2012U/93351
+                      - text: Learn More
+                      - img [ref=e1009]
+              - button "4:45 PM – 5:30 PM Registration Closed JOMSC U12 vs Norridge United U12 Boys Select Boys 12U T3 $1,890 Learn More" [ref=e1013] [cursor=pointer]:
+                - generic [ref=e1016]:
+                  - generic [ref=e1017]:
+                    - generic [ref=e1018]:
+                      - img [ref=e1019]
+                      - generic [ref=e1022]: 4:45 PM – 5:30 PM
+                    - generic [ref=e1024]: Registration Closed
+                  - heading "JOMSC U12 vs Norridge United U12 Boys Select" [level=4] [ref=e1025]
+                  - paragraph [ref=e1026]: Boys 12U
+                  - generic [ref=e1027]:
+                    - generic [ref=e1028]:
+                      - img [ref=e1029]
+                      - text: T3
+                    - generic [ref=e1032]: $1,890
+                    - link "Learn More" [ref=e1033]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e1034]
+              - button "5:00 PM – 5:45 PM Registration Closed Northwind 2014 Girls Premier 2 vs AYSO Extra U12 Girls Navy Girls 12U T2 $1,890 Learn More" [ref=e1038] [cursor=pointer]:
+                - generic [ref=e1041]:
+                  - generic [ref=e1042]:
+                    - generic [ref=e1043]:
+                      - img [ref=e1044]
+                      - generic [ref=e1047]: 5:00 PM – 5:45 PM
+                    - generic [ref=e1049]: Registration Closed
+                  - heading "Northwind 2014 Girls Premier 2 vs AYSO Extra U12 Girls Navy" [level=4] [ref=e1050]
+                  - paragraph [ref=e1051]: Girls 12U
+                  - generic [ref=e1052]:
+                    - generic [ref=e1053]:
+                      - img [ref=e1054]
+                      - text: T2
+                    - generic [ref=e1057]: $1,890
+                    - link "Learn More" [ref=e1058]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2012U/93351
+                      - text: Learn More
+                      - img [ref=e1059]
+              - button "5:30 PM – 6:15 PM Registration Closed JOMSC U13 vs Chicago City 2013 Boys III Boys 13U T3 $1,890 Learn More" [ref=e1063] [cursor=pointer]:
+                - generic [ref=e1066]:
+                  - generic [ref=e1067]:
+                    - generic [ref=e1068]:
+                      - img [ref=e1069]
+                      - generic [ref=e1072]: 5:30 PM – 6:15 PM
+                    - generic [ref=e1074]: Registration Closed
+                  - heading "JOMSC U13 vs Chicago City 2013 Boys III" [level=4] [ref=e1075]
+                  - paragraph [ref=e1076]: Boys 13U
+                  - generic [ref=e1077]:
+                    - generic [ref=e1078]:
+                      - img [ref=e1079]
+                      - text: T3
+                    - generic [ref=e1082]: $1,890
+                    - link "Learn More" [ref=e1083]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343
+                      - text: Learn More
+                      - img [ref=e1084]
+              - button "5:45 PM – 6:30 PM Registration Closed Chicago City 2013 Boys Loop vs PSG U12 Boys Pre Academy Boys 13U T2 $1,890 Learn More" [ref=e1088] [cursor=pointer]:
+                - generic [ref=e1091]:
+                  - generic [ref=e1092]:
+                    - generic [ref=e1093]:
+                      - img [ref=e1094]
+                      - generic [ref=e1097]: 5:45 PM – 6:30 PM
+                    - generic [ref=e1099]: Registration Closed
+                  - heading "Chicago City 2013 Boys Loop vs PSG U12 Boys Pre Academy" [level=4] [ref=e1100]
+                  - paragraph [ref=e1101]: Boys 13U
+                  - generic [ref=e1102]:
+                    - generic [ref=e1103]:
+                      - img [ref=e1104]
+                      - text: T2
+                    - generic [ref=e1107]: $1,890
+                    - link "Learn More" [ref=e1108]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343
+                      - text: Learn More
+                      - img [ref=e1109]
+              - button "6:15 PM – 7:00 PM Registration Closed Northwind 2012 Girls Premier 2 vs JaHbat G2012 Girls 14U T3 $1,890 Learn More" [ref=e1113] [cursor=pointer]:
+                - generic [ref=e1116]:
+                  - generic [ref=e1117]:
+                    - generic [ref=e1118]:
+                      - img [ref=e1119]
+                      - generic [ref=e1122]: 6:15 PM – 7:00 PM
+                    - generic [ref=e1124]: Registration Closed
+                  - heading "Northwind 2012 Girls Premier 2 vs JaHbat G2012" [level=4] [ref=e1125]
+                  - paragraph [ref=e1126]: Girls 14U
+                  - generic [ref=e1127]:
+                    - generic [ref=e1128]:
+                      - img [ref=e1129]
+                      - text: T3
+                    - generic [ref=e1132]: $1,890
+                    - link "Learn More" [ref=e1133]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2014U/93910
+                      - text: Learn More
+                      - img [ref=e1134]
+              - button "6:30 PM – 7:15 PM Registration Closed SKOMOR U12 Premier vs YSIFC 2014 Blue Boys 12U T2 $1,890 Learn More" [ref=e1138] [cursor=pointer]:
+                - generic [ref=e1141]:
+                  - generic [ref=e1142]:
+                    - generic [ref=e1143]:
+                      - img [ref=e1144]
+                      - generic [ref=e1147]: 6:30 PM – 7:15 PM
+                    - generic [ref=e1149]: Registration Closed
+                  - heading "SKOMOR U12 Premier vs YSIFC 2014 Blue" [level=4] [ref=e1150]
+                  - paragraph [ref=e1151]: Boys 12U
+                  - generic [ref=e1152]:
+                    - generic [ref=e1153]:
+                      - img [ref=e1154]
+                      - text: T2
+                    - generic [ref=e1157]: $1,890
+                    - link "Learn More" [ref=e1158]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e1159]
+              - button "7:00 PM – 8:30 PM 19 left Adult Pickup T1 $20 Free for Members Register" [ref=e1163] [cursor=pointer]:
+                - generic [ref=e1166]:
+                  - generic [ref=e1167]:
+                    - generic [ref=e1168]:
+                      - img [ref=e1169]
+                      - generic [ref=e1172]: 7:00 PM – 8:30 PM
+                    - generic [ref=e1174]: 19 left
+                  - heading "Adult Pickup" [level=4] [ref=e1175]
+                  - generic [ref=e1176]:
+                    - generic [ref=e1177]:
+                      - img [ref=e1178]
+                      - text: T1
+                    - generic [ref=e1181]: $20
+                    - generic [ref=e1182]: Free for Members
+                    - link "Register" [ref=e1183]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
+                      - text: Register
+                      - img [ref=e1184]
+              - button "7:00 PM – 7:45 PM Registration Closed ESFC 2014 Girls White vs Northwind 2014 Girls Premier 3 Girls 12U T3 $1,890 Learn More" [ref=e1188] [cursor=pointer]:
+                - generic [ref=e1191]:
+                  - generic [ref=e1192]:
+                    - generic [ref=e1193]:
+                      - img [ref=e1194]
+                      - generic [ref=e1197]: 7:00 PM – 7:45 PM
+                    - generic [ref=e1199]: Registration Closed
+                  - heading "ESFC 2014 Girls White vs Northwind 2014 Girls Premier 3" [level=4] [ref=e1200]
+                  - paragraph [ref=e1201]: Girls 12U
+                  - generic [ref=e1202]:
+                    - generic [ref=e1203]:
+                      - img [ref=e1204]
+                      - text: T3
+                    - generic [ref=e1207]: $1,890
+                    - link "Learn More" [ref=e1208]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2012U/93351
+                      - text: Learn More
+                      - img [ref=e1209]
+              - button "7:15 PM – 8:00 PM Registration Closed YSIFC 2014 Yellow vs PSG U11 Boys Pre Academy Boys 12U T2 $1,890 Learn More" [ref=e1213] [cursor=pointer]:
+                - generic [ref=e1216]:
+                  - generic [ref=e1217]:
+                    - generic [ref=e1218]:
+                      - img [ref=e1219]
+                      - generic [ref=e1222]: 7:15 PM – 8:00 PM
+                    - generic [ref=e1224]: Registration Closed
+                  - heading "YSIFC 2014 Yellow vs PSG U11 Boys Pre Academy" [level=4] [ref=e1225]
+                  - paragraph [ref=e1226]: Boys 12U
+                  - generic [ref=e1227]:
+                    - generic [ref=e1228]:
+                      - img [ref=e1229]
+                      - text: T2
+                    - generic [ref=e1232]: $1,890
+                    - link "Learn More" [ref=e1233]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e1234]
+              - button "7:45 PM – 8:30 PM Registration Closed PSG U13 Girls Pre Academy vs Chicago City 2013 Girls I Girls 13U T3 $1,890 Learn More" [ref=e1238] [cursor=pointer]:
+                - generic [ref=e1241]:
+                  - generic [ref=e1242]:
+                    - generic [ref=e1243]:
+                      - img [ref=e1244]
+                      - generic [ref=e1247]: 7:45 PM – 8:30 PM
+                    - generic [ref=e1249]: Registration Closed
+                  - heading "PSG U13 Girls Pre Academy vs Chicago City 2013 Girls I" [level=4] [ref=e1250]
+                  - paragraph [ref=e1251]: Girls 13U
+                  - generic [ref=e1252]:
+                    - generic [ref=e1253]:
+                      - img [ref=e1254]
+                      - text: T3
+                    - generic [ref=e1257]: $1,890
+                    - link "Learn More" [ref=e1258]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2013U/93909
+                      - text: Learn More
+                      - img [ref=e1259]
+          - region "Events for Sunday, March 1" [ref=e1263]:
+            - generic [ref=e1264]:
+              - generic [ref=e1265]:
+                - generic [ref=e1266]: Sun
+                - generic [ref=e1267]: "1"
+              - generic [ref=e1268]:
+                - heading "Sunday, March 1" [level=3] [ref=e1269]
+                - paragraph [ref=e1270]: 37 events
+            - generic [ref=e1271]:
+              - button "9:00 AM – 10:00 AM Registration Closed 10U Denver Broncos vs 10U Cincinnati Bengals Winter 2 - 10U Coed Q2 $275 Learn More" [ref=e1272] [cursor=pointer]:
+                - generic [ref=e1275]:
+                  - generic [ref=e1276]:
+                    - generic [ref=e1277]:
+                      - img [ref=e1278]
+                      - generic [ref=e1281]: 9:00 AM – 10:00 AM
+                    - generic [ref=e1283]: Registration Closed
+                  - heading "10U Denver Broncos vs 10U Cincinnati Bengals" [level=4] [ref=e1284]
+                  - paragraph [ref=e1285]: Winter 2 - 10U Coed
+                  - generic [ref=e1286]:
+                    - generic [ref=e1287]:
+                      - img [ref=e1288]
+                      - text: Q2
+                    - generic [ref=e1291]: $275
+                    - link "Learn More" [ref=e1292]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2010U%20Coed/94095
+                      - text: Learn More
+                      - img [ref=e1293]
+              - button "9:00 AM – 10:00 AM Registration Closed 12U New Orleans Saints vs 12U Jacksonville Jaguars Winter 2 - 12U Coed Q4 $275 Learn More" [ref=e1297] [cursor=pointer]:
+                - generic [ref=e1300]:
+                  - generic [ref=e1301]:
+                    - generic [ref=e1302]:
+                      - img [ref=e1303]
+                      - generic [ref=e1306]: 9:00 AM – 10:00 AM
+                    - generic [ref=e1308]: Registration Closed
+                  - heading "12U New Orleans Saints vs 12U Jacksonville Jaguars" [level=4] [ref=e1309]
+                  - paragraph [ref=e1310]: Winter 2 - 12U Coed
+                  - generic [ref=e1311]:
+                    - generic [ref=e1312]:
+                      - img [ref=e1313]
+                      - text: Q4
+                    - generic [ref=e1316]: $275
+                    - link "Learn More" [ref=e1317]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2012U%20Coed/94094
+                      - text: Learn More
+                      - img [ref=e1318]
+              - button "9:00 AM – 10:00 AM Registration Closed 12U Chicago Bears vs 12U Cincinnati Bengals Winter 2 - 12U Coed Q3 $275 Learn More" [ref=e1322] [cursor=pointer]:
+                - generic [ref=e1325]:
+                  - generic [ref=e1326]:
+                    - generic [ref=e1327]:
+                      - img [ref=e1328]
+                      - generic [ref=e1331]: 9:00 AM – 10:00 AM
+                    - generic [ref=e1333]: Registration Closed
+                  - heading "12U Chicago Bears vs 12U Cincinnati Bengals" [level=4] [ref=e1334]
+                  - paragraph [ref=e1335]: Winter 2 - 12U Coed
+                  - generic [ref=e1336]:
+                    - generic [ref=e1337]:
+                      - img [ref=e1338]
+                      - text: Q3
+                    - generic [ref=e1341]: $275
+                    - link "Learn More" [ref=e1342]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2012U%20Coed/94094
+                      - text: Learn More
+                      - img [ref=e1343]
+              - button "10:00 AM – 11:00 AM Registration Closed 10U Chicago Bears vs 10U Detroit Lions Winter 2 - 10U Coed Q2 $275 Learn More" [ref=e1347] [cursor=pointer]:
+                - generic [ref=e1350]:
+                  - generic [ref=e1351]:
+                    - generic [ref=e1352]:
+                      - img [ref=e1353]
+                      - generic [ref=e1356]: 10:00 AM – 11:00 AM
+                    - generic [ref=e1358]: Registration Closed
+                  - heading "10U Chicago Bears vs 10U Detroit Lions" [level=4] [ref=e1359]
+                  - paragraph [ref=e1360]: Winter 2 - 10U Coed
+                  - generic [ref=e1361]:
+                    - generic [ref=e1362]:
+                      - img [ref=e1363]
+                      - text: Q2
+                    - generic [ref=e1366]: $275
+                    - link "Learn More" [ref=e1367]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2010U%20Coed/94095
+                      - text: Learn More
+                      - img [ref=e1368]
+              - button "10:00 AM – 11:00 AM Registration Closed 12U Cincinnati Bengals vs 12U New Orleans Saints Winter 2 - 12U Coed Q3 $275 Learn More" [ref=e1372] [cursor=pointer]:
+                - generic [ref=e1375]:
+                  - generic [ref=e1376]:
+                    - generic [ref=e1377]:
+                      - img [ref=e1378]
+                      - generic [ref=e1381]: 10:00 AM – 11:00 AM
+                    - generic [ref=e1383]: Registration Closed
+                  - heading "12U Cincinnati Bengals vs 12U New Orleans Saints" [level=4] [ref=e1384]
+                  - paragraph [ref=e1385]: Winter 2 - 12U Coed
+                  - generic [ref=e1386]:
+                    - generic [ref=e1387]:
+                      - img [ref=e1388]
+                      - text: Q3
+                    - generic [ref=e1391]: $275
+                    - link "Learn More" [ref=e1392]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2012U%20Coed/94094
+                      - text: Learn More
+                      - img [ref=e1393]
+              - button "10:00 AM – 11:00 AM Registration Closed 12U LA Rams vs 12U LA Chargers Winter 2 - 12U Coed Q4 $275 Learn More" [ref=e1397] [cursor=pointer]:
+                - generic [ref=e1400]:
+                  - generic [ref=e1401]:
+                    - generic [ref=e1402]:
+                      - img [ref=e1403]
+                      - generic [ref=e1406]: 10:00 AM – 11:00 AM
+                    - generic [ref=e1408]: Registration Closed
+                  - heading "12U LA Rams vs 12U LA Chargers" [level=4] [ref=e1409]
+                  - paragraph [ref=e1410]: Winter 2 - 12U Coed
+                  - generic [ref=e1411]:
+                    - generic [ref=e1412]:
+                      - img [ref=e1413]
+                      - text: Q4
+                    - generic [ref=e1416]: $275
+                    - link "Learn More" [ref=e1417]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2012U%20Coed/94094
+                      - text: Learn More
+                      - img [ref=e1418]
+              - button "11:00 AM – 11:45 AM Registration Closed AYSO Extra U10 Girls Navy vs YSIFC 2016 Girls Girls 10U Q2 $1,695 Learn More" [ref=e1422] [cursor=pointer]:
+                - generic [ref=e1425]:
+                  - generic [ref=e1426]:
+                    - generic [ref=e1427]:
+                      - img [ref=e1428]
+                      - generic [ref=e1431]: 11:00 AM – 11:45 AM
+                    - generic [ref=e1433]: Registration Closed
+                  - heading "AYSO Extra U10 Girls Navy vs YSIFC 2016 Girls" [level=4] [ref=e1434]
+                  - paragraph [ref=e1435]: Girls 10U
+                  - generic [ref=e1436]:
+                    - generic [ref=e1437]:
+                      - img [ref=e1438]
+                      - text: Q2
+                    - generic [ref=e1441]: $1,695
+                    - link "Learn More" [ref=e1442]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2010U/93349
+                      - text: Learn More
+                      - img [ref=e1443]
+              - button "11:15 AM – 12:00 PM Registration Closed Norridge United U11 Boys Premier vs FC Lions 2015 Boys 11U Q3 $1,695 Learn More" [ref=e1447] [cursor=pointer]:
+                - generic [ref=e1450]:
+                  - generic [ref=e1451]:
+                    - generic [ref=e1452]:
+                      - img [ref=e1453]
+                      - generic [ref=e1456]: 11:15 AM – 12:00 PM
+                    - generic [ref=e1458]: Registration Closed
+                  - heading "Norridge United U11 Boys Premier vs FC Lions 2015" [level=4] [ref=e1459]
+                  - paragraph [ref=e1460]: Boys 11U
+                  - generic [ref=e1461]:
+                    - generic [ref=e1462]:
+                      - img [ref=e1463]
+                      - text: Q3
+                    - generic [ref=e1466]: $1,695
+                    - link "Learn More" [ref=e1467]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e1468]
+              - button "11:30 AM – 12:15 PM Registration Closed Chicago Powerstrikers vs JaHbat G2015 Girls 11U Q4 $1,695 Learn More" [ref=e1472] [cursor=pointer]:
+                - generic [ref=e1475]:
+                  - generic [ref=e1476]:
+                    - generic [ref=e1477]:
+                      - img [ref=e1478]
+                      - generic [ref=e1481]: 11:30 AM – 12:15 PM
+                    - generic [ref=e1483]: Registration Closed
+                  - heading "Chicago Powerstrikers vs JaHbat G2015" [level=4] [ref=e1484]
+                  - paragraph [ref=e1485]: Girls 11U
+                  - generic [ref=e1486]:
+                    - generic [ref=e1487]:
+                      - img [ref=e1488]
+                      - text: Q4
+                    - generic [ref=e1491]: $1,695
+                    - link "Learn More" [ref=e1492]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2011U/93350
+                      - text: Learn More
+                      - img [ref=e1493]
+              - button "11:45 AM – 12:30 PM Registration Closed Chicago City 2017 Boys vs JaHbat B2017/18 Boys 9U Q2 $1,695 Learn More" [ref=e1497] [cursor=pointer]:
+                - generic [ref=e1500]:
+                  - generic [ref=e1501]:
+                    - generic [ref=e1502]:
+                      - img [ref=e1503]
+                      - generic [ref=e1506]: 11:45 AM – 12:30 PM
+                    - generic [ref=e1508]: Registration Closed
+                  - heading "Chicago City 2017 Boys vs JaHbat B2017/18" [level=4] [ref=e1509]
+                  - paragraph [ref=e1510]: Boys 9U
+                  - generic [ref=e1511]:
+                    - generic [ref=e1512]:
+                      - img [ref=e1513]
+                      - text: Q2
+                    - generic [ref=e1516]: $1,695
+                    - link "Learn More" [ref=e1517]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%209U/93339
+                      - text: Learn More
+                      - img [ref=e1518]
+              - button "12:00 PM – 12:45 PM Registration Closed AYSO Extra U10 Boys Orange vs PSG U10 Boys White Boys 10U Q3 $1,695 Learn More" [ref=e1522] [cursor=pointer]:
+                - generic [ref=e1525]:
+                  - generic [ref=e1526]:
+                    - generic [ref=e1527]:
+                      - img [ref=e1528]
+                      - generic [ref=e1531]: 12:00 PM – 12:45 PM
+                    - generic [ref=e1533]: Registration Closed
+                  - heading "AYSO Extra U10 Boys Orange vs PSG U10 Boys White" [level=4] [ref=e1534]
+                  - paragraph [ref=e1535]: Boys 10U
+                  - generic [ref=e1536]:
+                    - generic [ref=e1537]:
+                      - img [ref=e1538]
+                      - text: Q3
+                    - generic [ref=e1541]: $1,695
+                    - link "Learn More" [ref=e1542]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                      - text: Learn More
+                      - img [ref=e1543]
+              - button "12:15 PM – 1:00 PM Registration Closed PSG U10 Boys - North-Side vs Team Evanston 2016 Boys Orange 3 Boys 10U Q4 $1,695 Learn More" [ref=e1547] [cursor=pointer]:
+                - generic [ref=e1550]:
+                  - generic [ref=e1551]:
+                    - generic [ref=e1552]:
+                      - img [ref=e1553]
+                      - generic [ref=e1556]: 12:15 PM – 1:00 PM
+                    - generic [ref=e1558]: Registration Closed
+                  - heading "PSG U10 Boys - North-Side vs Team Evanston 2016 Boys Orange 3" [level=4] [ref=e1559]
+                  - paragraph [ref=e1560]: Boys 10U
+                  - generic [ref=e1561]:
+                    - generic [ref=e1562]:
+                      - img [ref=e1563]
+                      - text: Q4
+                    - generic [ref=e1566]: $1,695
+                    - link "Learn More" [ref=e1567]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                      - text: Learn More
+                      - img [ref=e1568]
+              - button "12:30 PM – 1:15 PM Registration Closed Chicago City 2016 Boys I vs PSG U10 Boys Blue Boys 10U Q2 $1,695 Learn More" [ref=e1572] [cursor=pointer]:
+                - generic [ref=e1575]:
+                  - generic [ref=e1576]:
+                    - generic [ref=e1577]:
+                      - img [ref=e1578]
+                      - generic [ref=e1581]: 12:30 PM – 1:15 PM
+                    - generic [ref=e1583]: Registration Closed
+                  - heading "Chicago City 2016 Boys I vs PSG U10 Boys Blue" [level=4] [ref=e1584]
+                  - paragraph [ref=e1585]: Boys 10U
+                  - generic [ref=e1586]:
+                    - generic [ref=e1587]:
+                      - img [ref=e1588]
+                      - text: Q2
+                    - generic [ref=e1591]: $1,695
+                    - link "Learn More" [ref=e1592]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                      - text: Learn More
+                      - img [ref=e1593]
+              - button "12:45 PM – 1:30 PM Registration Closed Wilmette Wings 2017 Boys vs PSG U9 Boys Blue I Boys 9U Q3 $1,695 Learn More" [ref=e1597] [cursor=pointer]:
+                - generic [ref=e1600]:
+                  - generic [ref=e1601]:
+                    - generic [ref=e1602]:
+                      - img [ref=e1603]
+                      - generic [ref=e1606]: 12:45 PM – 1:30 PM
+                    - generic [ref=e1608]: Registration Closed
+                  - heading "Wilmette Wings 2017 Boys vs PSG U9 Boys Blue I" [level=4] [ref=e1609]
+                  - paragraph [ref=e1610]: Boys 9U
+                  - generic [ref=e1611]:
+                    - generic [ref=e1612]:
+                      - img [ref=e1613]
+                      - text: Q3
+                    - generic [ref=e1616]: $1,695
+                    - link "Learn More" [ref=e1617]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%209U/93339
+                      - text: Learn More
+                      - img [ref=e1618]
+              - button "1:00 PM – 1:45 PM Registration Closed YSIFC 2016 Blue vs Chicago City 2016 Boys IV Boys 10U Q4 $1,695 Learn More" [ref=e1622] [cursor=pointer]:
+                - generic [ref=e1625]:
+                  - generic [ref=e1626]:
+                    - generic [ref=e1627]:
+                      - img [ref=e1628]
+                      - generic [ref=e1631]: 1:00 PM – 1:45 PM
+                    - generic [ref=e1633]: Registration Closed
+                  - heading "YSIFC 2016 Blue vs Chicago City 2016 Boys IV" [level=4] [ref=e1634]
+                  - paragraph [ref=e1635]: Boys 10U
+                  - generic [ref=e1636]:
+                    - generic [ref=e1637]:
+                      - img [ref=e1638]
+                      - text: Q4
+                    - generic [ref=e1641]: $1,695
+                    - link "Learn More" [ref=e1642]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                      - text: Learn More
+                      - img [ref=e1643]
+              - button "1:15 PM – 2:00 PM Registration Closed PSG U10 Boys - West Town vs Chicago City 2016 Boys III Boys 10U Q2 $1,695 Learn More" [ref=e1647] [cursor=pointer]:
+                - generic [ref=e1650]:
+                  - generic [ref=e1651]:
+                    - generic [ref=e1652]:
+                      - img [ref=e1653]
+                      - generic [ref=e1656]: 1:15 PM – 2:00 PM
+                    - generic [ref=e1658]: Registration Closed
+                  - heading "PSG U10 Boys - West Town vs Chicago City 2016 Boys III" [level=4] [ref=e1659]
+                  - paragraph [ref=e1660]: Boys 10U
+                  - generic [ref=e1661]:
+                    - generic [ref=e1662]:
+                      - img [ref=e1663]
+                      - text: Q2
+                    - generic [ref=e1666]: $1,695
+                    - link "Learn More" [ref=e1667]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                      - text: Learn More
+                      - img [ref=e1668]
+              - button "1:30 PM – 2:15 PM Registration Closed FC Ole vs Chicago City 2015 Boys I Boys 11U Q3 $1,695 Learn More" [ref=e1672] [cursor=pointer]:
+                - generic [ref=e1675]:
+                  - generic [ref=e1676]:
+                    - generic [ref=e1677]:
+                      - img [ref=e1678]
+                      - generic [ref=e1681]: 1:30 PM – 2:15 PM
+                    - generic [ref=e1683]: Registration Closed
+                  - heading "FC Ole vs Chicago City 2015 Boys I" [level=4] [ref=e1684]
+                  - paragraph [ref=e1685]: Boys 11U
+                  - generic [ref=e1686]:
+                    - generic [ref=e1687]:
+                      - img [ref=e1688]
+                      - text: Q3
+                    - generic [ref=e1691]: $1,695
+                    - link "Learn More" [ref=e1692]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e1693]
+              - button "1:45 PM – 2:30 PM Registration Closed YSIFC 2016 Yellow vs Chicago City 2016 Boys II Boys 10U Q4 $1,695 Learn More" [ref=e1697] [cursor=pointer]:
+                - generic [ref=e1700]:
+                  - generic [ref=e1701]:
+                    - generic [ref=e1702]:
+                      - img [ref=e1703]
+                      - generic [ref=e1706]: 1:45 PM – 2:30 PM
+                    - generic [ref=e1708]: Registration Closed
+                  - heading "YSIFC 2016 Yellow vs Chicago City 2016 Boys II" [level=4] [ref=e1709]
+                  - paragraph [ref=e1710]: Boys 10U
+                  - generic [ref=e1711]:
+                    - generic [ref=e1712]:
+                      - img [ref=e1713]
+                      - text: Q4
+                    - generic [ref=e1716]: $1,695
+                    - link "Learn More" [ref=e1717]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                      - text: Learn More
+                      - img [ref=e1718]
+              - button "2:00 PM – 2:45 PM Registration Closed AYSO Extra U10 Boys Navy vs Team Evanston 2016 Boys Blue 1 Boys 10U Q2 $1,695 Learn More" [ref=e1722] [cursor=pointer]:
+                - generic [ref=e1725]:
+                  - generic [ref=e1726]:
+                    - generic [ref=e1727]:
+                      - img [ref=e1728]
+                      - generic [ref=e1731]: 2:00 PM – 2:45 PM
+                    - generic [ref=e1733]: Registration Closed
+                  - heading "AYSO Extra U10 Boys Navy vs Team Evanston 2016 Boys Blue 1" [level=4] [ref=e1734]
+                  - paragraph [ref=e1735]: Boys 10U
+                  - generic [ref=e1736]:
+                    - generic [ref=e1737]:
+                      - img [ref=e1738]
+                      - text: Q2
+                    - generic [ref=e1741]: $1,695
+                    - link "Learn More" [ref=e1742]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                      - text: Learn More
+                      - img [ref=e1743]
+              - button "2:15 PM – 3:00 PM Registration Closed PSG Evanston & Northshore 9U Boys vs YSIFC 2017 Yellow Boys 9U Q3 $1,695 Learn More" [ref=e1747] [cursor=pointer]:
+                - generic [ref=e1750]:
+                  - generic [ref=e1751]:
+                    - generic [ref=e1752]:
+                      - img [ref=e1753]
+                      - generic [ref=e1756]: 2:15 PM – 3:00 PM
+                    - generic [ref=e1758]: Registration Closed
+                  - heading "PSG Evanston & Northshore 9U Boys vs YSIFC 2017 Yellow" [level=4] [ref=e1759]
+                  - paragraph [ref=e1760]: Boys 9U
+                  - generic [ref=e1761]:
+                    - generic [ref=e1762]:
+                      - img [ref=e1763]
+                      - text: Q3
+                    - generic [ref=e1766]: $1,695
+                    - link "Learn More" [ref=e1767]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%209U/93339
+                      - text: Learn More
+                      - img [ref=e1768]
+              - button "2:30 PM – 3:15 PM Registration Closed JaHbat B2016 vs Wilmette Wings 2016 White Boys Boys 10U Q4 $1,695 Learn More" [ref=e1772] [cursor=pointer]:
+                - generic [ref=e1775]:
+                  - generic [ref=e1776]:
+                    - generic [ref=e1777]:
+                      - img [ref=e1778]
+                      - generic [ref=e1781]: 2:30 PM – 3:15 PM
+                    - generic [ref=e1783]: Registration Closed
+                  - heading "JaHbat B2016 vs Wilmette Wings 2016 White Boys" [level=4] [ref=e1784]
+                  - paragraph [ref=e1785]: Boys 10U
+                  - generic [ref=e1786]:
+                    - generic [ref=e1787]:
+                      - img [ref=e1788]
+                      - text: Q4
+                    - generic [ref=e1791]: $1,695
+                    - link "Learn More" [ref=e1792]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                      - text: Learn More
+                      - img [ref=e1793]
+              - button "2:45 PM – 3:30 PM Registration Closed PSG U9 Girls - Northside vs YSIFC 2017-18 Girls Girls 9U Q2 $1,695 Learn More" [ref=e1797] [cursor=pointer]:
+                - generic [ref=e1800]:
+                  - generic [ref=e1801]:
+                    - generic [ref=e1802]:
+                      - img [ref=e1803]
+                      - generic [ref=e1806]: 2:45 PM – 3:30 PM
+                    - generic [ref=e1808]: Registration Closed
+                  - heading "PSG U9 Girls - Northside vs YSIFC 2017-18 Girls" [level=4] [ref=e1809]
+                  - paragraph [ref=e1810]: Girls 9U
+                  - generic [ref=e1811]:
+                    - generic [ref=e1812]:
+                      - img [ref=e1813]
+                      - text: Q2
+                    - generic [ref=e1816]: $1,695
+                    - link "Learn More" [ref=e1817]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%209U/93348
+                      - text: Learn More
+                      - img [ref=e1818]
+              - button "3:00 PM – 3:45 PM Registration Closed Wilmette Wings 2016 White Girls vs AYSO Extra U10 Girls Navy Girls 10U Q3 $1,695 Learn More" [ref=e1822] [cursor=pointer]:
+                - generic [ref=e1825]:
+                  - generic [ref=e1826]:
+                    - generic [ref=e1827]:
+                      - img [ref=e1828]
+                      - generic [ref=e1831]: 3:00 PM – 3:45 PM
+                    - generic [ref=e1833]: Registration Closed
+                  - heading "Wilmette Wings 2016 White Girls vs AYSO Extra U10 Girls Navy" [level=4] [ref=e1834]
+                  - paragraph [ref=e1835]: Girls 10U
+                  - generic [ref=e1836]:
+                    - generic [ref=e1837]:
+                      - img [ref=e1838]
+                      - text: Q3
+                    - generic [ref=e1841]: $1,695
+                    - link "Learn More" [ref=e1842]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2010U/93349
+                      - text: Learn More
+                      - img [ref=e1843]
+              - button "3:15 PM – 4:00 PM Registration Closed FC Lakeshore 2015 Boys Premier Red II vs Chicago City 2016 Boys Academy II Boys 11U Q4 $1,695 Learn More" [ref=e1847] [cursor=pointer]:
+                - generic [ref=e1850]:
+                  - generic [ref=e1851]:
+                    - generic [ref=e1852]:
+                      - img [ref=e1853]
+                      - generic [ref=e1856]: 3:15 PM – 4:00 PM
+                    - generic [ref=e1858]: Registration Closed
+                  - heading "FC Lakeshore 2015 Boys Premier Red II vs Chicago City 2016 Boys Academy II" [level=4] [ref=e1859]
+                  - paragraph [ref=e1860]: Boys 11U
+                  - generic [ref=e1861]:
+                    - generic [ref=e1862]:
+                      - img [ref=e1863]
+                      - text: Q4
+                    - generic [ref=e1866]: $1,695
+                    - link "Learn More" [ref=e1867]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e1868]
+              - button "3:30 PM – 4:15 PM Registration Closed Wilmette Wings 2015 White Boys vs PSG Evanston & Northshore U11 Boys Boys 11U Q2 $1,695 Learn More" [ref=e1872] [cursor=pointer]:
+                - generic [ref=e1875]:
+                  - generic [ref=e1876]:
+                    - generic [ref=e1877]:
+                      - img [ref=e1878]
+                      - generic [ref=e1881]: 3:30 PM – 4:15 PM
+                    - generic [ref=e1883]: Registration Closed
+                  - heading "Wilmette Wings 2015 White Boys vs PSG Evanston & Northshore U11 Boys" [level=4] [ref=e1884]
+                  - paragraph [ref=e1885]: Boys 11U
+                  - generic [ref=e1886]:
+                    - generic [ref=e1887]:
+                      - img [ref=e1888]
+                      - text: Q2
+                    - generic [ref=e1891]: $1,695
+                    - link "Learn More" [ref=e1892]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e1893]
+              - button "3:45 PM – 4:30 PM Registration Closed Chicago City 2015 Boys III vs PSG U11 Boys Red Boys 11U Q3 $1,695 Learn More" [ref=e1897] [cursor=pointer]:
+                - generic [ref=e1900]:
+                  - generic [ref=e1901]:
+                    - generic [ref=e1902]:
+                      - img [ref=e1903]
+                      - generic [ref=e1906]: 3:45 PM – 4:30 PM
+                    - generic [ref=e1908]: Registration Closed
+                  - heading "Chicago City 2015 Boys III vs PSG U11 Boys Red" [level=4] [ref=e1909]
+                  - paragraph [ref=e1910]: Boys 11U
+                  - generic [ref=e1911]:
+                    - generic [ref=e1912]:
+                      - img [ref=e1913]
+                      - text: Q3
+                    - generic [ref=e1916]: $1,695
+                    - link "Learn More" [ref=e1917]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e1918]
+              - button "4:00 PM – 4:45 PM Registration Closed YSIFC 2015 vs PSG U11 Boys White Boys 11U Q4 $1,695 Learn More" [ref=e1922] [cursor=pointer]:
+                - generic [ref=e1925]:
+                  - generic [ref=e1926]:
+                    - generic [ref=e1927]:
+                      - img [ref=e1928]
+                      - generic [ref=e1931]: 4:00 PM – 4:45 PM
+                    - generic [ref=e1933]: Registration Closed
+                  - heading "YSIFC 2015 vs PSG U11 Boys White" [level=4] [ref=e1934]
+                  - paragraph [ref=e1935]: Boys 11U
+                  - generic [ref=e1936]:
+                    - generic [ref=e1937]:
+                      - img [ref=e1938]
+                      - text: Q4
+                    - generic [ref=e1941]: $1,695
+                    - link "Learn More" [ref=e1942]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e1943]
+              - button "4:15 PM – 5:00 PM Registration Closed Wilmette Wings 2017 White Girls vs PSG U9 Girls Red Girls 9U Q2 $1,695 Learn More" [ref=e1947] [cursor=pointer]:
+                - generic [ref=e1950]:
+                  - generic [ref=e1951]:
+                    - generic [ref=e1952]:
+                      - img [ref=e1953]
+                      - generic [ref=e1956]: 4:15 PM – 5:00 PM
+                    - generic [ref=e1958]: Registration Closed
+                  - heading "Wilmette Wings 2017 White Girls vs PSG U9 Girls Red" [level=4] [ref=e1959]
+                  - paragraph [ref=e1960]: Girls 9U
+                  - generic [ref=e1961]:
+                    - generic [ref=e1962]:
+                      - img [ref=e1963]
+                      - text: Q2
+                    - generic [ref=e1966]: $1,695
+                    - link "Learn More" [ref=e1967]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%209U/93348
+                      - text: Learn More
+                      - img [ref=e1968]
+              - button "4:30 PM – 5:15 PM Registration Closed PSG U10 Girls Pre Academy vs Chicago City 2016 Girls II Girls 10U Q3 $1,695 Learn More" [ref=e1972] [cursor=pointer]:
+                - generic [ref=e1975]:
+                  - generic [ref=e1976]:
+                    - generic [ref=e1977]:
+                      - img [ref=e1978]
+                      - generic [ref=e1981]: 4:30 PM – 5:15 PM
+                    - generic [ref=e1983]: Registration Closed
+                  - heading "PSG U10 Girls Pre Academy vs Chicago City 2016 Girls II" [level=4] [ref=e1984]
+                  - paragraph [ref=e1985]: Girls 10U
+                  - generic [ref=e1986]:
+                    - generic [ref=e1987]:
+                      - img [ref=e1988]
+                      - text: Q3
+                    - generic [ref=e1991]: $1,695
+                    - link "Learn More" [ref=e1992]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2010U/93349
+                      - text: Learn More
+                      - img [ref=e1993]
+              - button "5:00 PM – 5:45 PM Registration Closed Wilmette Wings 2016 White Girls vs JaHbat G2016/17 Girls 10U Q2 $1,695 Learn More" [ref=e1997] [cursor=pointer]:
+                - generic [ref=e2000]:
+                  - generic [ref=e2001]:
+                    - generic [ref=e2002]:
+                      - img [ref=e2003]
+                      - generic [ref=e2006]: 5:00 PM – 5:45 PM
+                    - generic [ref=e2008]: Registration Closed
+                  - heading "Wilmette Wings 2016 White Girls vs JaHbat G2016/17" [level=4] [ref=e2009]
+                  - paragraph [ref=e2010]: Girls 10U
+                  - generic [ref=e2011]:
+                    - generic [ref=e2012]:
+                      - img [ref=e2013]
+                      - text: Q2
+                    - generic [ref=e2016]: $1,695
+                    - link "Learn More" [ref=e2017]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2010U/93349
+                      - text: Learn More
+                      - img [ref=e2018]
+              - button "5:15 PM – 6:00 PM Registration Closed JOMSC U9 vs FC Stars 2017 Boys Boys 9U Q3 $1,695 Learn More" [ref=e2022] [cursor=pointer]:
+                - generic [ref=e2025]:
+                  - generic [ref=e2026]:
+                    - generic [ref=e2027]:
+                      - img [ref=e2028]
+                      - generic [ref=e2031]: 5:15 PM – 6:00 PM
+                    - generic [ref=e2033]: Registration Closed
+                  - heading "JOMSC U9 vs FC Stars 2017 Boys" [level=4] [ref=e2034]
+                  - paragraph [ref=e2035]: Boys 9U
+                  - generic [ref=e2036]:
+                    - generic [ref=e2037]:
+                      - img [ref=e2038]
+                      - text: Q3
+                    - generic [ref=e2041]: $1,695
+                    - link "Learn More" [ref=e2042]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%209U/93339
+                      - text: Learn More
+                      - img [ref=e2043]
+              - button "5:45 PM – 6:30 PM Registration Closed BH Dragons U11 vs PSG U11 Boys Blue Boys 11U Q2 $1,695 Learn More" [ref=e2047] [cursor=pointer]:
+                - generic [ref=e2050]:
+                  - generic [ref=e2051]:
+                    - generic [ref=e2052]:
+                      - img [ref=e2053]
+                      - generic [ref=e2056]: 5:45 PM – 6:30 PM
+                    - generic [ref=e2058]: Registration Closed
+                  - heading "BH Dragons U11 vs PSG U11 Boys Blue" [level=4] [ref=e2059]
+                  - paragraph [ref=e2060]: Boys 11U
+                  - generic [ref=e2061]:
+                    - generic [ref=e2062]:
+                      - img [ref=e2063]
+                      - text: Q2
+                    - generic [ref=e2066]: $1,695
+                    - link "Learn More" [ref=e2067]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e2068]
+              - button "6:00 PM – 6:45 PM Registration Closed FC Lakeshore Girls 2015 Premier Red vs ESFC 2015 Girls Girls 11U Q3 $1,695 Learn More" [ref=e2072] [cursor=pointer]:
+                - generic [ref=e2075]:
+                  - generic [ref=e2076]:
+                    - generic [ref=e2077]:
+                      - img [ref=e2078]
+                      - generic [ref=e2081]: 6:00 PM – 6:45 PM
+                    - generic [ref=e2083]: Registration Closed
+                  - heading "FC Lakeshore Girls 2015 Premier Red vs ESFC 2015 Girls" [level=4] [ref=e2084]
+                  - paragraph [ref=e2085]: Girls 11U
+                  - generic [ref=e2086]:
+                    - generic [ref=e2087]:
+                      - img [ref=e2088]
+                      - text: Q3
+                    - generic [ref=e2091]: $1,695
+                    - link "Learn More" [ref=e2092]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2011U/93350
+                      - text: Learn More
+                      - img [ref=e2093]
+              - button "6:30 PM – 7:15 PM Registration Closed Wilmette Wings 2015 White Girls vs PSG U11 Girls Pre Academy Girls 11U Q2 $1,695 Learn More" [ref=e2097] [cursor=pointer]:
+                - generic [ref=e2100]:
+                  - generic [ref=e2101]:
+                    - generic [ref=e2102]:
+                      - img [ref=e2103]
+                      - generic [ref=e2106]: 6:30 PM – 7:15 PM
+                    - generic [ref=e2108]: Registration Closed
+                  - heading "Wilmette Wings 2015 White Girls vs PSG U11 Girls Pre Academy" [level=4] [ref=e2109]
+                  - paragraph [ref=e2110]: Girls 11U
+                  - generic [ref=e2111]:
+                    - generic [ref=e2112]:
+                      - img [ref=e2113]
+                      - text: Q2
+                    - generic [ref=e2116]: $1,695
+                    - link "Learn More" [ref=e2117]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2011U/93350
+                      - text: Learn More
+                      - img [ref=e2118]
+              - button "7:30 PM – 8:30 PM Registration Closed Royals vs Green Winter II 2026 Women's League T2 $130 Learn More" [ref=e2122] [cursor=pointer]:
+                - generic [ref=e2125]:
+                  - generic [ref=e2126]:
+                    - generic [ref=e2127]:
+                      - img [ref=e2128]
+                      - generic [ref=e2131]: 7:30 PM – 8:30 PM
+                    - generic [ref=e2133]: Registration Closed
+                  - heading "Royals vs Green" [level=4] [ref=e2134]
+                  - paragraph [ref=e2135]: Winter II 2026 Women's League
+                  - generic [ref=e2136]:
+                    - generic [ref=e2137]:
+                      - img [ref=e2138]
+                      - text: T2
+                    - generic [ref=e2141]: $130
+                    - link "Learn More" [ref=e2142]:
+                      - /url: https://bondsports.co/activity/programs/FEMALE-adult-SOCCER/11267/season/Winter%20II%202026%20Women's%20League/103459
+                      - text: Learn More
+                      - img [ref=e2143]
+              - button "7:30 PM – 8:30 PM Registration Closed Red vs Yellow Winter II 2026 Women's League T3 $130 Learn More" [ref=e2147] [cursor=pointer]:
+                - generic [ref=e2150]:
+                  - generic [ref=e2151]:
+                    - generic [ref=e2152]:
+                      - img [ref=e2153]
+                      - generic [ref=e2156]: 7:30 PM – 8:30 PM
+                    - generic [ref=e2158]: Registration Closed
+                  - heading "Red vs Yellow" [level=4] [ref=e2159]
+                  - paragraph [ref=e2160]: Winter II 2026 Women's League
+                  - generic [ref=e2161]:
+                    - generic [ref=e2162]:
+                      - img [ref=e2163]
+                      - text: T3
+                    - generic [ref=e2166]: $130
+                    - link "Learn More" [ref=e2167]:
+                      - /url: https://bondsports.co/activity/programs/FEMALE-adult-SOCCER/11267/season/Winter%20II%202026%20Women's%20League/103459
+                      - text: Learn More
+                      - img [ref=e2168]
+              - button "8:30 PM – 9:30 PM Registration Closed Green vs Schwaben A.C. Winter II 2026 Women's League T2 $130 Learn More" [ref=e2172] [cursor=pointer]:
+                - generic [ref=e2175]:
+                  - generic [ref=e2176]:
+                    - generic [ref=e2177]:
+                      - img [ref=e2178]
+                      - generic [ref=e2181]: 8:30 PM – 9:30 PM
+                    - generic [ref=e2183]: Registration Closed
+                  - heading "Green vs Schwaben A.C." [level=4] [ref=e2184]
+                  - paragraph [ref=e2185]: Winter II 2026 Women's League
+                  - generic [ref=e2186]:
+                    - generic [ref=e2187]:
+                      - img [ref=e2188]
+                      - text: T2
+                    - generic [ref=e2191]: $130
+                    - link "Learn More" [ref=e2192]:
+                      - /url: https://bondsports.co/activity/programs/FEMALE-adult-SOCCER/11267/season/Winter%20II%202026%20Women's%20League/103459
+                      - text: Learn More
+                      - img [ref=e2193]
+          - region "Events for Wednesday, March 4" [ref=e2197]:
+            - generic [ref=e2198]:
+              - generic [ref=e2199]:
+                - generic [ref=e2200]: Wed
+                - generic [ref=e2201]: "4"
+              - generic [ref=e2202]:
+                - heading "Wednesday, March 4" [level=3] [ref=e2203]
+                - paragraph [ref=e2204]: 1 event
+            - button "9:00 PM – 10:30 PM 22 left Adult Pickup T3 $20 Free for Members Register" [ref=e2206] [cursor=pointer]:
+              - generic [ref=e2209]:
+                - generic [ref=e2210]:
+                  - generic [ref=e2211]:
+                    - img [ref=e2212]
+                    - generic [ref=e2215]: 9:00 PM – 10:30 PM
+                  - generic [ref=e2217]: 22 left
+                - heading "Adult Pickup" [level=4] [ref=e2218]
+                - generic [ref=e2219]:
+                  - generic [ref=e2220]:
+                    - img [ref=e2221]
+                    - text: T3
+                  - generic [ref=e2224]: $20
+                  - generic [ref=e2225]: Free for Members
+                  - link "Register" [ref=e2226]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
+                    - text: Register
+                    - img [ref=e2227]
+          - region "Events for Thursday, March 5" [ref=e2231]:
+            - generic [ref=e2232]:
+              - generic [ref=e2233]:
+                - generic [ref=e2234]: Thu
+                - generic [ref=e2235]: "5"
+              - generic [ref=e2236]:
+                - heading "Thursday, March 5" [level=3] [ref=e2237]
+                - paragraph [ref=e2238]: 3 events
+            - generic [ref=e2239]:
+              - button "5:45 PM – 6:30 PM Registration Closed Northwind 2011 Girls Premier 2 vs Chicago Celtic SC HS Girls Girls High School T3 $1,890 Learn More" [ref=e2240] [cursor=pointer]:
+                - generic [ref=e2243]:
+                  - generic [ref=e2244]:
+                    - generic [ref=e2245]:
+                      - img [ref=e2246]
+                      - generic [ref=e2249]: 5:45 PM – 6:30 PM
+                    - generic [ref=e2251]: Registration Closed
+                  - heading "Northwind 2011 Girls Premier 2 vs Chicago Celtic SC HS Girls" [level=4] [ref=e2252]
+                  - paragraph [ref=e2253]: Girls High School
+                  - generic [ref=e2254]:
+                    - generic [ref=e2255]:
+                      - img [ref=e2256]
+                      - text: T3
+                    - generic [ref=e2259]: $1,890
+                    - link "Learn More" [ref=e2260]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%20High%20School/93911
+                      - text: Learn More
+                      - img [ref=e2261]
+              - button "6:30 PM – 7:15 PM Registration Closed PSG U15 Girls High School vs ESFC 2010/11 Girls Girls High School T3 $1,890 Learn More" [ref=e2265] [cursor=pointer]:
+                - generic [ref=e2268]:
+                  - generic [ref=e2269]:
+                    - generic [ref=e2270]:
+                      - img [ref=e2271]
+                      - generic [ref=e2274]: 6:30 PM – 7:15 PM
+                    - generic [ref=e2276]: Registration Closed
+                  - heading "PSG U15 Girls High School vs ESFC 2010/11 Girls" [level=4] [ref=e2277]
+                  - paragraph [ref=e2278]: Girls High School
+                  - generic [ref=e2279]:
+                    - generic [ref=e2280]:
+                      - img [ref=e2281]
+                      - text: T3
+                    - generic [ref=e2284]: $1,890
+                    - link "Learn More" [ref=e2285]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%20High%20School/93911
+                      - text: Learn More
+                      - img [ref=e2286]
+              - button "7:15 PM – 8:00 PM Registration Closed JaHbat 2011/10 vs PSG U15 Girls High School Girls High School T3 $1,890 Learn More" [ref=e2290] [cursor=pointer]:
+                - generic [ref=e2293]:
+                  - generic [ref=e2294]:
+                    - generic [ref=e2295]:
+                      - img [ref=e2296]
+                      - generic [ref=e2299]: 7:15 PM – 8:00 PM
+                    - generic [ref=e2301]: Registration Closed
+                  - heading "JaHbat 2011/10 vs PSG U15 Girls High School" [level=4] [ref=e2302]
+                  - paragraph [ref=e2303]: Girls High School
+                  - generic [ref=e2304]:
+                    - generic [ref=e2305]:
+                      - img [ref=e2306]
+                      - text: T3
+                    - generic [ref=e2309]: $1,890
+                    - link "Learn More" [ref=e2310]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%20High%20School/93911
+                      - text: Learn More
+                      - img [ref=e2311]
+          - region "Events for Friday, March 6" [ref=e2315]:
+            - generic [ref=e2316]:
+              - generic [ref=e2317]:
+                - generic [ref=e2318]: Fri
+                - generic [ref=e2319]: "6"
+              - generic [ref=e2320]:
+                - heading "Friday, March 6" [level=3] [ref=e2321]
+                - paragraph [ref=e2322]: 6 events
+            - generic [ref=e2323]:
+              - button "4:30 PM – 6:00 PM 18 left Adult Pickup T2 $20 Free for Members Register" [ref=e2324] [cursor=pointer]:
+                - generic [ref=e2327]:
+                  - generic [ref=e2328]:
+                    - generic [ref=e2329]:
+                      - img [ref=e2330]
+                      - generic [ref=e2333]: 4:30 PM – 6:00 PM
+                    - generic [ref=e2335]: 18 left
+                  - heading "Adult Pickup" [level=4] [ref=e2336]
+                  - generic [ref=e2337]:
+                    - generic [ref=e2338]:
+                      - img [ref=e2339]
+                      - text: T2
+                    - generic [ref=e2342]: $20
+                    - generic [ref=e2343]: Free for Members
+                    - link "Register" [ref=e2344]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
+                      - text: Register
+                      - img [ref=e2345]
+              - button "6:00 PM – 6:45 PM Registration Closed PSG U15 Boys Red vs Chicago City 2010 Boys III Boys High School T2 $1,890 Learn More" [ref=e2349] [cursor=pointer]:
+                - generic [ref=e2352]:
+                  - generic [ref=e2353]:
+                    - generic [ref=e2354]:
+                      - img [ref=e2355]
+                      - generic [ref=e2358]: 6:00 PM – 6:45 PM
+                    - generic [ref=e2360]: Registration Closed
+                  - heading "PSG U15 Boys Red vs Chicago City 2010 Boys III" [level=4] [ref=e2361]
+                  - paragraph [ref=e2362]: Boys High School
+                  - generic [ref=e2363]:
+                    - generic [ref=e2364]:
+                      - img [ref=e2365]
+                      - text: T2
+                    - generic [ref=e2368]: $1,890
+                    - link "Learn More" [ref=e2369]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e2370]
+              - button "6:45 PM – 7:30 PM Registration Closed Northwind 2009 Boys Premier vs PSG U16 Boys Red Boys High School T2 $1,890 Learn More" [ref=e2374] [cursor=pointer]:
+                - generic [ref=e2377]:
+                  - generic [ref=e2378]:
+                    - generic [ref=e2379]:
+                      - img [ref=e2380]
+                      - generic [ref=e2383]: 6:45 PM – 7:30 PM
+                    - generic [ref=e2385]: Registration Closed
+                  - heading "Northwind 2009 Boys Premier vs PSG U16 Boys Red" [level=4] [ref=e2386]
+                  - paragraph [ref=e2387]: Boys High School
+                  - generic [ref=e2388]:
+                    - generic [ref=e2389]:
+                      - img [ref=e2390]
+                      - text: T2
+                    - generic [ref=e2393]: $1,890
+                    - link "Learn More" [ref=e2394]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e2395]
+              - button "7:15 PM – 8:00 PM Registration Closed JaHbat B2010 vs Chicago City 2010 Boys II/Loop Boys High School T3 $1,890 Learn More" [ref=e2399] [cursor=pointer]:
+                - generic [ref=e2402]:
+                  - generic [ref=e2403]:
+                    - generic [ref=e2404]:
+                      - img [ref=e2405]
+                      - generic [ref=e2408]: 7:15 PM – 8:00 PM
+                    - generic [ref=e2410]: Registration Closed
+                  - heading "JaHbat B2010 vs Chicago City 2010 Boys II/Loop" [level=4] [ref=e2411]
+                  - paragraph [ref=e2412]: Boys High School
+                  - generic [ref=e2413]:
+                    - generic [ref=e2414]:
+                      - img [ref=e2415]
+                      - text: T3
+                    - generic [ref=e2418]: $1,890
+                    - link "Learn More" [ref=e2419]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e2420]
+              - button "7:30 PM – 8:15 PM Registration Closed Chaldean Lions vs Northwind 2009 Boys Premier Boys High School T2 $1,890 Learn More" [ref=e2424] [cursor=pointer]:
+                - generic [ref=e2427]:
+                  - generic [ref=e2428]:
+                    - generic [ref=e2429]:
+                      - img [ref=e2430]
+                      - generic [ref=e2433]: 7:30 PM – 8:15 PM
+                    - generic [ref=e2435]: Registration Closed
+                  - heading "Chaldean Lions vs Northwind 2009 Boys Premier" [level=4] [ref=e2436]
+                  - paragraph [ref=e2437]: Boys High School
+                  - generic [ref=e2438]:
+                    - generic [ref=e2439]:
+                      - img [ref=e2440]
+                      - text: T2
+                    - generic [ref=e2443]: $1,890
+                    - link "Learn More" [ref=e2444]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e2445]
+              - button "8:15 PM – 9:00 PM Registration Closed Northwind 2010 Boys Premier 2 vs Chicago Celtic SC HS Boys Boys High School T2 $1,890 Learn More" [ref=e2449] [cursor=pointer]:
+                - generic [ref=e2452]:
+                  - generic [ref=e2453]:
+                    - generic [ref=e2454]:
+                      - img [ref=e2455]
+                      - generic [ref=e2458]: 8:15 PM – 9:00 PM
+                    - generic [ref=e2460]: Registration Closed
+                  - heading "Northwind 2010 Boys Premier 2 vs Chicago Celtic SC HS Boys" [level=4] [ref=e2461]
+                  - paragraph [ref=e2462]: Boys High School
+                  - generic [ref=e2463]:
+                    - generic [ref=e2464]:
+                      - img [ref=e2465]
+                      - text: T2
+                    - generic [ref=e2468]: $1,890
+                    - link "Learn More" [ref=e2469]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e2470]
+          - region "Events for Saturday, March 7" [ref=e2474]:
+            - generic [ref=e2475]:
+              - generic [ref=e2476]:
+                - generic [ref=e2477]: Sat
+                - generic [ref=e2478]: "7"
+              - generic [ref=e2479]:
+                - heading "Saturday, March 7" [level=3] [ref=e2480]
+                - paragraph [ref=e2481]: 33 events
+            - generic [ref=e2482]:
+              - button "9:15 AM – 10:00 AM Registration Closed ESFC 2013 Girls White vs Chicago City 2014 Girls I Girls 13U T3 $1,890 Learn More" [ref=e2483] [cursor=pointer]:
+                - generic [ref=e2486]:
+                  - generic [ref=e2487]:
+                    - generic [ref=e2488]:
+                      - img [ref=e2489]
+                      - generic [ref=e2492]: 9:15 AM – 10:00 AM
+                    - generic [ref=e2494]: Registration Closed
+                  - heading "ESFC 2013 Girls White vs Chicago City 2014 Girls I" [level=4] [ref=e2495]
+                  - paragraph [ref=e2496]: Girls 13U
+                  - generic [ref=e2497]:
+                    - generic [ref=e2498]:
+                      - img [ref=e2499]
+                      - text: T3
+                    - generic [ref=e2502]: $1,890
+                    - link "Learn More" [ref=e2503]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2013U/93909
+                      - text: Learn More
+                      - img [ref=e2504]
+              - button "9:30 AM – 10:30 AM Registration Closed 14U Chicago Bears vs 14U Detroit Lions Winter 2 - 14U Coed T2 $275 Learn More" [ref=e2508] [cursor=pointer]:
+                - generic [ref=e2511]:
+                  - generic [ref=e2512]:
+                    - generic [ref=e2513]:
+                      - img [ref=e2514]
+                      - generic [ref=e2517]: 9:30 AM – 10:30 AM
+                    - generic [ref=e2519]: Registration Closed
+                  - heading "14U Chicago Bears vs 14U Detroit Lions" [level=4] [ref=e2520]
+                  - paragraph [ref=e2521]: Winter 2 - 14U Coed
+                  - generic [ref=e2522]:
+                    - generic [ref=e2523]:
+                      - img [ref=e2524]
+                      - text: T2
+                    - generic [ref=e2527]: $275
+                    - link "Learn More" [ref=e2528]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2014U%20Coed/94096
+                      - text: Learn More
+                      - img [ref=e2529]
+              - button "10:00 AM – 10:45 AM Registration Closed BH Dragons U13 vs Chicago City 2013 Boys II Boys 13U T3 $1,890 Learn More" [ref=e2533] [cursor=pointer]:
+                - generic [ref=e2536]:
+                  - generic [ref=e2537]:
+                    - generic [ref=e2538]:
+                      - img [ref=e2539]
+                      - generic [ref=e2542]: 10:00 AM – 10:45 AM
+                    - generic [ref=e2544]: Registration Closed
+                  - heading "BH Dragons U13 vs Chicago City 2013 Boys II" [level=4] [ref=e2545]
+                  - paragraph [ref=e2546]: Boys 13U
+                  - generic [ref=e2547]:
+                    - generic [ref=e2548]:
+                      - img [ref=e2549]
+                      - text: T3
+                    - generic [ref=e2552]: $1,890
+                    - link "Learn More" [ref=e2553]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343
+                      - text: Learn More
+                      - img [ref=e2554]
+              - button "10:30 AM – 11:30 AM Registration Closed 14U Houston Texans vs 14U Buffalo Bills Winter 2 - 14U Coed T2 $275 Learn More" [ref=e2558] [cursor=pointer]:
+                - generic [ref=e2561]:
+                  - generic [ref=e2562]:
+                    - generic [ref=e2563]:
+                      - img [ref=e2564]
+                      - generic [ref=e2567]: 10:30 AM – 11:30 AM
+                    - generic [ref=e2569]: Registration Closed
+                  - heading "14U Houston Texans vs 14U Buffalo Bills" [level=4] [ref=e2570]
+                  - paragraph [ref=e2571]: Winter 2 - 14U Coed
+                  - generic [ref=e2572]:
+                    - generic [ref=e2573]:
+                      - img [ref=e2574]
+                      - text: T2
+                    - generic [ref=e2577]: $275
+                    - link "Learn More" [ref=e2578]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2014U%20Coed/94096
+                      - text: Learn More
+                      - img [ref=e2579]
+              - button "10:45 AM – 11:30 AM Registration Closed Chicago City 2012 Girls I vs ESFC 2012 Girls Girls 14U T3 $1,890 Learn More" [ref=e2583] [cursor=pointer]:
+                - generic [ref=e2586]:
+                  - generic [ref=e2587]:
+                    - generic [ref=e2588]:
+                      - img [ref=e2589]
+                      - generic [ref=e2592]: 10:45 AM – 11:30 AM
+                    - generic [ref=e2594]: Registration Closed
+                  - heading "Chicago City 2012 Girls I vs ESFC 2012 Girls" [level=4] [ref=e2595]
+                  - paragraph [ref=e2596]: Girls 14U
+                  - generic [ref=e2597]:
+                    - generic [ref=e2598]:
+                      - img [ref=e2599]
+                      - text: T3
+                    - generic [ref=e2602]: $1,890
+                    - link "Learn More" [ref=e2603]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2014U/93910
+                      - text: Learn More
+                      - img [ref=e2604]
+              - button "11:30 AM – 12:15 PM Registration Closed SKOMOR U14/13 Premier vs Chicago City 2012 Boys II Boys 14U T3 $1,890 Learn More" [ref=e2608] [cursor=pointer]:
+                - generic [ref=e2611]:
+                  - generic [ref=e2612]:
+                    - generic [ref=e2613]:
+                      - img [ref=e2614]
+                      - generic [ref=e2617]: 11:30 AM – 12:15 PM
+                    - generic [ref=e2619]: Registration Closed
+                  - heading "SKOMOR U14/13 Premier vs Chicago City 2012 Boys II" [level=4] [ref=e2620]
+                  - paragraph [ref=e2621]: Boys 14U
+                  - generic [ref=e2622]:
+                    - generic [ref=e2623]:
+                      - img [ref=e2624]
+                      - text: T3
+                    - generic [ref=e2627]: $1,890
+                    - link "Learn More" [ref=e2628]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e2629]
+              - button "12:00 PM – 12:45 PM Registration Closed Wilmette Wings 2014 White Boys vs PSG U12 Boys Red Boys 12U T2 $1,890 Learn More" [ref=e2633] [cursor=pointer]:
+                - generic [ref=e2636]:
+                  - generic [ref=e2637]:
+                    - generic [ref=e2638]:
+                      - img [ref=e2639]
+                      - generic [ref=e2642]: 12:00 PM – 12:45 PM
+                    - generic [ref=e2644]: Registration Closed
+                  - heading "Wilmette Wings 2014 White Boys vs PSG U12 Boys Red" [level=4] [ref=e2645]
+                  - paragraph [ref=e2646]: Boys 12U
+                  - generic [ref=e2647]:
+                    - generic [ref=e2648]:
+                      - img [ref=e2649]
+                      - text: T2
+                    - generic [ref=e2652]: $1,890
+                    - link "Learn More" [ref=e2653]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e2654]
+              - button "12:15 PM – 1:00 PM Registration Closed SKOMOR U14/13 Premier vs PSG U13 Boys Pre Academy Boys 14U T3 $1,890 Learn More" [ref=e2658] [cursor=pointer]:
+                - generic [ref=e2661]:
+                  - generic [ref=e2662]:
+                    - generic [ref=e2663]:
+                      - img [ref=e2664]
+                      - generic [ref=e2667]: 12:15 PM – 1:00 PM
+                    - generic [ref=e2669]: Registration Closed
+                  - heading "SKOMOR U14/13 Premier vs PSG U13 Boys Pre Academy" [level=4] [ref=e2670]
+                  - paragraph [ref=e2671]: Boys 14U
+                  - generic [ref=e2672]:
+                    - generic [ref=e2673]:
+                      - img [ref=e2674]
+                      - text: T3
+                    - generic [ref=e2677]: $1,890
+                    - link "Learn More" [ref=e2678]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e2679]
+              - button "12:45 PM – 1:30 PM Registration Closed ESFC 2013 Girls Blue vs PSG U13 Girls Pre Academy Girls 13U T2 $1,890 Learn More" [ref=e2683] [cursor=pointer]:
+                - generic [ref=e2686]:
+                  - generic [ref=e2687]:
+                    - generic [ref=e2688]:
+                      - img [ref=e2689]
+                      - generic [ref=e2692]: 12:45 PM – 1:30 PM
+                    - generic [ref=e2694]: Registration Closed
+                  - heading "ESFC 2013 Girls Blue vs PSG U13 Girls Pre Academy" [level=4] [ref=e2695]
+                  - paragraph [ref=e2696]: Girls 13U
+                  - generic [ref=e2697]:
+                    - generic [ref=e2698]:
+                      - img [ref=e2699]
+                      - text: T2
+                    - generic [ref=e2702]: $1,890
+                    - link "Learn More" [ref=e2703]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2013U/93909
+                      - text: Learn More
+                      - img [ref=e2704]
+              - button "1:00 PM – 1:45 PM Registration Closed PSG U14 Boys Red vs Chicago City 2012 Boys navy Boys 14U T3 $1,890 Learn More" [ref=e2708] [cursor=pointer]:
+                - generic [ref=e2711]:
+                  - generic [ref=e2712]:
+                    - generic [ref=e2713]:
+                      - img [ref=e2714]
+                      - generic [ref=e2717]: 1:00 PM – 1:45 PM
+                    - generic [ref=e2719]: Registration Closed
+                  - heading "PSG U14 Boys Red vs Chicago City 2012 Boys navy" [level=4] [ref=e2720]
+                  - paragraph [ref=e2721]: Boys 14U
+                  - generic [ref=e2722]:
+                    - generic [ref=e2723]:
+                      - img [ref=e2724]
+                      - text: T3
+                    - generic [ref=e2727]: $1,890
+                    - link "Learn More" [ref=e2728]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e2729]
+              - button "1:15 PM – 2:00 PM Registration Closed JaHbat B2018 vs PSG U8 Boys Blue Boys 8U T1 $1,245 Learn More" [ref=e2733] [cursor=pointer]:
+                - generic [ref=e2736]:
+                  - generic [ref=e2737]:
+                    - generic [ref=e2738]:
+                      - img [ref=e2739]
+                      - generic [ref=e2742]: 1:15 PM – 2:00 PM
+                    - generic [ref=e2744]: Registration Closed
+                  - heading "JaHbat B2018 vs PSG U8 Boys Blue" [level=4] [ref=e2745]
+                  - paragraph [ref=e2746]: Boys 8U
+                  - generic [ref=e2747]:
+                    - generic [ref=e2748]:
+                      - img [ref=e2749]
+                      - text: T1
+                    - generic [ref=e2752]: $1,245
+                    - link "Learn More" [ref=e2753]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e2754]
+              - button "1:30 PM – 2:15 PM Registration Closed PSG Evanston & Northshore 12U Boys vs JaHbat B2014 Blue Boys 12U T2 $1,890 Learn More" [ref=e2758] [cursor=pointer]:
+                - generic [ref=e2761]:
+                  - generic [ref=e2762]:
+                    - generic [ref=e2763]:
+                      - img [ref=e2764]
+                      - generic [ref=e2767]: 1:30 PM – 2:15 PM
+                    - generic [ref=e2769]: Registration Closed
+                  - heading "PSG Evanston & Northshore 12U Boys vs JaHbat B2014 Blue" [level=4] [ref=e2770]
+                  - paragraph [ref=e2771]: Boys 12U
+                  - generic [ref=e2772]:
+                    - generic [ref=e2773]:
+                      - img [ref=e2774]
+                      - text: T2
+                    - generic [ref=e2777]: $1,890
+                    - link "Learn More" [ref=e2778]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e2779]
+              - button "1:45 PM – 2:30 PM Registration Closed PSG Evanston & Northshore U14 Boys vs Chicago City 2012 Boys Loop Boys 14U T3 $1,890 Learn More" [ref=e2783] [cursor=pointer]:
+                - generic [ref=e2786]:
+                  - generic [ref=e2787]:
+                    - generic [ref=e2788]:
+                      - img [ref=e2789]
+                      - generic [ref=e2792]: 1:45 PM – 2:30 PM
+                    - generic [ref=e2794]: Registration Closed
+                  - heading "PSG Evanston & Northshore U14 Boys vs Chicago City 2012 Boys Loop" [level=4] [ref=e2795]
+                  - paragraph [ref=e2796]: Boys 14U
+                  - generic [ref=e2797]:
+                    - generic [ref=e2798]:
+                      - img [ref=e2799]
+                      - text: T3
+                    - generic [ref=e2802]: $1,890
+                    - link "Learn More" [ref=e2803]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e2804]
+              - button "2:15 PM – 3:00 PM Registration Closed Chicago City 2013 Boys Loop vs PSG U12 Boys Pre Academy Boys 13U T2 $1,890 Learn More" [ref=e2808] [cursor=pointer]:
+                - generic [ref=e2811]:
+                  - generic [ref=e2812]:
+                    - generic [ref=e2813]:
+                      - img [ref=e2814]
+                      - generic [ref=e2817]: 2:15 PM – 3:00 PM
+                    - generic [ref=e2819]: Registration Closed
+                  - heading "Chicago City 2013 Boys Loop vs PSG U12 Boys Pre Academy" [level=4] [ref=e2820]
+                  - paragraph [ref=e2821]: Boys 13U
+                  - generic [ref=e2822]:
+                    - generic [ref=e2823]:
+                      - img [ref=e2824]
+                      - text: T2
+                    - generic [ref=e2827]: $1,890
+                    - link "Learn More" [ref=e2828]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343
+                      - text: Learn More
+                      - img [ref=e2829]
+              - button "2:30 PM – 3:15 PM Registration Closed JaHbat B2013 Green vs PSG U13 Boys Red Boys 13U T3 $1,890 Learn More" [ref=e2833] [cursor=pointer]:
+                - generic [ref=e2836]:
+                  - generic [ref=e2837]:
+                    - generic [ref=e2838]:
+                      - img [ref=e2839]
+                      - generic [ref=e2842]: 2:30 PM – 3:15 PM
+                    - generic [ref=e2844]: Registration Closed
+                  - heading "JaHbat B2013 Green vs PSG U13 Boys Red" [level=4] [ref=e2845]
+                  - paragraph [ref=e2846]: Boys 13U
+                  - generic [ref=e2847]:
+                    - generic [ref=e2848]:
+                      - img [ref=e2849]
+                      - text: T3
+                    - generic [ref=e2852]: $1,890
+                    - link "Learn More" [ref=e2853]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343
+                      - text: Learn More
+                      - img [ref=e2854]
+              - button "2:45 PM – 3:30 PM Registration Closed FC Connection 2018 Blue vs Norridge United U7 Boys Premier Boys 8U T1 $1,245 Learn More" [ref=e2858] [cursor=pointer]:
+                - generic [ref=e2861]:
+                  - generic [ref=e2862]:
+                    - generic [ref=e2863]:
+                      - img [ref=e2864]
+                      - generic [ref=e2867]: 2:45 PM – 3:30 PM
+                    - generic [ref=e2869]: Registration Closed
+                  - heading "FC Connection 2018 Blue vs Norridge United U7 Boys Premier" [level=4] [ref=e2870]
+                  - paragraph [ref=e2871]: Boys 8U
+                  - generic [ref=e2872]:
+                    - generic [ref=e2873]:
+                      - img [ref=e2874]
+                      - text: T1
+                    - generic [ref=e2877]: $1,245
+                    - link "Learn More" [ref=e2878]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e2879]
+              - button "3:00 PM – 3:45 PM Registration Closed JaHbat G2013/14 vs PSG U13 Girls Red Girls 13U T2 $1,890 Learn More" [ref=e2883] [cursor=pointer]:
+                - generic [ref=e2886]:
+                  - generic [ref=e2887]:
+                    - generic [ref=e2888]:
+                      - img [ref=e2889]
+                      - generic [ref=e2892]: 3:00 PM – 3:45 PM
+                    - generic [ref=e2894]: Registration Closed
+                  - heading "JaHbat G2013/14 vs PSG U13 Girls Red" [level=4] [ref=e2895]
+                  - paragraph [ref=e2896]: Girls 13U
+                  - generic [ref=e2897]:
+                    - generic [ref=e2898]:
+                      - img [ref=e2899]
+                      - text: T2
+                    - generic [ref=e2902]: $1,890
+                    - link "Learn More" [ref=e2903]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2013U/93909
+                      - text: Learn More
+                      - img [ref=e2904]
+              - button "3:15 PM – 4:00 PM Registration Closed UA 2014 vs PSG U12 Boys Blue Boys 12U T3 $1,890 Learn More" [ref=e2908] [cursor=pointer]:
+                - generic [ref=e2911]:
+                  - generic [ref=e2912]:
+                    - generic [ref=e2913]:
+                      - img [ref=e2914]
+                      - generic [ref=e2917]: 3:15 PM – 4:00 PM
+                    - generic [ref=e2919]: Registration Closed
+                  - heading "UA 2014 vs PSG U12 Boys Blue" [level=4] [ref=e2920]
+                  - paragraph [ref=e2921]: Boys 12U
+                  - generic [ref=e2922]:
+                    - generic [ref=e2923]:
+                      - img [ref=e2924]
+                      - text: T3
+                    - generic [ref=e2927]: $1,890
+                    - link "Learn More" [ref=e2928]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e2929]
+              - button "3:30 PM – 4:15 PM Registration Closed PSG U8 Boys Blue - West Town vs PSG U8 Boys - Northside Boys 8U T1 $1,245 Learn More" [ref=e2933] [cursor=pointer]:
+                - generic [ref=e2936]:
+                  - generic [ref=e2937]:
+                    - generic [ref=e2938]:
+                      - img [ref=e2939]
+                      - generic [ref=e2942]: 3:30 PM – 4:15 PM
+                    - generic [ref=e2944]: Registration Closed
+                  - heading "PSG U8 Boys Blue - West Town vs PSG U8 Boys - Northside" [level=4] [ref=e2945]
+                  - paragraph [ref=e2946]: Boys 8U
+                  - generic [ref=e2947]:
+                    - generic [ref=e2948]:
+                      - img [ref=e2949]
+                      - text: T1
+                    - generic [ref=e2952]: $1,245
+                    - link "Learn More" [ref=e2953]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e2954]
+              - button "3:45 PM – 4:30 PM Registration Closed Northwind 2012 Girls Premier 2 vs JaHbat G2012 Girls 14U T2 $1,890 Learn More" [ref=e2958] [cursor=pointer]:
+                - generic [ref=e2961]:
+                  - generic [ref=e2962]:
+                    - generic [ref=e2963]:
+                      - img [ref=e2964]
+                      - generic [ref=e2967]: 3:45 PM – 4:30 PM
+                    - generic [ref=e2969]: Registration Closed
+                  - heading "Northwind 2012 Girls Premier 2 vs JaHbat G2012" [level=4] [ref=e2970]
+                  - paragraph [ref=e2971]: Girls 14U
+                  - generic [ref=e2972]:
+                    - generic [ref=e2973]:
+                      - img [ref=e2974]
+                      - text: T2
+                    - generic [ref=e2977]: $1,890
+                    - link "Learn More" [ref=e2978]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2014U/93910
+                      - text: Learn More
+                      - img [ref=e2979]
+              - button "4:15 PM – 5:00 PM Registration Closed FC Connection 2018 vs PSG Evanston & Northshore 8U Boys Boys 8U T1 $1,245 Learn More" [ref=e2983] [cursor=pointer]:
+                - generic [ref=e2986]:
+                  - generic [ref=e2987]:
+                    - generic [ref=e2988]:
+                      - img [ref=e2989]
+                      - generic [ref=e2992]: 4:15 PM – 5:00 PM
+                    - generic [ref=e2994]: Registration Closed
+                  - heading "FC Connection 2018 vs PSG Evanston & Northshore 8U Boys" [level=4] [ref=e2995]
+                  - paragraph [ref=e2996]: Boys 8U
+                  - generic [ref=e2997]:
+                    - generic [ref=e2998]:
+                      - img [ref=e2999]
+                      - text: T1
+                    - generic [ref=e3002]: $1,245
+                    - link "Learn More" [ref=e3003]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e3004]
+              - button "4:30 PM – 5:15 PM Registration Closed Norridge United U12 Boys Select vs AYSO Extra 12U Boys Orange Boys 12U T2 $1,890 Learn More" [ref=e3008] [cursor=pointer]:
+                - generic [ref=e3011]:
+                  - generic [ref=e3012]:
+                    - generic [ref=e3013]:
+                      - img [ref=e3014]
+                      - generic [ref=e3017]: 4:30 PM – 5:15 PM
+                    - generic [ref=e3019]: Registration Closed
+                  - heading "Norridge United U12 Boys Select vs AYSO Extra 12U Boys Orange" [level=4] [ref=e3020]
+                  - paragraph [ref=e3021]: Boys 12U
+                  - generic [ref=e3022]:
+                    - generic [ref=e3023]:
+                      - img [ref=e3024]
+                      - text: T2
+                    - generic [ref=e3027]: $1,890
+                    - link "Learn More" [ref=e3028]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e3029]
+              - button "4:45 PM – 5:30 PM Registration Closed Northwind 2014 Girls Premier 2 vs AYSO Extra U12 Girls Navy Girls 12U T3 $1,890 Learn More" [ref=e3033] [cursor=pointer]:
+                - generic [ref=e3036]:
+                  - generic [ref=e3037]:
+                    - generic [ref=e3038]:
+                      - img [ref=e3039]
+                      - generic [ref=e3042]: 4:45 PM – 5:30 PM
+                    - generic [ref=e3044]: Registration Closed
+                  - heading "Northwind 2014 Girls Premier 2 vs AYSO Extra U12 Girls Navy" [level=4] [ref=e3045]
+                  - paragraph [ref=e3046]: Girls 12U
+                  - generic [ref=e3047]:
+                    - generic [ref=e3048]:
+                      - img [ref=e3049]
+                      - text: T3
+                    - generic [ref=e3052]: $1,890
+                    - link "Learn More" [ref=e3053]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2012U/93351
+                      - text: Learn More
+                      - img [ref=e3054]
+              - button "5:00 PM – 5:45 PM Registration Closed PSG U8 Boys Red - West Town vs YSIFC 2019 Boys 8U T1 $1,245 Learn More" [ref=e3058] [cursor=pointer]:
+                - generic [ref=e3061]:
+                  - generic [ref=e3062]:
+                    - generic [ref=e3063]:
+                      - img [ref=e3064]
+                      - generic [ref=e3067]: 5:00 PM – 5:45 PM
+                    - generic [ref=e3069]: Registration Closed
+                  - heading "PSG U8 Boys Red - West Town vs YSIFC 2019" [level=4] [ref=e3070]
+                  - paragraph [ref=e3071]: Boys 8U
+                  - generic [ref=e3072]:
+                    - generic [ref=e3073]:
+                      - img [ref=e3074]
+                      - text: T1
+                    - generic [ref=e3077]: $1,245
+                    - link "Learn More" [ref=e3078]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e3079]
+              - button "5:15 PM – 6:00 PM Registration Closed SKOMOR U12 Premier vs YSIFC 2014 Yellow Boys 12U T2 $1,890 Learn More" [ref=e3083] [cursor=pointer]:
+                - generic [ref=e3086]:
+                  - generic [ref=e3087]:
+                    - generic [ref=e3088]:
+                      - img [ref=e3089]
+                      - generic [ref=e3092]: 5:15 PM – 6:00 PM
+                    - generic [ref=e3094]: Registration Closed
+                  - heading "SKOMOR U12 Premier vs YSIFC 2014 Yellow" [level=4] [ref=e3095]
+                  - paragraph [ref=e3096]: Boys 12U
+                  - generic [ref=e3097]:
+                    - generic [ref=e3098]:
+                      - img [ref=e3099]
+                      - text: T2
+                    - generic [ref=e3102]: $1,890
+                    - link "Learn More" [ref=e3103]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e3104]
+              - button "5:30 PM – 6:15 PM Registration Closed JOMSC U12 vs JaHbat B2014 Yellow Boys 12U T3 $1,890 Learn More" [ref=e3108] [cursor=pointer]:
+                - generic [ref=e3111]:
+                  - generic [ref=e3112]:
+                    - generic [ref=e3113]:
+                      - img [ref=e3114]
+                      - generic [ref=e3117]: 5:30 PM – 6:15 PM
+                    - generic [ref=e3119]: Registration Closed
+                  - heading "JOMSC U12 vs JaHbat B2014 Yellow" [level=4] [ref=e3120]
+                  - paragraph [ref=e3121]: Boys 12U
+                  - generic [ref=e3122]:
+                    - generic [ref=e3123]:
+                      - img [ref=e3124]
+                      - text: T3
+                    - generic [ref=e3127]: $1,890
+                    - link "Learn More" [ref=e3128]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e3129]
+              - button "6:00 PM – 6:45 PM Registration Closed ESFC 2014 Girls Blue vs Peterson Park 12U Girls Extra Girls 12U T2 $1,890 Learn More" [ref=e3133] [cursor=pointer]:
+                - generic [ref=e3136]:
+                  - generic [ref=e3137]:
+                    - generic [ref=e3138]:
+                      - img [ref=e3139]
+                      - generic [ref=e3142]: 6:00 PM – 6:45 PM
+                    - generic [ref=e3144]: Registration Closed
+                  - heading "ESFC 2014 Girls Blue vs Peterson Park 12U Girls Extra" [level=4] [ref=e3145]
+                  - paragraph [ref=e3146]: Girls 12U
+                  - generic [ref=e3147]:
+                    - generic [ref=e3148]:
+                      - img [ref=e3149]
+                      - text: T2
+                    - generic [ref=e3152]: $1,890
+                    - link "Learn More" [ref=e3153]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2012U/93351
+                      - text: Learn More
+                      - img [ref=e3154]
+              - button "6:15 PM – 7:00 PM Registration Closed JOMSC U14 vs Chicago City 2012 Boys Blue Boys 14U T3 $1,890 Learn More" [ref=e3158] [cursor=pointer]:
+                - generic [ref=e3161]:
+                  - generic [ref=e3162]:
+                    - generic [ref=e3163]:
+                      - img [ref=e3164]
+                      - generic [ref=e3167]: 6:15 PM – 7:00 PM
+                    - generic [ref=e3169]: Registration Closed
+                  - heading "JOMSC U14 vs Chicago City 2012 Boys Blue" [level=4] [ref=e3170]
+                  - paragraph [ref=e3171]: Boys 14U
+                  - generic [ref=e3172]:
+                    - generic [ref=e3173]:
+                      - img [ref=e3174]
+                      - text: T3
+                    - generic [ref=e3177]: $1,890
+                    - link "Learn More" [ref=e3178]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e3179]
+              - button "6:45 PM – 7:30 PM Registration Closed ESFC 2014 Girls White vs PSG U12 Girls Pre Academy Girls 12U T2 $1,890 Learn More" [ref=e3183] [cursor=pointer]:
+                - generic [ref=e3186]:
+                  - generic [ref=e3187]:
+                    - generic [ref=e3188]:
+                      - img [ref=e3189]
+                      - generic [ref=e3192]: 6:45 PM – 7:30 PM
+                    - generic [ref=e3194]: Registration Closed
+                  - heading "ESFC 2014 Girls White vs PSG U12 Girls Pre Academy" [level=4] [ref=e3195]
+                  - paragraph [ref=e3196]: Girls 12U
+                  - generic [ref=e3197]:
+                    - generic [ref=e3198]:
+                      - img [ref=e3199]
+                      - text: T2
+                    - generic [ref=e3202]: $1,890
+                    - link "Learn More" [ref=e3203]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2012U/93351
+                      - text: Learn More
+                      - img [ref=e3204]
+              - button "7:00 PM – 8:30 PM 21 left Adult Pickup T1 $20 Free for Members Register" [ref=e3208] [cursor=pointer]:
+                - generic [ref=e3211]:
+                  - generic [ref=e3212]:
+                    - generic [ref=e3213]:
+                      - img [ref=e3214]
+                      - generic [ref=e3217]: 7:00 PM – 8:30 PM
+                    - generic [ref=e3219]: 21 left
+                  - heading "Adult Pickup" [level=4] [ref=e3220]
+                  - generic [ref=e3221]:
+                    - generic [ref=e3222]:
+                      - img [ref=e3223]
+                      - text: T1
+                    - generic [ref=e3226]: $20
+                    - generic [ref=e3227]: Free for Members
+                    - link "Register" [ref=e3228]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
+                      - text: Register
+                      - img [ref=e3229]
+              - button "7:00 PM – 7:45 PM Registration Closed Norridge United U13 Boys Premier vs JOMSC U13 Boys 13U T3 $1,890 Learn More" [ref=e3233] [cursor=pointer]:
+                - generic [ref=e3236]:
+                  - generic [ref=e3237]:
+                    - generic [ref=e3238]:
+                      - img [ref=e3239]
+                      - generic [ref=e3242]: 7:00 PM – 7:45 PM
+                    - generic [ref=e3244]: Registration Closed
+                  - heading "Norridge United U13 Boys Premier vs JOMSC U13" [level=4] [ref=e3245]
+                  - paragraph [ref=e3246]: Boys 13U
+                  - generic [ref=e3247]:
+                    - generic [ref=e3248]:
+                      - img [ref=e3249]
+                      - text: T3
+                    - generic [ref=e3252]: $1,890
+                    - link "Learn More" [ref=e3253]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343
+                      - text: Learn More
+                      - img [ref=e3254]
+              - button "7:30 PM – 8:15 PM Registration Closed Norridge United U12 Boys Premier vs Chicago City 2014 Boys III Boys 12U T2 $1,890 Learn More" [ref=e3258] [cursor=pointer]:
+                - generic [ref=e3261]:
+                  - generic [ref=e3262]:
+                    - generic [ref=e3263]:
+                      - img [ref=e3264]
+                      - generic [ref=e3267]: 7:30 PM – 8:15 PM
+                    - generic [ref=e3269]: Registration Closed
+                  - heading "Norridge United U12 Boys Premier vs Chicago City 2014 Boys III" [level=4] [ref=e3270]
+                  - paragraph [ref=e3271]: Boys 12U
+                  - generic [ref=e3272]:
+                    - generic [ref=e3273]:
+                      - img [ref=e3274]
+                      - text: T2
+                    - generic [ref=e3277]: $1,890
+                    - link "Learn More" [ref=e3278]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e3279]
+              - button "7:45 PM – 8:30 PM Registration Closed Northwind 2012 Girls Premier vs JaHbat G2012 Girls 14U T3 $1,890 Learn More" [ref=e3283] [cursor=pointer]:
+                - generic [ref=e3286]:
+                  - generic [ref=e3287]:
+                    - generic [ref=e3288]:
+                      - img [ref=e3289]
+                      - generic [ref=e3292]: 7:45 PM – 8:30 PM
+                    - generic [ref=e3294]: Registration Closed
+                  - heading "Northwind 2012 Girls Premier vs JaHbat G2012" [level=4] [ref=e3295]
+                  - paragraph [ref=e3296]: Girls 14U
+                  - generic [ref=e3297]:
+                    - generic [ref=e3298]:
+                      - img [ref=e3299]
+                      - text: T3
+                    - generic [ref=e3302]: $1,890
+                    - link "Learn More" [ref=e3303]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2014U/93910
+                      - text: Learn More
+                      - img [ref=e3304]
+          - region "Events for Sunday, March 8" [ref=e3308]:
+            - generic [ref=e3309]:
+              - generic [ref=e3310]:
+                - generic [ref=e3311]: Sun
+                - generic [ref=e3312]: "8"
+              - generic [ref=e3313]:
+                - heading "Sunday, March 8" [level=3] [ref=e3314]
+                - paragraph [ref=e3315]: 33 events
+            - generic [ref=e3316]:
+              - button "9:00 AM – 10:00 AM Registration Closed 10U Denver Broncos vs 10U Chicago Bears Winter 2 - 10U Coed Q2 $275 Learn More" [ref=e3317] [cursor=pointer]:
+                - generic [ref=e3320]:
+                  - generic [ref=e3321]:
+                    - generic [ref=e3322]:
+                      - img [ref=e3323]
+                      - generic [ref=e3326]: 9:00 AM – 10:00 AM
+                    - generic [ref=e3328]: Registration Closed
+                  - heading "10U Denver Broncos vs 10U Chicago Bears" [level=4] [ref=e3329]
+                  - paragraph [ref=e3330]: Winter 2 - 10U Coed
+                  - generic [ref=e3331]:
+                    - generic [ref=e3332]:
+                      - img [ref=e3333]
+                      - text: Q2
+                    - generic [ref=e3336]: $275
+                    - link "Learn More" [ref=e3337]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2010U%20Coed/94095
+                      - text: Learn More
+                      - img [ref=e3338]
+              - button "9:00 AM – 10:00 AM Registration Closed 12U Jacksonville Jaguars vs 12U Cincinnati Bengals Winter 2 - 12U Coed Q4 $275 Learn More" [ref=e3342] [cursor=pointer]:
+                - generic [ref=e3345]:
+                  - generic [ref=e3346]:
+                    - generic [ref=e3347]:
+                      - img [ref=e3348]
+                      - generic [ref=e3351]: 9:00 AM – 10:00 AM
+                    - generic [ref=e3353]: Registration Closed
+                  - heading "12U Jacksonville Jaguars vs 12U Cincinnati Bengals" [level=4] [ref=e3354]
+                  - paragraph [ref=e3355]: Winter 2 - 12U Coed
+                  - generic [ref=e3356]:
+                    - generic [ref=e3357]:
+                      - img [ref=e3358]
+                      - text: Q4
+                    - generic [ref=e3361]: $275
+                    - link "Learn More" [ref=e3362]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2012U%20Coed/94094
+                      - text: Learn More
+                      - img [ref=e3363]
+              - button "9:00 AM – 10:00 AM Registration Closed 12U New Orleans Saints vs 12U LA Chargers Winter 2 - 12U Coed Q3 $275 Learn More" [ref=e3367] [cursor=pointer]:
+                - generic [ref=e3370]:
+                  - generic [ref=e3371]:
+                    - generic [ref=e3372]:
+                      - img [ref=e3373]
+                      - generic [ref=e3376]: 9:00 AM – 10:00 AM
+                    - generic [ref=e3378]: Registration Closed
+                  - heading "12U New Orleans Saints vs 12U LA Chargers" [level=4] [ref=e3379]
+                  - paragraph [ref=e3380]: Winter 2 - 12U Coed
+                  - generic [ref=e3381]:
+                    - generic [ref=e3382]:
+                      - img [ref=e3383]
+                      - text: Q3
+                    - generic [ref=e3386]: $275
+                    - link "Learn More" [ref=e3387]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2012U%20Coed/94094
+                      - text: Learn More
+                      - img [ref=e3388]
+              - button "10:00 AM – 11:00 AM Registration Closed 10U Detroit Lions vs 10U Cincinnati Bengals Winter 2 - 10U Coed Q3 $275 Learn More" [ref=e3392] [cursor=pointer]:
+                - generic [ref=e3395]:
+                  - generic [ref=e3396]:
+                    - generic [ref=e3397]:
+                      - img [ref=e3398]
+                      - generic [ref=e3401]: 10:00 AM – 11:00 AM
+                    - generic [ref=e3403]: Registration Closed
+                  - heading "10U Detroit Lions vs 10U Cincinnati Bengals" [level=4] [ref=e3404]
+                  - paragraph [ref=e3405]: Winter 2 - 10U Coed
+                  - generic [ref=e3406]:
+                    - generic [ref=e3407]:
+                      - img [ref=e3408]
+                      - text: Q3
+                    - generic [ref=e3411]: $275
+                    - link "Learn More" [ref=e3412]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2010U%20Coed/94095
+                      - text: Learn More
+                      - img [ref=e3413]
+              - button "10:00 AM – 11:00 AM Registration Closed 12U LA Rams vs 12U Chicago Bears Winter 2 - 12U Coed Q4 $275 Learn More" [ref=e3417] [cursor=pointer]:
+                - generic [ref=e3420]:
+                  - generic [ref=e3421]:
+                    - generic [ref=e3422]:
+                      - img [ref=e3423]
+                      - generic [ref=e3426]: 10:00 AM – 11:00 AM
+                    - generic [ref=e3428]: Registration Closed
+                  - heading "12U LA Rams vs 12U Chicago Bears" [level=4] [ref=e3429]
+                  - paragraph [ref=e3430]: Winter 2 - 12U Coed
+                  - generic [ref=e3431]:
+                    - generic [ref=e3432]:
+                      - img [ref=e3433]
+                      - text: Q4
+                    - generic [ref=e3436]: $275
+                    - link "Learn More" [ref=e3437]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-FOOTBALL/10993/season/Winter%202%20-%2012U%20Coed/94094
+                      - text: Learn More
+                      - img [ref=e3438]
+              - button "11:30 AM – 12:15 PM Registration Closed Northside Athletics vs Norridge United U11 Boys Select Boys 11U Q4 $1,695 Learn More" [ref=e3442] [cursor=pointer]:
+                - generic [ref=e3445]:
+                  - generic [ref=e3446]:
+                    - generic [ref=e3447]:
+                      - img [ref=e3448]
+                      - generic [ref=e3451]: 11:30 AM – 12:15 PM
+                    - generic [ref=e3453]: Registration Closed
+                  - heading "Northside Athletics vs Norridge United U11 Boys Select" [level=4] [ref=e3454]
+                  - paragraph [ref=e3455]: Boys 11U
+                  - generic [ref=e3456]:
+                    - generic [ref=e3457]:
+                      - img [ref=e3458]
+                      - text: Q4
+                    - generic [ref=e3461]: $1,695
+                    - link "Learn More" [ref=e3462]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e3463]
+              - button "11:45 AM – 12:30 PM Registration Closed YSIFC 2017-18 Girls vs Wilmette Wings 2017 White Girls Girls 9U Q2 $1,695 Learn More" [ref=e3467] [cursor=pointer]:
+                - generic [ref=e3470]:
+                  - generic [ref=e3471]:
+                    - generic [ref=e3472]:
+                      - img [ref=e3473]
+                      - generic [ref=e3476]: 11:45 AM – 12:30 PM
+                    - generic [ref=e3478]: Registration Closed
+                  - heading "YSIFC 2017-18 Girls vs Wilmette Wings 2017 White Girls" [level=4] [ref=e3479]
+                  - paragraph [ref=e3480]: Girls 9U
+                  - generic [ref=e3481]:
+                    - generic [ref=e3482]:
+                      - img [ref=e3483]
+                      - text: Q2
+                    - generic [ref=e3486]: $1,695
+                    - link "Learn More" [ref=e3487]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%209U/93348
+                      - text: Learn More
+                      - img [ref=e3488]
+              - button "12:00 PM – 12:45 PM Registration Closed Blue Blood Dragons vs PSG U9 Boys Blue I Boys 9U Q3 $1,695 Learn More" [ref=e3492] [cursor=pointer]:
+                - generic [ref=e3495]:
+                  - generic [ref=e3496]:
+                    - generic [ref=e3497]:
+                      - img [ref=e3498]
+                      - generic [ref=e3501]: 12:00 PM – 12:45 PM
+                    - generic [ref=e3503]: Registration Closed
+                  - heading "Blue Blood Dragons vs PSG U9 Boys Blue I" [level=4] [ref=e3504]
+                  - paragraph [ref=e3505]: Boys 9U
+                  - generic [ref=e3506]:
+                    - generic [ref=e3507]:
+                      - img [ref=e3508]
+                      - text: Q3
+                    - generic [ref=e3511]: $1,695
+                    - link "Learn More" [ref=e3512]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%209U/93339
+                      - text: Learn More
+                      - img [ref=e3513]
+              - button "12:15 PM – 1:00 PM Registration Closed PSG U10 Boys - West Town vs PSG U10 Boys - North-Side Boys 10U Q4 $1,695 Learn More" [ref=e3517] [cursor=pointer]:
+                - generic [ref=e3520]:
+                  - generic [ref=e3521]:
+                    - generic [ref=e3522]:
+                      - img [ref=e3523]
+                      - generic [ref=e3526]: 12:15 PM – 1:00 PM
+                    - generic [ref=e3528]: Registration Closed
+                  - heading "PSG U10 Boys - West Town vs PSG U10 Boys - North-Side" [level=4] [ref=e3529]
+                  - paragraph [ref=e3530]: Boys 10U
+                  - generic [ref=e3531]:
+                    - generic [ref=e3532]:
+                      - img [ref=e3533]
+                      - text: Q4
+                    - generic [ref=e3536]: $1,695
+                    - link "Learn More" [ref=e3537]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                      - text: Learn More
+                      - img [ref=e3538]
+              - button "12:30 PM – 1:15 PM Registration Closed Chicago City 2016 Boys II vs PSG U10 Boys White Boys 10U Q2 $1,695 Learn More" [ref=e3542] [cursor=pointer]:
+                - generic [ref=e3545]:
+                  - generic [ref=e3546]:
+                    - generic [ref=e3547]:
+                      - img [ref=e3548]
+                      - generic [ref=e3551]: 12:30 PM – 1:15 PM
+                    - generic [ref=e3553]: Registration Closed
+                  - heading "Chicago City 2016 Boys II vs PSG U10 Boys White" [level=4] [ref=e3554]
+                  - paragraph [ref=e3555]: Boys 10U
+                  - generic [ref=e3556]:
+                    - generic [ref=e3557]:
+                      - img [ref=e3558]
+                      - text: Q2
+                    - generic [ref=e3561]: $1,695
+                    - link "Learn More" [ref=e3562]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                      - text: Learn More
+                      - img [ref=e3563]
+              - button "12:45 PM – 1:30 PM Registration Closed Chicago City 2017 Boys vs YSIFC 2017 Yellow Boys 9U Q3 $1,695 Learn More" [ref=e3567] [cursor=pointer]:
+                - generic [ref=e3570]:
+                  - generic [ref=e3571]:
+                    - generic [ref=e3572]:
+                      - img [ref=e3573]
+                      - generic [ref=e3576]: 12:45 PM – 1:30 PM
+                    - generic [ref=e3578]: Registration Closed
+                  - heading "Chicago City 2017 Boys vs YSIFC 2017 Yellow" [level=4] [ref=e3579]
+                  - paragraph [ref=e3580]: Boys 9U
+                  - generic [ref=e3581]:
+                    - generic [ref=e3582]:
+                      - img [ref=e3583]
+                      - text: Q3
+                    - generic [ref=e3586]: $1,695
+                    - link "Learn More" [ref=e3587]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%209U/93339
+                      - text: Learn More
+                      - img [ref=e3588]
+              - button "1:00 PM – 1:45 PM Registration Closed PSG Evanston & Northshore 9U Boys vs PSG U9 Boys Red Boys 9U Q4 $1,695 Learn More" [ref=e3592] [cursor=pointer]:
+                - generic [ref=e3595]:
+                  - generic [ref=e3596]:
+                    - generic [ref=e3597]:
+                      - img [ref=e3598]
+                      - generic [ref=e3601]: 1:00 PM – 1:45 PM
+                    - generic [ref=e3603]: Registration Closed
+                  - heading "PSG Evanston & Northshore 9U Boys vs PSG U9 Boys Red" [level=4] [ref=e3604]
+                  - paragraph [ref=e3605]: Boys 9U
+                  - generic [ref=e3606]:
+                    - generic [ref=e3607]:
+                      - img [ref=e3608]
+                      - text: Q4
+                    - generic [ref=e3611]: $1,695
+                    - link "Learn More" [ref=e3612]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%209U/93339
+                      - text: Learn More
+                      - img [ref=e3613]
+              - button "1:15 PM – 2:00 PM Registration Closed FC Lakeshore 2015 Boys Premier Red II vs PSG U11 Boys Red Boys 11U Q2 $1,695 Learn More" [ref=e3617] [cursor=pointer]:
+                - generic [ref=e3620]:
+                  - generic [ref=e3621]:
+                    - generic [ref=e3622]:
+                      - img [ref=e3623]
+                      - generic [ref=e3626]: 1:15 PM – 2:00 PM
+                    - generic [ref=e3628]: Registration Closed
+                  - heading "FC Lakeshore 2015 Boys Premier Red II vs PSG U11 Boys Red" [level=4] [ref=e3629]
+                  - paragraph [ref=e3630]: Boys 11U
+                  - generic [ref=e3631]:
+                    - generic [ref=e3632]:
+                      - img [ref=e3633]
+                      - text: Q2
+                    - generic [ref=e3636]: $1,695
+                    - link "Learn More" [ref=e3637]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e3638]
+              - button "1:30 PM – 2:15 PM Registration Closed Wilmette Wings 2017 Boys vs YSIFC 2017 Boys 9U Q3 $1,695 Learn More" [ref=e3642] [cursor=pointer]:
+                - generic [ref=e3645]:
+                  - generic [ref=e3646]:
+                    - generic [ref=e3647]:
+                      - img [ref=e3648]
+                      - generic [ref=e3651]: 1:30 PM – 2:15 PM
+                    - generic [ref=e3653]: Registration Closed
+                  - heading "Wilmette Wings 2017 Boys vs YSIFC 2017" [level=4] [ref=e3654]
+                  - paragraph [ref=e3655]: Boys 9U
+                  - generic [ref=e3656]:
+                    - generic [ref=e3657]:
+                      - img [ref=e3658]
+                      - text: Q3
+                    - generic [ref=e3661]: $1,695
+                    - link "Learn More" [ref=e3662]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%209U/93339
+                      - text: Learn More
+                      - img [ref=e3663]
+              - button "1:45 PM – 2:30 PM Registration Closed Chicago City 2015 Boys I vs PSG U10 Boys Pre Academy Boys 11U Q4 $1,695 Learn More" [ref=e3667] [cursor=pointer]:
+                - generic [ref=e3670]:
+                  - generic [ref=e3671]:
+                    - generic [ref=e3672]:
+                      - img [ref=e3673]
+                      - generic [ref=e3676]: 1:45 PM – 2:30 PM
+                    - generic [ref=e3678]: Registration Closed
+                  - heading "Chicago City 2015 Boys I vs PSG U10 Boys Pre Academy" [level=4] [ref=e3679]
+                  - paragraph [ref=e3680]: Boys 11U
+                  - generic [ref=e3681]:
+                    - generic [ref=e3682]:
+                      - img [ref=e3683]
+                      - text: Q4
+                    - generic [ref=e3686]: $1,695
+                    - link "Learn More" [ref=e3687]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e3688]
+              - button "2:00 PM – 2:45 PM Registration Closed AYSO Extra U10 Boys Orange vs YSIFC 2016 Yellow Boys 10U Q2 $1,695 Learn More" [ref=e3692] [cursor=pointer]:
+                - generic [ref=e3695]:
+                  - generic [ref=e3696]:
+                    - generic [ref=e3697]:
+                      - img [ref=e3698]
+                      - generic [ref=e3701]: 2:00 PM – 2:45 PM
+                    - generic [ref=e3703]: Registration Closed
+                  - heading "AYSO Extra U10 Boys Orange vs YSIFC 2016 Yellow" [level=4] [ref=e3704]
+                  - paragraph [ref=e3705]: Boys 10U
+                  - generic [ref=e3706]:
+                    - generic [ref=e3707]:
+                      - img [ref=e3708]
+                      - text: Q2
+                    - generic [ref=e3711]: $1,695
+                    - link "Learn More" [ref=e3712]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                      - text: Learn More
+                      - img [ref=e3713]
+              - button "2:15 PM – 3:00 PM Registration Closed Chicago City 2015 Boys II vs YSIFC 2015 Boys 11U Q3 $1,695 Learn More" [ref=e3717] [cursor=pointer]:
+                - generic [ref=e3720]:
+                  - generic [ref=e3721]:
+                    - generic [ref=e3722]:
+                      - img [ref=e3723]
+                      - generic [ref=e3726]: 2:15 PM – 3:00 PM
+                    - generic [ref=e3728]: Registration Closed
+                  - heading "Chicago City 2015 Boys II vs YSIFC 2015" [level=4] [ref=e3729]
+                  - paragraph [ref=e3730]: Boys 11U
+                  - generic [ref=e3731]:
+                    - generic [ref=e3732]:
+                      - img [ref=e3733]
+                      - text: Q3
+                    - generic [ref=e3736]: $1,695
+                    - link "Learn More" [ref=e3737]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e3738]
+              - button "2:30 PM – 3:15 PM Registration Closed Wilmette Wings 2017 White Girls vs PSG U9 Girls Red Girls 9U Q4 $1,695 Learn More" [ref=e3742] [cursor=pointer]:
+                - generic [ref=e3745]:
+                  - generic [ref=e3746]:
+                    - generic [ref=e3747]:
+                      - img [ref=e3748]
+                      - generic [ref=e3751]: 2:30 PM – 3:15 PM
+                    - generic [ref=e3753]: Registration Closed
+                  - heading "Wilmette Wings 2017 White Girls vs PSG U9 Girls Red" [level=4] [ref=e3754]
+                  - paragraph [ref=e3755]: Girls 9U
+                  - generic [ref=e3756]:
+                    - generic [ref=e3757]:
+                      - img [ref=e3758]
+                      - text: Q4
+                    - generic [ref=e3761]: $1,695
+                    - link "Learn More" [ref=e3762]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%209U/93348
+                      - text: Learn More
+                      - img [ref=e3763]
+              - button "2:45 PM – 3:30 PM Registration Closed FC Lakeshore Boys 2015 Premier Red 1 vs Norridge United U11 Boys Premier Boys 11U Q2 $1,695 Learn More" [ref=e3767] [cursor=pointer]:
+                - generic [ref=e3770]:
+                  - generic [ref=e3771]:
+                    - generic [ref=e3772]:
+                      - img [ref=e3773]
+                      - generic [ref=e3776]: 2:45 PM – 3:30 PM
+                    - generic [ref=e3778]: Registration Closed
+                  - heading "FC Lakeshore Boys 2015 Premier Red 1 vs Norridge United U11 Boys Premier" [level=4] [ref=e3779]
+                  - paragraph [ref=e3780]: Boys 11U
+                  - generic [ref=e3781]:
+                    - generic [ref=e3782]:
+                      - img [ref=e3783]
+                      - text: Q2
+                    - generic [ref=e3786]: $1,695
+                    - link "Learn More" [ref=e3787]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e3788]
+              - button "3:00 PM – 3:45 PM Registration Closed AYSO Extra U10 Boys Navy vs YSIFC 2016 Blue Boys 10U Q3 $1,695 Learn More" [ref=e3792] [cursor=pointer]:
+                - generic [ref=e3795]:
+                  - generic [ref=e3796]:
+                    - generic [ref=e3797]:
+                      - img [ref=e3798]
+                      - generic [ref=e3801]: 3:00 PM – 3:45 PM
+                    - generic [ref=e3803]: Registration Closed
+                  - heading "AYSO Extra U10 Boys Navy vs YSIFC 2016 Blue" [level=4] [ref=e3804]
+                  - paragraph [ref=e3805]: Boys 10U
+                  - generic [ref=e3806]:
+                    - generic [ref=e3807]:
+                      - img [ref=e3808]
+                      - text: Q3
+                    - generic [ref=e3811]: $1,695
+                    - link "Learn More" [ref=e3812]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                      - text: Learn More
+                      - img [ref=e3813]
+              - button "3:15 PM – 4:00 PM Registration Closed PSG U10 Boys Red vs UA 2016 Boys 10U Q4 $1,695 Learn More" [ref=e3817] [cursor=pointer]:
+                - generic [ref=e3820]:
+                  - generic [ref=e3821]:
+                    - generic [ref=e3822]:
+                      - img [ref=e3823]
+                      - generic [ref=e3826]: 3:15 PM – 4:00 PM
+                    - generic [ref=e3828]: Registration Closed
+                  - heading "PSG U10 Boys Red vs UA 2016" [level=4] [ref=e3829]
+                  - paragraph [ref=e3830]: Boys 10U
+                  - generic [ref=e3831]:
+                    - generic [ref=e3832]:
+                      - img [ref=e3833]
+                      - text: Q4
+                    - generic [ref=e3836]: $1,695
+                    - link "Learn More" [ref=e3837]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                      - text: Learn More
+                      - img [ref=e3838]
+              - button "3:30 PM – 4:15 PM Registration Closed FC Connection 2016 vs Team Evanston 2016 Boys Blue 1 Boys 10U Q2 $1,695 Learn More" [ref=e3842] [cursor=pointer]:
+                - generic [ref=e3845]:
+                  - generic [ref=e3846]:
+                    - generic [ref=e3847]:
+                      - img [ref=e3848]
+                      - generic [ref=e3851]: 3:30 PM – 4:15 PM
+                    - generic [ref=e3853]: Registration Closed
+                  - heading "FC Connection 2016 vs Team Evanston 2016 Boys Blue 1" [level=4] [ref=e3854]
+                  - paragraph [ref=e3855]: Boys 10U
+                  - generic [ref=e3856]:
+                    - generic [ref=e3857]:
+                      - img [ref=e3858]
+                      - text: Q2
+                    - generic [ref=e3861]: $1,695
+                    - link "Learn More" [ref=e3862]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2010U/93340
+                      - text: Learn More
+                      - img [ref=e3863]
+              - button "3:45 PM – 4:30 PM Registration Closed Chicago City 2016 Girls II vs JaHbat G2016/17 Girls 10U Q3 $1,695 Learn More" [ref=e3867] [cursor=pointer]:
+                - generic [ref=e3870]:
+                  - generic [ref=e3871]:
+                    - generic [ref=e3872]:
+                      - img [ref=e3873]
+                      - generic [ref=e3876]: 3:45 PM – 4:30 PM
+                    - generic [ref=e3878]: Registration Closed
+                  - heading "Chicago City 2016 Girls II vs JaHbat G2016/17" [level=4] [ref=e3879]
+                  - paragraph [ref=e3880]: Girls 10U
+                  - generic [ref=e3881]:
+                    - generic [ref=e3882]:
+                      - img [ref=e3883]
+                      - text: Q3
+                    - generic [ref=e3886]: $1,695
+                    - link "Learn More" [ref=e3887]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2010U/93349
+                      - text: Learn More
+                      - img [ref=e3888]
+              - button "4:00 PM – 4:45 PM Registration Closed FC Ole vs UA 2015 Boys 11U Q4 $1,695 Learn More" [ref=e3892] [cursor=pointer]:
+                - generic [ref=e3895]:
+                  - generic [ref=e3896]:
+                    - generic [ref=e3897]:
+                      - img [ref=e3898]
+                      - generic [ref=e3901]: 4:00 PM – 4:45 PM
+                    - generic [ref=e3903]: Registration Closed
+                  - heading "FC Ole vs UA 2015" [level=4] [ref=e3904]
+                  - paragraph [ref=e3905]: Boys 11U
+                  - generic [ref=e3906]:
+                    - generic [ref=e3907]:
+                      - img [ref=e3908]
+                      - text: Q4
+                    - generic [ref=e3911]: $1,695
+                    - link "Learn More" [ref=e3912]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e3913]
+              - button "4:15 PM – 5:00 PM Registration Closed Wilmette Wings 2015 White Boys vs Chicago City 2016 Boys Academy II Boys 11U Q2 $1,695 Learn More" [ref=e3917] [cursor=pointer]:
+                - generic [ref=e3920]:
+                  - generic [ref=e3921]:
+                    - generic [ref=e3922]:
+                      - img [ref=e3923]
+                      - generic [ref=e3926]: 4:15 PM – 5:00 PM
+                    - generic [ref=e3928]: Registration Closed
+                  - heading "Wilmette Wings 2015 White Boys vs Chicago City 2016 Boys Academy II" [level=4] [ref=e3929]
+                  - paragraph [ref=e3930]: Boys 11U
+                  - generic [ref=e3931]:
+                    - generic [ref=e3932]:
+                      - img [ref=e3933]
+                      - text: Q2
+                    - generic [ref=e3936]: $1,695
+                    - link "Learn More" [ref=e3937]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e3938]
+              - button "4:30 PM – 5:15 PM Registration Closed AYSO Extra U10 Girls Navy vs YSIFC 2016 Girls Girls 10U Q3 $1,695 Learn More" [ref=e3942] [cursor=pointer]:
+                - generic [ref=e3945]:
+                  - generic [ref=e3946]:
+                    - generic [ref=e3947]:
+                      - img [ref=e3948]
+                      - generic [ref=e3951]: 4:30 PM – 5:15 PM
+                    - generic [ref=e3953]: Registration Closed
+                  - heading "AYSO Extra U10 Girls Navy vs YSIFC 2016 Girls" [level=4] [ref=e3954]
+                  - paragraph [ref=e3955]: Girls 10U
+                  - generic [ref=e3956]:
+                    - generic [ref=e3957]:
+                      - img [ref=e3958]
+                      - text: Q3
+                    - generic [ref=e3961]: $1,695
+                    - link "Learn More" [ref=e3962]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2010U/93349
+                      - text: Learn More
+                      - img [ref=e3963]
+              - button "5:00 PM – 5:45 PM Registration Closed FC Lions 2015 vs PSG U11 Boys White Boys 11U Q2 $1,695 Learn More" [ref=e3967] [cursor=pointer]:
+                - generic [ref=e3970]:
+                  - generic [ref=e3971]:
+                    - generic [ref=e3972]:
+                      - img [ref=e3973]
+                      - generic [ref=e3976]: 5:00 PM – 5:45 PM
+                    - generic [ref=e3978]: Registration Closed
+                  - heading "FC Lions 2015 vs PSG U11 Boys White" [level=4] [ref=e3979]
+                  - paragraph [ref=e3980]: Boys 11U
+                  - generic [ref=e3981]:
+                    - generic [ref=e3982]:
+                      - img [ref=e3983]
+                      - text: Q2
+                    - generic [ref=e3986]: $1,695
+                    - link "Learn More" [ref=e3987]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e3988]
+              - button "5:15 PM – 6:00 PM Registration Closed Chicago Powerstrikers vs Wilmette Wings 2015 White Girls Girls 11U Q3 $1,695 Learn More" [ref=e3992] [cursor=pointer]:
+                - generic [ref=e3995]:
+                  - generic [ref=e3996]:
+                    - generic [ref=e3997]:
+                      - img [ref=e3998]
+                      - generic [ref=e4001]: 5:15 PM – 6:00 PM
+                    - generic [ref=e4003]: Registration Closed
+                  - heading "Chicago Powerstrikers vs Wilmette Wings 2015 White Girls" [level=4] [ref=e4004]
+                  - paragraph [ref=e4005]: Girls 11U
+                  - generic [ref=e4006]:
+                    - generic [ref=e4007]:
+                      - img [ref=e4008]
+                      - text: Q3
+                    - generic [ref=e4011]: $1,695
+                    - link "Learn More" [ref=e4012]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2011U/93350
+                      - text: Learn More
+                      - img [ref=e4013]
+              - button "5:45 PM – 6:30 PM Registration Closed BH Dragons U11 vs PSG Evanston & Northshore U11 Boys Boys 11U Q2 $1,695 Learn More" [ref=e4017] [cursor=pointer]:
+                - generic [ref=e4020]:
+                  - generic [ref=e4021]:
+                    - generic [ref=e4022]:
+                      - img [ref=e4023]
+                      - generic [ref=e4026]: 5:45 PM – 6:30 PM
+                    - generic [ref=e4028]: Registration Closed
+                  - heading "BH Dragons U11 vs PSG Evanston & Northshore U11 Boys" [level=4] [ref=e4029]
+                  - paragraph [ref=e4030]: Boys 11U
+                  - generic [ref=e4031]:
+                    - generic [ref=e4032]:
+                      - img [ref=e4033]
+                      - text: Q2
+                    - generic [ref=e4036]: $1,695
+                    - link "Learn More" [ref=e4037]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2011U/93341
+                      - text: Learn More
+                      - img [ref=e4038]
+              - button "6:00 PM – 6:45 PM Registration Closed FC Lakeshore Girls 2015 Premier Red vs PSG U11 Girls Pre Academy Girls 11U Q3 $1,695 Learn More" [ref=e4042] [cursor=pointer]:
+                - generic [ref=e4045]:
+                  - generic [ref=e4046]:
+                    - generic [ref=e4047]:
+                      - img [ref=e4048]
+                      - generic [ref=e4051]: 6:00 PM – 6:45 PM
+                    - generic [ref=e4053]: Registration Closed
+                  - heading "FC Lakeshore Girls 2015 Premier Red vs PSG U11 Girls Pre Academy" [level=4] [ref=e4054]
+                  - paragraph [ref=e4055]: Girls 11U
+                  - generic [ref=e4056]:
+                    - generic [ref=e4057]:
+                      - img [ref=e4058]
+                      - text: Q3
+                    - generic [ref=e4061]: $1,695
+                    - link "Learn More" [ref=e4062]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2011U/93350
+                      - text: Learn More
+                      - img [ref=e4063]
+              - button "7:00 PM – 8:00 PM Registration Closed Red vs Green Winter II 2026 Women's League T3 $130 Learn More" [ref=e4067] [cursor=pointer]:
+                - generic [ref=e4070]:
+                  - generic [ref=e4071]:
+                    - generic [ref=e4072]:
+                      - img [ref=e4073]
+                      - generic [ref=e4076]: 7:00 PM – 8:00 PM
+                    - generic [ref=e4078]: Registration Closed
+                  - heading "Red vs Green" [level=4] [ref=e4079]
+                  - paragraph [ref=e4080]: Winter II 2026 Women's League
+                  - generic [ref=e4081]:
+                    - generic [ref=e4082]:
+                      - img [ref=e4083]
+                      - text: T3
+                    - generic [ref=e4086]: $130
+                    - link "Learn More" [ref=e4087]:
+                      - /url: https://bondsports.co/activity/programs/FEMALE-adult-SOCCER/11267/season/Winter%20II%202026%20Women's%20League/103459
+                      - text: Learn More
+                      - img [ref=e4088]
+              - button "7:00 PM – 8:00 PM Registration Closed Schwaben A.C. vs Royals Winter II 2026 Women's League T2 $130 Learn More" [ref=e4092] [cursor=pointer]:
+                - generic [ref=e4095]:
+                  - generic [ref=e4096]:
+                    - generic [ref=e4097]:
+                      - img [ref=e4098]
+                      - generic [ref=e4101]: 7:00 PM – 8:00 PM
+                    - generic [ref=e4103]: Registration Closed
+                  - heading "Schwaben A.C. vs Royals" [level=4] [ref=e4104]
+                  - paragraph [ref=e4105]: Winter II 2026 Women's League
+                  - generic [ref=e4106]:
+                    - generic [ref=e4107]:
+                      - img [ref=e4108]
+                      - text: T2
+                    - generic [ref=e4111]: $130
+                    - link "Learn More" [ref=e4112]:
+                      - /url: https://bondsports.co/activity/programs/FEMALE-adult-SOCCER/11267/season/Winter%20II%202026%20Women's%20League/103459
+                      - text: Learn More
+                      - img [ref=e4113]
+              - button "8:00 PM – 9:00 PM Registration Closed Yellow vs Royals Winter II 2026 Women's League T2 $130 Learn More" [ref=e4117] [cursor=pointer]:
+                - generic [ref=e4120]:
+                  - generic [ref=e4121]:
+                    - generic [ref=e4122]:
+                      - img [ref=e4123]
+                      - generic [ref=e4126]: 8:00 PM – 9:00 PM
+                    - generic [ref=e4128]: Registration Closed
+                  - heading "Yellow vs Royals" [level=4] [ref=e4129]
+                  - paragraph [ref=e4130]: Winter II 2026 Women's League
+                  - generic [ref=e4131]:
+                    - generic [ref=e4132]:
+                      - img [ref=e4133]
+                      - text: T2
+                    - generic [ref=e4136]: $130
+                    - link "Learn More" [ref=e4137]:
+                      - /url: https://bondsports.co/activity/programs/FEMALE-adult-SOCCER/11267/season/Winter%20II%202026%20Women's%20League/103459
+                      - text: Learn More
+                      - img [ref=e4138]
+          - region "Events for Wednesday, March 11" [ref=e4142]:
+            - generic [ref=e4143]:
+              - generic [ref=e4144]:
+                - generic [ref=e4145]: Wed
+                - generic [ref=e4146]: "11"
+              - generic [ref=e4147]:
+                - heading "Wednesday, March 11" [level=3] [ref=e4148]
+                - paragraph [ref=e4149]: 1 event
+            - button "9:00 PM – 10:30 PM 22 left Adult Pickup T3 $20 Free for Members Register" [ref=e4151] [cursor=pointer]:
+              - generic [ref=e4154]:
+                - generic [ref=e4155]:
+                  - generic [ref=e4156]:
+                    - img [ref=e4157]
+                    - generic [ref=e4160]: 9:00 PM – 10:30 PM
+                  - generic [ref=e4162]: 22 left
+                - heading "Adult Pickup" [level=4] [ref=e4163]
+                - generic [ref=e4164]:
+                  - generic [ref=e4165]:
+                    - img [ref=e4166]
+                    - text: T3
+                  - generic [ref=e4169]: $20
+                  - generic [ref=e4170]: Free for Members
+                  - link "Register" [ref=e4171]:
+                    - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
+                    - text: Register
+                    - img [ref=e4172]
+          - region "Events for Thursday, March 12" [ref=e4176]:
+            - generic [ref=e4177]:
+              - generic [ref=e4178]:
+                - generic [ref=e4179]: Thu
+                - generic [ref=e4180]: "12"
+              - generic [ref=e4181]:
+                - heading "Thursday, March 12" [level=3] [ref=e4182]
+                - paragraph [ref=e4183]: 2 events
+            - generic [ref=e4184]:
+              - button "5:00 PM – 5:45 PM Registration Closed ESFC 2010/11 Girls vs Northwind 2010 Girls Premier 2 Girls High School T3 $1,890 Learn More" [ref=e4185] [cursor=pointer]:
+                - generic [ref=e4188]:
+                  - generic [ref=e4189]:
+                    - generic [ref=e4190]:
+                      - img [ref=e4191]
+                      - generic [ref=e4194]: 5:00 PM – 5:45 PM
+                    - generic [ref=e4196]: Registration Closed
+                  - heading "ESFC 2010/11 Girls vs Northwind 2010 Girls Premier 2" [level=4] [ref=e4197]
+                  - paragraph [ref=e4198]: Girls High School
+                  - generic [ref=e4199]:
+                    - generic [ref=e4200]:
+                      - img [ref=e4201]
+                      - text: T3
+                    - generic [ref=e4204]: $1,890
+                    - link "Learn More" [ref=e4205]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%20High%20School/93911
+                      - text: Learn More
+                      - img [ref=e4206]
+              - button "7:15 PM – 8:45 PM 22 left Adult Pickup T3 $20 Free for Members Register" [ref=e4210] [cursor=pointer]:
+                - generic [ref=e4213]:
+                  - generic [ref=e4214]:
+                    - generic [ref=e4215]:
+                      - img [ref=e4216]
+                      - generic [ref=e4219]: 7:15 PM – 8:45 PM
+                    - generic [ref=e4221]: 22 left
+                  - heading "Adult Pickup" [level=4] [ref=e4222]
+                  - generic [ref=e4223]:
+                    - generic [ref=e4224]:
+                      - img [ref=e4225]
+                      - text: T3
+                    - generic [ref=e4228]: $20
+                    - generic [ref=e4229]: Free for Members
+                    - link "Register" [ref=e4230]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
+                      - text: Register
+                      - img [ref=e4231]
+          - region "Events for Friday, March 13" [ref=e4235]:
+            - generic [ref=e4236]:
+              - generic [ref=e4237]:
+                - generic [ref=e4238]: Fri
+                - generic [ref=e4239]: "13"
+              - generic [ref=e4240]:
+                - heading "Friday, March 13" [level=3] [ref=e4241]
+                - paragraph [ref=e4242]: 6 events
+            - generic [ref=e4243]:
+              - button "4:30 PM – 6:00 PM 18 left Adult Pickup T2 $20 Free for Members Register" [ref=e4244] [cursor=pointer]:
+                - generic [ref=e4247]:
+                  - generic [ref=e4248]:
+                    - generic [ref=e4249]:
+                      - img [ref=e4250]
+                      - generic [ref=e4253]: 4:30 PM – 6:00 PM
+                    - generic [ref=e4255]: 18 left
+                  - heading "Adult Pickup" [level=4] [ref=e4256]
+                  - generic [ref=e4257]:
+                    - generic [ref=e4258]:
+                      - img [ref=e4259]
+                      - text: T2
+                    - generic [ref=e4262]: $20
+                    - generic [ref=e4263]: Free for Members
+                    - link "Register" [ref=e4264]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
+                      - text: Register
+                      - img [ref=e4265]
+              - button "6:00 PM – 6:45 PM Registration Closed Northwind 2010 Boys Premier vs Chicago City 2010 Boys II/Loop Boys High School T2 $1,890 Learn More" [ref=e4269] [cursor=pointer]:
+                - generic [ref=e4272]:
+                  - generic [ref=e4273]:
+                    - generic [ref=e4274]:
+                      - img [ref=e4275]
+                      - generic [ref=e4278]: 6:00 PM – 6:45 PM
+                    - generic [ref=e4280]: Registration Closed
+                  - heading "Northwind 2010 Boys Premier vs Chicago City 2010 Boys II/Loop" [level=4] [ref=e4281]
+                  - paragraph [ref=e4282]: Boys High School
+                  - generic [ref=e4283]:
+                    - generic [ref=e4284]:
+                      - img [ref=e4285]
+                      - text: T2
+                    - generic [ref=e4288]: $1,890
+                    - link "Learn More" [ref=e4289]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e4290]
+              - button "6:45 PM – 7:30 PM Registration Closed Ramblers & Celtics vs Chaldean Lions Boys High School T2 $1,890 Learn More" [ref=e4294] [cursor=pointer]:
+                - generic [ref=e4297]:
+                  - generic [ref=e4298]:
+                    - generic [ref=e4299]:
+                      - img [ref=e4300]
+                      - generic [ref=e4303]: 6:45 PM – 7:30 PM
+                    - generic [ref=e4305]: Registration Closed
+                  - heading "Ramblers & Celtics vs Chaldean Lions" [level=4] [ref=e4306]
+                  - paragraph [ref=e4307]: Boys High School
+                  - generic [ref=e4308]:
+                    - generic [ref=e4309]:
+                      - img [ref=e4310]
+                      - text: T2
+                    - generic [ref=e4313]: $1,890
+                    - link "Learn More" [ref=e4314]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e4315]
+              - button "7:15 PM – 8:00 PM Registration Closed JaHbat B2007/08/09 vs PSG U15 Boys Red Boys High School T3 $1,890 Learn More" [ref=e4319] [cursor=pointer]:
+                - generic [ref=e4322]:
+                  - generic [ref=e4323]:
+                    - generic [ref=e4324]:
+                      - img [ref=e4325]
+                      - generic [ref=e4328]: 7:15 PM – 8:00 PM
+                    - generic [ref=e4330]: Registration Closed
+                  - heading "JaHbat B2007/08/09 vs PSG U15 Boys Red" [level=4] [ref=e4331]
+                  - paragraph [ref=e4332]: Boys High School
+                  - generic [ref=e4333]:
+                    - generic [ref=e4334]:
+                      - img [ref=e4335]
+                      - text: T3
+                    - generic [ref=e4338]: $1,890
+                    - link "Learn More" [ref=e4339]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e4340]
+              - button "7:30 PM – 8:15 PM Registration Closed Chicago Celtic SC HS Boys vs Northwind 2009 Boys Premier Boys High School T2 $1,890 Learn More" [ref=e4344] [cursor=pointer]:
+                - generic [ref=e4347]:
+                  - generic [ref=e4348]:
+                    - generic [ref=e4349]:
+                      - img [ref=e4350]
+                      - generic [ref=e4353]: 7:30 PM – 8:15 PM
+                    - generic [ref=e4355]: Registration Closed
+                  - heading "Chicago Celtic SC HS Boys vs Northwind 2009 Boys Premier" [level=4] [ref=e4356]
+                  - paragraph [ref=e4357]: Boys High School
+                  - generic [ref=e4358]:
+                    - generic [ref=e4359]:
+                      - img [ref=e4360]
+                      - text: T2
+                    - generic [ref=e4363]: $1,890
+                    - link "Learn More" [ref=e4364]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e4365]
+              - button "8:15 PM – 9:00 PM Registration Closed JaHbat B2010 vs Northwind 2010 Boys Premier Boys High School T2 $1,890 Learn More" [ref=e4369] [cursor=pointer]:
+                - generic [ref=e4372]:
+                  - generic [ref=e4373]:
+                    - generic [ref=e4374]:
+                      - img [ref=e4375]
+                      - generic [ref=e4378]: 8:15 PM – 9:00 PM
+                    - generic [ref=e4380]: Registration Closed
+                  - heading "JaHbat B2010 vs Northwind 2010 Boys Premier" [level=4] [ref=e4381]
+                  - paragraph [ref=e4382]: Boys High School
+                  - generic [ref=e4383]:
+                    - generic [ref=e4384]:
+                      - img [ref=e4385]
+                      - text: T2
+                    - generic [ref=e4388]: $1,890
+                    - link "Learn More" [ref=e4389]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%20High%20School/93345
+                      - text: Learn More
+                      - img [ref=e4390]
+          - region "Events for Saturday, March 14" [ref=e4394]:
+            - generic [ref=e4395]:
+              - generic [ref=e4396]:
+                - generic [ref=e4397]: Sat
+                - generic [ref=e4398]: "14"
+              - generic [ref=e4399]:
+                - heading "Saturday, March 14" [level=3] [ref=e4400]
+                - paragraph [ref=e4401]: 30 events
+            - generic [ref=e4402]:
+              - button "10:00 AM – 10:45 AM Registration Closed BH Dragons U13 vs Chicago City 2013 Boys Loop Boys 13U T3 $1,890 Learn More" [ref=e4403] [cursor=pointer]:
+                - generic [ref=e4406]:
+                  - generic [ref=e4407]:
+                    - generic [ref=e4408]:
+                      - img [ref=e4409]
+                      - generic [ref=e4412]: 10:00 AM – 10:45 AM
+                    - generic [ref=e4414]: Registration Closed
+                  - heading "BH Dragons U13 vs Chicago City 2013 Boys Loop" [level=4] [ref=e4415]
+                  - paragraph [ref=e4416]: Boys 13U
+                  - generic [ref=e4417]:
+                    - generic [ref=e4418]:
+                      - img [ref=e4419]
+                      - text: T3
+                    - generic [ref=e4422]: $1,890
+                    - link "Learn More" [ref=e4423]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343
+                      - text: Learn More
+                      - img [ref=e4424]
+              - button "10:45 AM – 11:30 AM Registration Closed Chaldean Lions vs ESFC 2012 Boys White Boys 14U T3 $1,890 Learn More" [ref=e4428] [cursor=pointer]:
+                - generic [ref=e4431]:
+                  - generic [ref=e4432]:
+                    - generic [ref=e4433]:
+                      - img [ref=e4434]
+                      - generic [ref=e4437]: 10:45 AM – 11:30 AM
+                    - generic [ref=e4439]: Registration Closed
+                  - heading "Chaldean Lions vs ESFC 2012 Boys White" [level=4] [ref=e4440]
+                  - paragraph [ref=e4441]: Boys 14U
+                  - generic [ref=e4442]:
+                    - generic [ref=e4443]:
+                      - img [ref=e4444]
+                      - text: T3
+                    - generic [ref=e4447]: $1,890
+                    - link "Learn More" [ref=e4448]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e4449]
+              - button "11:30 AM – 12:15 PM Registration Closed Wilmette Wings 2014 Black Boys vs FC Lakeshore 2014 Boys Premier Boys 12U T3 $1,890 Learn More" [ref=e4453] [cursor=pointer]:
+                - generic [ref=e4456]:
+                  - generic [ref=e4457]:
+                    - generic [ref=e4458]:
+                      - img [ref=e4459]
+                      - generic [ref=e4462]: 11:30 AM – 12:15 PM
+                    - generic [ref=e4464]: Registration Closed
+                  - heading "Wilmette Wings 2014 Black Boys vs FC Lakeshore 2014 Boys Premier" [level=4] [ref=e4465]
+                  - paragraph [ref=e4466]: Boys 12U
+                  - generic [ref=e4467]:
+                    - generic [ref=e4468]:
+                      - img [ref=e4469]
+                      - text: T3
+                    - generic [ref=e4472]: $1,890
+                    - link "Learn More" [ref=e4473]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e4474]
+              - button "12:15 PM – 1:00 PM Registration Closed PSG U12 Boys Blue vs JaHbat B2014 Blue Boys 12U T3 $1,890 Learn More" [ref=e4478] [cursor=pointer]:
+                - generic [ref=e4481]:
+                  - generic [ref=e4482]:
+                    - generic [ref=e4483]:
+                      - img [ref=e4484]
+                      - generic [ref=e4487]: 12:15 PM – 1:00 PM
+                    - generic [ref=e4489]: Registration Closed
+                  - heading "PSG U12 Boys Blue vs JaHbat B2014 Blue" [level=4] [ref=e4490]
+                  - paragraph [ref=e4491]: Boys 12U
+                  - generic [ref=e4492]:
+                    - generic [ref=e4493]:
+                      - img [ref=e4494]
+                      - text: T3
+                    - generic [ref=e4497]: $1,890
+                    - link "Learn More" [ref=e4498]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e4499]
+              - button "12:30 PM – 1:15 PM Registration Closed ESFC 2013 Girls Blue vs PSG U13 Girls Red Girls 13U T2 $1,890 Learn More" [ref=e4503] [cursor=pointer]:
+                - generic [ref=e4506]:
+                  - generic [ref=e4507]:
+                    - generic [ref=e4508]:
+                      - img [ref=e4509]
+                      - generic [ref=e4512]: 12:30 PM – 1:15 PM
+                    - generic [ref=e4514]: Registration Closed
+                  - heading "ESFC 2013 Girls Blue vs PSG U13 Girls Red" [level=4] [ref=e4515]
+                  - paragraph [ref=e4516]: Girls 13U
+                  - generic [ref=e4517]:
+                    - generic [ref=e4518]:
+                      - img [ref=e4519]
+                      - text: T2
+                    - generic [ref=e4522]: $1,890
+                    - link "Learn More" [ref=e4523]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2013U/93909
+                      - text: Learn More
+                      - img [ref=e4524]
+              - button "1:00 PM – 1:45 PM Registration Closed Chicago City 2014 Girls II vs Peterson Park 12U Girls Extra Girls 12U T3 $1,890 Learn More" [ref=e4528] [cursor=pointer]:
+                - generic [ref=e4531]:
+                  - generic [ref=e4532]:
+                    - generic [ref=e4533]:
+                      - img [ref=e4534]
+                      - generic [ref=e4537]: 1:00 PM – 1:45 PM
+                    - generic [ref=e4539]: Registration Closed
+                  - heading "Chicago City 2014 Girls II vs Peterson Park 12U Girls Extra" [level=4] [ref=e4540]
+                  - paragraph [ref=e4541]: Girls 12U
+                  - generic [ref=e4542]:
+                    - generic [ref=e4543]:
+                      - img [ref=e4544]
+                      - text: T3
+                    - generic [ref=e4547]: $1,890
+                    - link "Learn More" [ref=e4548]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2012U/93351
+                      - text: Learn More
+                      - img [ref=e4549]
+              - button "1:15 PM – 2:00 PM Registration Closed ESFC 2014 Boys vs PSG U12 Boys Red Boys 12U T2 $1,890 Learn More" [ref=e4553] [cursor=pointer]:
+                - generic [ref=e4556]:
+                  - generic [ref=e4557]:
+                    - generic [ref=e4558]:
+                      - img [ref=e4559]
+                      - generic [ref=e4562]: 1:15 PM – 2:00 PM
+                    - generic [ref=e4564]: Registration Closed
+                  - heading "ESFC 2014 Boys vs PSG U12 Boys Red" [level=4] [ref=e4565]
+                  - paragraph [ref=e4566]: Boys 12U
+                  - generic [ref=e4567]:
+                    - generic [ref=e4568]:
+                      - img [ref=e4569]
+                      - text: T2
+                    - generic [ref=e4572]: $1,890
+                    - link "Learn More" [ref=e4573]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e4574]
+              - button "1:15 PM – 2:00 PM Registration Closed PSG U8 Boys Blue - West Town vs YSIFC 2019 Boys 8U T1 $1,245 Learn More" [ref=e4578] [cursor=pointer]:
+                - generic [ref=e4581]:
+                  - generic [ref=e4582]:
+                    - generic [ref=e4583]:
+                      - img [ref=e4584]
+                      - generic [ref=e4587]: 1:15 PM – 2:00 PM
+                    - generic [ref=e4589]: Registration Closed
+                  - heading "PSG U8 Boys Blue - West Town vs YSIFC 2019" [level=4] [ref=e4590]
+                  - paragraph [ref=e4591]: Boys 8U
+                  - generic [ref=e4592]:
+                    - generic [ref=e4593]:
+                      - img [ref=e4594]
+                      - text: T1
+                    - generic [ref=e4597]: $1,245
+                    - link "Learn More" [ref=e4598]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e4599]
+              - button "1:45 PM – 2:30 PM Registration Closed Chicago City 2012 Boys Blue vs PSG U14 Boys Blue Boys 14U T3 $1,890 Learn More" [ref=e4603] [cursor=pointer]:
+                - generic [ref=e4606]:
+                  - generic [ref=e4607]:
+                    - generic [ref=e4608]:
+                      - img [ref=e4609]
+                      - generic [ref=e4612]: 1:45 PM – 2:30 PM
+                    - generic [ref=e4614]: Registration Closed
+                  - heading "Chicago City 2012 Boys Blue vs PSG U14 Boys Blue" [level=4] [ref=e4615]
+                  - paragraph [ref=e4616]: Boys 14U
+                  - generic [ref=e4617]:
+                    - generic [ref=e4618]:
+                      - img [ref=e4619]
+                      - text: T3
+                    - generic [ref=e4622]: $1,890
+                    - link "Learn More" [ref=e4623]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e4624]
+              - button "2:00 PM – 2:45 PM Registration Closed FC Connection 2018 Blue vs JaHbat B2018 Boys 8U T1 $1,245 Learn More" [ref=e4628] [cursor=pointer]:
+                - generic [ref=e4631]:
+                  - generic [ref=e4632]:
+                    - generic [ref=e4633]:
+                      - img [ref=e4634]
+                      - generic [ref=e4637]: 2:00 PM – 2:45 PM
+                    - generic [ref=e4639]: Registration Closed
+                  - heading "FC Connection 2018 Blue vs JaHbat B2018" [level=4] [ref=e4640]
+                  - paragraph [ref=e4641]: Boys 8U
+                  - generic [ref=e4642]:
+                    - generic [ref=e4643]:
+                      - img [ref=e4644]
+                      - text: T1
+                    - generic [ref=e4647]: $1,245
+                    - link "Learn More" [ref=e4648]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e4649]
+              - button "2:00 PM – 2:45 PM Registration Closed Wilmette Wings 2014 White Girls vs ESFC 2014 Girls Blue Girls 12U T2 $1,890 Learn More" [ref=e4653] [cursor=pointer]:
+                - generic [ref=e4656]:
+                  - generic [ref=e4657]:
+                    - generic [ref=e4658]:
+                      - img [ref=e4659]
+                      - generic [ref=e4662]: 2:00 PM – 2:45 PM
+                    - generic [ref=e4664]: Registration Closed
+                  - heading "Wilmette Wings 2014 White Girls vs ESFC 2014 Girls Blue" [level=4] [ref=e4665]
+                  - paragraph [ref=e4666]: Girls 12U
+                  - generic [ref=e4667]:
+                    - generic [ref=e4668]:
+                      - img [ref=e4669]
+                      - text: T2
+                    - generic [ref=e4672]: $1,890
+                    - link "Learn More" [ref=e4673]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2012U/93351
+                      - text: Learn More
+                      - img [ref=e4674]
+              - button "2:30 PM – 3:15 PM Registration Closed ESFC 2012 Boys Blue vs PSG U14 Boys Red Boys 14U T3 $1,890 Learn More" [ref=e4678] [cursor=pointer]:
+                - generic [ref=e4681]:
+                  - generic [ref=e4682]:
+                    - generic [ref=e4683]:
+                      - img [ref=e4684]
+                      - generic [ref=e4687]: 2:30 PM – 3:15 PM
+                    - generic [ref=e4689]: Registration Closed
+                  - heading "ESFC 2012 Boys Blue vs PSG U14 Boys Red" [level=4] [ref=e4690]
+                  - paragraph [ref=e4691]: Boys 14U
+                  - generic [ref=e4692]:
+                    - generic [ref=e4693]:
+                      - img [ref=e4694]
+                      - text: T3
+                    - generic [ref=e4697]: $1,890
+                    - link "Learn More" [ref=e4698]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e4699]
+              - button "2:45 PM – 3:30 PM Registration Closed Norridge United U12 Boys Premier vs AYSO Extra U12 Boys Navy Boys 12U T2 $1,890 Learn More" [ref=e4703] [cursor=pointer]:
+                - generic [ref=e4706]:
+                  - generic [ref=e4707]:
+                    - generic [ref=e4708]:
+                      - img [ref=e4709]
+                      - generic [ref=e4712]: 2:45 PM – 3:30 PM
+                    - generic [ref=e4714]: Registration Closed
+                  - heading "Norridge United U12 Boys Premier vs AYSO Extra U12 Boys Navy" [level=4] [ref=e4715]
+                  - paragraph [ref=e4716]: Boys 12U
+                  - generic [ref=e4717]:
+                    - generic [ref=e4718]:
+                      - img [ref=e4719]
+                      - text: T2
+                    - generic [ref=e4722]: $1,890
+                    - link "Learn More" [ref=e4723]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e4724]
+              - button "2:45 PM – 3:30 PM Registration Closed FC Connection 2018 vs PSG U8 Boys Red - West Town Boys 8U T1 $1,245 Learn More" [ref=e4728] [cursor=pointer]:
+                - generic [ref=e4731]:
+                  - generic [ref=e4732]:
+                    - generic [ref=e4733]:
+                      - img [ref=e4734]
+                      - generic [ref=e4737]: 2:45 PM – 3:30 PM
+                    - generic [ref=e4739]: Registration Closed
+                  - heading "FC Connection 2018 vs PSG U8 Boys Red - West Town" [level=4] [ref=e4740]
+                  - paragraph [ref=e4741]: Boys 8U
+                  - generic [ref=e4742]:
+                    - generic [ref=e4743]:
+                      - img [ref=e4744]
+                      - text: T1
+                    - generic [ref=e4747]: $1,245
+                    - link "Learn More" [ref=e4748]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e4749]
+              - button "3:15 PM – 4:00 PM Registration Closed Chicago City 2012 Boys navy vs PSG Evanston & Northshore U14 Boys Boys 14U T3 $1,890 Learn More" [ref=e4753] [cursor=pointer]:
+                - generic [ref=e4756]:
+                  - generic [ref=e4757]:
+                    - generic [ref=e4758]:
+                      - img [ref=e4759]
+                      - generic [ref=e4762]: 3:15 PM – 4:00 PM
+                    - generic [ref=e4764]: Registration Closed
+                  - heading "Chicago City 2012 Boys navy vs PSG Evanston & Northshore U14 Boys" [level=4] [ref=e4765]
+                  - paragraph [ref=e4766]: Boys 14U
+                  - generic [ref=e4767]:
+                    - generic [ref=e4768]:
+                      - img [ref=e4769]
+                      - text: T3
+                    - generic [ref=e4772]: $1,890
+                    - link "Learn More" [ref=e4773]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e4774]
+              - button "3:30 PM – 4:15 PM Registration Closed Norridge United U13 Boys Select vs PSG U13 Boys Red Boys 13U T2 $1,890 Learn More" [ref=e4778] [cursor=pointer]:
+                - generic [ref=e4781]:
+                  - generic [ref=e4782]:
+                    - generic [ref=e4783]:
+                      - img [ref=e4784]
+                      - generic [ref=e4787]: 3:30 PM – 4:15 PM
+                    - generic [ref=e4789]: Registration Closed
+                  - heading "Norridge United U13 Boys Select vs PSG U13 Boys Red" [level=4] [ref=e4790]
+                  - paragraph [ref=e4791]: Boys 13U
+                  - generic [ref=e4792]:
+                    - generic [ref=e4793]:
+                      - img [ref=e4794]
+                      - text: T2
+                    - generic [ref=e4797]: $1,890
+                    - link "Learn More" [ref=e4798]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343
+                      - text: Learn More
+                      - img [ref=e4799]
+              - button "3:30 PM – 4:15 PM Registration Closed 2018 Boys Orange vs PSG Evanston & Northshore 8U Boys Boys 8U T1 $1,245 Learn More" [ref=e4803] [cursor=pointer]:
+                - generic [ref=e4806]:
+                  - generic [ref=e4807]:
+                    - generic [ref=e4808]:
+                      - img [ref=e4809]
+                      - generic [ref=e4812]: 3:30 PM – 4:15 PM
+                    - generic [ref=e4814]: Registration Closed
+                  - heading "2018 Boys Orange vs PSG Evanston & Northshore 8U Boys" [level=4] [ref=e4815]
+                  - paragraph [ref=e4816]: Boys 8U
+                  - generic [ref=e4817]:
+                    - generic [ref=e4818]:
+                      - img [ref=e4819]
+                      - text: T1
+                    - generic [ref=e4822]: $1,245
+                    - link "Learn More" [ref=e4823]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e4824]
+              - button "4:00 PM – 4:45 PM Registration Closed Chicago City 2012 Boys II vs PSG U13 Boys Pre Academy Boys 14U T3 $1,890 Learn More" [ref=e4828] [cursor=pointer]:
+                - generic [ref=e4831]:
+                  - generic [ref=e4832]:
+                    - generic [ref=e4833]:
+                      - img [ref=e4834]
+                      - generic [ref=e4837]: 4:00 PM – 4:45 PM
+                    - generic [ref=e4839]: Registration Closed
+                  - heading "Chicago City 2012 Boys II vs PSG U13 Boys Pre Academy" [level=4] [ref=e4840]
+                  - paragraph [ref=e4841]: Boys 14U
+                  - generic [ref=e4842]:
+                    - generic [ref=e4843]:
+                      - img [ref=e4844]
+                      - text: T3
+                    - generic [ref=e4847]: $1,890
+                    - link "Learn More" [ref=e4848]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e4849]
+              - button "4:15 PM – 5:00 PM Registration Closed Norridge United U13 Boys Premier vs Chicago City 2013 Boys III Boys 13U T2 $1,890 Learn More" [ref=e4853] [cursor=pointer]:
+                - generic [ref=e4856]:
+                  - generic [ref=e4857]:
+                    - generic [ref=e4858]:
+                      - img [ref=e4859]
+                      - generic [ref=e4862]: 4:15 PM – 5:00 PM
+                    - generic [ref=e4864]: Registration Closed
+                  - heading "Norridge United U13 Boys Premier vs Chicago City 2013 Boys III" [level=4] [ref=e4865]
+                  - paragraph [ref=e4866]: Boys 13U
+                  - generic [ref=e4867]:
+                    - generic [ref=e4868]:
+                      - img [ref=e4869]
+                      - text: T2
+                    - generic [ref=e4872]: $1,890
+                    - link "Learn More" [ref=e4873]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343
+                      - text: Learn More
+                      - img [ref=e4874]
+              - button "4:45 PM – 5:30 PM Registration Closed Northwind 2012 Girls Premier vs JaHbat G2012 Girls 14U T3 $1,890 Learn More" [ref=e4878] [cursor=pointer]:
+                - generic [ref=e4881]:
+                  - generic [ref=e4882]:
+                    - generic [ref=e4883]:
+                      - img [ref=e4884]
+                      - generic [ref=e4887]: 4:45 PM – 5:30 PM
+                    - generic [ref=e4889]: Registration Closed
+                  - heading "Northwind 2012 Girls Premier vs JaHbat G2012" [level=4] [ref=e4890]
+                  - paragraph [ref=e4891]: Girls 14U
+                  - generic [ref=e4892]:
+                    - generic [ref=e4893]:
+                      - img [ref=e4894]
+                      - text: T3
+                    - generic [ref=e4897]: $1,890
+                    - link "Learn More" [ref=e4898]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2014U/93910
+                      - text: Learn More
+                      - img [ref=e4899]
+              - button "5:00 PM – 5:45 PM Registration Closed AYSO Extra 12U Boys Orange vs JaHbat B2014 Yellow Boys 12U T2 $1,890 Learn More" [ref=e4903] [cursor=pointer]:
+                - generic [ref=e4906]:
+                  - generic [ref=e4907]:
+                    - generic [ref=e4908]:
+                      - img [ref=e4909]
+                      - generic [ref=e4912]: 5:00 PM – 5:45 PM
+                    - generic [ref=e4914]: Registration Closed
+                  - heading "AYSO Extra 12U Boys Orange vs JaHbat B2014 Yellow" [level=4] [ref=e4915]
+                  - paragraph [ref=e4916]: Boys 12U
+                  - generic [ref=e4917]:
+                    - generic [ref=e4918]:
+                      - img [ref=e4919]
+                      - text: T2
+                    - generic [ref=e4922]: $1,890
+                    - link "Learn More" [ref=e4923]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e4924]
+              - button "5:00 PM – 5:45 PM Registration Closed PSG U8 Boys - Northside vs PSG U8 Boys Blue Boys 8U T1 $1,245 Learn More" [ref=e4928] [cursor=pointer]:
+                - generic [ref=e4931]:
+                  - generic [ref=e4932]:
+                    - generic [ref=e4933]:
+                      - img [ref=e4934]
+                      - generic [ref=e4937]: 5:00 PM – 5:45 PM
+                    - generic [ref=e4939]: Registration Closed
+                  - heading "PSG U8 Boys - Northside vs PSG U8 Boys Blue" [level=4] [ref=e4940]
+                  - paragraph [ref=e4941]: Boys 8U
+                  - generic [ref=e4942]:
+                    - generic [ref=e4943]:
+                      - img [ref=e4944]
+                      - text: T1
+                    - generic [ref=e4947]: $1,245
+                    - link "Learn More" [ref=e4948]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%208U/93338
+                      - text: Learn More
+                      - img [ref=e4949]
+              - button "5:30 PM – 6:15 PM Registration Closed Northwind 2012 Girls Premier 2 vs ESFC 2012 Girls Girls 14U T3 $1,890 Learn More" [ref=e4953] [cursor=pointer]:
+                - generic [ref=e4956]:
+                  - generic [ref=e4957]:
+                    - generic [ref=e4958]:
+                      - img [ref=e4959]
+                      - generic [ref=e4962]: 5:30 PM – 6:15 PM
+                    - generic [ref=e4964]: Registration Closed
+                  - heading "Northwind 2012 Girls Premier 2 vs ESFC 2012 Girls" [level=4] [ref=e4965]
+                  - paragraph [ref=e4966]: Girls 14U
+                  - generic [ref=e4967]:
+                    - generic [ref=e4968]:
+                      - img [ref=e4969]
+                      - text: T3
+                    - generic [ref=e4972]: $1,890
+                    - link "Learn More" [ref=e4973]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2014U/93910
+                      - text: Learn More
+                      - img [ref=e4974]
+              - button "5:45 PM – 6:30 PM Registration Closed ESFC 2013 Girls White vs PSG U13 Girls Pre Academy Girls 13U T2 $1,890 Learn More" [ref=e4978] [cursor=pointer]:
+                - generic [ref=e4981]:
+                  - generic [ref=e4982]:
+                    - generic [ref=e4983]:
+                      - img [ref=e4984]
+                      - generic [ref=e4987]: 5:45 PM – 6:30 PM
+                    - generic [ref=e4989]: Registration Closed
+                  - heading "ESFC 2013 Girls White vs PSG U13 Girls Pre Academy" [level=4] [ref=e4990]
+                  - paragraph [ref=e4991]: Girls 13U
+                  - generic [ref=e4992]:
+                    - generic [ref=e4993]:
+                      - img [ref=e4994]
+                      - text: T2
+                    - generic [ref=e4997]: $1,890
+                    - link "Learn More" [ref=e4998]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2013U/93909
+                      - text: Learn More
+                      - img [ref=e4999]
+              - button "6:15 PM – 7:00 PM Registration Closed JOMSC U14 vs Chicago City 2012 Boys Loop Boys 14U T3 $1,890 Learn More" [ref=e5003] [cursor=pointer]:
+                - generic [ref=e5006]:
+                  - generic [ref=e5007]:
+                    - generic [ref=e5008]:
+                      - img [ref=e5009]
+                      - generic [ref=e5012]: 6:15 PM – 7:00 PM
+                    - generic [ref=e5014]: Registration Closed
+                  - heading "JOMSC U14 vs Chicago City 2012 Boys Loop" [level=4] [ref=e5015]
+                  - paragraph [ref=e5016]: Boys 14U
+                  - generic [ref=e5017]:
+                    - generic [ref=e5018]:
+                      - img [ref=e5019]
+                      - text: T3
+                    - generic [ref=e5022]: $1,890
+                    - link "Learn More" [ref=e5023]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2014U/93344
+                      - text: Learn More
+                      - img [ref=e5024]
+              - button "6:30 PM – 7:15 PM Registration Closed YSIFC 2014 Blue vs YSIFC 2014 Yellow Boys 12U T2 $1,890 Learn More" [ref=e5028] [cursor=pointer]:
+                - generic [ref=e5031]:
+                  - generic [ref=e5032]:
+                    - generic [ref=e5033]:
+                      - img [ref=e5034]
+                      - generic [ref=e5037]: 6:30 PM – 7:15 PM
+                    - generic [ref=e5039]: Registration Closed
+                  - heading "YSIFC 2014 Blue vs YSIFC 2014 Yellow" [level=4] [ref=e5040]
+                  - paragraph [ref=e5041]: Boys 12U
+                  - generic [ref=e5042]:
+                    - generic [ref=e5043]:
+                      - img [ref=e5044]
+                      - text: T2
+                    - generic [ref=e5047]: $1,890
+                    - link "Learn More" [ref=e5048]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e5049]
+              - button "7:00 PM – 8:30 PM 21 left Adult Pickup T1 $20 Free for Members Register" [ref=e5053] [cursor=pointer]:
+                - generic [ref=e5056]:
+                  - generic [ref=e5057]:
+                    - generic [ref=e5058]:
+                      - img [ref=e5059]
+                      - generic [ref=e5062]: 7:00 PM – 8:30 PM
+                    - generic [ref=e5064]: 21 left
+                  - heading "Adult Pickup" [level=4] [ref=e5065]
+                  - generic [ref=e5066]:
+                    - generic [ref=e5067]:
+                      - img [ref=e5068]
+                      - text: T1
+                    - generic [ref=e5071]: $20
+                    - generic [ref=e5072]: Free for Members
+                    - link "Register" [ref=e5073]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/10629/season/Adult%20Pickup/87667?skipToProducts=true
+                      - text: Register
+                      - img [ref=e5074]
+              - button "7:00 PM – 7:45 PM Registration Closed Northwind 2014 Girls Premier 2 vs PSG U12 Girls Pre Academy Girls 12U T3 $1,890 Learn More" [ref=e5078] [cursor=pointer]:
+                - generic [ref=e5081]:
+                  - generic [ref=e5082]:
+                    - generic [ref=e5083]:
+                      - img [ref=e5084]
+                      - generic [ref=e5087]: 7:00 PM – 7:45 PM
+                    - generic [ref=e5089]: Registration Closed
+                  - heading "Northwind 2014 Girls Premier 2 vs PSG U12 Girls Pre Academy" [level=4] [ref=e5090]
+                  - paragraph [ref=e5091]: Girls 12U
+                  - generic [ref=e5092]:
+                    - generic [ref=e5093]:
+                      - img [ref=e5094]
+                      - text: T3
+                    - generic [ref=e5097]: $1,890
+                    - link "Learn More" [ref=e5098]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Girls%2012U/93351
+                      - text: Learn More
+                      - img [ref=e5099]
+              - button "7:15 PM – 8:00 PM Registration Closed SKOMOR U12 Premier vs YSIFC 2014 Blue Boys 12U T2 $1,890 Learn More" [ref=e5103] [cursor=pointer]:
+                - generic [ref=e5106]:
+                  - generic [ref=e5107]:
+                    - generic [ref=e5108]:
+                      - img [ref=e5109]
+                      - generic [ref=e5112]: 7:15 PM – 8:00 PM
+                    - generic [ref=e5114]: Registration Closed
+                  - heading "SKOMOR U12 Premier vs YSIFC 2014 Blue" [level=4] [ref=e5115]
+                  - paragraph [ref=e5116]: Boys 12U
+                  - generic [ref=e5117]:
+                    - generic [ref=e5118]:
+                      - img [ref=e5119]
+                      - text: T2
+                    - generic [ref=e5122]: $1,890
+                    - link "Learn More" [ref=e5123]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2012U/93342
+                      - text: Learn More
+                      - img [ref=e5124]
+              - button "7:45 PM – 8:30 PM Registration Closed JOMSC U13 vs Norridge United U13 Boys Select Boys 13U T3 $1,890 Learn More" [ref=e5128] [cursor=pointer]:
+                - generic [ref=e5131]:
+                  - generic [ref=e5132]:
+                    - generic [ref=e5133]:
+                      - img [ref=e5134]
+                      - generic [ref=e5137]: 7:45 PM – 8:30 PM
+                    - generic [ref=e5139]: Registration Closed
+                  - heading "JOMSC U13 vs Norridge United U13 Boys Select" [level=4] [ref=e5140]
+                  - paragraph [ref=e5141]: Boys 13U
+                  - generic [ref=e5142]:
+                    - generic [ref=e5143]:
+                      - img [ref=e5144]
+                      - text: T3
+                    - generic [ref=e5147]: $1,890
+                    - link "Learn More" [ref=e5148]:
+                      - /url: https://bondsports.co/activity/programs/CO_ED-youth-SOCCER/11269/season/Boys%2013U/93343
+                      - text: Learn More
+                      - img [ref=e5149]
+          - generic [ref=e5154]:
+            - img [ref=e5155]
+            - generic [ref=e5157]: Loading more events...
+    - contentinfo [ref=e5158]:
+      - generic [ref=e5160]:
+        - paragraph [ref=e5161]: © 2026 TOCA Soccer
+        - generic [ref=e5163]: Powered by Bond Sports
+  - alert [ref=e5164]
+```

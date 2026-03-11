@@ -9,6 +9,8 @@ import { buildWeekSchedules } from '@/lib/transformers';
 import { getSportGradient } from '@/lib/utils';
 import { Calendar, Grid3X3, Filter } from 'lucide-react';
 
+const EMPTY_EVENTS: any[] = [];
+
 interface EmbedDiscoveryPageProps {
   initialPrograms: Program[];
   initialScheduleEvents?: any[];
@@ -20,7 +22,7 @@ interface EmbedDiscoveryPageProps {
 
 export function EmbedDiscoveryPage({
   initialPrograms,
-  initialScheduleEvents = [],
+  initialScheduleEvents = EMPTY_EVENTS,
   initialEventsFetched = false,
   config,
   initialViewMode = 'programs',
