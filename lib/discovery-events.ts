@@ -96,6 +96,43 @@ export interface DiscoveryEventsResult {
   context: DiscoveryEventsContext;
 }
 
+export function getEventLocalDate(event: FullDiscoveryEvent): string {
+  if (event.timezone) {
+    try {
+      const d = new Date(event.startDate);
+      return d.toLocaleDateString('en-CA', { timeZone: event.timezone });
+    } catch {
+      // fall through
+    }
+  }
+  return event.startDate.split('T')[0];
+}
+
+export function computeHorizonEndDate(months: number): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().split('T')[0];
+}
+
+export function filterEventsForResponse(
+  events: FullDiscoveryEvent[],
+  horizonMonths: number,
+  startDate?: string,
+  endDate?: string,
+): FullDiscoveryEvent[] {
+  const horizonEnd = computeHorizonEndDate(horizonMonths);
+  const effectiveEnd = endDate
+    ? (endDate < horizonEnd ? endDate : horizonEnd)
+    : horizonEnd;
+
+  return events.filter((event) => {
+    const localDate = getEventLocalDate(event);
+    if (startDate && localDate < startDate) return false;
+    if (localDate > effectiveEnd) return false;
+    return true;
+  });
+}
+
 const DEFAULT_FULL_TTL = 4 * 60 * 60; // 4 hours – cron refreshes every 15 min; this is a safety net
 const DEFAULT_AVAILABILITY_TTL = 30 * 60; // 30 min – cron refreshes every 15 min
 const PROGRAM_CONCURRENCY = 3;

@@ -4,6 +4,11 @@ import { getConfigBySlug } from '@/lib/config';
 import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
 import { cached, programsCacheKey } from '@/lib/cache';
+import {
+  getDiscoveryEvents,
+  filterEventsForResponse,
+  type FullDiscoveryEvent,
+} from '@/lib/discovery-events';
 import { Program, DiscoveryConfig } from '@/types';
 import { EmbedDiscoveryPage } from './EmbedDiscoveryPage';
 
@@ -63,11 +68,40 @@ export default async function EmbedPage({ params, searchParams }: PageProps) {
   
   const viewMode = (searchParams.viewMode as string) || config.features.defaultView;
   const programs = await getPrograms(config);
+
+  let initialScheduleEvents: FullDiscoveryEvent[] = [];
+  let initialEventsFetched = false;
+  let initialTotalServerEvents = 0;
+
+  if (viewMode === 'schedule') {
+    try {
+      const result = await getDiscoveryEvents({
+        slug: config.slug,
+        mode: 'full',
+        config,
+      });
+      const horizonMonths = config.features.eventHorizonMonths ?? 3;
+      const today = new Date().toISOString().split('T')[0];
+      const filtered = filterEventsForResponse(
+        result.payload.data as FullDiscoveryEvent[],
+        horizonMonths,
+        today,
+      );
+      initialTotalServerEvents = filtered.length;
+      initialScheduleEvents = filtered;
+      initialEventsFetched = true;
+    } catch (error) {
+      console.error(`[SSR] Failed to pre-fetch events for ${slug}:`, error);
+    }
+  }
   
   return (
     <Suspense fallback={<EmbedLoadingState />}>
       <EmbedDiscoveryPage 
         initialPrograms={programs}
+        initialScheduleEvents={initialScheduleEvents}
+        initialEventsFetched={initialEventsFetched}
+        initialTotalServerEvents={initialTotalServerEvents}
         config={config}
         initialViewMode={viewMode as 'programs' | 'schedule'}
         searchParams={searchParams}
