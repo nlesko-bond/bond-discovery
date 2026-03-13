@@ -527,11 +527,8 @@ export function DiscoveryPage({
     setEventsLoading(true);
     setEventsError(null);
     
-    const PAGE_SIZE = 200;
     const params = new URLSearchParams();
     params.set('slug', config.slug);
-    params.set('startDate', new Date().toISOString().split('T')[0]);
-    params.set('limit', String(PAGE_SIZE));
     const url = `/api/events?${params.toString()}`;
     
     const fetchStart = performance.now();
@@ -590,11 +587,9 @@ export function DiscoveryPage({
   const loadMoreEvents = useCallback(() => {
     if (loadingMore || apiEvents.length >= totalServerEvents) return;
     setLoadingMore(true);
-    const PAGE_SIZE = 200;
     const params = new URLSearchParams();
     params.set('slug', config.slug);
-    params.set('startDate', new Date().toISOString().split('T')[0]);
-    params.set('limit', String(PAGE_SIZE));
+    params.set('limit', '200');
     params.set('offset', String(apiEvents.length));
     fetch(`/api/events?${params.toString()}`)
       .then(res => res.ok ? res.json() : Promise.reject(new Error(`${res.status}`)))

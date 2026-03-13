@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   const requestedMode = searchParams.get('mode');
   const mode: DiscoveryEventsMode = requestedMode === 'availability' ? 'availability' : 'full';
 
-  const startDate = searchParams.get('startDate') || undefined;
+  const startDate = searchParams.get('startDate') || new Date().toISOString().split('T')[0];
   const explicitEndDate = searchParams.get('endDate') || undefined;
   const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : undefined;
   const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!, 10) : 0;
@@ -59,8 +59,8 @@ export async function GET(request: Request) {
 
     const cacheControl =
       mode === 'availability'
-        ? 's-maxage=20, stale-while-revalidate=60'
-        : 's-maxage=60, stale-while-revalidate=300';
+        ? 's-maxage=60, stale-while-revalidate=300'
+        : 's-maxage=900, stale-while-revalidate=7200';
 
     return NextResponse.json(
       { ...result.payload, data, meta: { ...result.payload.meta, totalFiltered } },
