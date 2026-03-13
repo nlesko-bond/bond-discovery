@@ -23,6 +23,7 @@ interface EmbedDiscoveryPageProps {
   initialPrograms: Program[];
   initialScheduleEvents?: any[];
   initialEventsFetched?: boolean;
+  initialTotalServerEvents?: number;
   config: DiscoveryConfig;
   initialViewMode?: ViewMode;
   searchParams: { [key: string]: string | string[] | undefined };
@@ -32,6 +33,7 @@ export function EmbedDiscoveryPage({
   initialPrograms,
   initialScheduleEvents = EMPTY_EVENTS,
   initialEventsFetched = false,
+  initialTotalServerEvents = 0,
   config,
   initialViewMode = 'programs',
   searchParams,
@@ -160,7 +162,7 @@ export function EmbedDiscoveryPage({
   const [eventsLoading, setEventsLoading] = useState(false);
   const [eventsError, setEventsError] = useState<string | null>(null);
   const [eventsFetched, setEventsFetched] = useState(initialEventsFetched);
-  const [totalServerEvents, setTotalServerEvents] = useState(0);
+  const [totalServerEvents, setTotalServerEvents] = useState(initialTotalServerEvents);
   const [loadingMore, setLoadingMore] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 

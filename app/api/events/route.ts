@@ -1,25 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getDiscoveryEvents, type DiscoveryEventsMode, type FullDiscoveryEvent } from '@/lib/discovery-events';
+import {
+  getDiscoveryEvents,
+  filterEventsForResponse,
+  type DiscoveryEventsMode,
+  type FullDiscoveryEvent,
+} from '@/lib/discovery-events';
 
 export const dynamic = 'force-dynamic';
-
-function getEventLocalDate(event: FullDiscoveryEvent): string {
-  if (event.timezone) {
-    try {
-      const d = new Date(event.startDate);
-      return d.toLocaleDateString('en-CA', { timeZone: event.timezone });
-    } catch {
-      // fall through
-    }
-  }
-  return event.startDate.split('T')[0];
-}
-
-function computeHorizonEndDate(months: number): string {
-  const d = new Date();
-  d.setMonth(d.getMonth() + months);
-  return d.toISOString().split('T')[0];
-}
 
 /**
  * GET /api/events
@@ -56,17 +43,12 @@ export async function GET(request: Request) {
 
     if (mode === 'full') {
       const horizonMonths = result.context?.config?.features?.eventHorizonMonths ?? 3;
-      const horizonEnd = computeHorizonEndDate(horizonMonths);
-      const endDate = explicitEndDate
-        ? (explicitEndDate < horizonEnd ? explicitEndDate : horizonEnd)
-        : horizonEnd;
-
-      data = (data as FullDiscoveryEvent[]).filter((event) => {
-        const localDate = getEventLocalDate(event);
-        if (startDate && localDate < startDate) return false;
-        if (localDate > endDate) return false;
-        return true;
-      });
+      data = filterEventsForResponse(
+        data as FullDiscoveryEvent[],
+        horizonMonths,
+        startDate,
+        explicitEndDate,
+      );
     }
 
     const totalFiltered = data.length;
