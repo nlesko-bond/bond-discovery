@@ -399,6 +399,8 @@ export interface FeatureConfig {
   scheduleThemeStyle?: 'gradient' | 'solid';
   // Show compact mobile quick chips for key filters
   mobileQuickFilterChips?: boolean;
+  // Max months of future events to return (default: 3)
+  eventHorizonMonths?: number;
 }
 
 export type FilterType = 

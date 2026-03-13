@@ -15,13 +15,20 @@ function getEventLocalDate(event: FullDiscoveryEvent): string {
   return event.startDate.split('T')[0];
 }
 
+function computeHorizonEndDate(months: number): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().split('T')[0];
+}
+
 /**
  * GET /api/events
  * Returns full schedule payload or availability overlay.
  * Always reads from cache (cacheOnly). Only the cron job calls Bond API.
  *
- * Optional query params `startDate` / `endDate` (YYYY-MM-DD) trim the
- * response without affecting the cache key the cron warms.
+ * The response is automatically trimmed to the config's eventHorizonMonths
+ * (default 3). Optional query params `startDate` / `endDate` (YYYY-MM-DD)
+ * can further narrow the window.
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -29,7 +36,7 @@ export async function GET(request: Request) {
   const mode: DiscoveryEventsMode = requestedMode === 'availability' ? 'availability' : 'full';
 
   const startDate = searchParams.get('startDate') || undefined;
-  const endDate = searchParams.get('endDate') || undefined;
+  const explicitEndDate = searchParams.get('endDate') || undefined;
 
   try {
     const result = await getDiscoveryEvents({
@@ -45,11 +52,17 @@ export async function GET(request: Request) {
 
     let data = result.payload.data;
 
-    if (mode === 'full' && (startDate || endDate)) {
+    if (mode === 'full') {
+      const horizonMonths = result.context?.config?.features?.eventHorizonMonths ?? 3;
+      const horizonEnd = computeHorizonEndDate(horizonMonths);
+      const endDate = explicitEndDate
+        ? (explicitEndDate < horizonEnd ? explicitEndDate : horizonEnd)
+        : horizonEnd;
+
       data = (data as FullDiscoveryEvent[]).filter((event) => {
         const localDate = getEventLocalDate(event);
         if (startDate && localDate < startDate) return false;
-        if (endDate && localDate > endDate) return false;
+        if (localDate > endDate) return false;
         return true;
       });
     }

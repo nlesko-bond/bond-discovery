@@ -70,6 +70,7 @@ interface PageConfig {
     discoveryRefreshPolicy?: '5min' | '15min' | '30min' | '60min';
     scheduleThemeStyle?: 'gradient' | 'solid';
     mobileQuickFilterChips?: boolean;
+    eventHorizonMonths?: number;
   };
   defaultParams?: Record<string, string>;
   cacheTtl?: number;
@@ -1225,6 +1226,22 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                     <option value="60min">Every 60 minutes</option>
                   </select>
                   <p className="text-xs text-gray-500 mt-1">How often cron should refresh this page cache</p>
+                </div>
+
+                <div>
+                  <label className="label">Event Horizon (months)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={24}
+                    className="input"
+                    value={config.features.eventHorizonMonths ?? 3}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      features: { ...config.features, eventHorizonMonths: parseInt(e.target.value) || 3 }
+                    })}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Max months of future events returned to the page (default 3)</p>
                 </div>
                 
                 <div>
