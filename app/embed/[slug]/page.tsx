@@ -57,8 +57,6 @@ async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
   return allPrograms;
 }
 
-const SSR_PAGE_SIZE = 200;
-
 export default async function EmbedPage({ params, searchParams }: PageProps) {
   const { slug } = params;
   
@@ -90,7 +88,7 @@ export default async function EmbedPage({ params, searchParams }: PageProps) {
         today,
       );
       initialTotalServerEvents = filtered.length;
-      initialScheduleEvents = filtered.slice(0, SSR_PAGE_SIZE);
+      initialScheduleEvents = filtered;
       initialEventsFetched = true;
     } catch (error) {
       console.error(`[SSR] Failed to pre-fetch events for ${slug}:`, error);
