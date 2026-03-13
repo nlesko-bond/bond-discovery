@@ -527,11 +527,9 @@ export function DiscoveryPage({
     setEventsLoading(true);
     setEventsError(null);
     
-    const PAGE_SIZE = 200;
     const params = new URLSearchParams();
     params.set('slug', config.slug);
     params.set('startDate', new Date().toISOString().split('T')[0]);
-    params.set('limit', String(PAGE_SIZE));
     const url = `/api/events?${params.toString()}`;
     
     const fetchStart = performance.now();
