@@ -14,17 +14,13 @@ import {
 } from 'lucide-react';
 import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode } from '@/types';
 import { ProgramGrid } from './ProgramGrid';
+import { ScheduleView } from './ScheduleView';
 import { programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers';
 import { buildUrl, getSportGradient, getProgramTypeLabel, cn, isLightColor } from '@/lib/utils';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
-
-const ScheduleView = dynamic(
-  () => import('./ScheduleView').then(m => ({ default: m.ScheduleView })),
-  { loading: () => <ScheduleViewSkeleton /> }
-);
 
 const HorizontalFilterBar = dynamic(
   () => import('./HorizontalFilterBar').then(m => ({ default: m.HorizontalFilterBar }))

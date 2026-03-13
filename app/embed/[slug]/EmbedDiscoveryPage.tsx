@@ -3,15 +3,11 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { ProgramGrid } from '@/components/discovery/ProgramGrid';
+import { ScheduleView } from '@/components/discovery/ScheduleView';
 import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode, CalendarEvent } from '@/types';
 import { buildWeekSchedules } from '@/lib/transformers';
 import { getSportGradient } from '@/lib/utils';
 import { Calendar, Grid3X3, Filter } from 'lucide-react';
-
-const ScheduleView = dynamic(
-  () => import('@/components/discovery/ScheduleView').then(m => ({ default: m.ScheduleView })),
-  { loading: () => <div className="space-y-4 animate-pulse"><div className="h-6 w-32 bg-gray-200 rounded" /><div className="h-16 w-full bg-gray-200 rounded-xl" /><div className="h-24 w-full bg-gray-200 rounded-xl mt-4" /></div> }
-);
 
 const HorizontalFilterBar = dynamic(
   () => import('@/components/discovery/HorizontalFilterBar').then(m => ({ default: m.HorizontalFilterBar }))
