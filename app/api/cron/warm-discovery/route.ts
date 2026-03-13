@@ -7,7 +7,11 @@ import {
   cacheSet,
   type DiscoveryRefreshPolicy,
 } from '@/lib/cache';
-import { getDiscoveryEvents } from '@/lib/discovery-events';
+import {
+  getDiscoveryEvents,
+  filterEventsForResponse,
+  type FullDiscoveryEvent,
+} from '@/lib/discovery-events';
 import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
 
 export const runtime = 'nodejs';
@@ -92,6 +96,25 @@ export async function GET(request: NextRequest) {
           mode: 'availability',
           forceFresh: true,
         });
+
+        // Pre-compute the filtered API response so the Edge route can serve it directly
+        const horizonMonths = config.features?.eventHorizonMonths ?? 3;
+        const today = new Date().toISOString().split('T')[0];
+        const filtered = filterEventsForResponse(
+          full.payload.data as FullDiscoveryEvent[],
+          horizonMonths,
+          today,
+        );
+        const precomputed = {
+          ...full.payload,
+          data: filtered,
+          meta: {
+            ...full.payload.meta,
+            totalFiltered: filtered.length,
+            precomputedAt: new Date().toISOString(),
+          },
+        };
+        await cacheSet(`discovery:response:${config.slug}`, precomputed, { ttl: 4 * 60 * 60 });
 
         await markDiscoveryRefreshed(config.slug);
         details.push({

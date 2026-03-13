@@ -1,83 +1,73 @@
-import { NextResponse } from 'next/server';
-import {
-  getDiscoveryEvents,
-  filterEventsForResponse,
-  type DiscoveryEventsMode,
-  type FullDiscoveryEvent,
-} from '@/lib/discovery-events';
-
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/events
- * Returns full schedule payload or availability overlay.
- * Always reads from cache (cacheOnly). Only the cron job calls Bond API.
  *
- * The response is automatically trimmed to the config's eventHorizonMonths
- * (default 3). Optional query params `startDate` / `endDate` (YYYY-MM-DD)
- * can further narrow the window.
+ * Reads the pre-computed response from Upstash that the cron job writes
+ * every ~15 minutes at key `discovery:response:<slug>`.
+ *
+ * This route uses Edge Runtime (~50ms cold start) and makes a single
+ * HTTP call to Upstash — no Supabase, no React, no heavy imports.
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const requestedMode = searchParams.get('mode');
-  const mode: DiscoveryEventsMode = requestedMode === 'availability' ? 'availability' : 'full';
+  const slug = searchParams.get('slug');
 
-  const startDate = searchParams.get('startDate') || new Date().toISOString().split('T')[0];
-  const explicitEndDate = searchParams.get('endDate') || undefined;
-  const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : undefined;
-  const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!, 10) : 0;
+  if (!slug) {
+    return new Response(
+      JSON.stringify({ error: 'Missing slug parameter' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
+  const kvUrl = process.env.KV_REST_API_URL;
+  const kvToken = process.env.KV_REST_API_TOKEN;
+
+  if (!kvUrl || !kvToken) {
+    return new Response(
+      JSON.stringify({ error: 'Cache not configured' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
 
   try {
-    const result = await getDiscoveryEvents({
-      slug: searchParams.get('slug') || undefined,
-      apiKey: searchParams.get('apiKey') || undefined,
-      orgIds: searchParams.get('orgIds')
-        ? searchParams.get('orgIds')!.split(/[_,]/).filter(Boolean)
-        : undefined,
-      facilityId: searchParams.get('facilityId') || undefined,
-      includePast: searchParams.get('includePast') === 'true',
-      mode,
-    });
+    const upstashRes = await fetch(
+      `${kvUrl}/get/discovery:response:${encodeURIComponent(slug)}`,
+      { headers: { Authorization: `Bearer ${kvToken}` } },
+    );
 
-    let data = result.payload.data;
-
-    if (mode === 'full') {
-      const horizonMonths = result.context?.config?.features?.eventHorizonMonths ?? 3;
-      data = filterEventsForResponse(
-        data as FullDiscoveryEvent[],
-        horizonMonths,
-        startDate,
-        explicitEndDate,
+    if (!upstashRes.ok) {
+      return new Response(
+        JSON.stringify({ error: 'Cache read failed', status: upstashRes.status }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
-    const totalFiltered = data.length;
+    const { result } = await upstashRes.json();
 
-    if (limit) {
-      data = data.slice(offset, offset + limit);
+    if (result === null || result === undefined) {
+      return new Response(
+        JSON.stringify({ error: 'No cached data for this slug. The cron job may not have run yet.', slug }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } },
+      );
     }
 
-    const cacheControl =
-      mode === 'availability'
-        ? 's-maxage=60, stale-while-revalidate=300'
-        : 's-maxage=900, stale-while-revalidate=7200';
+    // Upstash stores objects as JSON strings via @vercel/kv; return as-is
+    const body = typeof result === 'string' ? result : JSON.stringify(result);
 
-    return NextResponse.json(
-      { ...result.payload, data, meta: { ...result.payload.meta, totalFiltered } },
-      {
-        headers: {
-          'Cache-Control': cacheControl,
-          'X-Bond-Events-Cache': result.cacheStatus,
-          'X-Bond-Events-Mode': mode,
-          'X-Bond-Events-Cache-Key': result.cacheKey,
-        },
-      }
-    );
+    return new Response(body, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 's-maxage=900, stale-while-revalidate=7200',
+        'X-Bond-Events-Cache': 'PRECOMPUTED',
+        'X-Bond-Events-Mode': 'full',
+      },
+    });
   } catch (error) {
-    console.error('Error fetching events:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch events' },
-      { status: 500 }
+    return new Response(
+      JSON.stringify({ error: 'Unexpected error reading cache' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 }
