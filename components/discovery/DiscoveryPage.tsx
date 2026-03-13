@@ -468,6 +468,8 @@ export function DiscoveryPage({
   const [eventsLoading, setEventsLoading] = useState(false);
   const [eventsError, setEventsError] = useState<string | null>(null);
   const [eventsFetched, setEventsFetched] = useState(initialEventsFetched);
+  const [totalServerEvents, setTotalServerEvents] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const cacheV2Enabled = config.features.discoveryCacheEnabled === true;
   
   // Ref to track the current fetch request for cancellation
@@ -527,9 +529,11 @@ export function DiscoveryPage({
     setEventsLoading(true);
     setEventsError(null);
     
+    const PAGE_SIZE = 200;
     const params = new URLSearchParams();
     params.set('slug', config.slug);
     params.set('startDate', new Date().toISOString().split('T')[0]);
+    params.set('limit', String(PAGE_SIZE));
     const url = `/api/events?${params.toString()}`;
     
     const fetchStart = performance.now();
@@ -544,15 +548,18 @@ export function DiscoveryPage({
         if (abortController.signal.aborted) return;
         
         const fetchMs = Math.round(performance.now() - fetchStart);
-        console.log(`[perf] events fetch: ${fetchMs}ms (${data?.data?.length ?? 0} events)`);
+        const total = data?.meta?.totalFiltered ?? data?.data?.length ?? 0;
+        console.log(`[perf] events fetch: ${fetchMs}ms (${data?.data?.length ?? 0}/${total} events)`);
         gtmEvent.push('perf_events_fetch', {
           fetch_duration_ms: fetchMs,
           event_count: data?.data?.length ?? 0,
+          total_events: total,
           slug: config.slug,
         });
 
         if (data && Array.isArray(data.data)) {
           setApiEvents(data.data);
+          setTotalServerEvents(total);
           setEventsFetched(true);
         } else {
           console.error('Unexpected API response format:', data);
@@ -572,7 +579,6 @@ export function DiscoveryPage({
         setEventsFetched(true);
       })
       .finally(() => {
-        // Don't update loading state if this request was aborted
         if (abortController.signal.aborted) return;
         setEventsLoading(false);
       });
@@ -582,6 +588,26 @@ export function DiscoveryPage({
       abortController.abort();
     };
   }, [viewMode, eventsFetched, config.slug]);
+
+  const loadMoreEvents = useCallback(() => {
+    if (loadingMore || apiEvents.length >= totalServerEvents) return;
+    setLoadingMore(true);
+    const PAGE_SIZE = 200;
+    const params = new URLSearchParams();
+    params.set('slug', config.slug);
+    params.set('startDate', new Date().toISOString().split('T')[0]);
+    params.set('limit', String(PAGE_SIZE));
+    params.set('offset', String(apiEvents.length));
+    fetch(`/api/events?${params.toString()}`)
+      .then(res => res.ok ? res.json() : Promise.reject(new Error(`${res.status}`)))
+      .then(data => {
+        if (data && Array.isArray(data.data)) {
+          setApiEvents(prev => [...prev, ...data.data]);
+        }
+      })
+      .catch(err => console.error('Error loading more events:', err))
+      .finally(() => setLoadingMore(false));
+  }, [loadingMore, apiEvents.length, totalServerEvents, config.slug]);
 
   // Keep waitlist/spots data fresher with a lightweight availability overlay.
   // Fires once when events are loaded; reads from cache only (no Bond API).
@@ -1368,6 +1394,9 @@ export function DiscoveryPage({
               isLoading={eventsLoading}
               error={eventsError}
               totalEvents={filteredEvents.length}
+              totalServerEvents={totalServerEvents}
+              onLoadMore={loadMoreEvents}
+              loadingMore={loadingMore}
               hasMultipleFacilities={filterOptions.hasMultipleFacilities}
               linkTarget={linkTarget}
               hideRegistrationLinks={config.features.hideRegistrationLinks}

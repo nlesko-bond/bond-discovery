@@ -44,6 +44,9 @@ interface ScheduleViewProps {
   isLoading?: boolean;
   error?: string | null;
   totalEvents?: number;
+  totalServerEvents?: number;
+  onLoadMore?: () => void;
+  loadingMore?: boolean;
   hasMultipleFacilities?: boolean;
   linkTarget?: '_blank' | '_top' | '_self';
   hideRegistrationLinks?: boolean;
@@ -57,6 +60,9 @@ export function ScheduleView({
   isLoading,
   error,
   totalEvents,
+  totalServerEvents,
+  onLoadMore,
+  loadingMore,
   hasMultipleFacilities,
   linkTarget = '_blank',
   hideRegistrationLinks = false,
@@ -794,6 +800,9 @@ export function ScheduleView({
           linkTarget={linkTarget}
           hideRegistrationLinks={hideRegistrationLinks}
           customRegistrationUrl={customRegistrationUrl}
+          totalServerEvents={totalServerEvents}
+          onLoadMore={onLoadMore}
+          loadingMore={loadingMore}
         />
       )}
 
@@ -1413,6 +1422,9 @@ function TableView({
   linkTarget = '_blank',
   hideRegistrationLinks = false,
   customRegistrationUrl,
+  totalServerEvents,
+  onLoadMore,
+  loadingMore,
 }: {
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
@@ -1423,6 +1435,9 @@ function TableView({
   linkTarget?: '_blank' | '_top' | '_self';
   hideRegistrationLinks?: boolean;
   customRegistrationUrl?: string;
+  totalServerEvents?: number;
+  onLoadMore?: () => void;
+  loadingMore?: boolean;
 }) {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [visibleCount, setVisibleCount] = useState(50);
@@ -1727,7 +1742,7 @@ function TableView({
       </div>
       
       {/* Load More */}
-      {visibleCount < events.length && (
+      {visibleCount < events.length ? (
         <div className="p-4 border-t border-gray-100 text-center">
           <button
             onClick={() => setVisibleCount(prev => prev + 50)}
@@ -1737,11 +1752,22 @@ function TableView({
             Load more ({events.length - visibleCount} remaining)
           </button>
         </div>
-      )}
+      ) : onLoadMore && totalServerEvents && events.length < totalServerEvents ? (
+        <div className="p-4 border-t border-gray-100 text-center">
+          <button
+            onClick={() => { onLoadMore(); setVisibleCount(prev => prev + 200); }}
+            disabled={loadingMore}
+            className="px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+            style={{ color: secondaryColor }}
+          >
+            {loadingMore ? 'Loading...' : `Load more (${totalServerEvents - events.length} remaining)`}
+          </button>
+        </div>
+      ) : null}
       
       {/* Summary */}
       <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 text-xs text-gray-500 text-center">
-        Showing {Math.min(visibleCount, events.length)} of {events.length} events
+        Showing {Math.min(visibleCount, events.length)} of {totalServerEvents || events.length} events
       </div>
     </div>
   );

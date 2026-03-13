@@ -37,6 +37,8 @@ export async function GET(request: Request) {
 
   const startDate = searchParams.get('startDate') || undefined;
   const explicitEndDate = searchParams.get('endDate') || undefined;
+  const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : undefined;
+  const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!, 10) : 0;
 
   try {
     const result = await getDiscoveryEvents({
@@ -67,13 +69,19 @@ export async function GET(request: Request) {
       });
     }
 
+    const totalFiltered = data.length;
+
+    if (limit) {
+      data = data.slice(offset, offset + limit);
+    }
+
     const cacheControl =
       mode === 'availability'
         ? 's-maxage=20, stale-while-revalidate=60'
         : 's-maxage=60, stale-while-revalidate=300';
 
     return NextResponse.json(
-      { ...result.payload, data },
+      { ...result.payload, data, meta: { ...result.payload.meta, totalFiltered } },
       {
         headers: {
           'Cache-Control': cacheControl,

@@ -160,6 +160,8 @@ export function EmbedDiscoveryPage({
   const [eventsLoading, setEventsLoading] = useState(false);
   const [eventsError, setEventsError] = useState<string | null>(null);
   const [eventsFetched, setEventsFetched] = useState(initialEventsFetched);
+  const [totalServerEvents, setTotalServerEvents] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const contentTimedRef = useRef(false);
@@ -181,17 +183,24 @@ export function EmbedDiscoveryPage({
     setEventsLoading(true);
     setEventsError(null);
 
+    const PAGE_SIZE = 200;
     const params = new URLSearchParams();
     params.set('slug', config.slug);
     params.set('startDate', new Date().toISOString().split('T')[0]);
+    params.set('limit', String(PAGE_SIZE));
     const fetchStart = performance.now();
     fetch(`/api/events?${params.toString()}`, { signal: ac.signal })
       .then(res => { if (!res.ok) throw new Error(`API error: ${res.status}`); return res.json(); })
       .then(data => {
         if (ac.signal.aborted) return;
+        const total = data?.meta?.totalFiltered ?? data?.data?.length ?? 0;
         const fetchMs = Math.round(performance.now() - fetchStart);
-        console.log(`[perf] embed events fetch: ${fetchMs}ms (${data?.data?.length ?? 0} events)`);
-        if (data && Array.isArray(data.data)) { setApiEvents(data.data); setEventsFetched(true); }
+        console.log(`[perf] embed events fetch: ${fetchMs}ms (${data?.data?.length ?? 0}/${total} events)`);
+        if (data && Array.isArray(data.data)) {
+          setApiEvents(data.data);
+          setTotalServerEvents(total);
+          setEventsFetched(true);
+        }
       })
       .catch(err => {
         if (ac.signal.aborted || err?.name === 'AbortError') return;
@@ -202,6 +211,26 @@ export function EmbedDiscoveryPage({
 
     return () => ac.abort();
   }, [viewMode, eventsFetched, config.slug]);
+
+  const loadMoreEvents = useCallback(() => {
+    if (loadingMore || apiEvents.length >= totalServerEvents) return;
+    setLoadingMore(true);
+    const PAGE_SIZE = 200;
+    const params = new URLSearchParams();
+    params.set('slug', config.slug);
+    params.set('startDate', new Date().toISOString().split('T')[0]);
+    params.set('limit', String(PAGE_SIZE));
+    params.set('offset', String(apiEvents.length));
+    fetch(`/api/events?${params.toString()}`)
+      .then(res => res.ok ? res.json() : Promise.reject(new Error(`${res.status}`)))
+      .then(data => {
+        if (data && Array.isArray(data.data)) {
+          setApiEvents(prev => [...prev, ...data.data]);
+        }
+      })
+      .catch(err => console.error('Error loading more events:', err))
+      .finally(() => setLoadingMore(false));
+  }, [loadingMore, apiEvents.length, totalServerEvents, config.slug]);
 
   const filteredEvents = useMemo(() => {
     let result = [...apiEvents];
@@ -345,6 +374,9 @@ export function EmbedDiscoveryPage({
             isLoading={eventsLoading}
             error={eventsError}
             totalEvents={filteredEvents.length}
+            totalServerEvents={totalServerEvents}
+            onLoadMore={loadMoreEvents}
+            loadingMore={loadingMore}
           />
         )}
       </main>
