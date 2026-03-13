@@ -1,13 +1,21 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { ProgramGrid } from '@/components/discovery/ProgramGrid';
-import { ScheduleView } from '@/components/discovery/ScheduleView';
-import { HorizontalFilterBar } from '@/components/discovery/HorizontalFilterBar';
 import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode, CalendarEvent } from '@/types';
 import { buildWeekSchedules } from '@/lib/transformers';
 import { getSportGradient } from '@/lib/utils';
 import { Calendar, Grid3X3, Filter } from 'lucide-react';
+
+const ScheduleView = dynamic(
+  () => import('@/components/discovery/ScheduleView').then(m => ({ default: m.ScheduleView })),
+  { loading: () => <div className="space-y-4 animate-pulse"><div className="h-6 w-32 bg-gray-200 rounded" /><div className="h-16 w-full bg-gray-200 rounded-xl" /><div className="h-24 w-full bg-gray-200 rounded-xl mt-4" /></div> }
+);
+
+const HorizontalFilterBar = dynamic(
+  () => import('@/components/discovery/HorizontalFilterBar').then(m => ({ default: m.HorizontalFilterBar }))
+);
 
 const EMPTY_EVENTS: any[] = [];
 
@@ -154,6 +162,17 @@ export function EmbedDiscoveryPage({
   const [eventsFetched, setEventsFetched] = useState(initialEventsFetched);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const contentTimedRef = useRef(false);
+  useEffect(() => {
+    if (contentTimedRef.current) return;
+    const hasContent = viewMode === 'schedule' ? eventsFetched : initialPrograms.length > 0;
+    if (hasContent) {
+      contentTimedRef.current = true;
+      const ttc = Math.round(performance.now());
+      console.log(`[perf] time-to-content: ${ttc}ms (${viewMode} embed, ${config.slug})`);
+    }
+  }, [viewMode, eventsFetched, initialPrograms.length, config.slug]);
+
   useEffect(() => {
     if (viewMode !== 'schedule' || eventsFetched) return;
     if (abortControllerRef.current) abortControllerRef.current.abort();
@@ -165,10 +184,13 @@ export function EmbedDiscoveryPage({
     const params = new URLSearchParams();
     params.set('slug', config.slug);
     params.set('startDate', new Date().toISOString().split('T')[0]);
+    const fetchStart = performance.now();
     fetch(`/api/events?${params.toString()}`, { signal: ac.signal })
       .then(res => { if (!res.ok) throw new Error(`API error: ${res.status}`); return res.json(); })
       .then(data => {
         if (ac.signal.aborted) return;
+        const fetchMs = Math.round(performance.now() - fetchStart);
+        console.log(`[perf] embed events fetch: ${fetchMs}ms (${data?.data?.length ?? 0} events)`);
         if (data && Array.isArray(data.data)) { setApiEvents(data.data); setEventsFetched(true); }
       })
       .catch(err => {

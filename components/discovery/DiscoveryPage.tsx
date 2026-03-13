@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { 
   LayoutGrid, 
   Calendar, 
@@ -13,15 +14,25 @@ import {
 } from 'lucide-react';
 import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode } from '@/types';
 import { ProgramGrid } from './ProgramGrid';
-import { ScheduleView } from './ScheduleView';
-import { HorizontalFilterBar } from './HorizontalFilterBar';
-import { MobileFilters } from './MobileFilters';
 import { programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers';
 import { buildUrl, getSportGradient, getProgramTypeLabel, cn, isLightColor } from '@/lib/utils';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
+
+const ScheduleView = dynamic(
+  () => import('./ScheduleView').then(m => ({ default: m.ScheduleView })),
+  { loading: () => <ScheduleViewSkeleton /> }
+);
+
+const HorizontalFilterBar = dynamic(
+  () => import('./HorizontalFilterBar').then(m => ({ default: m.HorizontalFilterBar }))
+);
+
+const MobileFilters = dynamic(
+  () => import('./MobileFilters').then(m => ({ default: m.MobileFilters }))
+);
 
 const EMPTY_EVENTS: any[] = [];
 
@@ -461,6 +472,23 @@ export function DiscoveryPage({
   
   // Ref to track the current fetch request for cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  const contentTimedRef = useRef(false);
+  useEffect(() => {
+    if (contentTimedRef.current) return;
+    const hasContent = viewMode === 'schedule' ? eventsFetched : initialPrograms.length > 0;
+    if (hasContent) {
+      contentTimedRef.current = true;
+      const ttc = Math.round(performance.now());
+      console.log(`[perf] time-to-content: ${ttc}ms (${viewMode} view, ${config.slug})`);
+      gtmEvent.push('perf_time_to_content', {
+        ttc_ms: ttc,
+        view_mode: viewMode,
+        slug: config.slug,
+        program_count: initialPrograms.length,
+      });
+    }
+  }, [viewMode, eventsFetched, initialPrograms.length, config.slug]);
   // Tracks the latest user-initiated tab target to avoid URL/state races
   const pendingViewModeRef = useRef<ViewMode | null>(null);
   const pendingViewModeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -504,41 +532,44 @@ export function DiscoveryPage({
     params.set('startDate', new Date().toISOString().split('T')[0]);
     const url = `/api/events?${params.toString()}`;
     
+    const fetchStart = performance.now();
     fetch(url, { signal: abortController.signal })
       .then(res => {
-        // Check if request was successful
         if (!res.ok) {
           throw new Error(`API error: ${res.status} ${res.statusText}`);
         }
         return res.json();
       })
       .then(data => {
-        // Don't update state if this request was aborted
         if (abortController.signal.aborted) return;
         
-        // Handle successful response - data.data can be an empty array which is valid
+        const fetchMs = Math.round(performance.now() - fetchStart);
+        console.log(`[perf] events fetch: ${fetchMs}ms (${data?.data?.length ?? 0} events)`);
+        gtmEvent.push('perf_events_fetch', {
+          fetch_duration_ms: fetchMs,
+          event_count: data?.data?.length ?? 0,
+          slug: config.slug,
+        });
+
         if (data && Array.isArray(data.data)) {
           setApiEvents(data.data);
           setEventsFetched(true);
         } else {
-          // Unexpected response format
           console.error('Unexpected API response format:', data);
           setEventsError('Unexpected response from server');
-          setEventsFetched(true); // Mark as fetched to prevent infinite retries
+          setEventsFetched(true);
         }
       })
       .catch(err => {
-        // Don't update state if this request was aborted
         if (abortController.signal.aborted) return;
         
-        // Handle AbortError silently (user navigated away)
         if (err.name === 'AbortError') {
           return;
         }
         
         console.error('Error fetching events:', err);
         setEventsError('Failed to load events');
-        setEventsFetched(true); // Mark as fetched to prevent infinite retries
+        setEventsFetched(true);
       })
       .finally(() => {
         // Don't update loading state if this request was aborted
