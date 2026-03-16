@@ -241,6 +241,10 @@ async function buildContext(request: DiscoveryEventsRequest): Promise<DiscoveryE
 }
 
 function toCacheKey(context: DiscoveryEventsContext): string {
+  // Cache key is scope-only (no slug). Configs that share the same orgs,
+  // API key, and program filters produce identical pipeline data, so they
+  // share one cache entry. This prevents rate-limiting when multiple slugs
+  // (e.g. pbsz / pbsz-copy) trigger separate requests for the same data.
   const cacheScope = [
     context.orgIds.join(','),
     context.facilityId || 'all',
@@ -254,9 +258,9 @@ function toCacheKey(context: DiscoveryEventsContext): string {
   ].join(':');
 
   if (context.mode === 'availability') {
-    return discoveryAvailabilityCacheKey(context.slug, cacheScope);
+    return discoveryAvailabilityCacheKey('_shared', cacheScope);
   }
-  return discoveryFullCacheKey(context.slug, cacheScope);
+  return discoveryFullCacheKey('_shared', cacheScope);
 }
 
 function shouldSkipProgram(programId: string, context: DiscoveryEventsContext): boolean {
