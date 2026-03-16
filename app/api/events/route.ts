@@ -77,10 +77,11 @@ export async function GET(request: Request) {
 
     const totalFiltered = data.length;
 
-    // Write-through: self-heal the precomputed cache on fallback so the
-    // next request (and the server-side ISR pre-fetch) hits the fast path.
-    // Never write empty results -- they poison the cache for hours.
-    if (slug && mode === 'full' && !limit && totalFiltered > 0) {
+    // Write-through: populate the precomputed response cache ONLY when the
+    // pipeline returned a cache HIT (i.e. data produced by the cron's careful,
+    // rate-managed run). Fresh pipeline runs (MISS) can be partial due to Bond
+    // API rate-limiting and must never be cached in this key.
+    if (slug && mode === 'full' && !limit && totalFiltered > 0 && result.cacheStatus === 'HIT') {
       const responsePayload = {
         ...result.payload,
         data,
