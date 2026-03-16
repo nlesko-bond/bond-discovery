@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { getConfigBySlug } from '@/lib/config';
+import { getConfigBySlug, getAllPageConfigs } from '@/lib/config';
 import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
 import { cached, programsCacheKey, cacheGet, cacheSet } from '@/lib/cache';
@@ -155,6 +155,16 @@ function EmbedLoadingState() {
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-toca-purple"></div>
     </div>
   );
+}
+
+// Pre-build all known embed pages so ISR always has a stale version to serve
+// while revalidating in the background (prevents the server-side fallback from
+// blocking the first visitor's page render).
+export async function generateStaticParams() {
+  const configs = await getAllPageConfigs();
+  return configs.map((config) => ({
+    slug: config.slug,
+  }));
 }
 
 // Enable ISR with 5-minute revalidation
