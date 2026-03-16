@@ -3,12 +3,7 @@ import { notFound } from 'next/navigation';
 import { getConfigBySlug, getAllPageConfigs } from '@/lib/config';
 import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
-import { cached, programsCacheKey, cacheGet, cacheSet } from '@/lib/cache';
-import {
-  getDiscoveryEvents,
-  filterEventsForResponse,
-  type FullDiscoveryEvent,
-} from '@/lib/discovery-events';
+import { cached, programsCacheKey, cacheGet } from '@/lib/cache';
 import { Program, DiscoveryConfig } from '@/types';
 import { EmbedDiscoveryPage } from './EmbedDiscoveryPage';
 
@@ -58,13 +53,10 @@ async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
 }
 
 /**
- * Read pre-computed events from KV. When KV is empty, fall back to running the
- * events pipeline server-side so ISR always caches a complete page.
+ * Read pre-computed events from KV (populated by the cron job or write-through).
+ * Returns null on miss so the client falls back to fetching via /api/events.
  */
-async function getPrecomputedEvents(
-  slug: string,
-  config: DiscoveryConfig,
-): Promise<{
+async function getPrecomputedEvents(slug: string): Promise<{
   events: any[];
   total: number;
 } | null> {
@@ -77,49 +69,8 @@ async function getPrecomputedEvents(
       };
     }
   } catch {
-    // KV read failed -- fall through to server-side pipeline
+    // KV miss -- client will fetch
   }
-
-  try {
-    const result = await Promise.race([
-      getDiscoveryEvents({ slug, mode: 'full', config }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('server-side events timeout')), 12_000),
-      ),
-    ]);
-
-    const horizonMonths = config.features?.eventHorizonMonths ?? 3;
-    const today = new Date().toISOString().split('T')[0];
-    const filtered = filterEventsForResponse(
-      result.payload.data as FullDiscoveryEvent[],
-      horizonMonths,
-      today,
-    );
-
-    if (filtered.length === 0) {
-      console.warn(`[embed] server-side fallback returned 0 events for ${slug}, skipping cache`);
-      return null;
-    }
-
-    const responsePayload = {
-      ...result.payload,
-      data: filtered,
-      meta: {
-        ...result.payload.meta,
-        totalFiltered: filtered.length,
-        precomputedAt: new Date().toISOString(),
-      },
-    };
-    cacheSet(`discovery:response:${slug}`, responsePayload, {
-      ttl: 4 * 60 * 60,
-    }).catch(() => {});
-
-    console.log(`[embed] server-side fallback for ${slug}: ${filtered.length} events`);
-    return { events: filtered, total: filtered.length };
-  } catch (err) {
-    console.error(`[embed] server-side events fallback failed for ${slug}:`, err);
-  }
-
   return null;
 }
 
@@ -136,7 +87,7 @@ export default async function EmbedPage({ params, searchParams }: PageProps) {
 
   const [programs, eventsResult] = await Promise.all([
     getPrograms(config),
-    getPrecomputedEvents(slug, config),
+    getPrecomputedEvents(slug),
   ]);
   
   return (

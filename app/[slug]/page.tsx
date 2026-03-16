@@ -5,12 +5,7 @@ import { ProgramGridSkeleton } from '@/components/ui/Skeletons';
 import { getConfigBySlug, getAllPageConfigs } from '@/lib/config';
 import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
-import { cached, programsCacheKey, cacheGet, cacheSet } from '@/lib/cache';
-import {
-  getDiscoveryEvents,
-  filterEventsForResponse,
-  type FullDiscoveryEvent,
-} from '@/lib/discovery-events';
+import { cached, programsCacheKey, cacheGet } from '@/lib/cache';
 import { Program, DiscoveryConfig } from '@/types';
 
 interface PageProps {
@@ -69,15 +64,10 @@ async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
 }
 
 /**
- * Read pre-computed events from KV. When KV is empty (cron hasn't warmed this
- * slug, TTL expired, etc.) fall back to running the events pipeline server-side
- * so ISR always caches a complete page. A 12-second timeout prevents the
- * serverless function from hanging indefinitely.
+ * Read pre-computed events from KV (populated by the cron job or write-through).
+ * Returns null on miss so the client falls back to fetching via /api/events.
  */
-async function getPrecomputedEvents(
-  slug: string,
-  config: DiscoveryConfig,
-): Promise<{
+async function getPrecomputedEvents(slug: string): Promise<{
   events: any[];
   total: number;
 } | null> {
@@ -90,54 +80,8 @@ async function getPrecomputedEvents(
       };
     }
   } catch {
-    // KV read failed -- fall through to server-side pipeline
+    // KV miss -- client will fetch
   }
-
-  // KV miss (or cached empty result) — run the pipeline server-side so ISR
-  // caches a complete page. During normal ISR revalidation this runs in the
-  // background (no user waits).
-  try {
-    const result = await Promise.race([
-      getDiscoveryEvents({ slug, mode: 'full', config }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('server-side events timeout')), 12_000),
-      ),
-    ]);
-
-    const horizonMonths = config.features?.eventHorizonMonths ?? 3;
-    const today = new Date().toISOString().split('T')[0];
-    const filtered = filterEventsForResponse(
-      result.payload.data as FullDiscoveryEvent[],
-      horizonMonths,
-      today,
-    );
-
-    // Never cache empty results -- they're almost certainly from rate-limiting
-    // or a transient pipeline failure. Let the client retry instead.
-    if (filtered.length === 0) {
-      console.warn(`[page] server-side fallback returned 0 events for ${slug}, skipping cache`);
-      return null;
-    }
-
-    const responsePayload = {
-      ...result.payload,
-      data: filtered,
-      meta: {
-        ...result.payload.meta,
-        totalFiltered: filtered.length,
-        precomputedAt: new Date().toISOString(),
-      },
-    };
-    cacheSet(`discovery:response:${slug}`, responsePayload, {
-      ttl: 4 * 60 * 60,
-    }).catch(() => {});
-
-    console.log(`[page] server-side fallback for ${slug}: ${filtered.length} events`);
-    return { events: filtered, total: filtered.length };
-  } catch (err) {
-    console.error(`[page] server-side events fallback failed for ${slug}:`, err);
-  }
-
   return null;
 }
 
@@ -155,7 +99,7 @@ export default async function DiscoverySlugPage({ params, searchParams }: PagePr
   // Fetch programs and pre-computed events in parallel
   const [programs, eventsResult] = await Promise.all([
     getPrograms(config),
-    getPrecomputedEvents(slug, config),
+    getPrecomputedEvents(slug),
   ]);
   
   return (
