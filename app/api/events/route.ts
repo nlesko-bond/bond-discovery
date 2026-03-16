@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       if (precomputed && Array.isArray(precomputed.data) && precomputed.data.length > 0) {
         return NextResponse.json(precomputed, {
           headers: {
-            'Cache-Control': 's-maxage=900, stale-while-revalidate=7200',
+            'Cache-Control': 's-maxage=60, stale-while-revalidate=120',
             'X-Bond-Events-Cache': 'PRECOMPUTED',
             'X-Bond-Events-Mode': 'full',
           },
@@ -115,8 +115,8 @@ export async function GET(request: Request) {
       {
         headers: {
           'Cache-Control': mode === 'availability'
-            ? 's-maxage=60, stale-while-revalidate=300'
-            : 's-maxage=900, stale-while-revalidate=7200',
+            ? 's-maxage=30, stale-while-revalidate=60'
+            : 's-maxage=60, stale-while-revalidate=120',
           'X-Bond-Events-Cache': result.cacheStatus,
           'X-Bond-Events-Mode': mode,
           'X-Bond-Events-Cache-Key': result.cacheKey,

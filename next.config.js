@@ -21,16 +21,6 @@ const nextConfig = {
   // Headers for caching and security
   async headers() {
     return [
-      // API routes - aggressive caching
-      {
-        source: '/api/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 's-maxage=300, stale-while-revalidate=600',
-          },
-        ],
-      },
       // Discovery pages - cache with revalidation
       {
         source: '/:slug((?!admin|api|embed|_next).*)',
