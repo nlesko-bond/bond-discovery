@@ -5,7 +5,7 @@ import { ProgramGridSkeleton } from '@/components/ui/Skeletons';
 import { getConfigBySlug, getAllPageConfigs } from '@/lib/config';
 import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
-import { cached, programsCacheKey } from '@/lib/cache';
+import { cached, programsCacheKey, cacheGet } from '@/lib/cache';
 import { Program, DiscoveryConfig } from '@/types';
 
 interface PageProps {
@@ -14,14 +14,12 @@ interface PageProps {
 }
 
 async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
-  // Use page-specific API key if configured, otherwise fall back to default
   const apiKey = config.apiKey || DEFAULT_API_KEY;
   const client = createBondClient(apiKey);
   const allPrograms: Program[] = [];
   const orgIds = config.organizationIds;
   const today = new Date().toISOString().split('T')[0];
   
-  // Fetch programs from all organizations in parallel
   const promises = orgIds.map(async (orgId) => {
     try {
       const cacheKey = programsCacheKey(orgId, undefined, apiKey);
@@ -32,23 +30,20 @@ async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
         { ttl: Math.max(config.cacheTtl || 0, 4 * 60 * 60) }
       );
       
-      // Transform and add org ID
       const programs = (response.data || []).map(raw => ({
         ...transformProgram(raw),
         organizationId: orgId,
       }));
       
-      // Filter out past sessions (where endDate < today)
       programs.forEach(program => {
         if (program.sessions) {
           program.sessions = program.sessions.filter(session => {
-            if (!session.endDate) return true; // Keep sessions without end date
+            if (!session.endDate) return true;
             return session.endDate >= today;
           });
         }
       });
       
-      // Remove programs with no active sessions
       return programs.filter(p => !p.sessions || p.sessions.length > 0);
     } catch (error) {
       console.error(`Error fetching programs for org ${orgId}:`, error);
@@ -59,7 +54,6 @@ async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
   const results = await Promise.all(promises);
   results.forEach(programs => allPrograms.push(...programs));
   
-  // Apply facility filter if set in config
   if (config.facilityIds && config.facilityIds.length > 0) {
     return allPrograms.filter(p => 
       p.facilityId && config.facilityIds!.includes(p.facilityId)
@@ -67,6 +61,28 @@ async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
   }
   
   return allPrograms;
+}
+
+/**
+ * Read pre-computed events from KV (written by the cron job).
+ * Returns null on miss so the client can fall back to fetching.
+ */
+async function getPrecomputedEvents(slug: string): Promise<{
+  events: any[];
+  total: number;
+} | null> {
+  try {
+    const precomputed = await cacheGet<any>(`discovery:response:${slug}`);
+    if (precomputed?.data && Array.isArray(precomputed.data)) {
+      return {
+        events: precomputed.data,
+        total: precomputed.meta?.totalFiltered ?? precomputed.data.length,
+      };
+    }
+  } catch {
+    // KV miss -- client will fetch as before
+  }
+  return null;
 }
 
 export default async function DiscoverySlugPage({ params, searchParams }: PageProps) {
@@ -80,12 +96,19 @@ export default async function DiscoverySlugPage({ params, searchParams }: PagePr
   
   const viewMode = (searchParams.viewMode as string) || config.features.defaultView;
   
-  const programs = await getPrograms(config);
+  // Fetch programs and pre-computed events in parallel
+  const [programs, eventsResult] = await Promise.all([
+    getPrograms(config),
+    getPrecomputedEvents(slug),
+  ]);
   
   return (
     <Suspense fallback={<LoadingState />}>
       <DiscoveryPage 
         initialPrograms={programs}
+        initialScheduleEvents={eventsResult?.events}
+        initialEventsFetched={!!eventsResult}
+        initialTotalServerEvents={eventsResult?.total ?? 0}
         config={config}
         initialViewMode={viewMode as 'programs' | 'schedule'}
         searchParams={searchParams}

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { getConfigBySlug } from '@/lib/config';
 import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
-import { cached, programsCacheKey } from '@/lib/cache';
+import { cached, programsCacheKey, cacheGet } from '@/lib/cache';
 import { Program, DiscoveryConfig } from '@/types';
 import { EmbedDiscoveryPage } from './EmbedDiscoveryPage';
 
@@ -52,6 +52,24 @@ async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
   return allPrograms;
 }
 
+async function getPrecomputedEvents(slug: string): Promise<{
+  events: any[];
+  total: number;
+} | null> {
+  try {
+    const precomputed = await cacheGet<any>(`discovery:response:${slug}`);
+    if (precomputed?.data && Array.isArray(precomputed.data)) {
+      return {
+        events: precomputed.data,
+        total: precomputed.meta?.totalFiltered ?? precomputed.data.length,
+      };
+    }
+  } catch {
+    // KV miss -- client will fetch as before
+  }
+  return null;
+}
+
 export default async function EmbedPage({ params, searchParams }: PageProps) {
   const { slug } = params;
   
@@ -62,12 +80,19 @@ export default async function EmbedPage({ params, searchParams }: PageProps) {
   }
   
   const viewMode = (searchParams.viewMode as string) || config.features.defaultView;
-  const programs = await getPrograms(config);
+
+  const [programs, eventsResult] = await Promise.all([
+    getPrograms(config),
+    getPrecomputedEvents(slug),
+  ]);
   
   return (
     <Suspense fallback={<EmbedLoadingState />}>
       <EmbedDiscoveryPage 
         initialPrograms={programs}
+        initialScheduleEvents={eventsResult?.events}
+        initialEventsFetched={!!eventsResult}
+        initialTotalServerEvents={eventsResult?.total ?? 0}
         config={config}
         initialViewMode={viewMode as 'programs' | 'schedule'}
         searchParams={searchParams}

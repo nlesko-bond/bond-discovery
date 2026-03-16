@@ -7,6 +7,7 @@
 const memoryCache = new Map<string, { data: any; expires: number }>();
 
 const DEFAULT_TTL = 300; // 5 minutes
+const STALE_GRACE_FACTOR = 2; // Serve stale data up to 2x TTL while revalidating
 
 interface CacheOptions {
   ttl?: number; // Time to live in seconds
@@ -21,14 +22,39 @@ const DISCOVERY_REFRESH_INTERVALS_MS: Record<DiscoveryRefreshPolicy, number> = {
   '60min': 60 * 60 * 1000,
 };
 
+// ---------------------------------------------------------------------------
+// Lazy singleton for @vercel/kv -- avoids dynamic import on every call
+// ---------------------------------------------------------------------------
+import type { VercelKV } from '@vercel/kv';
+
+let _kvInstance: VercelKV | null = null;
+let _kvPromise: Promise<VercelKV> | null = null;
+
+function getKV(): Promise<VercelKV> | null {
+  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return null;
+  if (_kvInstance) return Promise.resolve(_kvInstance);
+  if (!_kvPromise) {
+    _kvPromise = import('@vercel/kv').then((mod) => {
+      _kvInstance = mod.kv;
+      return _kvInstance;
+    });
+  }
+  return _kvPromise;
+}
+
+// ---------------------------------------------------------------------------
+// In-flight request coalescing -- prevents thundering-herd on cache miss
+// ---------------------------------------------------------------------------
+const inflight = new Map<string, Promise<any>>();
+
 /**
  * Get a value from cache
  */
 export async function cacheGet<T>(key: string): Promise<T | null> {
-  // Try Vercel KV first
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+  const kvPromise = getKV();
+  if (kvPromise) {
     try {
-      const { kv } = await import('@vercel/kv');
+      const kv = await kvPromise;
       return await kv.get<T>(key);
     } catch (error) {
       console.error('KV get error:', error);
@@ -58,10 +84,10 @@ export async function cacheSet<T>(
 ): Promise<void> {
   const ttl = options.ttl || DEFAULT_TTL;
 
-  // Try Vercel KV first
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+  const kvPromise = getKV();
+  if (kvPromise) {
     try {
-      const { kv } = await import('@vercel/kv');
+      const kv = await kvPromise;
       await kv.set(key, value, { ex: ttl });
       return;
     } catch (error) {
@@ -80,10 +106,10 @@ export async function cacheSet<T>(
  * Delete a value from cache
  */
 export async function cacheDelete(key: string): Promise<void> {
-  // Try Vercel KV first
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+  const kvPromise = getKV();
+  if (kvPromise) {
     try {
-      const { kv } = await import('@vercel/kv');
+      const kv = await kvPromise;
       await kv.del(key);
       return;
     } catch (error) {
@@ -99,10 +125,10 @@ export async function cacheDelete(key: string): Promise<void> {
  * Delete all cache entries matching a pattern
  */
 export async function cacheDeletePattern(pattern: string): Promise<void> {
-  // Try Vercel KV first
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+  const kvPromise = getKV();
+  if (kvPromise) {
     try {
-      const { kv } = await import('@vercel/kv');
+      const kv = await kvPromise;
       const keys = await kv.keys(pattern);
       if (keys.length > 0) {
         await kv.del(...keys);
@@ -126,10 +152,10 @@ export async function cacheDeletePattern(pattern: string): Promise<void> {
  * Clear all cache
  */
 export async function cacheClear(): Promise<void> {
-  // Try Vercel KV first
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+  const kvPromise = getKV();
+  if (kvPromise) {
     try {
-      const { kv } = await import('@vercel/kv');
+      const kv = await kvPromise;
       await kv.flushall();
       return;
     } catch (error) {
@@ -231,24 +257,89 @@ export async function markMembershipsRefreshed(slug: string): Promise<void> {
 }
 
 /**
- * Wrapper function to get or set cache
+ * Wrapper function to get or set cache with request coalescing.
+ *
+ * When multiple concurrent callers request the same key and all miss,
+ * only one actual fetch runs -- the rest await the same promise.
  */
 export async function cached<T>(
   key: string,
   fetcher: () => Promise<T>,
   options: CacheOptions = {}
 ): Promise<T> {
-  // Try to get from cache
   const cachedValue = await cacheGet<T>(key);
   if (cachedValue !== null) {
     return cachedValue;
   }
 
-  // Fetch fresh data
-  const freshValue = await fetcher();
+  // Coalesce concurrent fetches for the same key
+  const existing = inflight.get(key);
+  if (existing) {
+    return existing as Promise<T>;
+  }
 
-  // Cache the result
-  await cacheSet(key, freshValue, options);
+  const fetchPromise = (async () => {
+    try {
+      const freshValue = await fetcher();
+      await cacheSet(key, freshValue, options);
+      return freshValue;
+    } finally {
+      inflight.delete(key);
+    }
+  })();
 
-  return freshValue;
+  inflight.set(key, fetchPromise);
+  return fetchPromise;
+}
+
+/**
+ * Stale-while-revalidate wrapper.
+ *
+ * Tries the primary cache key first. If that misses, tries a stale
+ * shadow key (`swr:{key}`) that lives 2x the TTL. If stale data exists,
+ * it is returned immediately and a background refresh is kicked off.
+ * This guarantees no user ever waits for the slow fallback pipeline.
+ */
+export async function cachedSWR<T>(
+  key: string,
+  fetcher: () => Promise<T>,
+  options: CacheOptions = {}
+): Promise<T> {
+  const cachedValue = await cacheGet<T>(key);
+  if (cachedValue !== null) {
+    return cachedValue;
+  }
+
+  // Primary miss -- check the stale shadow key
+  const staleKey = `swr:${key}`;
+  const staleValue = await cacheGet<T>(staleKey);
+
+  if (staleValue !== null) {
+    // Serve stale immediately; refresh in the background (fire-and-forget)
+    if (!inflight.has(key)) {
+      const bgPromise = (async () => {
+        try {
+          const fresh = await fetcher();
+          const ttl = options.ttl || DEFAULT_TTL;
+          await cacheSet(key, fresh, options);
+          await cacheSet(staleKey, fresh, { ttl: ttl * STALE_GRACE_FACTOR });
+        } catch (err) {
+          console.error(`[cachedSWR] background refresh failed for ${key}:`, err);
+        } finally {
+          inflight.delete(key);
+        }
+      })();
+      inflight.set(key, bgPromise);
+    }
+    return staleValue;
+  }
+
+  // Total miss (no stale data either) -- fetch synchronously with coalescing
+  return cached(key, async () => {
+    const fresh = await fetcher();
+    const ttl = options.ttl || DEFAULT_TTL;
+    // Also populate the stale shadow key for future SWR
+    await cacheSet(staleKey, fresh, { ttl: ttl * STALE_GRACE_FACTOR });
+    return fresh;
+  }, options);
 }

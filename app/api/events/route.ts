@@ -5,7 +5,7 @@ import {
   type DiscoveryEventsMode,
   type FullDiscoveryEvent,
 } from '@/lib/discovery-events';
-import { cacheGet } from '@/lib/cache';
+import { cacheGet, cacheSet } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +17,8 @@ export const dynamic = 'force-dynamic';
  * and heavy processing entirely.
  *
  * Fallback: if the pre-computed key is missing (cron hasn't run yet,
- * new slug, etc.), falls back to the full pipeline so pages never break.
+ * new slug, etc.), falls back to the full pipeline and then self-heals
+ * the precomputed cache so subsequent requests are fast.
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -74,6 +75,25 @@ export async function GET(request: Request) {
     }
 
     const totalFiltered = data.length;
+
+    // Write-through: self-heal the precomputed cache on fallback so the
+    // next request (and the server-side ISR pre-fetch) hits the fast path.
+    if (slug && mode === 'full' && !limit) {
+      const responsePayload = {
+        ...result.payload,
+        data,
+        meta: {
+          ...result.payload.meta,
+          totalFiltered,
+          precomputedAt: new Date().toISOString(),
+        },
+      };
+      cacheSet(`discovery:response:${slug}`, responsePayload, {
+        ttl: 4 * 60 * 60,
+      }).catch((err) =>
+        console.error(`[events] write-through cache failed for ${slug}:`, err)
+      );
+    }
 
     if (limit) {
       data = data.slice(offset, offset + limit);
