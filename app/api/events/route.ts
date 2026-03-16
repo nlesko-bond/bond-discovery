@@ -5,8 +5,7 @@ import {
   type DiscoveryEventsMode,
   type FullDiscoveryEvent,
 } from '@/lib/discovery-events';
-import { revalidatePath } from 'next/cache';
-import { cacheGet, cacheSet } from '@/lib/cache';
+import { cacheGet } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,34 +76,11 @@ export async function GET(request: Request) {
 
     const totalFiltered = data.length;
 
-    // Write-through: populate the precomputed response cache ONLY when the
-    // pipeline returned a cache HIT (i.e. data produced by the cron's careful,
-    // rate-managed run). Fresh pipeline runs (MISS) can be partial due to Bond
-    // API rate-limiting and must never be cached in this key.
-    if (slug && mode === 'full' && !limit && totalFiltered > 0 && result.cacheStatus === 'HIT') {
-      const responsePayload = {
-        ...result.payload,
-        data,
-        meta: {
-          ...result.payload.meta,
-          totalFiltered,
-          precomputedAt: new Date().toISOString(),
-        },
-      };
-      cacheSet(`discovery:response:${slug}`, responsePayload, {
-        ttl: 4 * 60 * 60,
-      }).catch((err) =>
-        console.error(`[events] write-through cache failed for ${slug}:`, err)
-      );
-
-      // Invalidate stale ISR pages so they regenerate with the now-warm KV data
-      try {
-        revalidatePath(`/${slug}`);
-        revalidatePath(`/embed/${slug}`);
-      } catch {
-        // revalidatePath may fail in edge runtime; non-critical
-      }
-    }
+    // discovery:response:{slug} is populated ONLY by the cron job, which
+    // fetches with careful rate management and produces complete datasets.
+    // Write-through from the API fallback is intentionally disabled because
+    // fresh pipeline runs can return partial data (Bond API rate-limiting)
+    // and that partial data would poison the response cache for hours.
 
     if (limit) {
       data = data.slice(offset, offset + limit);
