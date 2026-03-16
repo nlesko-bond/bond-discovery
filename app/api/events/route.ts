@@ -5,6 +5,7 @@ import {
   type DiscoveryEventsMode,
   type FullDiscoveryEvent,
 } from '@/lib/discovery-events';
+import { revalidatePath } from 'next/cache';
 import { cacheGet, cacheSet } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
@@ -93,6 +94,14 @@ export async function GET(request: Request) {
       }).catch((err) =>
         console.error(`[events] write-through cache failed for ${slug}:`, err)
       );
+
+      // Invalidate stale ISR pages so they regenerate with the now-warm KV data
+      try {
+        revalidatePath(`/${slug}`);
+        revalidatePath(`/embed/${slug}`);
+      } catch {
+        // revalidatePath may fail in edge runtime; non-critical
+      }
     }
 
     if (limit) {
