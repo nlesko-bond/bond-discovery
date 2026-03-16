@@ -70,7 +70,7 @@ async function getPrecomputedEvents(
 } | null> {
   try {
     const precomputed = await cacheGet<any>(`discovery:response:${slug}`);
-    if (precomputed?.data && Array.isArray(precomputed.data)) {
+    if (precomputed?.data && Array.isArray(precomputed.data) && precomputed.data.length > 0) {
       return {
         events: precomputed.data,
         total: precomputed.meta?.totalFiltered ?? precomputed.data.length,
@@ -95,6 +95,11 @@ async function getPrecomputedEvents(
       horizonMonths,
       today,
     );
+
+    if (filtered.length === 0) {
+      console.warn(`[embed] server-side fallback returned 0 events for ${slug}, skipping cache`);
+      return null;
+    }
 
     const responsePayload = {
       ...result.payload,
@@ -176,7 +181,9 @@ export async function generateMetadata({ params }: PageProps) {
   
   return {
     title: config?.branding.companyName || 'Discovery',
-    // Prevent indexing of embed pages
+    ...(config?.branding.favicon && {
+      icons: { icon: config.branding.favicon },
+    }),
     robots: 'noindex, nofollow',
   };
 }

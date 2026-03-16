@@ -83,7 +83,7 @@ async function getPrecomputedEvents(
 } | null> {
   try {
     const precomputed = await cacheGet<any>(`discovery:response:${slug}`);
-    if (precomputed?.data && Array.isArray(precomputed.data)) {
+    if (precomputed?.data && Array.isArray(precomputed.data) && precomputed.data.length > 0) {
       return {
         events: precomputed.data,
         total: precomputed.meta?.totalFiltered ?? precomputed.data.length,
@@ -93,8 +93,9 @@ async function getPrecomputedEvents(
     // KV read failed -- fall through to server-side pipeline
   }
 
-  // KV miss — run the full pipeline server-side so ISR caches a complete page.
-  // During normal ISR revalidation this runs in the background (no user waits).
+  // KV miss (or cached empty result) — run the pipeline server-side so ISR
+  // caches a complete page. During normal ISR revalidation this runs in the
+  // background (no user waits).
   try {
     const result = await Promise.race([
       getDiscoveryEvents({ slug, mode: 'full', config }),
@@ -110,6 +111,13 @@ async function getPrecomputedEvents(
       horizonMonths,
       today,
     );
+
+    // Never cache empty results -- they're almost certainly from rate-limiting
+    // or a transient pipeline failure. Let the client retry instead.
+    if (filtered.length === 0) {
+      console.warn(`[page] server-side fallback returned 0 events for ${slug}, skipping cache`);
+      return null;
+    }
 
     const responsePayload = {
       ...result.payload,
@@ -202,6 +210,9 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: `${config.branding.companyName} - Programs`,
     description: config.branding.tagline || `Find programs at ${config.branding.companyName}`,
+    ...(config.branding.favicon && {
+      icons: { icon: config.branding.favicon },
+    }),
     openGraph: {
       title: config.branding.companyName,
       description: config.branding.tagline,

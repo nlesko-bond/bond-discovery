@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   if (slug && mode === 'full') {
     try {
       const precomputed = await cacheGet<any>(`discovery:response:${slug}`);
-      if (precomputed && Array.isArray(precomputed.data)) {
+      if (precomputed && Array.isArray(precomputed.data) && precomputed.data.length > 0) {
         return NextResponse.json(precomputed, {
           headers: {
             'Cache-Control': 's-maxage=900, stale-while-revalidate=7200',
@@ -79,7 +79,8 @@ export async function GET(request: Request) {
 
     // Write-through: self-heal the precomputed cache on fallback so the
     // next request (and the server-side ISR pre-fetch) hits the fast path.
-    if (slug && mode === 'full' && !limit) {
+    // Never write empty results -- they poison the cache for hours.
+    if (slug && mode === 'full' && !limit && totalFiltered > 0) {
       const responsePayload = {
         ...result.payload,
         data,
