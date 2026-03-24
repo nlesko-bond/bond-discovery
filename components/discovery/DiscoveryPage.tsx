@@ -18,6 +18,7 @@ import { ScheduleView } from './ScheduleView';
 import { programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers';
 import { buildUrl, getSportGradient, getProgramTypeLabel, cn, isLightColor } from '@/lib/utils';
 import { eventMatchesDateRange, eventMatchesDaysOfWeek } from '@/lib/schedule-event-filters';
+import { scheduleViewParamFromPageSearchParams } from '@/lib/schedule-view-resolution';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
@@ -1423,6 +1424,7 @@ export function DiscoveryPage({
               onScheduleFiltersChange={
                 config.features.showScheduleTableDateFilters ? handleFiltersChange : undefined
               }
+              initialUrlScheduleView={scheduleViewParamFromPageSearchParams(searchParams)}
             />
           )}
         </main>

@@ -8,6 +8,7 @@ import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode, CalendarEvent } f
 import { buildWeekSchedules } from '@/lib/transformers';
 import { getSportGradient } from '@/lib/utils';
 import { eventMatchesDateRange, eventMatchesDaysOfWeek } from '@/lib/schedule-event-filters';
+import { scheduleViewParamFromPageSearchParams } from '@/lib/schedule-view-resolution';
 import { Calendar, Grid3X3, Filter } from 'lucide-react';
 
 const HorizontalFilterBar = dynamic(
@@ -400,6 +401,7 @@ export function EmbedDiscoveryPage({
             onScheduleFiltersChange={
               config.features.showScheduleTableDateFilters ? handleFiltersChange : undefined
             }
+            initialUrlScheduleView={scheduleViewParamFromPageSearchParams(searchParams)}
           />
         )}
       </main>

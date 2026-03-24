@@ -33,6 +33,7 @@ import { format, parseISO, startOfMonth, addMonths, subMonths, isToday, isSameDa
 import { DayView, WeekGridView, MonthView } from './calendar';
 import { ScheduleTableFilterBar } from './ScheduleTableFilterBar';
 import {
+  Skeleton,
   ScheduleViewSkeleton,
   ScheduleTableSkeleton,
   ScheduleViewportUnresolvedPlaceholder,
@@ -48,7 +49,22 @@ import {
 } from '@/lib/schedule-view-resolution';
 
 type ViewMode = 'list' | 'table' | 'day' | 'week' | 'month';
+
+/** When set (including `null`), initial `scheduleView` matches the server page — avoids useSearchParams() hydration mismatch. Omit in tests to use the hook only. */
+function initialScheduleViewParamForHydration(
+  serverParam: string | null | undefined,
+  searchParams: { get: (name: string) => string | null },
+): string | null {
+  if (serverParam !== undefined) {
+    return serverParam;
+  }
+  return searchParams.get('scheduleView');
+}
 type TableColumn = 'date' | 'time' | 'event' | 'program' | 'location' | 'spots' | 'action';
+
+function formatEventCountForHydration(n: number | undefined): string {
+  return (n ?? 0).toLocaleString('en-US');
+}
 
 interface ScheduleViewProps {
   schedule: WeekSchedule[];
@@ -66,6 +82,8 @@ interface ScheduleViewProps {
   customRegistrationUrl?: string;
   filters?: DiscoveryFilters;
   onScheduleFiltersChange?: (next: DiscoveryFilters) => void;
+  /** From page `searchParams` via `scheduleViewParamFromPageSearchParams` — keeps SSR and first client render aligned. */
+  initialUrlScheduleView?: string | null;
 }
 
 export function ScheduleView({
@@ -84,6 +102,7 @@ export function ScheduleView({
   customRegistrationUrl,
   filters,
   onScheduleFiltersChange,
+  initialUrlScheduleView,
 }: ScheduleViewProps) {
   const searchParams = useSearchParams();
   const searchParamsRef = useRef(searchParams);
@@ -138,13 +157,21 @@ export function ScheduleView({
 
   // Until client layout runs, avoid SSR desktop-default (e.g. table) HTML when there is no
   // explicit scheduleView — phones would see that for seconds before hydration.
+  // Seed from server searchParams when provided so SSR HTML matches the first client render
+  // (useSearchParams alone can disagree during hydration).
   const [scheduleViewportResolved, setScheduleViewportResolved] = useState(() => {
-    const u = searchParams.get('scheduleView');
+    const u = initialScheduleViewParamForHydration(
+      initialUrlScheduleView,
+      searchParams,
+    );
     return !!(u && VALID_SCHEDULE_VIEW_MODES.includes(u as ViewMode));
   });
 
   const [viewMode, setViewModeState] = useState<ViewMode>(() => {
-    const u = searchParams.get('scheduleView');
+    const u = initialScheduleViewParamForHydration(
+      initialUrlScheduleView,
+      searchParams,
+    );
     if (u && VALID_SCHEDULE_VIEW_MODES.includes(u as ViewMode)) {
       return u as ViewMode;
     }
@@ -190,6 +217,8 @@ export function ScheduleView({
     if (typeof window === 'undefined') return;
     applyResolvedScheduleView();
     setScheduleViewportResolved(true);
+    setSelectedDayDate((d) => d ?? new Date().toISOString().split('T')[0]);
+    setCurrentMonth((m) => m ?? startOfMonth(new Date()));
   }, [applyResolvedScheduleView]);
 
   useEffect(() => {
@@ -218,11 +247,9 @@ export function ScheduleView({
     [router, pathname, allowTableOnMobile, tableEscapeFallback],
   );
   
-  const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
-  // Default to today for day view
-  const [selectedDayDate, setSelectedDayDate] = useState<string | null>(() => {
-    return new Date().toISOString().split('T')[0];
-  });
+  // Defer to useLayoutEffect so server and client first paint match (Date()/timezone differs in SSR).
+  const [currentMonth, setCurrentMonth] = useState<Date | null>(null);
+  const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
   
   // Lazy loading for list view
   const [visibleDays, setVisibleDays] = useState(14); // Start with 2 weeks
@@ -514,7 +541,7 @@ export function ScheduleView({
           <div className="flex items-center gap-3 text-xs text-gray-500">
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: secondaryColor }} />
-              <span><span className="font-semibold" style={{ color: primaryColor }}>{totalEvents?.toLocaleString() || 0}</span> events</span>
+              <span><span className="font-semibold" style={{ color: primaryColor }}>{formatEventCountForHydration(totalEvents)}</span> events</span>
             </div>
             {displayTimezone && (
               <span className="text-gray-400">All times {displayTimezone}</span>
@@ -660,52 +687,80 @@ export function ScheduleView({
         style={viewMode !== 'list' && viewMode !== 'table' ? { top: 'var(--sticky-offset, 0px)' } : undefined}
       >
       {viewMode === 'month' ? (
-        /* Month Navigation */
-        <div 
-          className="flex items-center justify-between px-3 py-3 text-white rounded-t-lg"
-          style={{ background: themeHeaderBackground }}
-        >
-          <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
-            <ChevronLeft size={20} />
-          </button>
-          <h2 className="text-lg font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
-          <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
-            <ChevronRight size={20} />
-          </button>
-        </div>
-      ) : viewMode === 'day' && selectedDayDate ? (
-        /* Day Navigation */
-        <div 
-          className="flex items-center justify-between px-3 py-3 text-white rounded-t-lg"
-          style={{ background: themeHeaderBackground }}
-        >
-          <button
-            onClick={() => {
-              const currentDate = parseISO(selectedDayDate);
-              const prevDate = new Date(currentDate);
-              prevDate.setDate(prevDate.getDate() - 1);
-              setSelectedDayDate(prevDate.toISOString().split('T')[0]);
-            }}
-            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+        currentMonth ? (
+          <div
+            className="flex items-center justify-between px-3 py-3 text-white rounded-t-lg"
+            style={{ background: themeHeaderBackground }}
           >
-            <ChevronLeft size={20} />
-          </button>
-          <div className="text-center">
-            <h2 className="text-lg font-bold">{format(parseISO(selectedDayDate), 'EEE, MMM d')}</h2>
-            <button onClick={() => setViewMode('list')} className="text-xs text-white/70 hover:text-white">← Back to list</button>
+            <button
+              onClick={() => setCurrentMonth((m) => subMonths(m!, 1))}
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <h2 className="text-lg font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
+            <button
+              onClick={() => setCurrentMonth((m) => addMonths(m!, 1))}
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <ChevronRight size={20} />
+            </button>
           </div>
-          <button
-            onClick={() => {
-              const currentDate = parseISO(selectedDayDate);
-              const nextDate = new Date(currentDate);
-              nextDate.setDate(nextDate.getDate() + 1);
-              setSelectedDayDate(nextDate.toISOString().split('T')[0]);
-            }}
-            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+        ) : (
+          <div
+            className="flex items-center justify-between px-3 py-3 text-white rounded-t-lg"
+            style={{ background: themeHeaderBackground }}
+            aria-busy="true"
           >
-            <ChevronRight size={20} />
-          </button>
-        </div>
+            <div className="h-8 w-8 rounded-lg bg-white/20 animate-pulse" />
+            <Skeleton className="h-6 w-36 rounded bg-white/25" />
+            <div className="h-8 w-8 rounded-lg bg-white/20 animate-pulse" />
+          </div>
+        )
+      ) : viewMode === 'day' ? (
+        selectedDayDate ? (
+          <div
+            className="flex items-center justify-between px-3 py-3 text-white rounded-t-lg"
+            style={{ background: themeHeaderBackground }}
+          >
+            <button
+              onClick={() => {
+                const currentDate = parseISO(selectedDayDate);
+                const prevDate = new Date(currentDate);
+                prevDate.setDate(prevDate.getDate() - 1);
+                setSelectedDayDate(prevDate.toISOString().split('T')[0]);
+              }}
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div className="text-center">
+              <h2 className="text-lg font-bold">{format(parseISO(selectedDayDate), 'EEE, MMM d')}</h2>
+              <button type="button" onClick={() => setViewMode('list')} className="text-xs text-white/70 hover:text-white">← Back to list</button>
+            </div>
+            <button
+              onClick={() => {
+                const currentDate = parseISO(selectedDayDate);
+                const nextDate = new Date(currentDate);
+                nextDate.setDate(nextDate.getDate() + 1);
+                setSelectedDayDate(nextDate.toISOString().split('T')[0]);
+              }}
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        ) : (
+          <div
+            className="flex items-center justify-between px-3 py-3 text-white rounded-t-lg"
+            style={{ background: themeHeaderBackground }}
+            aria-busy="true"
+          >
+            <div className="h-8 w-8 rounded-lg bg-white/20 animate-pulse" />
+            <Skeleton className="h-6 w-40 rounded bg-white/25" />
+            <div className="h-8 w-8 rounded-lg bg-white/20 animate-pulse" />
+          </div>
+        )
       ) : viewMode === 'list' || viewMode === 'table' ? null : (
         /* Week Navigation - Compact (not for list/table which show all events) */
         <div 
@@ -764,7 +819,7 @@ export function ScheduleView({
       )}
 
       {/* Month View */}
-      {viewMode === 'month' && (
+      {viewMode === 'month' && currentMonth && (
         <MonthView
           events={allEvents}
           currentMonth={currentMonth}
@@ -1609,7 +1664,8 @@ function TableView({
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 print:shadow-none print:border-0">
       {/* Table */}
-      <div className="print:overflow-visible overflow-x-auto">
+      {/* No overflow-x-auto here: it creates a scroll container and breaks thead position:sticky vs the page. */}
+      <div className="print:overflow-visible">
         <table className="w-full min-w-0 print:text-xs border-collapse table-auto">
           <thead 
             className="sticky z-20 text-white" 

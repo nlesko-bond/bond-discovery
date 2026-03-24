@@ -2,8 +2,26 @@ import { describe, it, expect } from 'vitest';
 import {
   readAllowTableOnMobileFromFeatures,
   resolveScheduleViewMode,
+  scheduleViewParamFromPageSearchParams,
   shouldRewriteScheduleViewParam,
 } from '@/lib/schedule-view-resolution';
+
+describe('scheduleViewParamFromPageSearchParams', () => {
+  it('returns null when absent or empty', () => {
+    expect(scheduleViewParamFromPageSearchParams({})).toBe(null);
+    expect(scheduleViewParamFromPageSearchParams({ scheduleView: '' })).toBe(null);
+    expect(scheduleViewParamFromPageSearchParams({ scheduleView: [] })).toBe(null);
+  });
+
+  it('returns string or first array element', () => {
+    expect(scheduleViewParamFromPageSearchParams({ scheduleView: 'table' })).toBe(
+      'table',
+    );
+    expect(
+      scheduleViewParamFromPageSearchParams({ scheduleView: ['week', 'list'] }),
+    ).toBe('week');
+  });
+});
 
 describe('readAllowTableOnMobileFromFeatures', () => {
   it('is true only when camelCase or snake_case flag is explicitly true', () => {

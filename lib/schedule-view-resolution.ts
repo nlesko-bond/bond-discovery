@@ -51,6 +51,18 @@ export const VALID_SCHEDULE_VIEW_MODES: ScheduleViewResolutionMode[] = [
   'month',
 ];
 
+/** First `scheduleView` from a Next.js page `searchParams` — same on server and client. */
+export function scheduleViewParamFromPageSearchParams(sp: {
+  scheduleView?: string | string[] | undefined;
+}): string | null {
+  const v = sp.scheduleView;
+  if (typeof v === 'string' && v.length > 0) return v;
+  if (Array.isArray(v) && typeof v[0] === 'string' && v[0].length > 0) {
+    return v[0];
+  }
+  return null;
+}
+
 export type ScheduleViewResolutionOptions = {
   allowTableOnMobile: boolean;
   desktopDefaultView: ScheduleViewResolutionMode;
