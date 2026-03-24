@@ -130,4 +130,34 @@ export function ScheduleViewSkeleton() {
   );
 }
 
+/** Loading placeholder when default resolved view is table (avoids list-shaped skeleton → table jump). */
+export function ScheduleTableSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-6">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-10 w-48 rounded-lg" />
+      </div>
+      <Skeleton className="h-16 w-full rounded-xl" />
+      <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden bg-white">
+        <div className="grid grid-cols-6 gap-2 px-3 py-2 bg-gray-50 border-b border-gray-100">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-4 w-full" />
+          ))}
+        </div>
+        {Array.from({ length: 8 }).map((_, row) => (
+          <div
+            key={row}
+            className="grid grid-cols-6 gap-2 px-3 py-3 border-b border-gray-100 last:border-0"
+          >
+            {Array.from({ length: 6 }).map((_, col) => (
+              <Skeleton key={col} className="h-4 w-full" />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default Skeleton;

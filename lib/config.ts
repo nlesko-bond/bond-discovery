@@ -38,6 +38,15 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
   
   // Get tableColumns from features, cast to proper type
   const tableColumns = (features.tableColumns as ScheduleTableColumn[] | undefined) || undefined;
+
+  const allowTableViewOnMobile =
+    features.allowTableViewOnMobile === true ||
+    features.allow_table_view_on_mobile === true;
+
+  const defaultScheduleView =
+    features.defaultScheduleView ?? features.default_schedule_view;
+  const mobileDefaultScheduleView =
+    features.mobileDefaultScheduleView ?? features.mobile_default_schedule_view;
   
   return {
     id: row.id,
@@ -57,6 +66,9 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
       linkBehavior, // Ensure camelCase for frontend
       includedProgramIds, // Ensure it's in features for admin UI
       tableColumns, // Cast to proper type
+      allowTableViewOnMobile,
+      defaultScheduleView,
+      mobileDefaultScheduleView,
       discoveryCacheEnabled: features.discoveryCacheEnabled ?? true,
       availabilityCacheTtl: typeof features.availabilityCacheTtl === 'number' ? features.availabilityCacheTtl : 60,
       discoveryRefreshPolicy: features.discoveryRefreshPolicy || '15min',

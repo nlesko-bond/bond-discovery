@@ -32,10 +32,14 @@ import { eventShowsRedeemPass, getPunchPassRedeemUrl, trackRedeemPassClick } fro
 import { format, parseISO, startOfMonth, addMonths, subMonths, isToday, isSameDay } from 'date-fns';
 import { DayView, WeekGridView, MonthView } from './calendar';
 import { ScheduleTableFilterBar } from './ScheduleTableFilterBar';
-import { ScheduleViewSkeleton } from '@/components/ui/Skeleton';
+import { ScheduleViewSkeleton, ScheduleTableSkeleton } from '@/components/ui/Skeleton';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 import {
+  computeInitialScheduleViewState,
+  isNarrowScheduleViewport,
+  readAllowTableOnMobileFromFeatures,
   resolveScheduleViewMode,
+  SCHEDULE_VIEW_NARROW_MEDIA_QUERY,
   shouldRewriteScheduleViewParam,
   VALID_SCHEDULE_VIEW_MODES,
 } from '@/lib/schedule-view-resolution';
@@ -98,14 +102,23 @@ export function ScheduleView({
   
   // Sticky positioning uses CSS variable --sticky-offset set by parent DiscoveryPage
   // This dynamically measures the actual header height for proper positioning
-  
-  const TABLE_VIEW_BREAKPOINT = 550;
 
-  const allowTableOnMobile = !!config.features.allowTableViewOnMobile;
+  const allowTableOnMobile = readAllowTableOnMobileFromFeatures(
+    config.features as Record<string, unknown>,
+  );
   const desktopDefaultView =
     (config.features.defaultScheduleView as ViewMode) || 'list';
   const mobileDefaultRaw =
     config.features.mobileDefaultScheduleView as ViewMode | undefined;
+
+  const scheduleResolutionOpts = useMemo(
+    () => ({
+      allowTableOnMobile,
+      desktopDefaultView,
+      mobileDefaultRaw,
+    }),
+    [allowTableOnMobile, desktopDefaultView, mobileDefaultRaw],
+  );
 
   /** When table is not allowed on a narrow viewport, fall back (never table). */
   const tableEscapeFallback = useCallback((): ViewMode => {
@@ -122,18 +135,14 @@ export function ScheduleView({
     return 'list';
   }, [mobileDefaultRaw, desktopDefaultView]);
 
-  // SSR + first client frame: URL wins if present; otherwise neutral `list` — useLayoutEffect
-  // resolves viewport + admin defaults before paint.
-  const [viewMode, setViewModeState] = useState<ViewMode>(() => {
-    const urlScheduleView = searchParams.get('scheduleView') as ViewMode | null;
-    if (
-      urlScheduleView &&
-      VALID_SCHEDULE_VIEW_MODES.includes(urlScheduleView)
-    ) {
-      return urlScheduleView;
-    }
-    return 'list';
-  });
+  // SSR uses desktop default when URL omits scheduleView (avoids list→table flash on wide screens).
+  // Client useLayoutEffect still aligns URL + corrects mobile after hydration.
+  const [viewMode, setViewModeState] = useState<ViewMode>(() =>
+    computeInitialScheduleViewState(
+      searchParams.get('scheduleView'),
+      scheduleResolutionOpts,
+    ),
+  );
 
   const viewModeRef = useRef(viewMode);
   useEffect(() => {
@@ -144,14 +153,10 @@ export function ScheduleView({
 
   const applyResolvedScheduleView = useCallback(() => {
     if (typeof window === 'undefined') return;
-    const narrow = window.innerWidth < TABLE_VIEW_BREAKPOINT;
+    const narrow = isNarrowScheduleViewport();
     const raw = searchParamsRef.current.get('scheduleView');
 
-    const target = resolveScheduleViewMode(raw, narrow, {
-      allowTableOnMobile,
-      desktopDefaultView,
-      mobileDefaultRaw,
-    });
+    const target = resolveScheduleViewMode(raw, narrow, scheduleResolutionOpts);
 
     setIsTableAllowed(allowTableOnMobile || !narrow);
 
@@ -172,31 +177,25 @@ export function ScheduleView({
       p.set('scheduleView', target);
       router.replace(`${pathname}?${p.toString()}`, { scroll: false });
     }
-  }, [
-    allowTableOnMobile,
-    desktopDefaultView,
-    mobileDefaultRaw,
-    pathname,
-    router,
-    scheduleViewParam,
-  ]);
+  }, [pathname, router, scheduleViewParam, scheduleResolutionOpts]);
 
   useLayoutEffect(() => {
     applyResolvedScheduleView();
   }, [applyResolvedScheduleView]);
 
   useEffect(() => {
-    const onResize = () => applyResolvedScheduleView();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia(SCHEDULE_VIEW_NARROW_MEDIA_QUERY);
+    const onChange = () => applyResolvedScheduleView();
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
   }, [applyResolvedScheduleView]);
 
   // Update URL when view mode changes
   const setViewMode = useCallback(
     (newMode: ViewMode) => {
       const narrow =
-        typeof window !== 'undefined' &&
-        window.innerWidth < TABLE_VIEW_BREAKPOINT;
+        typeof window !== 'undefined' && isNarrowScheduleViewport();
       let next = newMode;
       if (next === 'table' && narrow && !allowTableOnMobile) {
         next = tableEscapeFallback();
@@ -451,11 +450,13 @@ export function ScheduleView({
     setViewMode('day');
   };
 
-  // Loading state - show skeleton
+  // Loading state — match skeleton to resolved view to avoid list-shaped → table jump
   if (isLoading) {
+    const showTableSkeleton =
+      viewMode === 'table' && config.features.showTableView !== false;
     return (
       <div className="p-4 md:p-6">
-        <ScheduleViewSkeleton />
+        {showTableSkeleton ? <ScheduleTableSkeleton /> : <ScheduleViewSkeleton />}
       </div>
     );
   }

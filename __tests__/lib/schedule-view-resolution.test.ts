@@ -1,8 +1,24 @@
 import { describe, it, expect } from 'vitest';
 import {
+  readAllowTableOnMobileFromFeatures,
   resolveScheduleViewMode,
   shouldRewriteScheduleViewParam,
 } from '@/lib/schedule-view-resolution';
+
+describe('readAllowTableOnMobileFromFeatures', () => {
+  it('is true only when camelCase or snake_case flag is explicitly true', () => {
+    expect(readAllowTableOnMobileFromFeatures({})).toBe(false);
+    expect(
+      readAllowTableOnMobileFromFeatures({ allowTableViewOnMobile: false }),
+    ).toBe(false);
+    expect(
+      readAllowTableOnMobileFromFeatures({ allowTableViewOnMobile: true }),
+    ).toBe(true);
+    expect(
+      readAllowTableOnMobileFromFeatures({ allow_table_view_on_mobile: true }),
+    ).toBe(true);
+  });
+});
 
 describe('resolveScheduleViewMode', () => {
   const base = {
