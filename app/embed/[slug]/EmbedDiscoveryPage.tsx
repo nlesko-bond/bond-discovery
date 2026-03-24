@@ -263,14 +263,16 @@ export function EmbedDiscoveryPage({
         );
       });
     }
-    if (filters.dateRange?.start || filters.dateRange?.end) {
-      result = result.filter((e) => eventMatchesDateRange(e, filters.dateRange));
-    }
-    if (filters.daysOfWeek && filters.daysOfWeek.length > 0) {
-      result = result.filter((e) => eventMatchesDaysOfWeek(e, filters.daysOfWeek));
+    if (config.features.showScheduleTableDateFilters) {
+      if (filters.dateRange?.start || filters.dateRange?.end) {
+        result = result.filter((e) => eventMatchesDateRange(e, filters.dateRange));
+      }
+      if (filters.daysOfWeek && filters.daysOfWeek.length > 0) {
+        result = result.filter((e) => eventMatchesDaysOfWeek(e, filters.daysOfWeek));
+      }
     }
     return result;
-  }, [apiEvents, filters, initialPrograms]);
+  }, [apiEvents, filters, initialPrograms, config.features.showScheduleTableDateFilters]);
 
   const scheduleData = useMemo(() => {
     if (viewMode !== 'schedule') return null;
@@ -394,8 +396,10 @@ export function EmbedDiscoveryPage({
             linkTarget={linkTarget}
             hideRegistrationLinks={config.features.hideRegistrationLinks}
             customRegistrationUrl={config.features.customRegistrationUrl}
-            filters={filters}
-            onScheduleFiltersChange={handleFiltersChange}
+            filters={config.features.showScheduleTableDateFilters ? filters : undefined}
+            onScheduleFiltersChange={
+              config.features.showScheduleTableDateFilters ? handleFiltersChange : undefined
+            }
           />
         )}
       </main>

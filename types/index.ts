@@ -405,6 +405,11 @@ export interface FeatureConfig {
   showPunchPassRedeemButton?: boolean;
   /** Override URL for redeem pass (default https://bondsports.co/user/passes) */
   punchPassRedeemUrl?: string;
+  /**
+   * When true, schedule table view shows compact date/day filters and applies them to events.
+   * Default off — opt in per page after testing.
+   */
+  showScheduleTableDateFilters?: boolean;
 }
 
 export type FilterType = 

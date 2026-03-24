@@ -6,8 +6,6 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Calendar,
-  CalendarDays,
-  CalendarRange,
   List,
   Clock,
   MapPin,
@@ -31,32 +29,11 @@ import { WeekSchedule, DaySchedule, CalendarEvent, DiscoveryConfig, DiscoveryFil
 import { formatDate, formatTime, formatPrice, getSportLabel, getProgramTypeLabel, buildRegistrationUrl, cn } from '@/lib/utils';
 import { bondAnalytics } from '@/lib/analytics';
 import { eventShowsRedeemPass, getPunchPassRedeemUrl, trackRedeemPassClick } from '@/lib/schedule-redeem';
-import {
-  format,
-  parseISO,
-  startOfMonth,
-  addMonths,
-  subMonths,
-  isToday,
-  isSameDay,
-  addDays,
-  startOfWeek,
-  endOfWeek,
-  endOfMonth,
-} from 'date-fns';
+import { format, parseISO, startOfMonth, addMonths, subMonths, isToday, isSameDay } from 'date-fns';
 import { DayView, WeekGridView, MonthView } from './calendar';
+import { ScheduleTableFilterBar } from './ScheduleTableFilterBar';
 import { ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
-
-const TABLE_DOW_OPTIONS: { value: number; label: string }[] = [
-  { value: 0, label: 'Sun' },
-  { value: 1, label: 'Mon' },
-  { value: 2, label: 'Tue' },
-  { value: 3, label: 'Wed' },
-  { value: 4, label: 'Thu' },
-  { value: 5, label: 'Fri' },
-  { value: 6, label: 'Sat' },
-];
 
 type ViewMode = 'list' | 'table' | 'day' | 'week' | 'month';
 type TableColumn = 'date' | 'time' | 'event' | 'program' | 'location' | 'spots' | 'action';
@@ -809,7 +786,7 @@ export function ScheduleView({
       {/* Table View - Desktop only */}
       {viewMode === 'table' && (
         <>
-          {filters && onScheduleFiltersChange && (
+          {config.features.showScheduleTableDateFilters && filters && onScheduleFiltersChange && (
             <ScheduleTableFilterBar
               config={config}
               filters={filters}
@@ -1205,271 +1182,6 @@ function EventCard({
         </div>
       </div>
     </button>
-  );
-}
-
-function ScheduleTableFilterBar({
-  config,
-  filters,
-  onChange,
-}: {
-  config: DiscoveryConfig;
-  filters: DiscoveryFilters;
-  onChange: (next: DiscoveryFilters) => void;
-}) {
-  const primaryColor = config.branding.primaryColor || '#1E2761';
-  const secondaryColor = config.branding.secondaryColor || '#6366F1';
-  const themeStyle = (config.features.scheduleThemeStyle as 'gradient' | 'solid') || 'solid';
-  const headerBackground =
-    themeStyle === 'solid'
-      ? primaryColor
-      : `linear-gradient(120deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
-
-  const dr = filters.dateRange || {};
-  const dows = filters.daysOfWeek || [];
-
-  const setDateRange = (patch: { start?: string; end?: string }) => {
-    const nextRange = { ...dr, ...patch };
-    const next: { start?: string; end?: string } = {};
-    if (nextRange.start) next.start = nextRange.start;
-    if (nextRange.end) next.end = nextRange.end;
-    onChange({
-      ...filters,
-      dateRange: next.start || next.end ? next : {},
-    });
-  };
-
-  const toggleDow = (value: number) => {
-    const next = dows.includes(value)
-      ? dows.filter((d) => d !== value)
-      : [...dows, value].sort((a, b) => a - b);
-    onChange({ ...filters, daysOfWeek: next.length ? next : undefined });
-  };
-
-  const clearAll = () => onChange({ ...filters, dateRange: {}, daysOfWeek: undefined });
-
-  const hasActive = Boolean(dr.start || dr.end || dows.length > 0);
-
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const presetBtnClass =
-    'text-xs font-semibold px-3 py-2 rounded-xl border transition-all duration-200 active:scale-[0.98]';
-
-  const applyPresetNext7 = () => {
-    onChange({
-      ...filters,
-      dateRange: { start: today, end: format(addDays(new Date(), 7), 'yyyy-MM-dd') },
-    });
-  };
-
-  const applyPresetThisWeek = () => {
-    const now = new Date();
-    onChange({
-      ...filters,
-      dateRange: {
-        start: format(startOfWeek(now, { weekStartsOn: 0 }), 'yyyy-MM-dd'),
-        end: format(endOfWeek(now, { weekStartsOn: 0 }), 'yyyy-MM-dd'),
-      },
-    });
-  };
-
-  const applyPresetThisMonth = () => {
-    const now = new Date();
-    onChange({
-      ...filters,
-      dateRange: {
-        start: format(startOfMonth(now), 'yyyy-MM-dd'),
-        end: format(endOfMonth(now), 'yyyy-MM-dd'),
-      },
-    });
-  };
-
-  const dateInputClass =
-    'w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200/90 bg-white text-sm text-gray-900 shadow-sm ' +
-    'transition-[box-shadow,border-color] duration-200 placeholder:text-gray-400 ' +
-    'hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-0';
-
-  return (
-    <section className="mb-4 rounded-2xl border border-gray-200/90 bg-white shadow-md shadow-gray-200/40 overflow-hidden print:hidden">
-      <div
-        className="px-4 py-3.5 flex items-start gap-3 text-white"
-        style={{ background: headerBackground }}
-      >
-        <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm border border-white/20"
-          aria-hidden
-        >
-          <CalendarRange className="w-5 h-5 text-white" strokeWidth={2} />
-        </div>
-        <div className="min-w-0 flex-1 pt-0.5">
-          <h3 className="text-sm font-bold tracking-tight text-white">Filter schedule</h3>
-          <p className="text-xs text-white/80 leading-snug mt-0.5">
-            Date range and weekdays use each event&apos;s local day in its timezone.
-          </p>
-        </div>
-        {hasActive && (
-          <button
-            type="button"
-            onClick={clearAll}
-            className="shrink-0 flex items-center gap-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/25 px-3 py-2 text-xs font-semibold text-white transition-colors"
-          >
-            <X className="w-3.5 h-3.5 opacity-90" />
-            Reset
-          </button>
-        )}
-      </div>
-
-      <div className="px-4 py-4 sm:px-5 sm:py-5 space-y-5 bg-gradient-to-b from-slate-50/90 via-white to-white">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">Quick ranges</p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={applyPresetNext7}
-              className={cn(presetBtnClass, 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300')}
-            >
-              Next 7 days
-            </button>
-            <button
-              type="button"
-              onClick={applyPresetThisWeek}
-              className={cn(presetBtnClass, 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300')}
-            >
-              This week
-            </button>
-            <button
-              type="button"
-              onClick={applyPresetThisMonth}
-              className={cn(presetBtnClass, 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300')}
-            >
-              This month
-            </button>
-            <button
-              type="button"
-              onClick={() => onChange({ ...filters, daysOfWeek: [1, 2, 3, 4, 5] })}
-              className={cn(presetBtnClass, 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300')}
-            >
-              Weekdays only
-            </button>
-            <button
-              type="button"
-              onClick={() => onChange({ ...filters, daysOfWeek: [0, 6] })}
-              className={cn(presetBtnClass, 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300')}
-            >
-              Weekends
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">Custom range</p>
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 sm:gap-2 items-end">
-            <div className="space-y-1.5">
-              <label htmlFor="schedule-table-start" className="text-xs font-semibold text-gray-600">
-                Starts on or after
-              </label>
-              <div className="relative">
-                <CalendarDays
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                  aria-hidden
-                />
-                <input
-                  id="schedule-table-start"
-                  type="date"
-                  className={dateInputClass}
-                  onFocus={(e) => {
-                    e.target.style.boxShadow = `0 0 0 2px ${secondaryColor}40`;
-                    e.target.style.borderColor = secondaryColor;
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.boxShadow = '';
-                    e.target.style.borderColor = 'rgb(229 231 235)';
-                  }}
-                  value={dr.start || ''}
-                  onChange={(e) => setDateRange({ start: e.target.value || undefined })}
-                />
-              </div>
-            </div>
-
-            <div className="hidden sm:flex items-center justify-center pb-2 text-gray-300 select-none" aria-hidden>
-              <span className="text-lg font-light">→</span>
-            </div>
-
-            <div className="space-y-1.5">
-              <label htmlFor="schedule-table-end" className="text-xs font-semibold text-gray-600">
-                Ends on or before
-              </label>
-              <div className="relative">
-                <CalendarDays
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                  aria-hidden
-                />
-                <input
-                  id="schedule-table-end"
-                  type="date"
-                  className={dateInputClass}
-                  onFocus={(e) => {
-                    e.target.style.boxShadow = `0 0 0 2px ${secondaryColor}40`;
-                    e.target.style.borderColor = secondaryColor;
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.boxShadow = '';
-                    e.target.style.borderColor = 'rgb(229 231 235)';
-                  }}
-                  value={dr.end || ''}
-                  min={dr.start || undefined}
-                  onChange={(e) => setDateRange({ end: e.target.value || undefined })}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div className="flex items-baseline justify-between gap-2 mb-2">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Days of week</p>
-            {dows.length > 0 && (
-              <button
-                type="button"
-                onClick={() => onChange({ ...filters, daysOfWeek: undefined })}
-                className="text-xs font-semibold hover:underline"
-                style={{ color: secondaryColor }}
-              >
-                Clear days
-              </button>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {TABLE_DOW_OPTIONS.map(({ value, label }) => {
-              const on = dows.includes(value);
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => toggleDow(value)}
-                  className={cn(
-                    'min-w-[2.75rem] px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 border active:scale-[0.97]',
-                    on
-                      ? 'text-white border-transparent shadow-md'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50',
-                  )}
-                  style={
-                    on
-                      ? {
-                          backgroundColor: secondaryColor,
-                          borderColor: secondaryColor,
-                          boxShadow: `0 4px 14px -4px ${secondaryColor}90`,
-                        }
-                      : undefined
-                  }
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </section>
   );
 }
 

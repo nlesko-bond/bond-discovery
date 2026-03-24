@@ -73,6 +73,7 @@ interface PageConfig {
     eventHorizonMonths?: number;
     showPunchPassRedeemButton?: boolean;
     punchPassRedeemUrl?: string;
+    showScheduleTableDateFilters?: boolean;
   };
   defaultParams?: Record<string, string>;
   cacheTtl?: number;
@@ -753,6 +754,25 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   <div>
                     <span className="font-medium">Allow table view on mobile</span>
                     <p className="text-xs text-gray-500">Enable for compact tables (2-3 columns) that fit on small screens</p>
+                  </div>
+                </label>
+                <label className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300"
+                    checked={config.features.showScheduleTableDateFilters === true}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        features: { ...config.features, showScheduleTableDateFilters: e.target.checked },
+                      })
+                    }
+                  />
+                  <div>
+                    <span className="font-medium">Show schedule table date &amp; weekday filters</span>
+                    <p className="text-xs text-gray-500">
+                      Off by default. When enabled, table view shows optional date range (popover) and day-of-week chips above the grid.
+                    </p>
                   </div>
                 </label>
               </div>

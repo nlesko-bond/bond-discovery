@@ -849,17 +849,18 @@ export function DiscoveryPage({
       }
     }
 
-    // Event-level date range (local date in event timezone)
-    if (filters.dateRange?.start || filters.dateRange?.end) {
-      result = result.filter((event) => eventMatchesDateRange(event, filters.dateRange));
+    // Event-level date / weekday filters (opt-in; schedule table UI + filtering)
+    if (config.features.showScheduleTableDateFilters) {
+      if (filters.dateRange?.start || filters.dateRange?.end) {
+        result = result.filter((event) => eventMatchesDateRange(event, filters.dateRange));
+      }
+      if (filters.daysOfWeek && filters.daysOfWeek.length > 0) {
+        result = result.filter((event) => eventMatchesDaysOfWeek(event, filters.daysOfWeek));
+      }
     }
 
-    if (filters.daysOfWeek && filters.daysOfWeek.length > 0) {
-      result = result.filter((event) => eventMatchesDaysOfWeek(event, filters.daysOfWeek));
-    }
-    
     return result;
-  }, [apiEvents, filters, initialPrograms]);
+  }, [apiEvents, filters, initialPrograms, config.features.showScheduleTableDateFilters]);
   
   // Generate schedule data for calendar view from real API events
   const scheduleData = useMemo(() => {
@@ -1023,11 +1024,13 @@ export function DiscoveryPage({
     if (newFilters.gender && newFilters.gender !== 'all') params.gender = newFilters.gender;
     if (newFilters.availability && newFilters.availability !== 'all') params.availability = newFilters.availability;
     if (newFilters.membershipRequired !== null) params.membershipRequired = newFilters.membershipRequired;
-    if (newFilters.daysOfWeek?.length) params.daysOfWeek = newFilters.daysOfWeek.join('_');
+    if (config.features.showScheduleTableDateFilters && newFilters.daysOfWeek?.length) {
+      params.daysOfWeek = newFilters.daysOfWeek.join('_');
+    }
 
     const url = buildUrl(pathname, params);
     router.replace(url, { scroll: false });
-  }, [router, pathname]);
+  }, [router, pathname, config.features.showScheduleTableDateFilters]);
 
   // Handle filter changes
   const handleFiltersChange = useCallback((newFilters: DiscoveryFilters) => {
@@ -1081,9 +1084,11 @@ export function DiscoveryPage({
     if (filters.ageRange?.min || filters.ageRange?.max) count++;
     if (filters.gender && filters.gender !== 'all') count++;
     if (filters.availability && filters.availability !== 'all') count++;
-    if (filters.daysOfWeek && filters.daysOfWeek.length > 0) count++;
+    if (config.features.showScheduleTableDateFilters && filters.daysOfWeek && filters.daysOfWeek.length > 0) {
+      count++;
+    }
     return count;
-  }, [filters]);
+  }, [filters, config.features.showScheduleTableDateFilters]);
 
   return (
     <div 
@@ -1414,8 +1419,10 @@ export function DiscoveryPage({
               linkTarget={linkTarget}
               hideRegistrationLinks={config.features.hideRegistrationLinks}
               customRegistrationUrl={config.features.customRegistrationUrl}
-              filters={filters}
-              onScheduleFiltersChange={handleFiltersChange}
+              filters={config.features.showScheduleTableDateFilters ? filters : undefined}
+              onScheduleFiltersChange={
+                config.features.showScheduleTableDateFilters ? handleFiltersChange : undefined
+              }
             />
           )}
         </main>

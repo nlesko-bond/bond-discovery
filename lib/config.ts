@@ -66,6 +66,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
       showPunchPassRedeemButton: features.showPunchPassRedeemButton === true,
       punchPassRedeemUrl:
         typeof features.punchPassRedeemUrl === 'string' ? features.punchPassRedeemUrl : undefined,
+      showScheduleTableDateFilters: features.showScheduleTableDateFilters === true,
     },
     allowedParams: row.allowed_params || [],
     defaultParams: row.default_params || {},
@@ -108,6 +109,7 @@ export const defaultConfig: DiscoveryConfig = {
     mobileQuickFilterChips: true,
     eventHorizonMonths: 3,
     showPunchPassRedeemButton: false,
+    showScheduleTableDateFilters: false,
   },
   allowedParams: [
     'viewMode',
