@@ -1174,7 +1174,7 @@ function EventCard({
                   style={{ color: secondaryColor, borderColor: `${secondaryColor}55`, backgroundColor: `${secondaryColor}10` }}
                 >
                   <Ticket size={12} />
-                  Redeem pass
+                  Redeem
                 </a>
               )}
             </div>
@@ -1734,60 +1734,64 @@ function TableView({
                     </td>
                   )}
                   
-                  {/* Action */}
+                  {/* Action — redeem left, register right so single-button rows stay aligned */}
                   {showActionColumn && (
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-center print:hidden">
-                      <div className="flex flex-col min-[400px]:flex-row items-stretch justify-center gap-1.5">
-                        {!hideRegistrationLinks && event.linkSEO && (
-                          <a 
-                            href={customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
-                            target={linkTarget}
-                            rel="noopener noreferrer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (!isRegistrationUnavailable) {
-                                gtmEvent.clickRegister({
-                                  programId: event.programId,
-                                  programName: event.programName,
-                                  sessionId: event.sessionId,
-                                  sessionName: event.sessionName,
-                                });
-                                bondAnalytics.clickRegister(config.slug, {
-                                  programId: event.programId,
-                                  programName: event.programName,
-                                  sessionId: event.sessionId,
-                                  sessionName: event.sessionName,
-                                });
-                              }
-                            }}
-                            className={cn(
-                              'inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-xs font-medium rounded-lg transition-colors print:hidden',
-                              isRegistrationUnavailable
-                                ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                : 'text-white hover:opacity-90'
-                            )}
-                            style={!isRegistrationUnavailable ? { backgroundColor: secondaryColor } : undefined}
-                          >
-                            {isRegistrationUnavailable ? 'Details' : (isWaitlistJoinable ? 'Join Waitlist' : 'Register')}
-                            {config.features.showRegisterIcon !== false && <ExternalLink size={12} />}
-                          </a>
-                        )}
-                        {eventShowsRedeemPass(event, config) && (
-                          <a
-                            href={getPunchPassRedeemUrl(config)}
-                            target={linkTarget}
-                            rel="noopener noreferrer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              trackRedeemPassClick(config, event);
-                            }}
-                            className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg border print:hidden hover:opacity-90"
-                            style={{ color: secondaryColor, borderColor: `${secondaryColor}66`, backgroundColor: `${secondaryColor}0d` }}
-                          >
-                            <Ticket size={12} />
-                            Pass
-                          </a>
-                        )}
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 print:hidden">
+                      <div className="flex flex-row items-center justify-between gap-2 w-full min-w-[10rem]">
+                        <div className="flex flex-1 justify-start min-w-0">
+                          {eventShowsRedeemPass(event, config) && (
+                            <a
+                              href={getPunchPassRedeemUrl(config)}
+                              target={linkTarget}
+                              rel="noopener noreferrer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                trackRedeemPassClick(config, event);
+                              }}
+                              className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg border print:hidden hover:opacity-90 shrink-0"
+                              style={{ color: secondaryColor, borderColor: `${secondaryColor}66`, backgroundColor: `${secondaryColor}0d` }}
+                            >
+                              <Ticket size={12} />
+                              Redeem
+                            </a>
+                          )}
+                        </div>
+                        <div className="flex justify-end shrink-0">
+                          {!hideRegistrationLinks && event.linkSEO && (
+                            <a
+                              href={customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
+                              target={linkTarget}
+                              rel="noopener noreferrer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!isRegistrationUnavailable) {
+                                  gtmEvent.clickRegister({
+                                    programId: event.programId,
+                                    programName: event.programName,
+                                    sessionId: event.sessionId,
+                                    sessionName: event.sessionName,
+                                  });
+                                  bondAnalytics.clickRegister(config.slug, {
+                                    programId: event.programId,
+                                    programName: event.programName,
+                                    sessionId: event.sessionId,
+                                    sessionName: event.sessionName,
+                                  });
+                                }
+                              }}
+                              className={cn(
+                                'inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-xs font-medium rounded-lg transition-colors print:hidden',
+                                isRegistrationUnavailable
+                                  ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                  : 'text-white hover:opacity-90'
+                              )}
+                              style={!isRegistrationUnavailable ? { backgroundColor: secondaryColor } : undefined}
+                            >
+                              {isRegistrationUnavailable ? 'Details' : (isWaitlistJoinable ? 'Join Waitlist' : 'Register')}
+                              {config.features.showRegisterIcon !== false && <ExternalLink size={12} />}
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </td>
                   )}

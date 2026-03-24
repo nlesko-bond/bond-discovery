@@ -104,7 +104,14 @@ export function ScheduleTableFilterBar({ config, filters, onChange }: ScheduleTa
   };
 
   const chip =
-    'text-[11px] font-semibold px-2 py-1 rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50';
+    'text-[11px] font-semibold px-2 py-1.5 rounded-lg border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/90 text-slate-600 shadow-sm ' +
+    'transition-[background-color,border-color,box-shadow,transform] duration-150 hover:border-slate-300 hover:from-slate-50 hover:to-slate-100 hover:text-slate-800 hover:shadow ' +
+    'active:scale-[0.98]';
+
+  const dateInputClass =
+    'w-full rounded-lg border border-slate-200/90 bg-slate-50/50 px-2 py-1.5 text-xs text-slate-800 shadow-inner ' +
+    'transition-[border-color,box-shadow,background-color] duration-150 ' +
+    'hover:border-slate-300 hover:bg-white focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-400/25 focus:ring-offset-0';
 
   return (
     <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-gray-200/90 bg-white/90 px-2.5 py-2 shadow-sm print:hidden">
@@ -113,10 +120,10 @@ export function ScheduleTableFilterBar({ config, filters, onChange }: ScheduleTa
           type="button"
           onClick={() => setRangeOpen((o) => !o)}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors',
+            'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-[background-color,border-color,box-shadow,color] duration-150',
             hasRange
               ? 'border-transparent text-white shadow-sm'
-              : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50',
+              : 'border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 text-slate-700 shadow-sm hover:border-slate-300 hover:from-slate-50 hover:to-slate-100 hover:text-slate-900 hover:shadow',
           )}
           style={hasRange ? { backgroundColor: secondaryColor } : undefined}
         >
@@ -175,7 +182,7 @@ export function ScheduleTableFilterBar({ config, filters, onChange }: ScheduleTa
                   type="date"
                   value={dr.start || ''}
                   onChange={(e) => setDateRange({ start: e.target.value || undefined })}
-                  className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-xs text-gray-900"
+                  className={dateInputClass}
                 />
               </div>
               <div>
@@ -188,7 +195,7 @@ export function ScheduleTableFilterBar({ config, filters, onChange }: ScheduleTa
                   value={dr.end || ''}
                   min={dr.start || undefined}
                   onChange={(e) => setDateRange({ end: e.target.value || undefined })}
-                  className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-xs text-gray-900"
+                  className={dateInputClass}
                 />
               </div>
             </div>
@@ -216,10 +223,10 @@ export function ScheduleTableFilterBar({ config, filters, onChange }: ScheduleTa
               type="button"
               onClick={() => toggleDow(value)}
               className={cn(
-                'min-w-[2rem] rounded-md border px-1.5 py-1 text-[11px] font-bold transition-colors',
+                'min-w-[2.25rem] rounded-lg border px-2 py-1 text-[11px] font-bold shadow-sm transition-[background-color,border-color,box-shadow,color,transform] duration-150',
                 on
-                  ? 'border-transparent text-white'
-                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
+                  ? 'border-transparent text-white shadow-md'
+                  : 'border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 text-slate-600 hover:border-slate-300 hover:from-slate-50 hover:to-slate-100 hover:text-slate-800 hover:shadow active:scale-[0.97]',
               )}
               style={on ? { backgroundColor: secondaryColor, borderColor: secondaryColor } : undefined}
             >
