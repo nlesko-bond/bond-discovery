@@ -155,6 +155,22 @@ export const gtmEvent = {
     });
   },
 
+  clickRedeemPass: (data: {
+    eventId: string;
+    programId: string;
+    programName: string;
+    sessionId?: string;
+    sessionName?: string;
+  }) => {
+    gtmEvent.push('click_redeem_pass', {
+      event_id: data.eventId,
+      program_id: data.programId,
+      program_name: data.programName,
+      session_id: data.sessionId,
+      session_name: data.sessionName,
+    });
+  },
+
   /**
    * Track filter applied
    */

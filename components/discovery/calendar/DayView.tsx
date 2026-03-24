@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo, useRef, useEffect } from 'react';
-import { Clock, MapPin, Users, ExternalLink } from 'lucide-react';
+import { Clock, MapPin, Users, ExternalLink, Ticket } from 'lucide-react';
 import { CalendarEvent, DiscoveryConfig } from '@/types';
 import { formatTime, buildRegistrationUrl, cn, getHourInTimezone, getMinutesInTimezone } from '@/lib/utils';
+import { eventShowsRedeemPass, getPunchPassRedeemUrl, trackRedeemPassClick } from '@/lib/schedule-redeem';
 import { format, parseISO, isSameDay, isToday } from 'date-fns';
 
 interface DayViewProps {
@@ -243,22 +244,40 @@ function EventCard({
           </div>
         </div>
 
-        {/* Quick Register */}
-        {!hideRegistrationLinks && registrationUrl && (
-          <a
-            href={registrationUrl}
-            target={linkTarget}
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="flex-shrink-0 p-2 rounded-lg transition-all hover:opacity-90"
-            style={{ 
-              backgroundColor: secondaryColor, 
-              color: 'white',
-            }}
-          >
-            <ExternalLink size={14} />
-          </a>
-        )}
+        <div className="flex flex-shrink-0 items-center gap-1.5">
+          {!hideRegistrationLinks && registrationUrl && (
+            <a
+              href={registrationUrl}
+              target={linkTarget}
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="p-2 rounded-lg transition-all hover:opacity-90"
+              style={{ 
+                backgroundColor: secondaryColor, 
+                color: 'white',
+              }}
+              title="Register"
+            >
+              <ExternalLink size={14} />
+            </a>
+          )}
+          {eventShowsRedeemPass(event, config) && (
+            <a
+              href={getPunchPassRedeemUrl(config)}
+              target={linkTarget}
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                e.stopPropagation();
+                trackRedeemPassClick(config, event);
+              }}
+              className="p-2 rounded-lg border-2 transition-all hover:opacity-90"
+              style={{ color: secondaryColor, borderColor: secondaryColor, backgroundColor: `${secondaryColor}12` }}
+              title="Redeem pass"
+            >
+              <Ticket size={14} />
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import { ScheduleView } from '@/components/discovery/ScheduleView';
 import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode, CalendarEvent } from '@/types';
 import { buildWeekSchedules } from '@/lib/transformers';
 import { getSportGradient } from '@/lib/utils';
+import { eventMatchesDateRange, eventMatchesDaysOfWeek } from '@/lib/schedule-event-filters';
 import { Calendar, Grid3X3, Filter } from 'lucide-react';
 
 const HorizontalFilterBar = dynamic(
@@ -34,6 +35,9 @@ export function EmbedDiscoveryPage({
   initialViewMode = 'programs',
   searchParams,
 }: EmbedDiscoveryPageProps) {
+  const linkBehavior = config.features.linkBehavior || 'new_tab';
+  const linkTarget = linkBehavior === 'same_window' ? '_top' : linkBehavior === 'in_frame' ? '_self' : '_blank';
+
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [filters, setFilters] = useState<DiscoveryFilters>({
     search: (searchParams.search as string) || '',
@@ -49,6 +53,16 @@ export function EmbedDiscoveryPage({
     sports: searchParams.sports 
       ? (searchParams.sports as string).split('_') 
       : [],
+    dateRange: {
+      start: searchParams.startDate as string | undefined,
+      end: searchParams.endDate as string | undefined,
+    },
+    daysOfWeek: searchParams.daysOfWeek
+      ? (searchParams.daysOfWeek as string)
+          .split('_')
+          .map((n) => parseInt(n, 10))
+          .filter((n) => !Number.isNaN(n) && n >= 0 && n <= 6)
+      : undefined,
   });
 
   // Filter programs
@@ -249,6 +263,12 @@ export function EmbedDiscoveryPage({
         );
       });
     }
+    if (filters.dateRange?.start || filters.dateRange?.end) {
+      result = result.filter((e) => eventMatchesDateRange(e, filters.dateRange));
+    }
+    if (filters.daysOfWeek && filters.daysOfWeek.length > 0) {
+      result = result.filter((e) => eventMatchesDaysOfWeek(e, filters.daysOfWeek));
+    }
     return result;
   }, [apiEvents, filters, initialPrograms]);
 
@@ -276,6 +296,7 @@ export function EmbedDiscoveryPage({
         memberPrice: event.memberPrice, registrationWindowStatus: event.registrationWindowStatus,
         isWaitlistEnabled: event.isWaitlistEnabled, waitlistCount: event.waitlistCount,
         segmentId: event.segmentId, segmentName: event.segmentName, isSegmented: event.isSegmented,
+        hasPunchPassProduct: Boolean(event.hasPunchPassProduct),
       };
     });
     return buildWeekSchedules(calendarEvents, 8);
@@ -370,6 +391,11 @@ export function EmbedDiscoveryPage({
             totalServerEvents={totalServerEvents}
             onLoadMore={loadMoreEvents}
             loadingMore={loadingMore}
+            linkTarget={linkTarget}
+            hideRegistrationLinks={config.features.hideRegistrationLinks}
+            customRegistrationUrl={config.features.customRegistrationUrl}
+            filters={filters}
+            onScheduleFiltersChange={handleFiltersChange}
           />
         )}
       </main>

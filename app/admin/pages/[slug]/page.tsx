@@ -71,6 +71,8 @@ interface PageConfig {
     scheduleThemeStyle?: 'gradient' | 'solid';
     mobileQuickFilterChips?: boolean;
     eventHorizonMonths?: number;
+    showPunchPassRedeemButton?: boolean;
+    punchPassRedeemUrl?: string;
   };
   defaultParams?: Record<string, string>;
   cacheTtl?: number;
@@ -806,9 +808,54 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                 />
                 <div>
                   <span className="font-medium">Hide registration links</span>
-                  <p className="text-sm text-gray-500">Hide all Register/Learn More buttons throughout the page</p>
+                  <p className="text-sm text-gray-500">
+                    Hides Register/Learn More on programs and schedule. Punch pass redeem (when enabled below) still shows for eligible events.
+                  </p>
                 </div>
               </label>
+
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300"
+                  checked={config.features.showPunchPassRedeemButton === true}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      features: { ...config.features, showPunchPassRedeemButton: e.target.checked },
+                    })
+                  }
+                />
+                <div>
+                  <span className="font-medium">Show punch pass redeem button</span>
+                  <p className="text-sm text-gray-500">
+                    On the schedule tab, adds a second action when the session has a Bond punch-pass product (
+                    <code className="text-xs">isPunchPass</code>).
+                  </p>
+                </div>
+              </label>
+
+              <div>
+                <label className="label">Punch pass redeem URL (optional)</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="https://bondsports.co/user/passes"
+                  value={config.features.punchPassRedeemUrl || ''}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      features: {
+                        ...config.features,
+                        punchPassRedeemUrl: e.target.value.trim() || undefined,
+                      },
+                    })
+                  }
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Defaults to https://bondsports.co/user/passes. Scheme is added if omitted.
+                </p>
+              </div>
               
               {/* Custom Registration URL - only show when exactly 1 program is included */}
               {config.features.programFilterMode === 'include' && 

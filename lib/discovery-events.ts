@@ -63,6 +63,8 @@ export interface FullDiscoveryEvent {
   segmentId?: string;
   segmentName?: string;
   isSegmented?: boolean;
+  /** True when the session has at least one product with isPunchPass from Bond */
+  hasPunchPassProduct?: boolean;
 }
 
 export interface AvailabilityDiscoveryEvent {
@@ -330,6 +332,11 @@ function getPriceSummary(session: any): { startingPrice?: number; memberPrice?: 
   return { startingPrice, memberPrice };
 }
 
+function sessionHasPunchPassProduct(session: { products?: { isPunchPass?: boolean }[] }): boolean {
+  const products = session.products || [];
+  return products.some((p) => p.isPunchPass === true);
+}
+
 function toAvailabilityEvent(
   event: any,
   session: any,
@@ -418,6 +425,7 @@ function toFullEvent(
     segmentId,
     segmentName,
     isSegmented: Boolean(segmentId),
+    hasPunchPassProduct: sessionHasPunchPassProduct(session),
   };
 }
 

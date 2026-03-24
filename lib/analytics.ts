@@ -88,6 +88,22 @@ export const bondAnalytics = {
     eventType: 'click_register',
     eventData: data,
   }),
+
+  clickRedeemPass: (
+    pageSlug: string,
+    data: {
+      eventId: string;
+      programId: string;
+      programName: string;
+      sessionId?: string;
+      sessionName?: string;
+    },
+  ) =>
+    trackEvent({
+      pageSlug,
+      eventType: 'click_redeem_pass',
+      eventData: data,
+    }),
   
   shareLink: (pageSlug: string, sharedUrl: string) => trackEvent({
     pageSlug,

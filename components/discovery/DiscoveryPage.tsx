@@ -17,6 +17,7 @@ import { ProgramGrid } from './ProgramGrid';
 import { ScheduleView } from './ScheduleView';
 import { programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers';
 import { buildUrl, getSportGradient, getProgramTypeLabel, cn, isLightColor } from '@/lib/utils';
+import { eventMatchesDateRange, eventMatchesDaysOfWeek } from '@/lib/schedule-event-filters';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
@@ -95,6 +96,12 @@ export function DiscoveryPage({
           : searchParams.membershipRequired === 'false' 
             ? false 
             : null,
+        daysOfWeek: searchParams.daysOfWeek
+          ? (searchParams.daysOfWeek as string)
+              .split('_')
+              .map((n) => parseInt(n, 10))
+              .filter((n) => !Number.isNaN(n) && n >= 0 && n <= 6)
+          : undefined,
       };
     }
     
@@ -123,6 +130,7 @@ export function DiscoveryPage({
       gender: 'all',
       availability: 'all',
       membershipRequired: null,
+      daysOfWeek: undefined,
     };
   };
 
@@ -840,6 +848,15 @@ export function DiscoveryPage({
         );
       }
     }
+
+    // Event-level date range (local date in event timezone)
+    if (filters.dateRange?.start || filters.dateRange?.end) {
+      result = result.filter((event) => eventMatchesDateRange(event, filters.dateRange));
+    }
+
+    if (filters.daysOfWeek && filters.daysOfWeek.length > 0) {
+      result = result.filter((event) => eventMatchesDaysOfWeek(event, filters.daysOfWeek));
+    }
     
     return result;
   }, [apiEvents, filters, initialPrograms]);
@@ -903,6 +920,7 @@ export function DiscoveryPage({
         segmentId: event.segmentId,
         segmentName: event.segmentName,
         isSegmented: event.isSegmented,
+        hasPunchPassProduct: Boolean(event.hasPunchPassProduct),
       };
     });
     
@@ -1005,6 +1023,7 @@ export function DiscoveryPage({
     if (newFilters.gender && newFilters.gender !== 'all') params.gender = newFilters.gender;
     if (newFilters.availability && newFilters.availability !== 'all') params.availability = newFilters.availability;
     if (newFilters.membershipRequired !== null) params.membershipRequired = newFilters.membershipRequired;
+    if (newFilters.daysOfWeek?.length) params.daysOfWeek = newFilters.daysOfWeek.join('_');
 
     const url = buildUrl(pathname, params);
     router.replace(url, { scroll: false });
@@ -1062,6 +1081,7 @@ export function DiscoveryPage({
     if (filters.ageRange?.min || filters.ageRange?.max) count++;
     if (filters.gender && filters.gender !== 'all') count++;
     if (filters.availability && filters.availability !== 'all') count++;
+    if (filters.daysOfWeek && filters.daysOfWeek.length > 0) count++;
     return count;
   }, [filters]);
 
@@ -1394,6 +1414,8 @@ export function DiscoveryPage({
               linkTarget={linkTarget}
               hideRegistrationLinks={config.features.hideRegistrationLinks}
               customRegistrationUrl={config.features.customRegistrationUrl}
+              filters={filters}
+              onScheduleFiltersChange={handleFiltersChange}
             />
           )}
         </main>

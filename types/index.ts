@@ -401,6 +401,10 @@ export interface FeatureConfig {
   mobileQuickFilterChips?: boolean;
   // Max months of future events to return (default: 3)
   eventHorizonMonths?: number;
+  /** When true, show “Redeem pass” for events whose session has a punch-pass product */
+  showPunchPassRedeemButton?: boolean;
+  /** Override URL for redeem pass (default https://bondsports.co/user/passes) */
+  punchPassRedeemUrl?: string;
 }
 
 export type FilterType = 
@@ -445,6 +449,8 @@ export interface DiscoveryFilters {
   };
   availability?: 'all' | 'available' | 'almost_full' | 'has_spots';
   membershipRequired?: boolean | null;
+  /** Local weekdays (0=Sun … 6=Sat) to include; empty/undefined = all */
+  daysOfWeek?: number[];
 }
 
 // Calendar/Schedule Types
@@ -498,6 +504,9 @@ export interface CalendarEvent {
   segmentId?: string;
   segmentName?: string;
   isSegmented?: boolean;
+
+  /** Session has at least one Bond product with isPunchPass */
+  hasPunchPassProduct?: boolean;
 }
 
 export interface DaySchedule {
