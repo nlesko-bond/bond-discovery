@@ -1,5 +1,6 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SkeletonProps {
@@ -125,6 +126,26 @@ export function ScheduleViewSkeleton() {
       <div className="space-y-4 mt-6">
         <DaySectionSkeleton />
         <DaySectionSkeleton />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Shown until client layout resolves mobile vs desktop schedule default (no `scheduleView` in URL).
+ * Avoids shipping SSR desktop-default table HTML to phones before hydration.
+ */
+export function ScheduleViewportUnresolvedPlaceholder() {
+  return (
+    <div className="space-y-4" aria-hidden="true">
+      <div className="flex items-center justify-between mb-6">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-10 w-48 rounded-lg" />
+      </div>
+      <Skeleton className="h-16 w-full rounded-xl" />
+      <div className="mt-8 flex flex-col items-center justify-center gap-3 py-16">
+        <Loader2 className="w-8 h-8 text-gray-300 animate-spin" aria-label="Loading" />
+        <Skeleton className="h-4 w-48" />
       </div>
     </div>
   );

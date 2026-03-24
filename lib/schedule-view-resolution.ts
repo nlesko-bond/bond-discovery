@@ -27,26 +27,6 @@ export function readAllowTableOnMobileFromFeatures(features: {
   );
 }
 
-/** SSR: no viewport — use URL if valid, else desktop default (client layout effect corrects mobile). */
-export function computeInitialScheduleViewState(
-  urlScheduleView: string | null,
-  opts: ScheduleViewResolutionOptions,
-): ScheduleViewResolutionMode {
-  const paramOk =
-    !!urlScheduleView &&
-    VALID_SCHEDULE_VIEW_MODES.includes(urlScheduleView as ScheduleViewResolutionMode);
-
-  if (typeof window === 'undefined') {
-    if (paramOk) {
-      return urlScheduleView as ScheduleViewResolutionMode;
-    }
-    return opts.desktopDefaultView;
-  }
-
-  const narrow = isNarrowScheduleViewport();
-  return resolveScheduleViewMode(urlScheduleView, narrow, opts);
-}
-
 export type ScheduleViewResolutionMode =
   | 'list'
   | 'table'

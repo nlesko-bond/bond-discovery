@@ -32,10 +32,13 @@ import { eventShowsRedeemPass, getPunchPassRedeemUrl, trackRedeemPassClick } fro
 import { format, parseISO, startOfMonth, addMonths, subMonths, isToday, isSameDay } from 'date-fns';
 import { DayView, WeekGridView, MonthView } from './calendar';
 import { ScheduleTableFilterBar } from './ScheduleTableFilterBar';
-import { ScheduleViewSkeleton, ScheduleTableSkeleton } from '@/components/ui/Skeleton';
+import {
+  ScheduleViewSkeleton,
+  ScheduleTableSkeleton,
+  ScheduleViewportUnresolvedPlaceholder,
+} from '@/components/ui/Skeleton';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 import {
-  computeInitialScheduleViewState,
   isNarrowScheduleViewport,
   readAllowTableOnMobileFromFeatures,
   resolveScheduleViewMode,
@@ -133,14 +136,20 @@ export function ScheduleView({
     return 'list';
   }, [mobileDefaultRaw, desktopDefaultView]);
 
-  // SSR uses desktop default when URL omits scheduleView (avoids list→table flash on wide screens).
-  // Client useLayoutEffect still aligns URL + corrects mobile after hydration.
-  const [viewMode, setViewModeState] = useState<ViewMode>(() =>
-    computeInitialScheduleViewState(
-      searchParams.get('scheduleView'),
-      scheduleResolutionOpts,
-    ),
-  );
+  // Until client layout runs, avoid SSR desktop-default (e.g. table) HTML when there is no
+  // explicit scheduleView — phones would see that for seconds before hydration.
+  const [scheduleViewportResolved, setScheduleViewportResolved] = useState(() => {
+    const u = searchParams.get('scheduleView');
+    return !!(u && VALID_SCHEDULE_VIEW_MODES.includes(u as ViewMode));
+  });
+
+  const [viewMode, setViewModeState] = useState<ViewMode>(() => {
+    const u = searchParams.get('scheduleView');
+    if (u && VALID_SCHEDULE_VIEW_MODES.includes(u as ViewMode)) {
+      return u as ViewMode;
+    }
+    return 'list';
+  });
 
   const viewModeRef = useRef(viewMode);
   useEffect(() => {
@@ -178,7 +187,9 @@ export function ScheduleView({
   }, [pathname, router, scheduleViewParam, scheduleResolutionOpts]);
 
   useLayoutEffect(() => {
+    if (typeof window === 'undefined') return;
     applyResolvedScheduleView();
+    setScheduleViewportResolved(true);
   }, [applyResolvedScheduleView]);
 
   useEffect(() => {
@@ -447,6 +458,14 @@ export function ScheduleView({
     setSelectedDayDate(date);
     setViewMode('day');
   };
+
+  if (!scheduleViewportResolved) {
+    return (
+      <div className="p-4 md:p-6" aria-busy="true">
+        <ScheduleViewportUnresolvedPlaceholder />
+      </div>
+    );
+  }
 
   // Loading state — match skeleton to resolved view to avoid list-shaped → table jump
   if (isLoading) {
