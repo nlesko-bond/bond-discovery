@@ -95,6 +95,21 @@ export function ScheduleView({
   // Use URL scheduleView param first, then config default
   // Note: We use a consistent default for SSR to avoid hydration mismatch
   const validViewModes = ['list', 'table', 'day', 'week', 'month'];
+  const TABLE_VIEW_BREAKPOINT = 550;
+
+  /** Admin "Default Schedule View (Mobile)" — null if unset (then keep desktop default). */
+  const getPreferredMobileView = useCallback((): ViewMode | null => {
+    const m = config.features.mobileDefaultScheduleView as ViewMode | undefined;
+    if (!m || !validViewModes.includes(m)) return null;
+    if (m === 'table' && !config.features.allowTableViewOnMobile) return 'list';
+    return m;
+  }, [config.features.mobileDefaultScheduleView, config.features.allowTableViewOnMobile]);
+
+  /** When leaving table on small screens: mobile default if set, otherwise list. */
+  const getTableEscapeFallback = useCallback((): ViewMode => {
+    return getPreferredMobileView() ?? 'list';
+  }, [getPreferredMobileView]);
+
   const [viewMode, setViewModeState] = useState<ViewMode>(() => {
     const urlScheduleView = searchParams.get('scheduleView') as ViewMode | null;
     if (urlScheduleView && validViewModes.includes(urlScheduleView)) {
@@ -114,29 +129,32 @@ export function ScheduleView({
   // After hydration, check if we should switch to mobile default
   // Also prevents table view on mobile since it doesn't fit small screens (unless allowTableViewOnMobile is enabled)
   useEffect(() => {
-    const TABLE_VIEW_BREAKPOINT = 550;
     const allowOnMobile = config.features.allowTableViewOnMobile;
-    
+
+    const replaceScheduleViewInUrl = (next: ViewMode) => {
+      const params = new URLSearchParams(window.location.search);
+      params.set('scheduleView', next);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    };
+
     const updateTableAllowed = () => {
       // If allowTableViewOnMobile is enabled, always allow table view
       if (allowOnMobile) {
         setIsTableAllowed(true);
         return;
       }
-      
+
       const isBelowBreakpoint = window.innerWidth < TABLE_VIEW_BREAKPOINT;
       setIsTableAllowed(!isBelowBreakpoint);
-      
+
       // Use ref to get current viewMode value
       if (isBelowBreakpoint && viewModeRef.current === 'table') {
-        // Table view doesn't work on mobile - switch to list and update URL
-        setViewModeState('list');
-        const params = new URLSearchParams(window.location.search);
-        params.set('scheduleView', 'list');
-        window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+        const fallback = getTableEscapeFallback();
+        setViewModeState(fallback);
+        replaceScheduleViewInUrl(fallback);
       }
     };
-    
+
     // Check on initial load
     if (allowOnMobile) {
       setIsTableAllowed(true);
@@ -144,24 +162,31 @@ export function ScheduleView({
       const isBelowBreakpoint = window.innerWidth < TABLE_VIEW_BREAKPOINT;
       setIsTableAllowed(!isBelowBreakpoint);
       if (isBelowBreakpoint) {
-        // Table view doesn't work on mobile - switch to list
         if (viewModeRef.current === 'table') {
-          setViewModeState('list');
-          const params = new URLSearchParams(window.location.search);
-          params.set('scheduleView', 'list');
-          window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
-        } else if (!searchParams.get('scheduleView') && config.features.mobileDefaultScheduleView) {
-          // Apply mobile default if no URL param specified
-          setViewModeState(config.features.mobileDefaultScheduleView as ViewMode);
+          const fallback = getTableEscapeFallback();
+          setViewModeState(fallback);
+          replaceScheduleViewInUrl(fallback);
+        } else if (!searchParams.get('scheduleView')) {
+          const preferred = getPreferredMobileView();
+          if (preferred != null && preferred !== viewModeRef.current) {
+            setViewModeState(preferred);
+            replaceScheduleViewInUrl(preferred);
+          }
         }
       }
     }
-    
+
     // Also check on resize (e.g., orientation change)
     window.addEventListener('resize', updateTableAllowed);
     return () => window.removeEventListener('resize', updateTableAllowed);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [config.features.allowTableViewOnMobile]); // Re-run if setting changes
+  }, [
+    config.features.allowTableViewOnMobile,
+    getPreferredMobileView,
+    getTableEscapeFallback,
+    pathname,
+    router,
+    searchParams,
+  ]);
   
   // Update URL when view mode changes
   const setViewMode = useCallback((newMode: ViewMode) => {
@@ -174,13 +199,39 @@ export function ScheduleView({
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [router, pathname]);
   
-  // Sync view mode from URL when it changes externally
+  // Sync view mode from URL when it changes externally (e.g. back/forward, shared link)
   useEffect(() => {
     const urlScheduleView = searchParams.get('scheduleView') as ViewMode | null;
-    if (urlScheduleView && validViewModes.includes(urlScheduleView) && urlScheduleView !== viewMode) {
+    if (!urlScheduleView || !validViewModes.includes(urlScheduleView)) return;
+
+    const tableBlockedOnMobile =
+      urlScheduleView === 'table' &&
+      !config.features.allowTableViewOnMobile &&
+      typeof window !== 'undefined' &&
+      window.innerWidth < TABLE_VIEW_BREAKPOINT;
+
+    if (tableBlockedOnMobile) {
+      const fallback = getTableEscapeFallback();
+      if (viewMode !== fallback) {
+        setViewModeState(fallback);
+        const params = new URLSearchParams(window.location.search);
+        params.set('scheduleView', fallback);
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      }
+      return;
+    }
+
+    if (urlScheduleView !== viewMode) {
       setViewModeState(urlScheduleView);
     }
-  }, [searchParams]);
+  }, [
+    searchParams,
+    viewMode,
+    config.features.allowTableViewOnMobile,
+    getTableEscapeFallback,
+    pathname,
+    router,
+  ]);
   
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
   // Default to today for day view
