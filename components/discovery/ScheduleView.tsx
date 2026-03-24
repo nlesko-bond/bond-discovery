@@ -103,9 +103,7 @@ export function ScheduleView({
   // Sticky positioning uses CSS variable --sticky-offset set by parent DiscoveryPage
   // This dynamically measures the actual header height for proper positioning
 
-  const allowTableOnMobile = readAllowTableOnMobileFromFeatures(
-    config.features as Record<string, unknown>,
-  );
+  const allowTableOnMobile = readAllowTableOnMobileFromFeatures(config.features);
   const desktopDefaultView =
     (config.features.defaultScheduleView as ViewMode) || 'list';
   const mobileDefaultRaw =

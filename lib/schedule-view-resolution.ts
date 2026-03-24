@@ -16,9 +16,11 @@ export function isNarrowScheduleViewport(): boolean {
   return window.matchMedia(SCHEDULE_VIEW_NARROW_MEDIA_QUERY).matches;
 }
 
-export function readAllowTableOnMobileFromFeatures(
-  features: Record<string, unknown>,
-): boolean {
+/** Accepts FeatureConfig or any partial; snake_case may appear on raw DB JSON. */
+export function readAllowTableOnMobileFromFeatures(features: {
+  allowTableViewOnMobile?: boolean;
+  allow_table_view_on_mobile?: boolean;
+}): boolean {
   return (
     features.allowTableViewOnMobile === true ||
     features.allow_table_view_on_mobile === true
