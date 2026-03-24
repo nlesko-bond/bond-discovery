@@ -1,0 +1,42 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getFormPageConfigBySlug, isQuestionnaireAllowed } from '@/lib/form-pages-config';
+import { staffSessionOk } from '@/lib/form-staff-cookie';
+import { isFormsPgConfigured, listQuestionsForQuestionnaire } from '@/lib/forms-pg';
+
+export const dynamic = 'force-dynamic';
+
+interface Ctx {
+  params: Promise<{ slug: string }>;
+}
+
+export async function GET(request: NextRequest, context: Ctx) {
+  const { slug } = await context.params;
+  if (!staffSessionOk(request, slug)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const config = await getFormPageConfigBySlug(slug);
+  if (!config?.is_active) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  const questionnaireId = parseInt(request.nextUrl.searchParams.get('questionnaireId') || '', 10);
+  if (Number.isNaN(questionnaireId)) {
+    return NextResponse.json({ error: 'questionnaireId required' }, { status: 400 });
+  }
+  if (!isQuestionnaireAllowed(config, questionnaireId)) {
+    return NextResponse.json({ error: 'Form not allowed' }, { status: 403 });
+  }
+
+  if (!isFormsPgConfigured()) {
+    return NextResponse.json({ error: 'Form database not configured' }, { status: 503 });
+  }
+
+  try {
+    const columns = await listQuestionsForQuestionnaire(questionnaireId);
+    return NextResponse.json({ columns });
+  } catch (e) {
+    console.error('[form-responses/questions]', e);
+    return NextResponse.json({ error: 'Failed to load questions' }, { status: 500 });
+  }
+}

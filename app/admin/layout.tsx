@@ -11,7 +11,8 @@ import {
   LogOut,
   User,
   BarChart3,
-  CreditCard
+  CreditCard,
+  ClipboardList
 } from 'lucide-react';
 import { AdminProviders } from './AdminProviders';
 import { AdminAuthGuard } from './AdminAuthGuard';
@@ -78,6 +79,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </NavLink>
             <NavLink href="/admin/memberships" icon={CreditCard}>
               Memberships
+            </NavLink>
+            <NavLink href="/admin/form-pages" icon={ClipboardList}>
+              Form responses
             </NavLink>
             <NavLink href="/admin/analytics" icon={BarChart3}>
               Analytics

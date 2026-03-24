@@ -129,6 +129,10 @@
 
 /* Print styles */
 @media print {
+  .form-responses-no-print {
+    display: none !important;
+  }
+
   /* Hide non-essential elements */
   header,
   .print\\:hidden,
