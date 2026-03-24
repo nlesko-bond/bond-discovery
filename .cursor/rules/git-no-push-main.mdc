@@ -1,0 +1,10 @@
+---
+description: Never push to main without explicit user approval
+alwaysApply: true
+---
+
+# Git — do not push to `main`
+
+- **Never** run `git push origin main` or otherwise update remote `main` unless the user has **explicitly approved** pushing to `main` in the current conversation (exact words or clear “yes, push to main”).
+- Default workflow: commit on a **feature branch**, open a PR, or stop after commit and tell the user what to run.
+- If the user asks for a fix or deploy but does **not** name `main`, assume **no push** — provide the branch name and suggested `git push -u origin <branch>` / PR link only.
