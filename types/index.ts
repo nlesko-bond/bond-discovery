@@ -373,7 +373,7 @@ export interface FeatureConfig {
   allowViewToggle: boolean;
   showTableView?: boolean; // Show table view option on desktop
   tableColumns?: ScheduleTableColumn[]; // Columns to show in schedule table view
-  allowTableViewOnMobile?: boolean; // Allow table view on small screens (bypasses 550px minimum)
+  allowTableViewOnMobile?: boolean; // Allow table view below md width (bypasses ~768px schedule breakpoint)
   // Embed-friendly options
   headerDisplay?: 'full' | 'minimal' | 'hidden'; // Header visibility mode (default: 'full')
   disableStickyHeader?: boolean; // Disable sticky main header (calendar headers still stick)

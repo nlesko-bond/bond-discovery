@@ -5,13 +5,22 @@
  * Wide + scheduleView=table → table (desktop honors the link).
  */
 
-/** Matches Tailwind-ish `sm` boundary; narrow = schedule “mobile” rules (table off unless allowed). */
-export const SCHEDULE_VIEW_NARROW_MEDIA_QUERY = '(max-width: 549px)';
+/**
+ * Viewports at most this many CSS pixels wide use “mobile” schedule rules
+ * (mobile default view, `scheduleView=table` gating unless admin allows table on mobile).
+ * Uses 767 so “wide” starts at 768px — same as Tailwind `md` and common tablet portrait widths.
+ */
+export const SCHEDULE_VIEW_MOBILE_MAX_WIDTH_PX = 767;
+
+export const SCHEDULE_VIEW_NARROW_MEDIA_QUERY = `(max-width: ${SCHEDULE_VIEW_MOBILE_MAX_WIDTH_PX}px)`;
 
 export function isNarrowScheduleViewport(): boolean {
   if (typeof window === 'undefined') return false;
   if (typeof window.matchMedia !== 'function') {
-    return window.innerWidth > 0 && window.innerWidth < 550;
+    return (
+      window.innerWidth > 0 &&
+      window.innerWidth <= SCHEDULE_VIEW_MOBILE_MAX_WIDTH_PX
+    );
   }
   return window.matchMedia(SCHEDULE_VIEW_NARROW_MEDIA_QUERY).matches;
 }
