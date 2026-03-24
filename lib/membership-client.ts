@@ -3,7 +3,7 @@
  * Uses Cognito auth headers (NOT the public API key).
  */
 
-import { getBondAuthHeaders, getBondApiBase } from './bond-auth';
+import { getBondAuthHeaders, getBondApiBase, invalidateBondTokenCache } from './bond-auth';
 import { MembershipApiResponse } from '@/types/membership';
 
 interface GetMembershipsOptions {
@@ -39,13 +39,23 @@ export async function getMemberships(
   url.searchParams.set('orderBy', orderBy);
   url.searchParams.set('organizationId', String(orgId));
 
-  const headers = await getBondAuthHeaders();
+  const doFetch = async () => {
+    const headers = await getBondAuthHeaders();
+    return fetch(url.toString(), {
+      method: 'GET',
+      headers,
+      signal: AbortSignal.timeout(15000),
+    });
+  };
 
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers,
-    signal: AbortSignal.timeout(15000),
-  });
+  let response = await doFetch();
+
+  // Stale or revoked tokens can sit in KV until TTL; Bond returns 401. Clear cache once and retry.
+  if (response.status === 401) {
+    console.warn('[MembershipClient] 401 from memberships API — invalidating bond:tokens and retrying once');
+    await invalidateBondTokenCache();
+    response = await doFetch();
+  }
 
   if (!response.ok) {
     const errorText = await response.text();

@@ -6,7 +6,7 @@
  * continues to use the public API with x-api-key (lib/bond-client.ts).
  */
 
-import { cacheGet, cacheSet } from './cache';
+import { cacheGet, cacheSet, cacheDelete } from './cache';
 
 const BOND_API_BASE = 'https://api.bondsports.co/v4';
 const REFRESH_TOKEN_URL = 'https://api.bondsports.co/auth/refresh';
@@ -109,4 +109,9 @@ async function refreshTokensFromBond(): Promise<CognitoTokens | null> {
 
 export function getBondApiBase(): string {
   return BOND_API_BASE;
+}
+
+/** Drop cached Cognito tokens so the next call forces a refresh (e.g. after API 401). */
+export async function invalidateBondTokenCache(): Promise<void> {
+  await cacheDelete(BOND_TOKENS_CACHE_KEY);
 }
