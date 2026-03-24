@@ -1609,8 +1609,8 @@ function TableView({
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 print:shadow-none print:border-0">
       {/* Table */}
-      <div className="print:overflow-visible">
-        <table className="w-full print:text-xs border-collapse">
+      <div className="print:overflow-visible overflow-x-auto">
+        <table className="w-full min-w-0 print:text-xs border-collapse table-auto">
           <thead 
             className="sticky z-20 text-white" 
             style={{ top: stickyOffset, background: tableHeaderBackground }}
@@ -1780,11 +1780,11 @@ function TableView({
                     </td>
                   )}
                   
-                  {/* Action — redeem left, register right so single-button rows stay aligned */}
+                  {/* Action — stack on narrow widths; row layout from sm up (punch pass + register) */}
                   {showActionColumn && (
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 print:hidden">
-                      <div className="flex flex-row items-center justify-between gap-2 w-full min-w-[10rem]">
-                        <div className="flex flex-1 justify-start min-w-0">
+                    <td className="min-w-0 px-1.5 sm:px-4 py-2 sm:py-3 print:hidden">
+                      <div className="flex flex-col gap-1.5 w-full min-w-0 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                        <div className="flex justify-stretch sm:flex-1 sm:justify-start min-w-0">
                           {eventShowsRedeemPass(event, config) && (
                             <a
                               href={getPunchPassRedeemUrl(config)}
@@ -1794,15 +1794,15 @@ function TableView({
                                 e.stopPropagation();
                                 trackRedeemPassClick(config, event);
                               }}
-                              className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg border print:hidden hover:opacity-90 shrink-0"
+                              className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg border print:hidden hover:opacity-90 w-full sm:w-auto"
                               style={{ color: secondaryColor, borderColor: `${secondaryColor}66`, backgroundColor: `${secondaryColor}0d` }}
                             >
-                              <Ticket size={12} />
+                              <Ticket size={12} className="shrink-0" />
                               Redeem
                             </a>
                           )}
                         </div>
-                        <div className="flex justify-end shrink-0">
+                        <div className="flex justify-stretch sm:justify-end sm:shrink-0 min-w-0">
                           {!hideRegistrationLinks && event.linkSEO && (
                             <a
                               href={customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
@@ -1826,7 +1826,7 @@ function TableView({
                                 }
                               }}
                               className={cn(
-                                'inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-xs font-medium rounded-lg transition-colors print:hidden',
+                                'inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-medium rounded-lg transition-colors print:hidden w-full sm:w-auto',
                                 isRegistrationUnavailable
                                   ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                   : 'text-white hover:opacity-90'
@@ -1834,7 +1834,7 @@ function TableView({
                               style={!isRegistrationUnavailable ? { backgroundColor: secondaryColor } : undefined}
                             >
                               {isRegistrationUnavailable ? 'Details' : (isWaitlistJoinable ? 'Join Waitlist' : 'Register')}
-                              {config.features.showRegisterIcon !== false && <ExternalLink size={12} />}
+                              {config.features.showRegisterIcon !== false && <ExternalLink size={12} className="shrink-0" />}
                             </a>
                           )}
                         </div>
