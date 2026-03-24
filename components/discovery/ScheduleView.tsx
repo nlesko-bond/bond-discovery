@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { 
   ChevronLeft, 
@@ -117,14 +117,14 @@ export function ScheduleView({
     return 'list';
   }, [mobileDefaultRaw]);
 
+  // SSR + first client frame: URL wins if present; otherwise neutral `list` so we don't
+  // paint desktop default then flip — useLayoutEffect applies admin mobile/desktop default from real width.
   const [viewMode, setViewModeState] = useState<ViewMode>(() => {
     const urlScheduleView = searchParams.get('scheduleView') as ViewMode | null;
     if (urlScheduleView && validViewModes.includes(urlScheduleView)) {
       return urlScheduleView;
     }
-    // Use list as default since it works well on both mobile and desktop
-    // This avoids hydration mismatch from window.innerWidth check
-    return (config.features.defaultScheduleView as ViewMode) || 'list';
+    return 'list';
   });
   
   // Ref to track current viewMode for resize handler (avoids stale closure)
@@ -168,45 +168,58 @@ export function ScheduleView({
     return () => window.removeEventListener('resize', syncViewportTableRules);
   }, [syncViewportTableRules]);
 
-  /** Once on client: if URL has no scheduleView, apply Default (Desktop) / Default (Mobile) from admin. */
-  const didApplyInitialScheduleDefault = useRef(false);
-  useEffect(() => {
-    if (didApplyInitialScheduleDefault.current) return;
+  /**
+   * Before first paint: resolve real viewport width vs admin defaults.
+   * - With `scheduleView` in URL: respect it (filters/other params untouched), clamp table on narrow if disallowed.
+   * - Without it: narrow → Default (Mobile) or desktop fallback; wide → Default (Desktop).
+   *   Table is only an auto-default on mobile when Allow table on mobile is on; otherwise never auto-start on table.
+   */
+  const didResolveInitialScheduleView = useRef(false);
+  useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
-    didApplyInitialScheduleDefault.current = true;
-
-    const raw = searchParams.get('scheduleView');
-    if (raw && validViewModes.includes(raw)) {
-      syncViewportTableRules();
-      return;
-    }
+    if (didResolveInitialScheduleView.current) return;
+    didResolveInitialScheduleView.current = true;
 
     const narrow = window.innerWidth < TABLE_VIEW_BREAKPOINT;
+    setIsTableAllowed(allowTableOnMobile || !narrow);
+
+    const raw = searchParamsRef.current.get('scheduleView');
     let target: ViewMode;
-    if (narrow) {
-      if (mobileDefaultRaw && validViewModes.includes(mobileDefaultRaw)) {
-        target = mobileDefaultRaw;
+
+    if (raw && validViewModes.includes(raw)) {
+      target = clampTableForViewport(raw as ViewMode, narrow);
+    } else {
+      if (narrow) {
+        if (mobileDefaultRaw && validViewModes.includes(mobileDefaultRaw)) {
+          target = mobileDefaultRaw;
+        } else {
+          target = desktopDefaultView;
+        }
+        if (target === 'table' && !allowTableOnMobile) {
+          target = tableEscapeFallback();
+        }
       } else {
         target = desktopDefaultView;
       }
-    } else {
-      target = desktopDefaultView;
+      target = clampTableForViewport(target, narrow);
     }
-    target = clampTableForViewport(target, narrow);
 
     setViewModeState(target);
+    viewModeRef.current = target;
+
     const p = new URLSearchParams(searchParamsRef.current.toString());
-    p.set('scheduleView', target);
-    router.replace(`${pathname}?${p.toString()}`, { scroll: false });
-    syncViewportTableRules();
+    if (p.get('scheduleView') !== target) {
+      p.set('scheduleView', target);
+      router.replace(`${pathname}?${p.toString()}`, { scroll: false });
+    }
   }, [
+    allowTableOnMobile,
     clampTableForViewport,
     desktopDefaultView,
     mobileDefaultRaw,
     pathname,
     router,
-    searchParams,
-    syncViewportTableRules,
+    tableEscapeFallback,
   ]);
 
   /** When scheduleView in the URL changes (e.g. back/forward), align state. Primitives only in deps to avoid re-running on every render when mocks return new URLSearchParams(). */
