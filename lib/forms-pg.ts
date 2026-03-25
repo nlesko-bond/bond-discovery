@@ -6,14 +6,39 @@
  *
  * Optional: BOND_FORMS_PG_SCHEMA only if these tables are outside public.
  *
- * TLS: BOND_FORMS_PG_SSL_CA (PEM; use \\n for newlines in env) or BOND_FORMS_PG_SSL_NO_VERIFY=1
- * if cert chain fails on Vercel (UNABLE_TO_GET_ISSUER_CERT_LOCALLY). Prefer CA when possible.
+ * TLS: pg merges parse(connectionString) over Pool config, so ?sslmode=require becomes ssl: {}
+ * and wipes explicit ssl — strip ssl* query params and set tls here.
+ * Default: rejectUnauthorized: false (Vercel/Node often lacks RDS CA in trust store).
+ * BOND_FORMS_PG_SSL_CA (PEM, \\n for newlines) + verification, or BOND_FORMS_PG_SSL_STRICT=1
+ * to require default Node verification (will fail without a resolvable chain).
  */
 
 import type { ConnectionOptions } from 'tls';
 import { Pool, type PoolClient } from 'pg';
 import type { QuestionColumnMeta, QuestionnaireListItem } from '@/types/form-pages';
 import { getFormsPgSchemaQualifier } from '@/lib/forms-pg-dialect';
+
+/** Query keys that must be removed so they cannot overwrite Pool `ssl` (see pg ConnectionParameters). */
+const PG_URL_SSL_QUERY_KEYS = [
+  'sslmode',
+  'ssl',
+  'sslcert',
+  'sslkey',
+  'sslrootcert',
+  'uselibpqcompat',
+] as const;
+
+function sanitizeBondFormsDatabaseUrl(connectionString: string): string {
+  try {
+    const u = new URL(connectionString);
+    for (const key of PG_URL_SSL_QUERY_KEYS) {
+      u.searchParams.delete(key);
+    }
+    return u.toString();
+  } catch {
+    return connectionString;
+  }
+}
 
 let pool: Pool | null = null;
 
@@ -25,7 +50,7 @@ function schemaQ(): string {
   return getFormsPgSchemaQualifier();
 }
 
-function getFormsPgSsl(): ConnectionOptions | undefined {
+function getFormsPgSsl(): ConnectionOptions {
   const caRaw = process.env.BOND_FORMS_PG_SSL_CA?.trim();
   if (caRaw) {
     return {
@@ -33,13 +58,13 @@ function getFormsPgSsl(): ConnectionOptions | undefined {
       ca: caRaw.replace(/\\n/g, '\n'),
     };
   }
-  const noVerify =
-    process.env.BOND_FORMS_PG_SSL_NO_VERIFY === '1' ||
-    process.env.BOND_FORMS_PG_SSL_NO_VERIFY === 'true';
-  if (noVerify) {
-    return { rejectUnauthorized: false };
+  const strict =
+    process.env.BOND_FORMS_PG_SSL_STRICT === '1' ||
+    process.env.BOND_FORMS_PG_SSL_STRICT === 'true';
+  if (strict) {
+    return { rejectUnauthorized: true };
   }
-  return undefined;
+  return { rejectUnauthorized: false };
 }
 
 function getPool(): Pool {
@@ -48,10 +73,9 @@ function getPool(): Pool {
     throw new Error('BOND_FORMS_DATABASE_URL is not set');
   }
   if (!pool) {
-    const ssl = getFormsPgSsl();
     pool = new Pool({
-      connectionString: url,
-      ...(ssl ? { ssl } : {}),
+      connectionString: sanitizeBondFormsDatabaseUrl(url),
+      ssl: getFormsPgSsl(),
       max: Number(process.env.BOND_FORMS_PG_POOL_MAX || 2),
       idleTimeoutMillis: 10_000,
       connectionTimeoutMillis: 25_000,

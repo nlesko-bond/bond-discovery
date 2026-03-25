@@ -9,6 +9,8 @@ declare module 'pg' {
 
   export interface PoolConfig {
     connectionString?: string;
+    /** Passed to tls.connect; required for TLS tuning on serverless (e.g. Vercel + RDS). */
+    ssl?: boolean | import('tls').ConnectionOptions;
     max?: number;
     idleTimeoutMillis?: number;
     connectionTimeoutMillis?: number;

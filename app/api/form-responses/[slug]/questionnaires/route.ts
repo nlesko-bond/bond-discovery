@@ -43,7 +43,7 @@ export async function GET(request: NextRequest, context: Ctx) {
     return NextResponse.json(
       {
         error: 'Failed to load questionnaires',
-        hint: 'Postgres: identifiers in lib/forms-pg.ts; BOND_FORMS_PG_SCHEMA if not public. TLS errors (e.g. UNABLE_TO_GET_ISSUER_CERT_LOCALLY): BOND_FORMS_PG_SSL_CA or BOND_FORMS_PG_SSL_NO_VERIFY=1 on Vercel. FORMS_PG_EXPOSE_ERRORS=1 for pgError.',
+        hint: 'Postgres: lib/forms-pg.ts + BOND_FORMS_PG_SCHEMA if needed. TLS: URL sslmode no longer overrides app ssl; optional BOND_FORMS_PG_SSL_CA or BOND_FORMS_PG_SSL_STRICT=1. FORMS_PG_EXPOSE_ERRORS=1 for pgError.',
         ...(pgError ? { pgError } : {}),
       },
       { status: 500 }
