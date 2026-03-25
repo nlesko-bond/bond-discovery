@@ -43,7 +43,7 @@ export async function GET(request: NextRequest, context: Ctx) {
     return NextResponse.json(
       {
         error: 'Failed to load questionnaires',
-        hint: 'If tables use snake_case columns, set BOND_FORMS_SQL_DIALECT=snake on Vercel. For schema other than public, set BOND_FORMS_PG_SCHEMA.',
+        hint: 'Confirm Postgres identifiers match lib/forms-pg.ts (PascalCase tables, "id" PK). Set FORMS_PG_EXPOSE_ERRORS=1 temporarily for pgError. BOND_FORMS_PG_SCHEMA only if tables are outside public.',
         ...(pgError ? { pgError } : {}),
       },
       { status: 500 }

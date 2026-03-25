@@ -1,17 +1,15 @@
 /**
  * Read-only Postgres access to Bond forms tables (read replica).
  *
- * Dialects:
- * - quoted_camel (default): "Questionnaires"."organizationId" — matches TypeORM-style quoted identifiers.
- * - snake: questionnaires.organization_id — common Sequelize/Postgres naming.
+ * Matches Bond `public` schema: PascalCase table names ("Questionnaires", …)
+ * and lowercase quoted PK column "id" (not "Id").
  *
- * Set BOND_FORMS_SQL_DIALECT=snake on Vercel if you get 500 / "relation does not exist".
- * Set BOND_FORMS_PG_SCHEMA=myschema if tables are not in public.
+ * Optional: BOND_FORMS_PG_SCHEMA only if these tables are outside public.
  */
 
 import type { Pool, PoolClient } from 'pg';
 import type { QuestionColumnMeta, QuestionnaireListItem } from '@/types/form-pages';
-import { getFormsPgSchemaQualifier, getFormsPgSqlDialect } from '@/lib/forms-pg-dialect';
+import { getFormsPgSchemaQualifier } from '@/lib/forms-pg-dialect';
 
 let pool: Pool | null = null;
 
@@ -21,10 +19,6 @@ export function isFormsPgConfigured(): boolean {
 
 function schemaQ(): string {
   return getFormsPgSchemaQualifier();
-}
-
-function snake(): boolean {
-  return getFormsPgSqlDialect() === 'snake';
 }
 
 async function getPool(): Promise<Pool> {
@@ -64,18 +58,11 @@ export function formatFormsPgError(e: unknown): { message: string; code?: string
 export async function listQuestionnaires(organizationId: number): Promise<QuestionnaireListItem[]> {
   return withClient(async (c) => {
     const sq = schemaQ();
-    const sql = snake()
-      ? `
-      SELECT qu.id::int AS id, qu.title AS title
-      FROM ${sq}questionnaires qu
-      WHERE qu.organization_id = $1
-      ORDER BY qu.title NULLS LAST, qu.id
-      `
-      : `
-      SELECT qu."Id"::int AS id, qu."title" AS title
+    const sql = `
+      SELECT qu."id"::int AS id, qu."title" AS title
       FROM ${sq}"Questionnaires" qu
       WHERE qu."organizationId" = $1
-      ORDER BY qu."title" NULLS LAST, qu."Id"
+      ORDER BY qu."title" NULLS LAST, qu."id"
       `;
     const { rows } = await c.query<{ id: number; title: string | null }>(sql, [organizationId]);
     return rows;
@@ -88,17 +75,10 @@ export async function getQuestionnaireTitle(
 ): Promise<string | null> {
   return withClient(async (c) => {
     const sq = schemaQ();
-    const sql = snake()
-      ? `
-      SELECT qu.title AS title
-      FROM ${sq}questionnaires qu
-      WHERE qu.organization_id = $1 AND qu.id::int = $2
-      LIMIT 1
-      `
-      : `
+    const sql = `
       SELECT qu."title" AS title
       FROM ${sq}"Questionnaires" qu
-      WHERE qu."organizationId" = $1 AND qu."Id"::int = $2
+      WHERE qu."organizationId" = $1 AND qu."id"::int = $2
       LIMIT 1
       `;
     const { rows } = await c.query<{ title: string | null }>(sql, [organizationId, questionnaireId]);
@@ -111,30 +91,17 @@ export async function listQuestionsForQuestionnaire(
 ): Promise<QuestionColumnMeta[]> {
   return withClient(async (c) => {
     const sq = schemaQ();
-    const sql = snake()
-      ? `
+    const sql = `
       SELECT
-        qu.id::int AS id,
-        qu.questionnaire_id::int AS questionnaireid,
-        qu.ordinal AS ordinal,
-        qu.question_type AS questiontype,
-        qu.question AS question,
-        qu.meta_data AS "metaData"
-      FROM ${sq}questions qu
-      WHERE qu.questionnaire_id::int = $1
-      ORDER BY qu.ordinal NULLS LAST, qu.id
-      `
-      : `
-      SELECT
-        qu."Id"::int AS id,
-        qu."questionnaireId"::int AS questionnaireId,
+        qu."id"::int AS id,
+        qu."questionnaireId"::int AS questionnaireid,
         qu."ordinal" AS ordinal,
-        qu."questionType" AS questionType,
+        qu."questionType" AS questiontype,
         qu."question" AS question,
         qu."metaData" AS "metaData"
       FROM ${sq}"Questions" qu
       WHERE qu."questionnaireId"::int = $1
-      ORDER BY qu."ordinal" NULLS LAST, qu."Id"
+      ORDER BY qu."ordinal" NULLS LAST, qu."id"
       `;
     const { rows } = await c.query<{
       id: number;
@@ -178,7 +145,6 @@ export async function listAnswerTitlesPage(
   const search = params.search.trim().toLowerCase();
   return withClient(async (c) => {
     const sq = schemaQ();
-    const sn = snake();
 
     const values: unknown[] = [
       params.organizationId,
@@ -191,33 +157,16 @@ export async function listAnswerTitlesPage(
 
     if (params.cursor) {
       values.push(params.cursor.createdAt, params.cursor.id);
-      if (sn) {
-        sqlExtra += ` AND (at.created_at, at.id) < ($${idx}::timestamptz, $${idx + 1}::int)`;
-      } else {
-        sqlExtra += ` AND (at."createdAt", at."Id") < ($${idx}::timestamptz, $${idx + 1}::int)`;
-      }
+      sqlExtra += ` AND (at."createdAt", at."id") < ($${idx}::timestamptz, $${idx + 1}::int)`;
       idx += 2;
     }
 
     if (search.length > 0) {
       values.push(search);
-      if (sn) {
-        sqlExtra += `
-        AND EXISTS (
-          SELECT 1 FROM ${sq}answers a
-          WHERE a.answer_title_id = at.id
-            AND a.organization_id = $1
-            AND (
-              position($${idx} in lower(coalesce(a.question_text, ''))) > 0
-              OR position($${idx} in lower(coalesce(a.answer_value::text, ''))) > 0
-            )
-        )
-      `;
-      } else {
-        sqlExtra += `
+      sqlExtra += `
         AND EXISTS (
           SELECT 1 FROM ${sq}"Answers" a
-          WHERE a."answerTitleId" = at."Id"
+          WHERE a."answerTitleId" = at."id"
             AND a."organizationId" = $1
             AND (
               position($${idx} in lower(coalesce(a."questionText", ''))) > 0
@@ -225,34 +174,21 @@ export async function listAnswerTitlesPage(
             )
         )
       `;
-      }
       idx += 1;
     }
 
     values.push(params.limit + 1);
     const limitIdx = idx;
 
-    const sql = sn
-      ? `
-      SELECT at.id::int AS id, at.created_at AS "createdAt", at.user_id::int AS "userId"
-      FROM ${sq}answer_titles at
-      WHERE at.organization_id = $1
-        AND at.questionnaire_id::int = $2
-        AND at.created_at >= $3::timestamptz
-        AND at.created_at <= $4::timestamptz
-        ${sqlExtra}
-      ORDER BY at.created_at DESC, at.id DESC
-      LIMIT $${limitIdx}
-    `
-      : `
-      SELECT at."Id"::int AS id, at."createdAt" AS "createdAt", at."userId"::int AS "userId"
+    const sql = `
+      SELECT at."id"::int AS id, at."createdAt" AS "createdAt", at."userId"::int AS "userId"
       FROM ${sq}"AnswerTitles" at
       WHERE at."organizationId" = $1
         AND at."questionnaireId"::int = $2
         AND at."createdAt" >= $3::timestamptz
         AND at."createdAt" <= $4::timestamptz
         ${sqlExtra}
-      ORDER BY at."createdAt" DESC, at."Id" DESC
+      ORDER BY at."createdAt" DESC, at."id" DESC
       LIMIT $${limitIdx}
     `;
 
@@ -295,26 +231,14 @@ export async function listAnswersForTitleIds(
   if (titleIds.length === 0) return [];
   return withClient(async (c) => {
     const sq = schemaQ();
-    const sql = snake()
-      ? `
-      SELECT
-        a.answer_title_id::int AS "answerTitleId",
-        a.question_id::int AS "questionId",
-        a.answer_value AS "answerValue",
-        q.question_type AS "questionType"
-      FROM ${sq}answers a
-      LEFT JOIN ${sq}questions q ON q.id = a.question_id
-      WHERE a.organization_id = $1
-        AND a.answer_title_id = ANY($2::int[])
-      `
-      : `
+    const sql = `
       SELECT
         a."answerTitleId"::int AS "answerTitleId",
         a."questionId"::int AS "questionId",
         a."answerValue" AS "answerValue",
         q."questionType" AS "questionType"
       FROM ${sq}"Answers" a
-      LEFT JOIN ${sq}"Questions" q ON q."Id" = a."questionId"
+      LEFT JOIN ${sq}"Questions" q ON q."id" = a."questionId"
       WHERE a."organizationId" = $1
         AND a."answerTitleId" = ANY($2::int[])
       `;
@@ -341,18 +265,7 @@ export async function listUsersByIds(userIds: number[]): Promise<Map<number, Use
   if (unique.length === 0) return new Map();
   return withClient(async (c) => {
     const sq = schemaQ();
-    const sql = snake()
-      ? `
-      SELECT
-        u.id::int AS id,
-        u.first_name AS "firstName",
-        u.last_name AS "lastName",
-        u.email AS email,
-        u.phone AS phone
-      FROM ${sq}users u
-      WHERE u.id = ANY($1::int[])
-      `
-      : `
+    const sql = `
       SELECT
         u."id"::int AS id,
         u."firstName" AS "firstName",
