@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFormPageConfigBySlug, isQuestionnaireAllowed } from '@/lib/form-pages-config';
 import { staffSessionOk } from '@/lib/form-staff-cookie';
-import { isFormsPgConfigured, listQuestionnaires } from '@/lib/forms-pg';
+import { shouldExposeFormsPgErrors } from '@/lib/forms-pg-dialect';
+import { formatFormsPgError, isFormsPgConfigured, listQuestionnaires } from '@/lib/forms-pg';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +39,14 @@ export async function GET(request: NextRequest, context: Ctx) {
     return NextResponse.json({ questionnaires: list });
   } catch (e) {
     console.error('[form-responses/questionnaires]', e);
-    return NextResponse.json({ error: 'Failed to load questionnaires' }, { status: 500 });
+    const pgError = shouldExposeFormsPgErrors() ? formatFormsPgError(e) : undefined;
+    return NextResponse.json(
+      {
+        error: 'Failed to load questionnaires',
+        hint: 'If tables use snake_case columns, set BOND_FORMS_SQL_DIALECT=snake on Vercel. For schema other than public, set BOND_FORMS_PG_SCHEMA.',
+        ...(pgError ? { pgError } : {}),
+      },
+      { status: 500 }
+    );
   }
 }
