@@ -3,7 +3,8 @@ import { loadFormResponsesPage } from '@/lib/form-responses-data';
 import { parseFormResponsesDateRange, parseTitleCursor } from '@/lib/form-responses-query';
 import { getFormPageConfigBySlug, isQuestionnaireAllowed } from '@/lib/form-pages-config';
 import { staffSessionOk } from '@/lib/form-staff-cookie';
-import { isFormsPgConfigured } from '@/lib/forms-pg';
+import { shouldExposeFormsPgErrors } from '@/lib/forms-pg-dialect';
+import { formatFormsPgError, isFormsPgConfigured } from '@/lib/forms-pg';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,6 +60,14 @@ export async function GET(request: NextRequest, context: Ctx) {
     return NextResponse.json({ data });
   } catch (e) {
     console.error('[form-responses/rows]', e);
-    return NextResponse.json({ error: 'Failed to load responses' }, { status: 500 });
+    const pgError = shouldExposeFormsPgErrors() ? formatFormsPgError(e) : undefined;
+    return NextResponse.json(
+      {
+        error: 'Failed to load responses',
+        hint: 'Set FORMS_PG_EXPOSE_ERRORS=1 on the deployment to include pgError with the Postgres message.',
+        ...(pgError ? { pgError } : {}),
+      },
+      { status: 500 }
+    );
   }
 }
