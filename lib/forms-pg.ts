@@ -5,8 +5,12 @@
  * and lowercase quoted PK column "id" (not "Id").
  *
  * Optional: BOND_FORMS_PG_SCHEMA only if these tables are outside public.
+ *
+ * TLS: BOND_FORMS_PG_SSL_CA (PEM; use \\n for newlines in env) or BOND_FORMS_PG_SSL_NO_VERIFY=1
+ * if cert chain fails on Vercel (UNABLE_TO_GET_ISSUER_CERT_LOCALLY). Prefer CA when possible.
  */
 
+import type { ConnectionOptions } from 'tls';
 import { Pool, type PoolClient } from 'pg';
 import type { QuestionColumnMeta, QuestionnaireListItem } from '@/types/form-pages';
 import { getFormsPgSchemaQualifier } from '@/lib/forms-pg-dialect';
@@ -21,14 +25,33 @@ function schemaQ(): string {
   return getFormsPgSchemaQualifier();
 }
 
+function getFormsPgSsl(): ConnectionOptions | undefined {
+  const caRaw = process.env.BOND_FORMS_PG_SSL_CA?.trim();
+  if (caRaw) {
+    return {
+      rejectUnauthorized: true,
+      ca: caRaw.replace(/\\n/g, '\n'),
+    };
+  }
+  const noVerify =
+    process.env.BOND_FORMS_PG_SSL_NO_VERIFY === '1' ||
+    process.env.BOND_FORMS_PG_SSL_NO_VERIFY === 'true';
+  if (noVerify) {
+    return { rejectUnauthorized: false };
+  }
+  return undefined;
+}
+
 function getPool(): Pool {
   const url = process.env.BOND_FORMS_DATABASE_URL?.trim();
   if (!url) {
     throw new Error('BOND_FORMS_DATABASE_URL is not set');
   }
   if (!pool) {
+    const ssl = getFormsPgSsl();
     pool = new Pool({
       connectionString: url,
+      ...(ssl ? { ssl } : {}),
       max: Number(process.env.BOND_FORMS_PG_POOL_MAX || 2),
       idleTimeoutMillis: 10_000,
       connectionTimeoutMillis: 25_000,
