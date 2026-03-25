@@ -317,7 +317,7 @@ export async function listUsersByIds(userIds: number[]): Promise<Map<number, Use
         u."firstName" AS "firstName",
         u."lastName" AS "lastName",
         u."email" AS email,
-        u."phone" AS phone
+        u."phoneNumber" AS phone
       FROM ${sq}"Users" u
       WHERE u."id" = ANY($1::int[])
       `;

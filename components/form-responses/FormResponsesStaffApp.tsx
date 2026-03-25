@@ -372,21 +372,23 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
       </main>
 
       <div className="max-w-[1600px] mx-auto px-4 pb-10 overflow-x-auto">
-        <table className="min-w-full text-sm border border-slate-200 bg-white rounded-lg overflow-hidden print:text-xs">
+        <table className="min-w-max max-w-full text-sm border border-slate-200 bg-white rounded-lg overflow-hidden print:text-xs">
           <thead>
             <tr style={{ backgroundColor: `${b.primaryColor}14` }}>
-              <th className="text-left p-2 border-b border-slate-200 font-semibold whitespace-nowrap">
+              <th className="text-left p-2 border-b border-slate-200 font-semibold whitespace-nowrap align-bottom w-[9.5rem]">
                 Submitted
               </th>
-              <th className="text-left p-2 border-b border-slate-200 font-semibold whitespace-nowrap">
-                Participant
+              <th className="text-left p-2 border-b border-slate-200 font-semibold align-bottom min-w-[10rem] max-w-[13rem]">
+                <span className="line-clamp-3 block leading-snug">Participant</span>
               </th>
               {columns.map((c) => (
                 <th
                   key={c.id}
-                  className="text-left p-2 border-b border-slate-200 font-semibold whitespace-nowrap max-w-[240px]"
+                  className="text-left p-2 border-b border-slate-200 font-semibold align-bottom min-w-[11rem] max-w-[15rem] w-[15rem]"
                 >
-                  {c.question || `Q ${c.id}`}
+                  <span className="line-clamp-3 block leading-snug text-slate-900 break-words">
+                    {c.question?.trim() || `Q ${c.id}`}
+                  </span>
                 </th>
               ))}
             </tr>
@@ -410,13 +412,13 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                   <td className="p-2 align-top text-slate-600 whitespace-nowrap">
                     {new Date(row.createdAt).toLocaleString()}
                   </td>
-                  <td className="p-2 align-top text-slate-800 whitespace-nowrap">
+                  <td className="p-2 align-top text-slate-800 min-w-[10rem] max-w-[13rem] break-words">
                     {row.user ? (
                       <div>
                         <div className="font-medium">
                           {[row.user.firstName, row.user.lastName].filter(Boolean).join(' ') || '—'}
                         </div>
-                        <div className="text-xs text-slate-500">{row.user.email || ''}</div>
+                        <div className="text-xs text-slate-500 break-all">{row.user.email || ''}</div>
                       </div>
                     ) : (
                       '—'
@@ -425,7 +427,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                   {columns.map((c) => {
                     const cell = row.answers[c.id];
                     return (
-                      <td key={c.id} className="p-2 align-top text-slate-800 max-w-[240px] break-words">
+                      <td key={c.id} className="p-2 align-top text-slate-800 max-w-[15rem] w-[15rem] break-words">
                         {cell?.linkUrl ? (
                           <a
                             href={cell.linkUrl}
