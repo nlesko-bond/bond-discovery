@@ -22,4 +22,14 @@ describe('formatAnswerValue', () => {
   it('returns plain text when not JSON', () => {
     expect(formatAnswerValue('hello', null).display).toBe('hello');
   });
+
+  it('accepts json/jsonb already parsed as object (node-pg)', () => {
+    const obj = {
+      street: '1 Main St',
+      city: 'Boston',
+      state: 'MA',
+      zip: '02101',
+    };
+    expect(formatAnswerValue(obj, 'address').display).toContain('Boston');
+  });
 });

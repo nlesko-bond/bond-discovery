@@ -188,7 +188,9 @@ export interface AnswerTitlePageParams {
 export async function listAnswerTitlesPage(
   params: AnswerTitlePageParams
 ): Promise<{ titles: AnswerTitleRow[]; nextCursor: { createdAt: string; id: number } | null }> {
-  const search = params.search.trim().toLowerCase();
+  const search = String(params.search ?? '')
+    .trim()
+    .toLowerCase();
   return withClient(async (c) => {
     const sq = schemaQ();
 
