@@ -7,7 +7,7 @@
  * Optional: BOND_FORMS_PG_SCHEMA only if these tables are outside public.
  */
 
-import type { Pool, PoolClient } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 import type { QuestionColumnMeta, QuestionnaireListItem } from '@/types/form-pages';
 import { getFormsPgSchemaQualifier } from '@/lib/forms-pg-dialect';
 
@@ -21,14 +21,13 @@ function schemaQ(): string {
   return getFormsPgSchemaQualifier();
 }
 
-async function getPool(): Promise<Pool> {
+function getPool(): Pool {
   const url = process.env.BOND_FORMS_DATABASE_URL?.trim();
   if (!url) {
     throw new Error('BOND_FORMS_DATABASE_URL is not set');
   }
   if (!pool) {
-    const { Pool: PgPool } = await import(/* webpackIgnore: true */ 'pg');
-    pool = new PgPool({
+    pool = new Pool({
       connectionString: url,
       max: Number(process.env.BOND_FORMS_PG_POOL_MAX || 2),
       idleTimeoutMillis: 10_000,
@@ -39,7 +38,7 @@ async function getPool(): Promise<Pool> {
 }
 
 async function withClient<T>(fn: (c: PoolClient) => Promise<T>): Promise<T> {
-  const p = await getPool();
+  const p = getPool();
   const client = await p.connect();
   try {
     await client.query('SET statement_timeout = 15000');

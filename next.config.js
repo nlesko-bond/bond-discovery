@@ -2,6 +2,11 @@
 const nextConfig = {
   // Enable React strict mode
   reactStrictMode: true,
+
+  experimental: {
+    // Next 14: externalize `pg` so the server bundle loads it from node_modules (Vercel file tracing includes it).
+    serverComponentsExternalPackages: ['pg'],
+  },
   
   // Image optimization
   images: {
