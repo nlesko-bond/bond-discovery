@@ -12,17 +12,3 @@ export function parseStaffLockBoolean(v: unknown): boolean {
   }
   return Boolean(v);
 }
-
-/**
- * Staff UI: show the multi-form dropdown only when the server **explicitly** sets
- * `staff_lock_to_default_questionnaire` to false (multi-form selection allowed).
- * Missing, null, true, or ambiguous values keep the dropdown **hidden** (default form only).
- */
-export function isStaffFormDropdownExplicitlyAllowed(raw: unknown): boolean {
-  if (raw === false || raw === 0) return true;
-  if (typeof raw === 'string') {
-    const s = raw.trim().toLowerCase();
-    if (s === 'false' || s === '0') return true;
-  }
-  return false;
-}

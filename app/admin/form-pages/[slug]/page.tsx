@@ -26,10 +26,7 @@ export default function EditFormPagePage() {
         if (!res.ok) throw new Error('Not found');
         const data = await res.json();
         const c = data.config as FormPageConfigAdmin;
-        setConfig({
-          ...c,
-          staff_lock_to_default_questionnaire: c.staff_lock_to_default_questionnaire ?? true,
-        });
+        setConfig(c);
         setAllowedIdsText(c.allowed_questionnaire_ids?.join(', ') || '');
       } catch {
         setError('Failed to load config');
@@ -59,7 +56,7 @@ export default function EditFormPagePage() {
         organization_id: config.organization_id,
         default_questionnaire_id: config.default_questionnaire_id,
         allowed_questionnaire_ids: allowed,
-        staff_lock_to_default_questionnaire: config.staff_lock_to_default_questionnaire ?? true,
+        staff_lock_to_default_questionnaire: true,
         branding: config.branding,
         default_range_days: config.default_range_days,
         max_range_days_cap: config.max_range_days_cap,
@@ -191,26 +188,10 @@ export default function EditFormPagePage() {
                 Page active
               </label>
             </div>
-            <div className="col-span-2 flex items-start gap-3">
-              <input
-                type="checkbox"
-                id="fp_allow_form_dropdown"
-                checked={!(config.staff_lock_to_default_questionnaire ?? true)}
-                onChange={(e) =>
-                  setConfig({ ...config, staff_lock_to_default_questionnaire: !e.target.checked })
-                }
-                className="h-4 w-4 rounded border-gray-300 mt-0.5"
-              />
-              <div>
-                <label htmlFor="fp_allow_form_dropdown" className="text-sm text-gray-700 font-medium">
-                  Allow staff to choose form (dropdown)
-                </label>
-                <p className="text-xs text-gray-500 mt-1">
-                  Off by default: staff only see the default questionnaire. Turn on to show a form
-                  dropdown when multiple forms are allowed for this org.
-                </p>
-              </div>
-            </div>
+            <p className="col-span-2 text-xs text-gray-500">
+              Staff responses view always uses the default questionnaire ID above (form picker is
+              disabled).
+            </p>
           </div>
         </Section>
 

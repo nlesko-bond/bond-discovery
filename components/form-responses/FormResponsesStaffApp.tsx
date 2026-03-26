@@ -14,10 +14,8 @@ import {
   type FormResponsesPage,
   type FormResponseRow,
   type QuestionColumnMeta,
-  type QuestionnaireListItem,
   type StaffInquiryStatus,
 } from '@/types/form-pages';
-import { isStaffFormDropdownExplicitlyAllowed } from '@/lib/parse-staff-lock';
 
 const STAFF_STATUS_ORDER: StaffInquiryStatus[] = ['pending', 'in_progress', 'resolved'];
 
@@ -120,8 +118,6 @@ type PublicConfig = {
   default_range_days: number;
   max_range_days_cap: number;
   requires_password: boolean;
-  /** True only when API explicitly returns staff_lock_to_default_questionnaire: false */
-  allow_staff_form_dropdown: boolean;
 };
 
 export function FormResponsesStaffApp({ slug }: { slug: string }) {
@@ -132,7 +128,6 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
 
-  const [questionnaires, setQuestionnaires] = useState<QuestionnaireListItem[]>([]);
   const [questionnaireId, setQuestionnaireId] = useState<number | null>(null);
   const [columns, setColumns] = useState<QuestionColumnMeta[]>([]);
   const [questionnaireTitle, setQuestionnaireTitle] = useState<string | null>(null);
@@ -230,11 +225,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
         }
         const raw = (await res.json()) as Record<string, unknown>;
         if (!cancelled) {
-          const allow = isStaffFormDropdownExplicitlyAllowed(raw.staff_lock_to_default_questionnaire);
-          setPublicConfig({
-            ...(raw as unknown as PublicConfig),
-            allow_staff_form_dropdown: allow,
-          });
+          setPublicConfig(raw as unknown as PublicConfig);
           const cap = Math.min(Math.max(Number(raw.max_range_days_cap) || 90, 1), 365);
           const defaultDays = Math.min(Math.max(Number(raw.default_range_days) || 60, 1), cap);
           const end = new Date();
@@ -267,11 +258,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
         if (!res.ok) return;
         const raw = (await res.json()) as Record<string, unknown>;
         if (!cancelled) {
-          const allow = isStaffFormDropdownExplicitlyAllowed(raw.staff_lock_to_default_questionnaire);
-          setPublicConfig({
-            ...(raw as unknown as PublicConfig),
-            allow_staff_form_dropdown: allow,
-          });
+          setPublicConfig(raw as unknown as PublicConfig);
         }
       } catch {
         /* keep existing config */
@@ -294,33 +281,11 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     };
   }, [base]);
 
+  /** Staff view always uses the page default questionnaire (no multi-form picker). */
   useEffect(() => {
     if (!authenticated || !publicConfig) return;
-    if (!publicConfig.allow_staff_form_dropdown) {
-      setQuestionnaireId(publicConfig.default_questionnaire_id);
-      setQuestionnaires([]);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`${base}/questionnaires`, { credentials: 'include' });
-        if (!res.ok) throw new Error('Could not load forms list');
-        const data = await res.json();
-        const list = (data.questionnaires || []) as QuestionnaireListItem[];
-        if (cancelled) return;
-        setQuestionnaires(list);
-        const def = publicConfig.default_questionnaire_id;
-        const hasDef = list.some((q) => q.id === def);
-        setQuestionnaireId(hasDef ? def : list[0]?.id ?? null);
-      } catch (e) {
-        if (!cancelled) setLoadError(e instanceof Error ? e.message : 'Failed to load forms');
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [authenticated, publicConfig, base]);
+    setQuestionnaireId(publicConfig.default_questionnaire_id);
+  }, [authenticated, publicConfig]);
 
   useEffect(() => {
     if (!authenticated || questionnaireId == null) return;
@@ -639,46 +604,22 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
           style={{ borderLeftWidth: 4, borderLeftColor: b.primaryColor }}
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
-            {publicConfig.allow_staff_form_dropdown ? (
-              <div className="w-full sm:w-auto sm:min-w-[240px]">
-                <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
-                  Form
-                </label>
-                <select
-                  value={questionnaireId ?? ''}
-                  onChange={(e) => setQuestionnaireId(Number(e.target.value))}
-                  className="w-full rounded-xl border-2 px-3 py-2.5 text-sm font-semibold text-slate-900 shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-1"
-                  style={{
-                    borderColor: b.primaryColor,
-                    background: `linear-gradient(145deg, ${b.primaryColor}14, ${b.secondaryColor}12, white)`,
-                    boxShadow: `inset 0 1px 0 rgb(255 255 255 / 0.6), 0 2px 8px ${b.primaryColor}22`,
-                  }}
-                >
-                  {questionnaires.map((q) => (
-                    <option key={q.id} value={q.id}>
-                      {q.title || `Form ${q.id}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : (
-              <div className="w-full sm:w-auto sm:min-w-[240px]">
-                <p className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
-                  Form
-                </p>
-                <p
-                  className="text-sm font-semibold text-slate-900 rounded-xl border-2 px-3 py-2.5 shadow-sm"
-                  style={{
-                    borderColor: b.primaryColor,
-                    background: `linear-gradient(135deg, ${b.primaryColor}18, ${b.secondaryColor}14)`,
-                  }}
-                >
-                  {questionnaireTitle?.trim()
-                    ? questionnaireTitle
-                    : `Default form (ID ${publicConfig.default_questionnaire_id})`}
-                </p>
-              </div>
-            )}
+            <div className="w-full sm:w-auto sm:min-w-[240px]">
+              <p className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
+                Form
+              </p>
+              <p
+                className="text-sm font-semibold text-slate-900 rounded-xl border-2 px-3 py-2.5 shadow-sm"
+                style={{
+                  borderColor: b.primaryColor,
+                  background: `linear-gradient(135deg, ${b.primaryColor}18, ${b.secondaryColor}14)`,
+                }}
+              >
+                {questionnaireTitle?.trim()
+                  ? questionnaireTitle
+                  : `Default form (ID ${publicConfig.default_questionnaire_id})`}
+              </p>
+            </div>
             <div className="flex flex-wrap gap-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
@@ -783,14 +724,6 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
               : ''}
             {statusViewFilter === 'completed_only' ? ' · completed only' : ''}
             .
-          </p>
-        ) : null}
-        {authenticated &&
-        questionnaires.length === 0 &&
-        publicConfig.allow_staff_form_dropdown ? (
-          <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-            No questionnaires found for this organization in the database. Check org ID and replica
-            connectivity.
           </p>
         ) : null}
       </main>

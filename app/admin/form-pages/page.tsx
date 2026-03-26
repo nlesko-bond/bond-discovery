@@ -15,8 +15,6 @@ export default function FormPagesAdminList() {
     organization_id: '',
     default_questionnaire_id: '',
     staff_password: '',
-    /** When true, staff_lock_to_default_questionnaire is false (show dropdown). */
-    allow_staff_form_dropdown: false,
   });
 
   useEffect(() => {
@@ -47,7 +45,7 @@ export default function FormPagesAdminList() {
           organization_id: parseInt(newForm.organization_id, 10),
           default_questionnaire_id: parseInt(newForm.default_questionnaire_id, 10),
           staff_password: newForm.staff_password,
-          staff_lock_to_default_questionnaire: !newForm.allow_staff_form_dropdown,
+          staff_lock_to_default_questionnaire: true,
         }),
       });
       if (res.ok) {
@@ -58,7 +56,6 @@ export default function FormPagesAdminList() {
           organization_id: '',
           default_questionnaire_id: '',
           staff_password: '',
-          allow_staff_form_dropdown: false,
         });
         fetchConfigs();
       } else {
@@ -155,26 +152,10 @@ export default function FormPagesAdminList() {
                 required
               />
             </div>
-            <div className="col-span-2 flex items-start gap-3">
-              <input
-                type="checkbox"
-                id="new_fp_allow_form_dropdown"
-                checked={newForm.allow_staff_form_dropdown}
-                onChange={(e) =>
-                  setNewForm({ ...newForm, allow_staff_form_dropdown: e.target.checked })
-                }
-                className="h-4 w-4 rounded border-gray-300 mt-0.5"
-              />
-              <div>
-                <label htmlFor="new_fp_allow_form_dropdown" className="text-sm text-gray-700 font-medium">
-                  Allow staff to choose form (dropdown)
-                </label>
-                <p className="text-xs text-gray-500 mt-1">
-                  Off by default: staff only see the default questionnaire. Turn on to show a form
-                  dropdown when multiple forms are allowed for this org.
-                </p>
-              </div>
-            </div>
+            <p className="col-span-2 text-xs text-gray-500">
+              Staff responses view always uses the default questionnaire ID above (form picker is
+              disabled).
+            </p>
           </div>
           <div className="flex gap-2">
             <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">
