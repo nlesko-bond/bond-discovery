@@ -40,6 +40,21 @@ function isDateQuestionType(questionType: string | null | undefined): boolean {
   return qt === 'date' || qt === 'datetime' || qt === 'birthdate' || qt === 'dob';
 }
 
+/** Bond stores calendar semantics in Questions.metaData / metadata (customType, dateType). */
+export function isDateQuestionFromMetadata(meta: unknown): boolean {
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return false;
+  const m = meta as Record<string, unknown>;
+  const customType = String(m.customType ?? m.CustomType ?? '').toLowerCase();
+  const dateType = String(m.dateType ?? m.DateType ?? '').toLowerCase();
+  if (customType === 'date') return true;
+  if (dateType === 'single' || dateType === 'range' || dateType === 'datetime') return true;
+  return false;
+}
+
+function treatAsDateField(questionType: string | null | undefined, questionMeta: unknown): boolean {
+  return isDateQuestionType(questionType) || isDateQuestionFromMetadata(questionMeta);
+}
+
 function parseTruthy(raw: unknown): boolean | null {
   if (raw === true) return true;
   if (raw === false) return false;
@@ -139,7 +154,11 @@ function looksLikeAddressShape(o: Record<string, unknown>): boolean {
 }
 
 /** Shared shape for JSON answers (string column or json/jsonb returned as object by node-pg). */
-function formattedFromObject(o: Record<string, unknown>, questionType: string | null | undefined): FormattedAnswer | null {
+function formattedFromObject(
+  o: Record<string, unknown>,
+  questionType: string | null | undefined,
+  questionMeta: unknown
+): FormattedAnswer | null {
   const qt = (questionType || '').toLowerCase();
 
   if (qt === 'address' || looksLikeAddressShape(o)) {
@@ -167,7 +186,7 @@ function formattedFromObject(o: Record<string, unknown>, questionType: string | 
 
   if (typeof pv === 'string') {
     const v = pv;
-    if (isDateQuestionType(questionType) && /^\d{4}-\d{2}-\d{2}/.test(v.trim())) {
+    if (treatAsDateField(questionType, questionMeta) && /^\d{4}-\d{2}-\d{2}/.test(v.trim())) {
       return { display: formatDateDisplay(v.trim()) };
     }
     if (/^https?:\/\//i.test(v)) {
@@ -176,7 +195,7 @@ function formattedFromObject(o: Record<string, unknown>, questionType: string | 
     if (v.startsWith('{') || v.startsWith('[')) {
       const inner = unwrapJsonTextToValue(v);
       if (inner !== v && typeof inner === 'object' && inner !== null && !Array.isArray(inner)) {
-        return formattedFromObject(inner as Record<string, unknown>, questionType);
+        return formattedFromObject(inner as Record<string, unknown>, questionType, questionMeta);
       }
     }
     return { display: v };
@@ -187,13 +206,14 @@ function formattedFromObject(o: Record<string, unknown>, questionType: string | 
 
 export function formatAnswerValue(
   raw: string | null | undefined | unknown,
-  questionType: string | null | undefined
+  questionType: string | null | undefined,
+  questionMeta?: unknown
 ): FormattedAnswer {
   if (raw == null || raw === '') return { display: '' };
 
   if (typeof raw === 'object' && raw !== null && !Array.isArray(raw)) {
     const o = raw as Record<string, unknown>;
-    const fromObj = formattedFromObject(o, questionType);
+    const fromObj = formattedFromObject(o, questionType, questionMeta);
     if (fromObj) return fromObj;
     try {
       return { display: JSON.stringify(raw) };
@@ -213,7 +233,7 @@ export function formatAnswerValue(
   if (looksJsonish) {
     const unwrapped = unwrapJsonTextToValue(trimmed);
     if (unwrapped !== trimmed) {
-      return formatAnswerValue(unwrapped, questionType);
+      return formatAnswerValue(unwrapped, questionType, questionMeta);
     }
   }
 
@@ -222,7 +242,7 @@ export function formatAnswerValue(
     if (t !== null) return booleanFormattedAnswer(t);
   }
 
-  if (isDateQuestionType(questionType) && /^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+  if (treatAsDateField(questionType, questionMeta) && /^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
     return { display: formatDateDisplay(trimmed) };
   }
 
@@ -231,7 +251,7 @@ export function formatAnswerValue(
     try {
       const parsed = JSON.parse(trimmed) as unknown;
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        const fromObj = formattedFromObject(parsed as Record<string, unknown>, questionType);
+        const fromObj = formattedFromObject(parsed as Record<string, unknown>, questionType, questionMeta);
         if (fromObj) return fromObj;
       }
     } catch {

@@ -254,6 +254,8 @@ export interface AnswerRowDb {
   /** json/jsonb from Postgres may be object/array; text column is string */
   answerValue: unknown;
   questionType: string | null;
+  /** Bond Questions.metaData / metadata (e.g. customType: date) */
+  questionMetaData: unknown;
 }
 
 export async function listAnswersForTitleIds(
@@ -268,7 +270,8 @@ export async function listAnswersForTitleIds(
         a."answerTitleId"::int AS "answerTitleId",
         a."questionId"::int AS "questionId",
         a."answerValue" AS "answerValue",
-        q."questionType" AS "questionType"
+        q."questionType" AS "questionType",
+        q."metaData" AS "questionMetaData"
       FROM ${sq}"Answers" a
       LEFT JOIN ${sq}"Questions" q ON q."id" = a."questionId"
       WHERE a."organizationId" = $1
@@ -279,8 +282,15 @@ export async function listAnswersForTitleIds(
       questionId: number;
       answerValue: unknown;
       questionType: string | null;
+      questionMetaData?: unknown;
     }>(sql, [organizationId, titleIds]);
-    return rows;
+    return rows.map((r) => ({
+      answerTitleId: r.answerTitleId,
+      questionId: r.questionId,
+      answerValue: r.answerValue,
+      questionType: r.questionType,
+      questionMetaData: r.questionMetaData ?? null,
+    }));
   });
 }
 

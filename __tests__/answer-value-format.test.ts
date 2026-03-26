@@ -89,4 +89,12 @@ describe('formatAnswerValue', () => {
     const outer = JSON.stringify(inner);
     expect(formatAnswerValue(outer, null).display).toBe('A, B');
   });
+
+  it('formats ISO instant when question metadata marks custom date field', () => {
+    const meta = { text: null, dateType: 'single', customType: 'date' };
+    const r = formatAnswerValue('2026-07-16T18:43:00.000Z', 'text', meta);
+    expect(r.display).toMatch(/2026/);
+    expect(r.display).not.toContain('T');
+    expect(r.display).not.toContain('18:43:00.000Z');
+  });
 });

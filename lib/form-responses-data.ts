@@ -55,7 +55,11 @@ export async function loadFormResponsesPage(
     const ansList = byTitle.get(t.id) ?? [];
     const answers: Record<number, { display: string; linkUrl?: string; checkmark?: boolean }> = {};
     for (const ar of ansList) {
-      answers[ar.questionId] = formatAnswerValue(ar.answerValue, ar.questionType);
+      answers[ar.questionId] = formatAnswerValue(
+        ar.answerValue,
+        ar.questionType,
+        ar.questionMetaData
+      );
     }
     return {
       answerTitleId: t.id,

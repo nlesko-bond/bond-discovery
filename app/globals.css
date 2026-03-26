@@ -133,16 +133,74 @@
     display: none !important;
   }
 
-  /* Hide non-essential elements */
-  header,
+  /* Wide staff tables: default to landscape */
+  @page {
+    margin: 10mm;
+    size: landscape;
+  }
+
+  .form-responses-print-root {
+    background: white !important;
+  }
+
+  .form-responses-print-scroll {
+    max-height: none !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .form-responses-print-table {
+    width: 100%;
+    font-size: 9pt;
+    border-collapse: collapse;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .form-responses-print-table thead th {
+    position: static !important;
+    background: #e2e8f0 !important;
+    border: 1px solid #94a3b8 !important;
+    padding: 6px 8px !important;
+    vertical-align: top !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+  }
+
+  .form-responses-print-table tbody td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 5px 8px !important;
+    vertical-align: top !important;
+    word-break: break-word !important;
+    color: #0f172a !important;
+  }
+
+  .form-responses-print-table tbody tr {
+    break-inside: avoid;
+  }
+
+  /* Sort controls: show as plain text in print */
+  .form-responses-print-table thead th button {
+    all: unset !important;
+    display: block !important;
+    font: inherit !important;
+    font-weight: 600 !important;
+    text-align: left !important;
+    cursor: default !important;
+    color: inherit !important;
+  }
+
+  .form-responses-print-table a {
+    color: inherit !important;
+    text-decoration: underline !important;
+  }
+
   .print\\:hidden,
-  [class*="print:hidden"],
-  button,
-  .sticky {
+  [class*="print:hidden"] {
     display: none !important;
   }
-  
-  /* Reset backgrounds */
+
   body {
     background: white !important;
     -webkit-print-color-adjust: exact;
@@ -153,13 +211,7 @@
   .print\\:block {
     display: block !important;
   }
-  
-  /* Remove shadows and borders */
-  * {
-    box-shadow: none !important;
-  }
-  
-  /* Keep colors in events */
+
   .bg-gradient-to-r {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;

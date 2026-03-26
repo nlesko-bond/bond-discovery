@@ -16,24 +16,6 @@ import type {
   QuestionnaireListItem,
 } from '@/types/form-pages';
 
-function GoogleSheetsMark({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="18"
-      height="18"
-      viewBox="0 0 48 48"
-      aria-hidden
-      focusable="false"
-    >
-      <path fill="#0F9D58" d="M6 6h18v18H6z" />
-      <path fill="#F4B400" d="M24 6h18v18H24z" />
-      <path fill="#DB4437" d="M6 24h18v18H6z" />
-      <path fill="#4285F4" d="M24 24h18v18H24z" />
-    </svg>
-  );
-}
-
 type SortColumn = 'submitted' | 'participant' | number;
 
 function participantSortKey(row: FormResponseRow): string {
@@ -429,9 +411,12 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     );
   }
 
+  /** Fully opaque tint (no alpha hex) so sticky headers hide scrolling rows */
+  const stickyHeaderBg = `color-mix(in srgb, ${b.primaryColor} 13%, rgb(241 245 249))`;
+
   return (
     <div
-      className="min-h-screen print:bg-white"
+      className="form-responses-print-root min-h-screen print:bg-white"
       style={{
         background: `linear-gradient(165deg, ${b.primaryColor}0d 0%, rgb(248 250 252) 22%, rgb(241 245 249) 55%, rgb(248 250 252) 100%)`,
       }}
@@ -457,17 +442,6 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
             >
               Download CSV
             </a>
-            <a
-              href={exportHref || '#'}
-              download={`form-responses-${slug}.csv`}
-              title="Identical CSV to Download. No Google sign-in: open the file in Sheets yourself (File → Import)."
-              className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-xl border border-slate-200/90 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50/90 transition-colors"
-              style={!exportHref ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
-            >
-              <GoogleSheetsMark className="shrink-0" />
-              <span className="hidden sm:inline">Sheets (CSV)</span>
-              <span className="sm:hidden">Sheets</span>
-            </a>
             <button
               type="button"
               onClick={() => window.print()}
@@ -476,10 +450,6 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
               Print
             </button>
           </div>
-          <p className="w-full basis-full text-[11px] text-slate-500 leading-snug border-t border-slate-100 pt-2 mt-1">
-            Exports use your staff session cookie to this app only. Google is not involved until you
-            manually import the downloaded file in Sheets.
-          </p>
         </div>
       </header>
 
@@ -544,10 +514,6 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                 placeholder="Filter loaded rows — names, email, answers…"
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-inner focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/80"
               />
-              <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
-                Runs in your browser on rows already loaded (and &quot;Load more&quot;). Not case-sensitive.
-                Does not query Bond or change which submissions are fetched.
-              </p>
             </div>
           </div>
         </div>
@@ -573,14 +539,28 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
       </main>
 
       <div className="max-w-[1600px] mx-auto px-4 pb-12">
-        <div className="rounded-xl border border-slate-200/90 bg-white shadow-md shadow-slate-200/40 overflow-x-auto max-h-[min(75vh,calc(100dvh-13rem))] overflow-y-auto print:max-h-none print:overflow-visible">
-          <table className="min-w-max w-full text-sm print:text-xs border-collapse">
+        <div className="form-responses-print-scroll rounded-xl border border-slate-200/90 bg-white shadow-md shadow-slate-200/40 overflow-x-auto max-h-[min(75vh,calc(100dvh-13rem))] overflow-y-auto print:max-h-none print:overflow-visible">
+          <div className="hidden print:block px-3 pt-3 pb-1 print:border-b print:border-slate-300">
+            <p className="text-sm font-bold text-slate-900">
+              {b.companyName} · {questionnaireTitle || publicConfig.name}
+            </p>
+            {from && to ? (
+              <p className="text-xs text-slate-600 mt-0.5">
+                Submissions {from} – {to}
+                {search.trim() ? ` · filtered (${displayRows.length} of ${accumulatedRows.length} loaded)` : ''}
+              </p>
+            ) : null}
+          </div>
+          <table className="form-responses-print-table min-w-max w-full text-sm print:text-xs border-collapse">
             <thead>
               <tr>
                 <th
                   scope="col"
-                  className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[9rem] min-w-[8rem] sticky top-0 z-10 print:static shadow-[inset_0_-1px_0_0_rgb(226_232_240)]"
-                  style={{ backgroundColor: `${b.primaryColor}18` }}
+                  className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[9rem] min-w-[8rem] sticky top-0 z-30 print:static"
+                  style={{
+                    backgroundColor: stickyHeaderBg,
+                    boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
+                  }}
                 >
                   <button
                     type="button"
@@ -592,8 +572,11 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                 </th>
                 <th
                   scope="col"
-                  className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle min-w-[9rem] max-w-[11rem] sticky top-0 z-10 print:static shadow-[inset_0_-1px_0_0_rgb(226_232_240)]"
-                  style={{ backgroundColor: `${b.primaryColor}18` }}
+                  className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle min-w-[9rem] max-w-[11rem] sticky top-0 z-30 print:static"
+                  style={{
+                    backgroundColor: stickyHeaderBg,
+                    boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
+                  }}
                 >
                   <button
                     type="button"
@@ -609,8 +592,11 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                   <th
                     key={c.id}
                     scope="col"
-                    className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle min-w-[8.5rem] max-w-[13rem] w-[11rem] sticky top-0 z-10 print:static shadow-[inset_0_-1px_0_0_rgb(226_232_240)]"
-                    style={{ backgroundColor: `${b.primaryColor}18` }}
+                    className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle min-w-[8.5rem] max-w-[13rem] w-[11rem] sticky top-0 z-30 print:static"
+                    style={{
+                      backgroundColor: stickyHeaderBg,
+                      boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
+                    }}
                   >
                     <button
                       type="button"
