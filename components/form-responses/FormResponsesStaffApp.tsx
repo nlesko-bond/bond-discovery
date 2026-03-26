@@ -20,6 +20,23 @@ import {
 
 const STAFF_STATUS_ORDER: StaffInquiryStatus[] = ['pending', 'in_progress', 'resolved'];
 
+/** Default: hide Done. All: show every row. Completed only: find mistaken Done marks. */
+type StatusViewFilter = 'active' | 'all' | 'completed_only';
+
+function parseStaffLockFromPayload(data: Record<string, unknown>): boolean {
+  const v = data.staff_lock_to_default_questionnaire;
+  return v === true || v === 'true';
+}
+
+const STATUS_SELECT_CLASSES: Record<StaffInquiryStatus, string> = {
+  pending:
+    'border-amber-400/90 bg-gradient-to-br from-amber-50 via-amber-50 to-orange-50/70 text-amber-950 shadow-sm ring-1 ring-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-400/80',
+  in_progress:
+    'border-sky-500/80 bg-gradient-to-br from-sky-50 via-indigo-50/80 to-violet-50/60 text-sky-950 shadow-sm ring-1 ring-sky-300/50 focus:outline-none focus:ring-2 focus:ring-sky-400/80',
+  resolved:
+    'border-emerald-500/80 bg-gradient-to-br from-emerald-50 via-teal-50/80 to-cyan-50/50 text-emerald-950 shadow-sm ring-1 ring-emerald-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400/80',
+};
+
 type SortColumn = 'status' | 'submitted' | 'participant' | number;
 
 /** Newest submission in the loaded set (for incremental refresh watermark). */
@@ -132,7 +149,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     column: 'submitted',
     dir: 'desc',
   });
-  const [showResolved, setShowResolved] = useState(false);
+  const [statusViewFilter, setStatusViewFilter] = useState<StatusViewFilter>('active');
   const [savingStatusId, setSavingStatusId] = useState<number | null>(null);
   const [statusSaveError, setStatusSaveError] = useState<string | null>(null);
 
@@ -174,13 +191,17 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     return copy;
   }, [accumulatedRows, sort]);
 
-  const statusFilteredRows = useMemo(
-    () =>
-      showResolved
-        ? sortedRows
-        : sortedRows.filter((r) => (r.staffStatus ?? 'pending') !== 'resolved'),
-    [sortedRows, showResolved]
-  );
+  const statusFilteredRows = useMemo(() => {
+    switch (statusViewFilter) {
+      case 'all':
+        return sortedRows;
+      case 'completed_only':
+        return sortedRows.filter((r) => (r.staffStatus ?? 'pending') === 'resolved');
+      case 'active':
+      default:
+        return sortedRows.filter((r) => (r.staffStatus ?? 'pending') !== 'resolved');
+    }
+  }, [sortedRows, statusViewFilter]);
 
   const displayRows = useMemo(
     () => statusFilteredRows.filter((r) => rowMatchesClientSearch(r, search)),
@@ -205,19 +226,20 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`${base}/config`);
+        const res = await fetch(`${base}/config`, { cache: 'no-store' });
         if (!res.ok) {
           if (!cancelled) setLoadError('This page was not found or is inactive.');
           return;
         }
-        const data = (await res.json()) as PublicConfig;
+        const raw = (await res.json()) as Record<string, unknown>;
         if (!cancelled) {
+          const staffLock = parseStaffLockFromPayload(raw);
           setPublicConfig({
-            ...data,
-            staff_lock_to_default_questionnaire: data.staff_lock_to_default_questionnaire ?? false,
+            ...(raw as unknown as PublicConfig),
+            staff_lock_to_default_questionnaire: staffLock,
           });
-          const cap = Math.min(Math.max(data.max_range_days_cap || 90, 1), 365);
-          const defaultDays = Math.min(Math.max(data.default_range_days || 60, 1), cap);
+          const cap = Math.min(Math.max(Number(raw.max_range_days_cap) || 90, 1), 365);
+          const defaultDays = Math.min(Math.max(Number(raw.default_range_days) || 60, 1), cap);
           const end = new Date();
           end.setHours(12, 0, 0, 0);
           const start = new Date(end.getTime() - defaultDays * 86400000);
@@ -237,6 +259,31 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
       cancelled = true;
     };
   }, [base]);
+
+  /** Re-fetch after login so staff_lock and other flags match the server (avoids stale pre-auth cache). */
+  useEffect(() => {
+    if (!authenticated) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${base}/config`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const raw = (await res.json()) as Record<string, unknown>;
+        if (!cancelled) {
+          const staffLock = parseStaffLockFromPayload(raw);
+          setPublicConfig({
+            ...(raw as unknown as PublicConfig),
+            staff_lock_to_default_questionnaire: staffLock,
+          });
+        }
+      } catch {
+        /* keep existing config */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authenticated, base]);
 
   useEffect(() => {
     let cancelled = false;
@@ -596,14 +643,19 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
             {!publicConfig.staff_lock_to_default_questionnaire ? (
-              <div className="w-full sm:w-auto sm:min-w-[220px]">
+              <div className="w-full sm:w-auto sm:min-w-[240px]">
                 <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
                   Form
                 </label>
                 <select
                   value={questionnaireId ?? ''}
                   onChange={(e) => setQuestionnaireId(Number(e.target.value))}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/80"
+                  className="w-full rounded-xl border-2 px-3 py-2.5 text-sm font-semibold text-slate-900 shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-1"
+                  style={{
+                    borderColor: b.primaryColor,
+                    background: `linear-gradient(145deg, ${b.primaryColor}14, ${b.secondaryColor}12, white)`,
+                    boxShadow: `inset 0 1px 0 rgb(255 255 255 / 0.6), 0 2px 8px ${b.primaryColor}22`,
+                  }}
                 >
                   {questionnaires.map((q) => (
                     <option key={q.id} value={q.id}>
@@ -613,11 +665,17 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                 </select>
               </div>
             ) : (
-              <div className="w-full sm:w-auto sm:min-w-[220px]">
+              <div className="w-full sm:w-auto sm:min-w-[240px]">
                 <p className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
                   Form
                 </p>
-                <p className="text-sm text-slate-800 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5">
+                <p
+                  className="text-sm font-semibold text-slate-900 rounded-xl border-2 px-3 py-2.5 shadow-sm"
+                  style={{
+                    borderColor: b.primaryColor,
+                    background: `linear-gradient(135deg, ${b.primaryColor}18, ${b.secondaryColor}14)`,
+                  }}
+                >
                   Default questionnaire (locked)
                 </p>
               </div>
@@ -662,17 +720,48 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-inner focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/80"
               />
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto pt-1">
-              <input
-                type="checkbox"
-                id="show_resolved"
-                checked={showResolved}
-                onChange={(e) => setShowResolved(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-slate-800"
-              />
-              <label htmlFor="show_resolved" className="text-sm text-slate-700">
-                Show completed (Done)
-              </label>
+            <div className="w-full sm:w-auto sm:max-w-[min(100%,22rem)]">
+              <p className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
+                Inquiry view
+              </p>
+              <div
+                className="inline-flex flex-wrap gap-0.5 rounded-2xl border border-slate-200/90 bg-slate-100/80 p-1 shadow-inner"
+                role="group"
+                aria-label="Filter by inquiry status"
+              >
+                {(
+                  [
+                    ['active', 'Active'],
+                    ['all', 'All'],
+                    ['completed_only', 'Completed only'],
+                  ] as const
+                ).map(([key, label]) => {
+                  const selected = statusViewFilter === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setStatusViewFilter(key)}
+                      className={`px-3 py-2 text-sm rounded-xl font-semibold transition-colors ${
+                        selected
+                          ? 'text-white shadow-md'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                      }`}
+                      style={
+                        selected
+                          ? { backgroundColor: b.primaryColor, boxShadow: `0 2px 8px ${b.primaryColor}55` }
+                          : undefined
+                      }
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-slate-500 mt-1.5 leading-snug">
+                Active hides Done. <span className="font-medium text-slate-600">Completed only</span> finds rows
+                marked Done so you can fix them.
+              </p>
             </div>
           </div>
         </div>
@@ -689,9 +778,11 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
             Showing <span className="font-semibold tabular-nums">{displayRows.length}</span> of{' '}
             <span className="font-semibold tabular-nums">{accumulatedRows.length}</span> loaded rows
             {search.trim() ? ' (search)' : ''}
-            {!showResolved && accumulatedRows.some((r) => (r.staffStatus ?? 'pending') === 'resolved')
-              ? ' · completed hidden'
+            {statusViewFilter === 'active' &&
+            accumulatedRows.some((r) => (r.staffStatus ?? 'pending') === 'resolved')
+              ? ' · Done hidden'
               : ''}
+            {statusViewFilter === 'completed_only' ? ' · completed only' : ''}
             .
           </p>
         ) : null}
@@ -720,9 +811,11 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                 {displayRows.length < accumulatedRows.length
                   ? ` · showing ${displayRows.length} of ${accumulatedRows.length} loaded`
                   : ''}
-                {!showResolved && accumulatedRows.some((r) => (r.staffStatus ?? 'pending') === 'resolved')
-                  ? ' · completed hidden'
+                {statusViewFilter === 'active' &&
+                accumulatedRows.some((r) => (r.staffStatus ?? 'pending') === 'resolved')
+                  ? ' · Done hidden'
                   : ''}
+                {statusViewFilter === 'completed_only' ? ' · completed only' : ''}
               </p>
             ) : null}
           </div>
@@ -819,25 +912,28 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
             ) : displayRows.length === 0 ? (
               <tr>
                 <td colSpan={3 + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
-                  No loaded rows match your filters. Clear search, enable &quot;Show completed&quot;, or load
-                  more responses.
+                  No loaded rows match your filters. Clear search, switch Inquiry view (All / Completed
+                  only), or load more responses.
                 </td>
               </tr>
             ) : (
-              displayRows.map((row) => (
+              displayRows.map((row) => {
+                const rowStatus = (row.staffStatus ?? 'pending') as StaffInquiryStatus;
+                return (
                 <tr key={row.answerTitleId} className="border-t border-slate-100 hover:bg-slate-50/90">
-                  <td className="p-2 align-top text-slate-800 min-w-[8.5rem] max-w-[10rem]">
+                  <td className="p-2 align-top text-slate-800 min-w-[8.5rem] max-w-[11rem]">
                     <label className="sr-only" htmlFor={`status-${row.answerTitleId}`}>
                       Status
                     </label>
                     <select
                       id={`status-${row.answerTitleId}`}
-                      value={row.staffStatus ?? 'pending'}
+                      value={rowStatus}
                       disabled={savingStatusId === row.answerTitleId}
                       onChange={(e) =>
                         void setRowStatus(row.answerTitleId, e.target.value as StaffInquiryStatus)
                       }
-                      className="w-full max-w-[10rem] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs sm:text-sm text-slate-900 disabled:opacity-60"
+                      className={`w-full max-w-[11rem] rounded-xl px-2.5 py-2 text-xs sm:text-sm font-semibold disabled:opacity-60 ${STATUS_SELECT_CLASSES[rowStatus]}`}
+                      style={{ accentColor: b.accentColor }}
                     >
                       {STAFF_STATUS_ORDER.map((s) => (
                         <option key={s} value={s}>
@@ -888,7 +984,8 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                     );
                   })}
                 </tr>
-              ))
+              );
+              })
             )}
           </tbody>
         </table>
