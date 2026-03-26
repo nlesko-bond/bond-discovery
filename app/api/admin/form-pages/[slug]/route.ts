@@ -67,6 +67,9 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     if (body.titles_per_page !== undefined) {
       updates.titles_per_page = Number(body.titles_per_page);
     }
+    if (body.staff_lock_to_default_questionnaire !== undefined) {
+      updates.staff_lock_to_default_questionnaire = Boolean(body.staff_lock_to_default_questionnaire);
+    }
     if (typeof body.staff_password === 'string' && body.staff_password.length > 0) {
       updates.staff_password = body.staff_password;
     }

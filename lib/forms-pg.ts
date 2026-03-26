@@ -248,6 +248,57 @@ export async function listAnswerTitlesPage(
   });
 }
 
+export interface AnswerTitleNewerThanParams {
+  organizationId: number;
+  questionnaireId: number;
+  from: Date;
+  to: Date;
+  /** Return titles strictly newer than this (createdAt, id) pair */
+  newerThan: { createdAt: string; id: number };
+  limit: number;
+}
+
+/** Submissions newer than `newerThan` within the date window — for incremental refresh without re-running pagination. */
+export async function listAnswerTitlesNewerThan(
+  params: AnswerTitleNewerThanParams
+): Promise<{ titles: AnswerTitleRow[] }> {
+  return withClient(async (c) => {
+    const sq = schemaQ();
+    const values: unknown[] = [
+      params.organizationId,
+      params.questionnaireId,
+      params.from.toISOString(),
+      params.to.toISOString(),
+      params.newerThan.createdAt,
+      params.newerThan.id,
+      params.limit,
+    ];
+    const sql = `
+      SELECT at."id"::int AS id, at."createdAt" AS "createdAt", at."userId"::int AS "userId"
+      FROM ${sq}"AnswerTitles" at
+      WHERE at."organizationId" = $1
+        AND at."questionnaireId"::int = $2
+        AND at."createdAt" >= $3::timestamptz
+        AND at."createdAt" <= $4::timestamptz
+        AND (at."createdAt", at."id") > ($5::timestamptz, $6::int)
+      ORDER BY at."createdAt" DESC, at."id" DESC
+      LIMIT $7
+    `;
+    const { rows } = await c.query<{
+      id: number;
+      createdAt: Date;
+      userId: number | null;
+    }>(sql, values);
+    return {
+      titles: rows.map((r) => ({
+        id: r.id,
+        createdAt: r.createdAt,
+        userId: r.userId,
+      })),
+    };
+  });
+}
+
 export interface AnswerRowDb {
   answerTitleId: number;
   questionId: number;

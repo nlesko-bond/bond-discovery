@@ -19,6 +19,7 @@ export async function GET(_request: Request, context: Ctx) {
     name: config.name,
     branding: config.branding,
     default_questionnaire_id: config.default_questionnaire_id,
+    staff_lock_to_default_questionnaire: config.staff_lock_to_default_questionnaire ?? false,
     default_range_days: config.default_range_days,
     max_range_days_cap: config.max_range_days_cap,
     requires_password: !!config.staff_password_hash,

@@ -1,43 +1,29 @@
 import { formatAnswerValue } from '@/lib/answer-value-format';
 import { filterColumnsWithAnswersInRows } from '@/lib/form-question-visibility';
+import type { AnswerTitleRow } from '@/lib/forms-pg';
 import {
   getQuestionnaireTitle,
+  listAnswerTitlesNewerThan,
   listAnswerTitlesPage,
   listAnswersForTitleIds,
   listQuestionsForQuestionnaire,
   listUsersByIds,
 } from '@/lib/forms-pg';
-import type {
-  FormPageConfig,
-  FormResponseRow,
-  FormResponsesPage,
-  QuestionColumnMeta,
+import { attachStaffStatusesToRows } from '@/lib/form-response-statuses';
+import {
+  STAFF_INQUIRY_STATUS_LABELS,
+  type FormPageConfig,
+  type FormResponseRow,
+  type FormResponsesPage,
+  type QuestionColumnMeta,
+  type StaffInquiryStatus,
 } from '@/types/form-pages';
 
-export async function loadFormResponsesPage(
+async function buildRowsFromTitles(
   config: FormPageConfig,
-  opts: {
-    questionnaireId: number;
-    from: Date;
-    to: Date;
-    cursor: { createdAt: string; id: number } | null;
-  }
-): Promise<FormResponsesPage> {
-  const limit = Math.min(Math.max(config.titles_per_page || 25, 5), 100);
-
-  const [questionnaireTitle, columns, { titles, nextCursor }] = await Promise.all([
-    getQuestionnaireTitle(config.organization_id, opts.questionnaireId),
-    listQuestionsForQuestionnaire(opts.questionnaireId),
-    listAnswerTitlesPage({
-      organizationId: config.organization_id,
-      questionnaireId: opts.questionnaireId,
-      from: opts.from,
-      to: opts.to,
-      limit,
-      cursor: opts.cursor,
-    }),
-  ]);
-
+  titles: AnswerTitleRow[]
+): Promise<FormResponseRow[]> {
+  if (titles.length === 0) return [];
   const titleIds = titles.map((t) => t.id);
   const flatAnswers = await listAnswersForTitleIds(config.organization_id, titleIds);
   const userIds = titles.map((t) => t.userId).filter((x): x is number => x != null);
@@ -50,7 +36,7 @@ export async function loadFormResponsesPage(
     byTitle.set(a.answerTitleId, list);
   }
 
-  const rows = titles.map((t) => {
+  return titles.map((t) => {
     const u = t.userId != null ? users.get(t.userId) : null;
     const ansList = byTitle.get(t.id) ?? [];
     const answers: Record<number, { display: string; linkUrl?: string; checkmark?: boolean }> = {};
@@ -76,12 +62,61 @@ export async function loadFormResponsesPage(
       answers,
     };
   });
+}
+
+export async function loadFormResponsesPage(
+  config: FormPageConfig,
+  opts: {
+    questionnaireId: number;
+    from: Date;
+    to: Date;
+    cursor: { createdAt: string; id: number } | null;
+    /** When set, returns only submissions newer than this watermark (incremental refresh) */
+    newerThan?: { createdAt: string; id: number } | null;
+  }
+): Promise<FormResponsesPage> {
+  const limit = Math.min(Math.max(config.titles_per_page || 25, 5), 100);
+  const orgId = config.organization_id;
+
+  const [questionnaireTitle, columns, titlePack] = await Promise.all([
+    getQuestionnaireTitle(orgId, opts.questionnaireId),
+    listQuestionsForQuestionnaire(opts.questionnaireId),
+    opts.newerThan
+      ? listAnswerTitlesNewerThan({
+          organizationId: orgId,
+          questionnaireId: opts.questionnaireId,
+          from: opts.from,
+          to: opts.to,
+          newerThan: opts.newerThan,
+          limit,
+        }).then((r) => ({
+          titles: r.titles,
+          nextCursor: null as { createdAt: string; id: number } | null,
+          incremental: true,
+        }))
+      : listAnswerTitlesPage({
+          organizationId: orgId,
+          questionnaireId: opts.questionnaireId,
+          from: opts.from,
+          to: opts.to,
+          limit,
+          cursor: opts.cursor,
+        }).then((r) => ({
+          titles: r.titles,
+          nextCursor: r.nextCursor,
+          incremental: false,
+        })),
+  ]);
+
+  const built = await buildRowsFromTitles(config, titlePack.titles);
+  const rows = await attachStaffStatusesToRows(config.id, built);
 
   return {
     questionnaireTitle,
     columns,
     rows,
-    nextCursor,
+    nextCursor: titlePack.nextCursor,
+    incremental: titlePack.incremental,
   };
 }
 
@@ -118,12 +153,18 @@ function csvEscape(value: string): string {
   return value;
 }
 
+function csvStatusLabel(r: FormResponseRow): string {
+  const s = (r.staffStatus ?? 'pending') as StaffInquiryStatus;
+  return STAFF_INQUIRY_STATUS_LABELS[s] ?? s;
+}
+
 export function formResponsesToCsv(
   columns: QuestionColumnMeta[],
   rows: FormResponseRow[]
 ): string {
   const headers = [
     'Submitted',
+    'Status',
     'UserId',
     'FirstName',
     'LastName',
@@ -135,6 +176,7 @@ export function formResponsesToCsv(
   for (const r of rows) {
     const base = [
       r.createdAt,
+      csvStatusLabel(r),
       r.user ? String(r.user.id) : '',
       r.user?.firstName ?? '',
       r.user?.lastName ?? '',

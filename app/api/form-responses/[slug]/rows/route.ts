@@ -46,7 +46,17 @@ export async function GET(request: NextRequest, context: Ctx) {
     );
   }
 
-  const cursor = parseTitleCursor(request.nextUrl.searchParams);
+  const sinceCreatedAt = request.nextUrl.searchParams.get('sinceCreatedAt');
+  const sinceIdRaw = request.nextUrl.searchParams.get('sinceId');
+  const sinceId = sinceIdRaw != null ? parseInt(sinceIdRaw, 10) : NaN;
+  const newerThan =
+    sinceCreatedAt &&
+    sinceCreatedAt.length > 0 &&
+    Number.isFinite(sinceId)
+      ? { createdAt: sinceCreatedAt, id: sinceId }
+      : null;
+
+  const cursor = newerThan ? null : parseTitleCursor(request.nextUrl.searchParams);
 
   try {
     const data = await loadFormResponsesPage(config, {
@@ -54,6 +64,7 @@ export async function GET(request: NextRequest, context: Ctx) {
       from,
       to,
       cursor,
+      newerThan,
     });
     return NextResponse.json({ data });
   } catch (e) {

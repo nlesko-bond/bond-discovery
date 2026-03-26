@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   clampYmdRangeToMaxSpan,
   maxToYmdForFrom,
@@ -9,14 +9,40 @@ import {
   ymdFromLocalNoon,
 } from '@/lib/form-responses-dates';
 import { filterColumnsWithAnswersInRows } from '@/lib/form-question-visibility';
-import type {
-  FormResponsesPage,
-  FormResponseRow,
-  QuestionColumnMeta,
-  QuestionnaireListItem,
+import {
+  STAFF_INQUIRY_STATUS_LABELS,
+  type FormResponsesPage,
+  type FormResponseRow,
+  type QuestionColumnMeta,
+  type QuestionnaireListItem,
+  type StaffInquiryStatus,
 } from '@/types/form-pages';
 
-type SortColumn = 'submitted' | 'participant' | number;
+const STAFF_STATUS_ORDER: StaffInquiryStatus[] = ['pending', 'in_progress', 'resolved'];
+
+type SortColumn = 'status' | 'submitted' | 'participant' | number;
+
+/** Newest submission in the loaded set (for incremental refresh watermark). */
+function computeNewestWatermark(rows: FormResponseRow[]): { createdAt: string; id: number } | null {
+  if (rows.length === 0) return null;
+  let best = rows[0];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    const ta = new Date(r.createdAt).getTime();
+    const tb = new Date(best.createdAt).getTime();
+    if (ta > tb || (ta === tb && r.answerTitleId > best.answerTitleId)) {
+      best = r;
+    }
+  }
+  return { createdAt: best.createdAt, id: best.answerTitleId };
+}
+
+function mergeNewRowsAtTop(prev: FormResponseRow[], incoming: FormResponseRow[]): FormResponseRow[] {
+  if (incoming.length === 0) return prev;
+  const seen = new Set(prev.map((r) => r.answerTitleId));
+  const fresh = incoming.filter((r) => !seen.has(r.answerTitleId));
+  return [...fresh, ...prev];
+}
 
 function participantSortKey(row: FormResponseRow): string {
   const u = row.user;
@@ -34,6 +60,12 @@ function cellSortKey(row: FormResponseRow, qid: number): string {
   return (cell?.display || '').toLowerCase();
 }
 
+function statusSortKey(row: FormResponseRow): string {
+  const s = row.staffStatus ?? 'pending';
+  const i = STAFF_STATUS_ORDER.indexOf(s);
+  return i >= 0 ? String(i).padStart(2, '0') : '99';
+}
+
 /** Client-only filter — never sent to the API or database. */
 function rowMatchesClientSearch(row: FormResponseRow, query: string): boolean {
   const n = query.trim().toLowerCase();
@@ -45,6 +77,9 @@ function rowMatchesClientSearch(row: FormResponseRow, query: string): boolean {
     .toLowerCase();
   if (participant.includes(n)) return true;
   if (new Date(row.createdAt).toLocaleString().toLowerCase().includes(n)) return true;
+  const st = (row.staffStatus ?? 'pending') as StaffInquiryStatus;
+  if (STAFF_INQUIRY_STATUS_LABELS[st].toLowerCase().includes(n)) return true;
+  if (st.replace(/_/g, ' ').includes(n)) return true;
   for (const a of Object.values(row.answers)) {
     const hay = [
       a.checkmark ? 'yes' : '',
@@ -72,6 +107,7 @@ type PublicConfig = {
   default_range_days: number;
   max_range_days_cap: number;
   requires_password: boolean;
+  staff_lock_to_default_questionnaire: boolean;
 };
 
 export function FormResponsesStaffApp({ slug }: { slug: string }) {
@@ -96,6 +132,13 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     column: 'submitted',
     dir: 'desc',
   });
+  const [showResolved, setShowResolved] = useState(false);
+  const [savingStatusId, setSavingStatusId] = useState<number | null>(null);
+  const [statusSaveError, setStatusSaveError] = useState<string | null>(null);
+
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const accumulatedRowsRef = useRef<FormResponseRow[]>([]);
+  accumulatedRowsRef.current = accumulatedRows;
 
   const base = `/api/form-responses/${encodeURIComponent(slug)}`;
 
@@ -115,6 +158,9 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     const { column: sortColumn, dir: sortDir } = sort;
     const mult = sortDir === 'asc' ? 1 : -1;
     copy.sort((a, b) => {
+      if (sortColumn === 'status') {
+        return statusSortKey(a).localeCompare(statusSortKey(b)) * mult;
+      }
       if (sortColumn === 'submitted') {
         const ta = new Date(a.createdAt).getTime();
         const tb = new Date(b.createdAt).getTime();
@@ -128,9 +174,17 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     return copy;
   }, [accumulatedRows, sort]);
 
+  const statusFilteredRows = useMemo(
+    () =>
+      showResolved
+        ? sortedRows
+        : sortedRows.filter((r) => (r.staffStatus ?? 'pending') !== 'resolved'),
+    [sortedRows, showResolved]
+  );
+
   const displayRows = useMemo(
-    () => sortedRows.filter((r) => rowMatchesClientSearch(r, search)),
-    [sortedRows, search]
+    () => statusFilteredRows.filter((r) => rowMatchesClientSearch(r, search)),
+    [statusFilteredRows, search]
   );
 
   const headerSort = useCallback((col: SortColumn) => {
@@ -158,7 +212,10 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
         }
         const data = (await res.json()) as PublicConfig;
         if (!cancelled) {
-          setPublicConfig(data);
+          setPublicConfig({
+            ...data,
+            staff_lock_to_default_questionnaire: data.staff_lock_to_default_questionnaire ?? false,
+          });
           const cap = Math.min(Math.max(data.max_range_days_cap || 90, 1), 365);
           const defaultDays = Math.min(Math.max(data.default_range_days || 60, 1), cap);
           const end = new Date();
@@ -195,6 +252,11 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
 
   useEffect(() => {
     if (!authenticated || !publicConfig) return;
+    if (publicConfig.staff_lock_to_default_questionnaire) {
+      setQuestionnaireId(publicConfig.default_questionnaire_id);
+      setQuestionnaires([]);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -263,6 +325,45 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     },
     [base, questionnaireId, from, to, publicConfig]
   );
+
+  const refreshNewSubmissions = useCallback(async () => {
+    if (questionnaireId == null || !publicConfig || !from || !to) return;
+    const prev = accumulatedRowsRef.current;
+    if (prev.length === 0) {
+      fetchRows(false, null);
+      return;
+    }
+    const wm = computeNewestWatermark(prev);
+    if (!wm) return;
+    const el = tableScrollRef.current;
+    const beforeH = el?.scrollHeight ?? 0;
+    const beforeTop = el?.scrollTop ?? 0;
+    setRowsLoading(true);
+    try {
+      const sp = new URLSearchParams();
+      sp.set('questionnaireId', String(questionnaireId));
+      sp.set('from', from);
+      sp.set('to', to);
+      sp.set('sinceCreatedAt', wm.createdAt);
+      sp.set('sinceId', String(wm.id));
+      const res = await fetch(`${base}/rows?${sp}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to check for new responses');
+      const json = await res.json();
+      const data = json.data as FormResponsesPage;
+      if (data.incremental) {
+        setAccumulatedRows((p) => mergeNewRowsAtTop(p, data.rows));
+        setQuestionnaireTitle(data.questionnaireTitle);
+        requestAnimationFrame(() => {
+          const node = tableScrollRef.current;
+          if (node) {
+            node.scrollTop = beforeTop + (node.scrollHeight - beforeH);
+          }
+        });
+      }
+    } finally {
+      setRowsLoading(false);
+    }
+  }, [base, questionnaireId, from, to, publicConfig, fetchRows]);
 
   useEffect(() => {
     if (!authenticated || questionnaireId == null || !from || !to) return;
@@ -335,6 +436,32 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
       setTo(next.toYmd);
     },
     [from, capDays]
+  );
+
+  const setRowStatus = useCallback(
+    async (answerTitleId: number, status: StaffInquiryStatus) => {
+      setStatusSaveError(null);
+      setSavingStatusId(answerTitleId);
+      try {
+        const res = await fetch(`${base}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ answerTitleId, status }),
+        });
+        if (!res.ok) {
+          const err = (await res.json().catch(() => ({}))) as { error?: string };
+          setStatusSaveError(err.error || 'Could not save status');
+          return;
+        }
+        setAccumulatedRows((prev) =>
+          prev.map((r) => (r.answerTitleId === answerTitleId ? { ...r, staffStatus: status } : r))
+        );
+      } finally {
+        setSavingStatusId(null);
+      }
+    },
+    [base]
   );
 
   if (loadError && !publicConfig) {
@@ -449,6 +576,15 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
             >
               Print
             </button>
+            <button
+              type="button"
+              onClick={() => void refreshNewSubmissions()}
+              disabled={rowsLoading || questionnaireId == null}
+              title="Load only submissions newer than your newest loaded row. Keeps filters, search, and &quot;Load more&quot; position."
+              className="text-sm px-3 py-2 rounded-xl border border-slate-200/90 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50/90 transition-colors disabled:opacity-50"
+            >
+              Refresh new
+            </button>
           </div>
         </div>
       </header>
@@ -459,22 +595,33 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
           style={{ borderLeftWidth: 4, borderLeftColor: b.primaryColor }}
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
-            <div className="w-full sm:w-auto sm:min-w-[220px]">
-              <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
-                Form
-              </label>
-              <select
-                value={questionnaireId ?? ''}
-                onChange={(e) => setQuestionnaireId(Number(e.target.value))}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/80"
-              >
-                {questionnaires.map((q) => (
-                  <option key={q.id} value={q.id}>
-                    {q.title || `Form ${q.id}`}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {!publicConfig.staff_lock_to_default_questionnaire ? (
+              <div className="w-full sm:w-auto sm:min-w-[220px]">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
+                  Form
+                </label>
+                <select
+                  value={questionnaireId ?? ''}
+                  onChange={(e) => setQuestionnaireId(Number(e.target.value))}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/80"
+                >
+                  {questionnaires.map((q) => (
+                    <option key={q.id} value={q.id}>
+                      {q.title || `Form ${q.id}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="w-full sm:w-auto sm:min-w-[220px]">
+                <p className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
+                  Form
+                </p>
+                <p className="text-sm text-slate-800 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5">
+                  Default questionnaire (locked)
+                </p>
+              </div>
+            )}
             <div className="flex flex-wrap gap-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
@@ -515,22 +662,42 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-inner focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/80"
               />
             </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto pt-1">
+              <input
+                type="checkbox"
+                id="show_resolved"
+                checked={showResolved}
+                onChange={(e) => setShowResolved(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-slate-800"
+              />
+              <label htmlFor="show_resolved" className="text-sm text-slate-700">
+                Show completed (Done)
+              </label>
+            </div>
           </div>
         </div>
+        {statusSaveError ? (
+          <p className="text-sm text-red-600" role="alert">
+            {statusSaveError}
+          </p>
+        ) : null}
         {questionnaireTitle ? (
           <p className="text-sm text-slate-800 font-semibold">Form: {questionnaireTitle}</p>
         ) : null}
-        {search.trim() && accumulatedRows.length > 0 ? (
+        {accumulatedRows.length > 0 && displayRows.length < accumulatedRows.length ? (
           <p className="text-xs text-slate-600">
             Showing <span className="font-semibold tabular-nums">{displayRows.length}</span> of{' '}
-            <span className="font-semibold tabular-nums">{accumulatedRows.length}</span> loaded rows.
+            <span className="font-semibold tabular-nums">{accumulatedRows.length}</span> loaded rows
+            {search.trim() ? ' (search)' : ''}
+            {!showResolved && accumulatedRows.some((r) => (r.staffStatus ?? 'pending') === 'resolved')
+              ? ' · completed hidden'
+              : ''}
+            .
           </p>
         ) : null}
-        <p className="text-xs text-slate-500 leading-relaxed">
-          Date range is limited to {capDays} days (admin cap). The server enforces this on every
-          request — nothing is cached long-term; each load queries the Bond replica.
-        </p>
-        {authenticated && questionnaires.length === 0 ? (
+        {authenticated &&
+        questionnaires.length === 0 &&
+        !publicConfig.staff_lock_to_default_questionnaire ? (
           <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
             No questionnaires found for this organization in the database. Check org ID and replica
             connectivity.
@@ -539,7 +706,10 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
       </main>
 
       <div className="max-w-[1600px] mx-auto px-4 pb-12">
-        <div className="form-responses-print-scroll rounded-xl border border-slate-200/90 bg-white shadow-md shadow-slate-200/40 overflow-x-auto max-h-[min(75vh,calc(100dvh-13rem))] overflow-y-auto print:max-h-none print:overflow-visible">
+        <div
+          ref={tableScrollRef}
+          className="form-responses-print-scroll rounded-xl border border-slate-200/90 bg-white shadow-md shadow-slate-200/40 overflow-x-auto max-h-[min(75vh,calc(100dvh-13rem))] overflow-y-auto print:max-h-none print:overflow-visible"
+        >
           <div className="hidden print:block px-3 pt-3 pb-1 print:border-b print:border-slate-300">
             <p className="text-sm font-bold text-slate-900">
               {b.companyName} · {questionnaireTitle || publicConfig.name}
@@ -547,13 +717,34 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
             {from && to ? (
               <p className="text-xs text-slate-600 mt-0.5">
                 Submissions {from} – {to}
-                {search.trim() ? ` · filtered (${displayRows.length} of ${accumulatedRows.length} loaded)` : ''}
+                {displayRows.length < accumulatedRows.length
+                  ? ` · showing ${displayRows.length} of ${accumulatedRows.length} loaded`
+                  : ''}
+                {!showResolved && accumulatedRows.some((r) => (r.staffStatus ?? 'pending') === 'resolved')
+                  ? ' · completed hidden'
+                  : ''}
               </p>
             ) : null}
           </div>
           <table className="form-responses-print-table min-w-max w-full text-sm print:text-xs border-collapse">
             <thead>
               <tr>
+                <th
+                  scope="col"
+                  className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[9.5rem] min-w-[8.5rem] sticky top-0 z-30 print:static"
+                  style={{
+                    backgroundColor: stickyHeaderBg,
+                    boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => headerSort('status')}
+                    className="text-left w-full min-h-[2.75rem] flex items-center font-semibold text-slate-900 hover:opacity-80 leading-snug"
+                  >
+                    Status{sortHint('status')}
+                  </button>
+                </th>
                 <th
                   scope="col"
                   className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[9rem] min-w-[8rem] sticky top-0 z-30 print:static"
@@ -615,25 +806,46 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
           <tbody>
             {rowsLoading && accumulatedRows.length === 0 ? (
               <tr>
-                <td colSpan={2 + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
+                <td colSpan={3 + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
                   Loading…
                 </td>
               </tr>
             ) : accumulatedRows.length === 0 ? (
               <tr>
-                <td colSpan={2 + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
+                <td colSpan={3 + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
                   No responses in this range.
                 </td>
               </tr>
             ) : displayRows.length === 0 ? (
               <tr>
-                <td colSpan={2 + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
-                  No loaded rows match this search. Clear search or load more responses.
+                <td colSpan={3 + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
+                  No loaded rows match your filters. Clear search, enable &quot;Show completed&quot;, or load
+                  more responses.
                 </td>
               </tr>
             ) : (
               displayRows.map((row) => (
                 <tr key={row.answerTitleId} className="border-t border-slate-100 hover:bg-slate-50/90">
+                  <td className="p-2 align-top text-slate-800 min-w-[8.5rem] max-w-[10rem]">
+                    <label className="sr-only" htmlFor={`status-${row.answerTitleId}`}>
+                      Status
+                    </label>
+                    <select
+                      id={`status-${row.answerTitleId}`}
+                      value={row.staffStatus ?? 'pending'}
+                      disabled={savingStatusId === row.answerTitleId}
+                      onChange={(e) =>
+                        void setRowStatus(row.answerTitleId, e.target.value as StaffInquiryStatus)
+                      }
+                      className="w-full max-w-[10rem] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs sm:text-sm text-slate-900 disabled:opacity-60"
+                    >
+                      {STAFF_STATUS_ORDER.map((s) => (
+                        <option key={s} value={s}>
+                          {STAFF_INQUIRY_STATUS_LABELS[s]}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
                   <td className="p-3 align-top text-slate-600 whitespace-nowrap text-xs sm:text-sm">
                     {new Date(row.createdAt).toLocaleString()}
                   </td>

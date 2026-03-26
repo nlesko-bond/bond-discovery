@@ -51,6 +51,7 @@ export async function createFormPageConfig(input: {
   organization_id: number;
   default_questionnaire_id: number;
   allowed_questionnaire_ids?: number[] | null;
+  staff_lock_to_default_questionnaire?: boolean;
   branding?: Partial<FormPageBranding>;
   staff_password?: string;
   default_range_days?: number;
@@ -75,6 +76,7 @@ export async function createFormPageConfig(input: {
       organization_id: input.organization_id,
       default_questionnaire_id: input.default_questionnaire_id,
       allowed_questionnaire_ids: input.allowed_questionnaire_ids ?? null,
+      staff_lock_to_default_questionnaire: input.staff_lock_to_default_questionnaire ?? false,
       branding: { ...DEFAULT_BRANDING, ...input.branding },
       staff_password_hash,
       staff_password_updated_at,
@@ -113,6 +115,9 @@ export async function updateFormPageConfig(
   if (updates.default_range_days !== undefined) updateData.default_range_days = updates.default_range_days;
   if (updates.max_range_days_cap !== undefined) updateData.max_range_days_cap = updates.max_range_days_cap;
   if (updates.titles_per_page !== undefined) updateData.titles_per_page = updates.titles_per_page;
+  if (updates.staff_lock_to_default_questionnaire !== undefined) {
+    updateData.staff_lock_to_default_questionnaire = updates.staff_lock_to_default_questionnaire;
+  }
 
   if (updates.staff_password !== undefined) {
     if (updates.staff_password.length > 0) {

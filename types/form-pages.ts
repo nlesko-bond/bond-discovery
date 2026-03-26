@@ -18,6 +18,8 @@ export interface FormPageConfig {
   organization_id: number;
   default_questionnaire_id: number;
   allowed_questionnaire_ids: number[] | null;
+  /** When true, staff UI hides the form dropdown and always uses default_questionnaire_id */
+  staff_lock_to_default_questionnaire: boolean;
   branding: FormPageBranding;
   staff_password_hash: string | null;
   staff_password_updated_at: string | null;
@@ -55,12 +57,23 @@ export interface FormResponseUser {
   phone: string | null;
 }
 
+/** Persisted per (form page, Bond answer title id) in Discovery Supabase */
+export type StaffInquiryStatus = 'pending' | 'in_progress' | 'resolved';
+
+export const STAFF_INQUIRY_STATUS_LABELS: Record<StaffInquiryStatus, string> = {
+  pending: 'New',
+  in_progress: 'In progress',
+  resolved: 'Done',
+};
+
 export interface FormResponseRow {
   answerTitleId: number;
   createdAt: string;
   user: FormResponseUser | null;
   /** questionId -> display string */
   answers: Record<number, { display: string; linkUrl?: string; checkmark?: boolean }>;
+  /** Staff workflow status; omitted or pending = not yet set in DB */
+  staffStatus?: StaffInquiryStatus;
 }
 
 export interface FormResponsesPage {
@@ -68,4 +81,6 @@ export interface FormResponsesPage {
   columns: QuestionColumnMeta[];
   rows: FormResponseRow[];
   nextCursor: { createdAt: string; id: number } | null;
+  /** When true, rows are only new submissions since since*; client must merge and keep the existing load-more cursor */
+  incremental?: boolean;
 }
