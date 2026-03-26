@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { 
+import {
   LayoutDashboard,
   Users,
   FileText,
@@ -13,7 +13,8 @@ import {
   BarChart3,
   CreditCard,
   ClipboardList,
-  ListChecks
+  ListChecks,
+  type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AdminProviders } from './AdminProviders';
@@ -150,7 +151,7 @@ function NavLink({
   pathname: string;
   href: string;
   activePrefix?: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   children: React.ReactNode;
 }) {
   const active = isNavLinkActive(pathname, href, activePrefix);
