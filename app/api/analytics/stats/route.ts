@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getSupabaseServiceRoleKey } from '@/lib/supabase';
+import { getSupabaseServiceRoleKey, getSupabaseUrlForServer } from '@/lib/supabase';
 
 // Force dynamic rendering - this route uses request.url
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,7 @@ function getSupabase() {
   if (!key) {
     throw new Error('Missing SUPABASE_SERVICE_KEY or SUPABASE_SERVICE_ROLE_KEY');
   }
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, key);
+  return createClient(getSupabaseUrlForServer(), key);
 }
 
 export async function GET(request: NextRequest) {
