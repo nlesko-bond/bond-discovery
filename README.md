@@ -301,7 +301,7 @@ Proprietary - Bond Sports 2025
 
 - **Public checklist:** `/onboard/[slug]` — orgs use the slug from Supabase `orgs.slug`.
 - **Staff admin:** `/admin/onboarding/*` — requires NextAuth (Google) and a row in `staff` with the same email as the signed-in user.
-- **Schema:** apply `supabase/migrations/001_onboarding_schema.sql` and `002_staff_slack_member_id.sql` (confirm no naming clash with existing `staff` / `orgs` / `templates` tables first).
+- **Schema:** apply `supabase/migrations/001_onboarding_schema.sql`, `002_staff_slack_member_id.sql`, and `003_realtime_orgs.sql` (confirm no naming clash with existing `staff` / `orgs` / `templates` tables first).
 - **Env:** `SUPABASE_SERVICE_KEY` (server), `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` (client + Realtime), `SLACK_ONBOARDING_WEBHOOK_URL` (Slack Incoming Webhook for step-completion alerts), `NEXT_PUBLIC_APP_URL` for links in Slack messages and webhook docs in UI.
 - **Webhook:** point a Supabase Database Webhook on `step_progress` UPDATE to `POST https://<your-domain>/api/webhooks/step-completed`.
 - **First admin:** insert a `staff` row for your `@bondsports.co` email before using `/admin/onboarding`.

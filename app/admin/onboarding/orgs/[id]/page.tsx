@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { OnboardingLinkCard } from '@/app/admin/onboarding/components/OnboardingLinkCard';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
 import type { TemplateStep } from '@/lib/onboarding/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { CopyLinkButton } from './CopyLinkButton';
 import { OrgActions } from './OrgActions';
 import { OrgRealtimeRefresh } from './OrgRealtimeRefresh';
+
+export const dynamic = 'force-dynamic';
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -66,9 +68,12 @@ export default async function OnboardingOrgDetailPage({ params, searchParams }: 
 
       {sp.new === '1' ? (
         <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          Organization created. Share the onboarding link below with your contact.
+          <strong>Organization created.</strong> Copy the link below and send it to your contact — they don’t need a
+          Bond login.
         </div>
       ) : null}
+
+      <OnboardingLinkCard url={onboardUrl} slug={org.slug} celebrate={sp.new === '1'} />
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -107,15 +112,6 @@ export default async function OnboardingOrgDetailPage({ params, searchParams }: 
           <p className="text-xs font-medium uppercase text-gray-500">Contact</p>
           <p className="mt-1 text-gray-900">{org.contact_name ?? '—'}</p>
           <p className="text-sm text-gray-600">{org.contact_email ?? '—'}</p>
-        </div>
-        <div className="sm:col-span-2">
-          <p className="text-xs font-medium uppercase text-gray-500">Onboarding link</p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <code className="max-w-full break-all rounded-lg bg-gray-50 px-2 py-1 text-xs text-gray-900">
-              {onboardUrl}
-            </code>
-            <CopyLinkButton url={onboardUrl} />
-          </div>
         </div>
       </div>
 

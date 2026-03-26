@@ -1,7 +1,10 @@
 import Link from 'next/link';
+import { OnboardingListRealtimeRefresh } from '@/app/admin/onboarding/components/OnboardingListRealtimeRefresh';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
 import type { OrgDashboardRow } from '@/lib/onboarding/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
+
+export const dynamic = 'force-dynamic';
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -72,6 +75,7 @@ export default async function OnboardingDashboardPage({
 
   return (
     <div className="space-y-8">
+      <OnboardingListRealtimeRefresh />
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">Onboarding dashboard</h1>
         <p className="mt-1 text-sm text-gray-600">Overview of onboarding progress across organizations.</p>

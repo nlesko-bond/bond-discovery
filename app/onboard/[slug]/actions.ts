@@ -1,6 +1,8 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
+import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
 import type { TemplateStep } from '@/lib/onboarding/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -77,6 +79,10 @@ export async function toggleStep(
       })
       .eq('id', orgId);
   }
+
+  revalidatePath(`${ONBOARDING_BASE}/dashboard`);
+  revalidatePath(`${ONBOARDING_BASE}/orgs`);
+  revalidatePath(`${ONBOARDING_BASE}/orgs/${orgId}`);
 
   return { success: true as const, allRequiredDone: requiredComplete };
 }

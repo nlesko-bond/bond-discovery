@@ -4,33 +4,27 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getOnboardingBrowserClient } from '@/lib/onboarding/supabase-browser';
 
-export function OrgRealtimeRefresh({ orgId }: { orgId: string }) {
+/**
+ * Refreshes server-rendered org lists when step_progress or orgs change anywhere.
+ * Use on dashboard + organizations list so progress bars stay current without a hard refresh.
+ */
+export function OnboardingListRealtimeRefresh() {
   const router = useRouter();
 
   useEffect(() => {
     const supabase = getOnboardingBrowserClient();
     const channel = supabase
-      .channel(`admin_org_progress:${orgId}`)
+      .channel('onboarding_org_lists')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'step_progress',
-          filter: `org_id=eq.${orgId}`,
-        },
+        { event: '*', schema: 'public', table: 'step_progress' },
         () => {
           router.refresh();
         },
       )
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orgs',
-          filter: `id=eq.${orgId}`,
-        },
+        { event: '*', schema: 'public', table: 'orgs' },
         () => {
           router.refresh();
         },
@@ -40,7 +34,7 @@ export function OrgRealtimeRefresh({ orgId }: { orgId: string }) {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [orgId, router]);
+  }, [router]);
 
   return null;
 }
