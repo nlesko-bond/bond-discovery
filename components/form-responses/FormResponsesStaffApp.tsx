@@ -17,16 +17,12 @@ import {
   type QuestionnaireListItem,
   type StaffInquiryStatus,
 } from '@/types/form-pages';
+import { parseStaffLockBoolean } from '@/lib/parse-staff-lock';
 
 const STAFF_STATUS_ORDER: StaffInquiryStatus[] = ['pending', 'in_progress', 'resolved'];
 
 /** Default: hide Done. All: show every row. Completed only: find mistaken Done marks. */
 type StatusViewFilter = 'active' | 'all' | 'completed_only';
-
-function parseStaffLockFromPayload(data: Record<string, unknown>): boolean {
-  const v = data.staff_lock_to_default_questionnaire;
-  return v === true || v === 'true';
-}
 
 const STATUS_SELECT_CLASSES: Record<StaffInquiryStatus, string> = {
   pending:
@@ -233,7 +229,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
         }
         const raw = (await res.json()) as Record<string, unknown>;
         if (!cancelled) {
-          const staffLock = parseStaffLockFromPayload(raw);
+          const staffLock = parseStaffLockBoolean(raw.staff_lock_to_default_questionnaire);
           setPublicConfig({
             ...(raw as unknown as PublicConfig),
             staff_lock_to_default_questionnaire: staffLock,
@@ -270,7 +266,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
         if (!res.ok) return;
         const raw = (await res.json()) as Record<string, unknown>;
         if (!cancelled) {
-          const staffLock = parseStaffLockFromPayload(raw);
+          const staffLock = parseStaffLockBoolean(raw.staff_lock_to_default_questionnaire);
           setPublicConfig({
             ...(raw as unknown as PublicConfig),
             staff_lock_to_default_questionnaire: staffLock,

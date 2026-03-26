@@ -5,6 +5,7 @@ import {
   updateFormPageConfig,
 } from '@/lib/form-pages-config';
 import type { FormPageBranding } from '@/types/form-pages';
+import { parseStaffLockBoolean } from '@/lib/parse-staff-lock';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,7 +69,7 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       updates.titles_per_page = Number(body.titles_per_page);
     }
     if (body.staff_lock_to_default_questionnaire !== undefined) {
-      updates.staff_lock_to_default_questionnaire = Boolean(body.staff_lock_to_default_questionnaire);
+      updates.staff_lock_to_default_questionnaire = parseStaffLockBoolean(body.staff_lock_to_default_questionnaire);
     }
     if (typeof body.staff_password === 'string' && body.staff_password.length > 0) {
       updates.staff_password = body.staff_password;

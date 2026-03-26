@@ -15,6 +15,7 @@ export default function FormPagesAdminList() {
     organization_id: '',
     default_questionnaire_id: '',
     staff_password: '',
+    staff_lock_to_default_questionnaire: true,
   });
 
   useEffect(() => {
@@ -45,6 +46,7 @@ export default function FormPagesAdminList() {
           organization_id: parseInt(newForm.organization_id, 10),
           default_questionnaire_id: parseInt(newForm.default_questionnaire_id, 10),
           staff_password: newForm.staff_password,
+          staff_lock_to_default_questionnaire: newForm.staff_lock_to_default_questionnaire,
         }),
       });
       if (res.ok) {
@@ -55,6 +57,7 @@ export default function FormPagesAdminList() {
           organization_id: '',
           default_questionnaire_id: '',
           staff_password: '',
+          staff_lock_to_default_questionnaire: true,
         });
         fetchConfigs();
       } else {
@@ -150,6 +153,26 @@ export default function FormPagesAdminList() {
                 onChange={(v) => setNewForm({ ...newForm, staff_password: v })}
                 required
               />
+            </div>
+            <div className="col-span-2 flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="new_fp_lock_default"
+                checked={newForm.staff_lock_to_default_questionnaire}
+                onChange={(e) =>
+                  setNewForm({ ...newForm, staff_lock_to_default_questionnaire: e.target.checked })
+                }
+                className="h-4 w-4 rounded border-gray-300 mt-0.5"
+              />
+              <div>
+                <label htmlFor="new_fp_lock_default" className="text-sm text-gray-700 font-medium">
+                  Staff page: use default form only
+                </label>
+                <p className="text-xs text-gray-500 mt-1">
+                  Hides the form dropdown on the staff responses page and always loads the default
+                  questionnaire ID.
+                </p>
+              </div>
             </div>
           </div>
           <div className="flex gap-2">

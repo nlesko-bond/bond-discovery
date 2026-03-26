@@ -76,7 +76,7 @@ export async function createFormPageConfig(input: {
       organization_id: input.organization_id,
       default_questionnaire_id: input.default_questionnaire_id,
       allowed_questionnaire_ids: input.allowed_questionnaire_ids ?? null,
-      staff_lock_to_default_questionnaire: input.staff_lock_to_default_questionnaire ?? false,
+      staff_lock_to_default_questionnaire: input.staff_lock_to_default_questionnaire ?? true,
       branding: { ...DEFAULT_BRANDING, ...input.branding },
       staff_password_hash,
       staff_password_updated_at,

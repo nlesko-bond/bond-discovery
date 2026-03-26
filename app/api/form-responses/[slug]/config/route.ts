@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getFormPageConfigBySlug } from '@/lib/form-pages-config';
+import { parseStaffLockBoolean } from '@/lib/parse-staff-lock';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,9 +15,7 @@ export async function GET(_request: Request, context: Ctx) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const raw = config as unknown as Record<string, unknown>;
-  const v = raw.staff_lock_to_default_questionnaire;
-  const staffLock = v === true || v === 'true';
+  const staffLock = parseStaffLockBoolean(config.staff_lock_to_default_questionnaire);
 
   return NextResponse.json(
     {

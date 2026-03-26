@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createFormPageConfig, getAllFormPageConfigs } from '@/lib/form-pages-config';
+import { parseStaffLockBoolean } from '@/lib/parse-staff-lock';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,6 +52,10 @@ export async function POST(request: NextRequest) {
       organization_id,
       default_questionnaire_id,
       allowed_questionnaire_ids: parseAllowedIds(body.allowed_questionnaire_ids),
+      staff_lock_to_default_questionnaire:
+        body.staff_lock_to_default_questionnaire !== undefined
+          ? parseStaffLockBoolean(body.staff_lock_to_default_questionnaire)
+          : undefined,
       branding: body.branding,
       staff_password,
       default_range_days: body.default_range_days != null ? Number(body.default_range_days) : undefined,

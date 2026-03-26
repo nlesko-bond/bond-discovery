@@ -26,7 +26,10 @@ export default function EditFormPagePage() {
         if (!res.ok) throw new Error('Not found');
         const data = await res.json();
         const c = data.config as FormPageConfigAdmin;
-        setConfig(c);
+        setConfig({
+          ...c,
+          staff_lock_to_default_questionnaire: c.staff_lock_to_default_questionnaire ?? true,
+        });
         setAllowedIdsText(c.allowed_questionnaire_ids?.join(', ') || '');
       } catch {
         setError('Failed to load config');
@@ -56,7 +59,7 @@ export default function EditFormPagePage() {
         organization_id: config.organization_id,
         default_questionnaire_id: config.default_questionnaire_id,
         allowed_questionnaire_ids: allowed,
-        staff_lock_to_default_questionnaire: config.staff_lock_to_default_questionnaire ?? false,
+        staff_lock_to_default_questionnaire: config.staff_lock_to_default_questionnaire ?? true,
         branding: config.branding,
         default_range_days: config.default_range_days,
         max_range_days_cap: config.max_range_days_cap,
@@ -192,7 +195,7 @@ export default function EditFormPagePage() {
               <input
                 type="checkbox"
                 id="fp_lock_default"
-                checked={config.staff_lock_to_default_questionnaire ?? false}
+                checked={config.staff_lock_to_default_questionnaire ?? true}
                 onChange={(e) =>
                   setConfig({ ...config, staff_lock_to_default_questionnaire: e.target.checked })
                 }
