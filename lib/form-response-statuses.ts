@@ -2,13 +2,20 @@
  * Persist staff workflow status per Bond answer title row (Discovery Supabase).
  */
 
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from './supabase';
 import type { FormResponseRow, StaffInquiryStatus } from '@/types/form-pages';
 
 const VALID_STATUSES: StaffInquiryStatus[] = ['pending', 'in_progress', 'resolved'];
 
 export function isValidStaffInquiryStatus(s: unknown): s is StaffInquiryStatus {
   return typeof s === 'string' && VALID_STATUSES.includes(s as StaffInquiryStatus);
+}
+
+function rowAnswerTitleId(row: Record<string, unknown>): number | null {
+  const raw = row.answer_title_id ?? row.answerTitleId;
+  if (raw == null) return null;
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  return Number.isFinite(n) ? n : null;
 }
 
 export async function getStatusesForAnswerTitles(
@@ -28,9 +35,10 @@ export async function getStatusesForAnswerTitles(
     return map;
   }
   for (const row of data || []) {
-    const id = Number((row as { answer_title_id: number }).answer_title_id);
-    const st = (row as { status: string }).status;
-    if (Number.isFinite(id) && isValidStaffInquiryStatus(st)) {
+    const r = row as Record<string, unknown>;
+    const id = rowAnswerTitleId(r);
+    const st = r.status;
+    if (id != null && typeof st === 'string' && isValidStaffInquiryStatus(st)) {
       map.set(id, st);
     }
   }
@@ -50,6 +58,9 @@ export async function attachStaffStatusesToRows(
   }));
 }
 
+/**
+ * PostgREST composite-key upsert is easy to misconfigure; use update-then-insert so saves persist.
+ */
 export async function upsertAnswerTitleStatus(
   formPageId: string,
   answerTitleId: number,
@@ -57,17 +68,56 @@ export async function upsertAnswerTitleStatus(
 ): Promise<void> {
   const db = getSupabaseAdmin();
   const now = new Date().toISOString();
-  const { error } = await db.from('form_answer_title_statuses').upsert(
-    {
-      form_page_id: formPageId,
-      answer_title_id: answerTitleId,
-      status,
-      updated_at: now,
-    },
-    { onConflict: 'form_page_id,answer_title_id' }
-  );
-  if (error) {
-    console.error('[form-response-statuses] upsert:', error);
-    throw new Error(error.message);
+
+  const { data: existing, error: selErr } = await db
+    .from('form_answer_title_statuses')
+    .select('answer_title_id')
+    .eq('form_page_id', formPageId)
+    .eq('answer_title_id', answerTitleId)
+    .maybeSingle();
+
+  if (selErr) {
+    console.error('[form-response-statuses] select before write:', selErr);
+    throw new Error(selErr.message);
   }
+
+  if (existing) {
+    const { error: updErr } = await db
+      .from('form_answer_title_statuses')
+      .update({ status, updated_at: now })
+      .eq('form_page_id', formPageId)
+      .eq('answer_title_id', answerTitleId);
+    if (updErr) {
+      console.error('[form-response-statuses] update:', updErr);
+      throw new Error(updErr.message);
+    }
+    return;
+  }
+
+  const { error: insErr } = await db.from('form_answer_title_statuses').insert({
+    form_page_id: formPageId,
+    answer_title_id: answerTitleId,
+    status,
+    updated_at: now,
+  });
+
+  if (!insErr) return;
+
+  // Unique race: treat as success path by updating
+  const code = 'code' in insErr ? String((insErr as { code?: string }).code) : '';
+  if (code === '23505') {
+    const { error: updErr } = await db
+      .from('form_answer_title_statuses')
+      .update({ status, updated_at: now })
+      .eq('form_page_id', formPageId)
+      .eq('answer_title_id', answerTitleId);
+    if (updErr) {
+      console.error('[form-response-statuses] update after duplicate:', updErr);
+      throw new Error(updErr.message);
+    }
+    return;
+  }
+
+  console.error('[form-response-statuses] insert:', insErr);
+  throw new Error(insErr.message);
 }
