@@ -15,7 +15,8 @@ export default function FormPagesAdminList() {
     organization_id: '',
     default_questionnaire_id: '',
     staff_password: '',
-    staff_lock_to_default_questionnaire: true,
+    /** When true, staff_lock_to_default_questionnaire is false (show dropdown). */
+    allow_staff_form_dropdown: false,
   });
 
   useEffect(() => {
@@ -46,7 +47,7 @@ export default function FormPagesAdminList() {
           organization_id: parseInt(newForm.organization_id, 10),
           default_questionnaire_id: parseInt(newForm.default_questionnaire_id, 10),
           staff_password: newForm.staff_password,
-          staff_lock_to_default_questionnaire: newForm.staff_lock_to_default_questionnaire,
+          staff_lock_to_default_questionnaire: !newForm.allow_staff_form_dropdown,
         }),
       });
       if (res.ok) {
@@ -57,7 +58,7 @@ export default function FormPagesAdminList() {
           organization_id: '',
           default_questionnaire_id: '',
           staff_password: '',
-          staff_lock_to_default_questionnaire: true,
+          allow_staff_form_dropdown: false,
         });
         fetchConfigs();
       } else {
@@ -157,20 +158,20 @@ export default function FormPagesAdminList() {
             <div className="col-span-2 flex items-start gap-3">
               <input
                 type="checkbox"
-                id="new_fp_lock_default"
-                checked={newForm.staff_lock_to_default_questionnaire}
+                id="new_fp_allow_form_dropdown"
+                checked={newForm.allow_staff_form_dropdown}
                 onChange={(e) =>
-                  setNewForm({ ...newForm, staff_lock_to_default_questionnaire: e.target.checked })
+                  setNewForm({ ...newForm, allow_staff_form_dropdown: e.target.checked })
                 }
                 className="h-4 w-4 rounded border-gray-300 mt-0.5"
               />
               <div>
-                <label htmlFor="new_fp_lock_default" className="text-sm text-gray-700 font-medium">
-                  Staff page: use default form only
+                <label htmlFor="new_fp_allow_form_dropdown" className="text-sm text-gray-700 font-medium">
+                  Allow staff to choose form (dropdown)
                 </label>
                 <p className="text-xs text-gray-500 mt-1">
-                  Hides the form dropdown on the staff responses page and always loads the default
-                  questionnaire ID.
+                  Off by default: staff only see the default questionnaire. Turn on to show a form
+                  dropdown when multiple forms are allowed for this org.
                 </p>
               </div>
             </div>

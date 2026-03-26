@@ -194,20 +194,20 @@ export default function EditFormPagePage() {
             <div className="col-span-2 flex items-start gap-3">
               <input
                 type="checkbox"
-                id="fp_lock_default"
-                checked={config.staff_lock_to_default_questionnaire ?? true}
+                id="fp_allow_form_dropdown"
+                checked={!(config.staff_lock_to_default_questionnaire ?? true)}
                 onChange={(e) =>
-                  setConfig({ ...config, staff_lock_to_default_questionnaire: e.target.checked })
+                  setConfig({ ...config, staff_lock_to_default_questionnaire: !e.target.checked })
                 }
                 className="h-4 w-4 rounded border-gray-300 mt-0.5"
               />
               <div>
-                <label htmlFor="fp_lock_default" className="text-sm text-gray-700 font-medium">
-                  Staff page: use default form only
+                <label htmlFor="fp_allow_form_dropdown" className="text-sm text-gray-700 font-medium">
+                  Allow staff to choose form (dropdown)
                 </label>
                 <p className="text-xs text-gray-500 mt-1">
-                  Hides the form dropdown on the staff responses page and always loads the default
-                  questionnaire ID.
+                  Off by default: staff only see the default questionnaire. Turn on to show a form
+                  dropdown when multiple forms are allowed for this org.
                 </p>
               </div>
             </div>
