@@ -1,0 +1,647 @@
+# CURSOR PROMPT — Bond Onboarding Platform (Phase 1 MVP)
+
+Build a complete Next.js 14+ App Router application called "Bond Onboarding Platform." It is a multi-tenant onboarding portal for Bond Sports. Two audiences: (1) external org users who see a public checklist at `/onboard/[slug]`, and (2) internal Bond staff who manage everything from `/admin/*`. Deploy target is Vercel. Database is Supabase (Postgres + Auth + Realtime). Styling is Tailwind CSS. Use `@supabase/ssr` for auth helpers, NOT the deprecated `@supabase/auth-helpers-nextjs`.
+
+---
+
+## 1. PROJECT SETUP
+
+Initialize with `npx create-next-app@latest bond-onboarding --typescript --tailwind --eslint --app --src-dir=false --import-alias="@/*"`.
+
+Install dependencies:
+```
+npm install @supabase/supabase-js @supabase/ssr slugify resend
+npm install -D supabase
+```
+
+Create `.env.local`:
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+RESEND_API_KEY=
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+---
+
+## 2. SUPABASE SCHEMA
+
+Create `supabase/migrations/001_schema.sql` with this exact SQL and run it against the Supabase project:
+
+```sql
+-- Staff (Bond internal users)
+create table staff (
+  id            uuid primary key default gen_random_uuid(),
+  email         text unique not null,
+  name          text not null,
+  role          text not null check (role in ('admin', 'cs_rep')),
+  notify_email  boolean default true,
+  created_at    timestamptz default now()
+);
+
+-- Templates (step definitions as JSONB)
+create table templates (
+  id            uuid primary key default gen_random_uuid(),
+  name          text not null,
+  steps         jsonb not null,
+  is_default    boolean default false,
+  created_at    timestamptz default now()
+);
+
+-- Orgs (each onboarding client)
+create table orgs (
+  id            uuid primary key default gen_random_uuid(),
+  name          text not null,
+  slug          text unique not null,
+  contact_name  text,
+  contact_email text,
+  pin           text,
+  template_id   uuid references templates(id),
+  assigned_rep  uuid references staff(id),
+  status        text default 'active' check (status in ('active', 'completed', 'paused', 'archived')),
+  created_at    timestamptz default now(),
+  completed_at  timestamptz
+);
+
+-- Step progress (one row per step per org)
+create table step_progress (
+  id            uuid primary key default gen_random_uuid(),
+  org_id        uuid references orgs(id) on delete cascade,
+  step_index    int not null,
+  completed     boolean default false,
+  completed_at  timestamptz,
+  completed_by  text,
+  notes         text,
+  unique(org_id, step_index)
+);
+
+-- Activity log (immutable audit trail)
+create table activity_log (
+  id            uuid primary key default gen_random_uuid(),
+  org_id        uuid references orgs(id) on delete cascade,
+  action        text not null,
+  step_index    int,
+  actor         text,
+  metadata      jsonb default '{}',
+  created_at    timestamptz default now()
+);
+
+-- Messages (Phase 2, create table now)
+create table messages (
+  id            uuid primary key default gen_random_uuid(),
+  org_id        uuid references orgs(id) on delete cascade,
+  sender_type   text not null check (sender_type in ('org', 'staff')),
+  sender_name   text not null,
+  body          text not null,
+  read_at       timestamptz,
+  created_at    timestamptz default now()
+);
+
+-- Dashboard view for aggregated stats
+create or replace view org_dashboard as
+select
+  o.id,
+  o.name,
+  o.slug,
+  o.status,
+  o.contact_email,
+  o.created_at,
+  o.completed_at,
+  s.id as rep_id,
+  s.name as rep_name,
+  s.email as rep_email,
+  count(sp.id) filter (where sp.completed) as steps_done,
+  count(sp.id) as steps_total,
+  round(
+    (count(sp.id) filter (where sp.completed))::numeric /
+    nullif(count(sp.id), 0) * 100
+  ) as completion_pct,
+  max(sp.completed_at) as last_activity
+from orgs o
+left join staff s on s.id = o.assigned_rep
+left join step_progress sp on sp.org_id = o.id
+group by o.id, s.id, s.name, s.email;
+
+-- Enable RLS
+alter table step_progress enable row level security;
+alter table activity_log enable row level security;
+alter table messages enable row level security;
+alter table orgs enable row level security;
+
+-- RLS: anon can read/update step_progress for their org (matched by slug in the request)
+create policy "anon_read_step_progress" on step_progress for select using (true);
+create policy "anon_update_step_progress" on step_progress for update using (true);
+create policy "anon_read_orgs" on orgs for select using (true);
+create policy "anon_insert_activity" on activity_log for insert with check (true);
+create policy "anon_read_activity" on activity_log for select using (true);
+create policy "anon_insert_messages" on messages for insert with check (true);
+create policy "anon_read_messages" on messages for select using (true);
+
+-- Enable realtime on step_progress
+alter publication supabase_realtime add table step_progress;
+
+-- Seed: default template
+insert into templates (name, is_default, steps) values (
+  'Default Onboarding',
+  true,
+  '[
+    {"title": "Understand the Back Office", "time": "~3 min", "description": "Before diving into setup, spend a few minutes getting oriented with how Bond''s back office is organized. Understanding the main navigation will make every step below much faster.", "links": [{"label": "Back Office Overview", "url": "https://help.bondsports.co/en/collections/11612167-getting-started", "icon": "📖"}], "doneWhen": "Done when you''ve watched the overview and can find the main nav sections."},
+    {"title": "Connect Your Bank Account", "time": "~5 min", "description": "This is what allows you to start collecting payments from customers. Get this done first so everything else can be tested end to end.", "links": [{"label": "Watch setup video", "url": "https://jam.dev/c/b1815fb9-2d82-46ed-b75b-8416566440ec", "icon": "🎥"}], "doneWhen": "Done when your bank account shows as connected in Settings."},
+    {"title": "Set Up Roles & Permissions", "time": "~10 min", "description": "Control what each member of your staff can access and do in Bond. This step directly impacts both daily operations and account security.", "links": [{"label": "Roles & Permissions Guide", "url": "https://help.bondsports.co/en/articles/10128365-roles-permissions", "icon": "📖"}], "note": "⚠️ Important: Incorrect permissions can affect security and daily operations. Take a few extra minutes to assign roles carefully.", "checklist": ["Add all employees to the system", "Assign the correct role to each person"], "doneWhen": "Done when all staff are added and roles are assigned."},
+    {"title": "Configure Your Tax Rates", "time": "~5 min", "description": "Set how taxes are applied to your products. You''ll want this in place before creating any rentals or programs.", "links": [{"label": "Open Tax Settings", "url": "https://backoffice.bondsports.co/client/settings#/organization/taxes/tax-rates", "icon": "⚙️"}], "checklist": ["Exclusive tax, added on top of product price", "Inclusive tax, built into the product price"], "doneWhen": "Done when your tax rates are saved in Settings."},
+    {"title": "Set Up Accounting Codes", "time": "~5 min", "description": "Set up your accounting codes before creating any products. This keeps your reporting organized from the start and avoids having to remap codes later.", "links": [{"label": "Accounting Codes Guide", "url": "https://help.bondsports.co/en/articles/12968674-accounting-codes", "icon": "📖"}], "doneWhen": "Done when your accounting codes are created and ready to assign."},
+    {"title": "Set Up Rental Products", "time": "~15 min", "description": "Create your rental products, courts, fields, ice time, cages, or any bookable space at your facility. Program products will be set up together during your initial program training call with the Bond team.", "links": [{"label": "Setting Up Rental Products", "url": "https://help.bondsports.co/en/articles/11021853-setting-up-rental-products", "icon": "📖"}, {"label": "Rental Reservations Overview", "url": "https://help.bondsports.co/en/articles/11403275-rental-reservations-overview", "icon": "📖"}], "doneWhen": "Done when your rental products are created and visible in the back office."},
+    {"title": "Set Up Programs (Registrations)", "time": "~10 min", "description": "Use programs for classes, leagues, camps, clinics, and training sessions — anything that requires participant registration rather than a simple rental booking.", "links": [{"label": "Programs Getting Started Guide", "url": "https://help.bondsports.co/en/articles/11060636-getting-started", "icon": "📖"}], "note": "📅 Note: Your Bond onboarding specialist will walk through program setup in detail on your training call. This step is here to help you get familiar beforehand.", "doneWhen": "Done when you''ve reviewed the guide and are ready for your training call."},
+    {"title": "Set Up Forms & Waivers", "time": "~5 min", "description": "Collect important participant information, waivers, and custom questionnaires — attached directly to your products and programs.", "links": [{"label": "Forms & Waivers Guide", "url": "https://help.bondsports.co/en/articles/13066858-managing-forms-questionnaires-in-the-bond-back-office", "icon": "📖"}], "doneWhen": "Done when at least one form or waiver is created and linked to a product."},
+    {"title": "Enable Conversion Tracking", "time": "~5 min", "description": "Connect Bond to tools like Google Analytics (GA4) to track how customers are finding and completing registrations on your site. This is an advanced step — come back to it once your core setup is complete.", "links": [{"label": "Conversion Analytics Guide", "url": "https://help.bondsports.co/en/collections/12615606-conversion-analytics", "icon": "📖"}], "optional": true, "doneWhen": "Done when your GA4 or tracking pixel is connected and firing."}
+  ]'::jsonb
+);
+```
+
+---
+
+## 3. SUPABASE CLIENTS
+
+### `lib/supabase/client.ts` (browser)
+```ts
+import { createBrowserClient } from '@supabase/ssr'
+
+export function createClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+```
+
+### `lib/supabase/server.ts` (server components + server actions)
+```ts
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+
+export async function createServerSupabase() {
+  const cookieStore = await cookies()
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch { /* server component, ignore */ }
+        },
+      },
+    }
+  )
+}
+```
+
+### `lib/supabase/admin.ts` (service role for mutations)
+```ts
+import { createClient } from '@supabase/supabase-js'
+
+export const adminClient = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+```
+
+### `middleware.ts` (refresh session on every request)
+Standard Supabase middleware that refreshes the session cookie. Follow the `@supabase/ssr` docs pattern. Protect `/admin/*` routes by checking for a valid session and redirecting to `/admin/login` if none.
+
+---
+
+## 4. TYPESCRIPT TYPES
+
+Create `lib/types.ts`:
+```ts
+export interface StepLink {
+  label: string
+  url: string
+  icon: string
+}
+
+export interface TemplateStep {
+  title: string
+  time: string
+  description: string
+  links: StepLink[]
+  note?: string
+  checklist?: string[]
+  doneWhen: string
+  optional?: boolean
+}
+
+export interface Template {
+  id: string
+  name: string
+  steps: TemplateStep[]
+  is_default: boolean
+  created_at: string
+}
+
+export interface Org {
+  id: string
+  name: string
+  slug: string
+  contact_name: string | null
+  contact_email: string | null
+  pin: string | null
+  template_id: string
+  assigned_rep: string
+  status: 'active' | 'completed' | 'paused' | 'archived'
+  created_at: string
+  completed_at: string | null
+}
+
+export interface StepProgress {
+  id: string
+  org_id: string
+  step_index: number
+  completed: boolean
+  completed_at: string | null
+  completed_by: string | null
+  notes: string | null
+}
+
+export interface OrgDashboardRow {
+  id: string
+  name: string
+  slug: string
+  status: string
+  contact_email: string | null
+  created_at: string
+  completed_at: string | null
+  rep_id: string
+  rep_name: string
+  rep_email: string
+  steps_done: number
+  steps_total: number
+  completion_pct: number
+  last_activity: string | null
+}
+
+export interface ActivityLogEntry {
+  id: string
+  org_id: string
+  action: string
+  step_index: number | null
+  actor: string | null
+  metadata: Record<string, unknown>
+  created_at: string
+}
+
+export interface Staff {
+  id: string
+  email: string
+  name: string
+  role: 'admin' | 'cs_rep'
+  notify_email: boolean
+  created_at: string
+}
+```
+
+---
+
+## 5. ORG-FACING ONBOARDING PAGE — `app/(public)/onboard/[slug]/page.tsx`
+
+This is the most important page. It must **exactly replicate the look and feel** of the existing static HTML. Here is the exact design spec to match:
+
+**Design tokens (port these to Tailwind):**
+- Page bg: `#f7f7f5`, text: `#2c2c2a`, max-width `680px` centered
+- Font: system stack (`-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`)
+- Step cards: white bg, `0.5px solid #e0dfd8` border, `12px` border-radius
+- Completed step: border changes to `#86efac`, title turns `#16a34a`
+- Checkbox: `22×22px`, `6px` border-radius, `1.5px solid #d0cec8`. When done: bg `#22c55e` with white checkmark SVG
+- Step badge: `#eb6d4a` bg, white text, uppercase, `999px` border-radius pill
+- Time badge: `#f3f2ee` bg, `#7a7a75` text, pill shape
+- Progress bar: `6px` height, `#e5e4e0` bg track, `#22c55e` fill, `99px` border-radius
+- Action links: `#1a6ef5` text, `#f0f5ff` bg, `7px` border-radius
+- Warning notes: `#fffbeb` bg, `3px solid #fbbf24` left border
+- Done-when: `#f0fdf4` bg, `#16a34a` text
+- Optional badge: `#fef9c3` bg, `#a16207` text
+
+**Behavior:**
+- Server component. Fetch org by slug, fetch template by `template_id`, fetch all `step_progress` rows.
+- If org not found → 404.
+- If org has a `pin` set → show a PIN entry screen first (client component), validate via server action, store validation in a cookie.
+- Render header: "BOND SPORTS" logo, "Welcome to Bond Sports 🎉" title, intro paragraph with org name interpolated, meta row ("⏱ Total time: ~25 min", "✅ X of Y steps complete"), progress bar.
+- Render goals box with the 6 goal items.
+- Render each step as an expandable card. Clicking the header toggles expand/collapse. Clicking the checkbox toggles completion.
+- Checkbox toggle calls a server action that updates `step_progress` and inserts into `activity_log`.
+- Progress bar and count update optimistically on the client.
+- "You're all set" celebration section appears when all non-optional steps are completed.
+- Support footer at bottom.
+
+**Implementation:**
+- The page itself is a server component that fetches data and passes it to a `<OnboardingChecklist />` client component.
+- The client component manages local state for expand/collapse and optimistic completion toggles.
+- Use `useTransition` for the server action calls.
+- Subscribe to Supabase Realtime on `step_progress` filtered by `org_id` so if multiple people from the org are on the page, they see each other's changes.
+
+### `app/(public)/onboard/[slug]/actions.ts`
+```ts
+'use server'
+
+import { adminClient } from '@/lib/supabase/admin'
+
+export async function toggleStep(orgId: string, stepIndex: number, completed: boolean) {
+  const now = completed ? new Date().toISOString() : null
+  
+  const { error } = await adminClient
+    .from('step_progress')
+    .update({ completed, completed_at: now })
+    .eq('org_id', orgId)
+    .eq('step_index', stepIndex)
+
+  if (error) throw new Error(error.message)
+
+  await adminClient.from('activity_log').insert({
+    org_id: orgId,
+    action: completed ? 'step_completed' : 'step_unchecked',
+    step_index: stepIndex,
+    actor: 'org',
+  })
+
+  // Check if all steps are now complete
+  const { data: progress } = await adminClient
+    .from('step_progress')
+    .select('completed')
+    .eq('org_id', orgId)
+
+  const allDone = progress?.every(s => s.completed)
+  if (allDone) {
+    await adminClient
+      .from('orgs')
+      .update({ status: 'completed', completed_at: new Date().toISOString() })
+      .eq('id', orgId)
+  }
+
+  return { allDone }
+}
+```
+
+---
+
+## 6. ADMIN AUTH
+
+### `app/(admin)/login/page.tsx`
+Simple email/password login form using Supabase Auth `signInWithPassword`. On success, redirect to `/admin/dashboard`. Style it clean and minimal — centered card on the Bond off-white background.
+
+### `app/(admin)/layout.tsx`
+- Check for Supabase session. If none → redirect to `/admin/login`.
+- Look up the logged-in user's email in the `staff` table. If not found → show "Access denied" (not all Supabase users are staff).
+- Render a sidebar layout:
+  - Sidebar (240px, white bg, left side): Bond logo at top, then nav links: Dashboard, Organizations, Templates, Team, Settings. Active state: `#f0f5ff` bg with `#1a6ef5` text. Logged-in user name + role at bottom with sign-out button.
+  - Main content area: full width minus sidebar, with `24px` padding, off-white `#f7f7f5` background.
+
+---
+
+## 7. ADMIN DASHBOARD — `app/(admin)/dashboard/page.tsx`
+
+**Stats cards row (4 cards):**
+1. Total Active Orgs — count where status = 'active'
+2. Avg Completion — average of `completion_pct` across active orgs
+3. Completed This Week — count where `completed_at` is within last 7 days
+4. Stalled (7+ days) — count where `last_activity` is older than 7 days and status = 'active'
+
+Each card: white bg, subtle border, large number, small label below.
+
+**Filters row:**
+- Dropdown: filter by rep (populated from staff table)
+- Dropdown: filter by status (active, completed, paused, archived)
+- Completion range slider or dropdown (0-25%, 25-50%, 50-75%, 75-100%)
+- All filters update the table below via URL search params (server-side filtering)
+
+**Org table:**
+Columns: Org Name (clickable → `/admin/orgs/[id]`), Rep, Steps Progress (visual bar + "X/Y"), Status (colored badge), Last Activity (relative time), Created.
+Sort by last activity descending by default.
+Use the `org_dashboard` Postgres view for the query.
+
+---
+
+## 8. ORG MANAGEMENT
+
+### `app/(admin)/orgs/new/page.tsx` — Create New Org
+Form fields:
+- Org Name (required) — auto-generates slug via `slugify(name)`, editable
+- Contact Name
+- Contact Email
+- Template (dropdown, default selected)
+- Assigned Rep (dropdown from staff table, default to current user)
+- PIN (optional, for protecting the onboarding link)
+
+On submit (server action):
+1. Insert into `orgs` table
+2. Fetch the selected template's `steps` array
+3. Insert one `step_progress` row per step (all `completed: false`) in a single batch
+4. Show success state with the generated onboarding link and a "Copy Link" button
+
+### `app/(admin)/orgs/page.tsx` — Org List
+Reuses the same table as dashboard but with search (by org name) and full pagination.
+
+### `app/(admin)/orgs/[id]/page.tsx` — Org Detail
+**Header:** Org name, status badge, assigned rep, contact info, onboarding link with copy button.
+
+**Progress section:** Visual progress bar matching the org-facing design. Below it, a step-by-step breakdown: each step shows title, completed/not, completion timestamp if done, and who completed it.
+
+**Activity feed:** Chronological list from `activity_log` for this org. Each entry: icon, action description, timestamp. Shows "Step 3 completed by org" or "Org created by alice@bondsports.co" etc.
+
+**Actions:** Buttons to pause/archive org, reassign rep, resend onboarding link (future: email integration).
+
+**Realtime:** Subscribe to `step_progress` changes for this org. When a step is toggled by the org user, the progress bar and step list update live without refresh.
+
+### `app/(admin)/orgs/[id]/settings/page.tsx`
+Edit form for org details: name, slug, contact info, assigned rep, template, PIN, status.
+
+---
+
+## 9. TEMPLATE MANAGEMENT — `app/(admin)/templates/page.tsx`
+
+**Template list:** Cards showing template name, step count, whether it's the default, created date.
+
+**Template editor** (inline or separate page):
+- Template name field
+- Sortable list of steps. Each step is an expandable card with fields:
+  - Title (text)
+  - Time estimate (text)
+  - Description (textarea)
+  - Links (repeatable: label + URL + icon emoji)
+  - Note (optional textarea)
+  - Checklist items (optional, repeatable text inputs)
+  - Done-when text (text)
+  - Optional flag (checkbox)
+- Add Step button at the bottom
+- Delete step (with confirmation)
+- Save button
+
+Store as JSONB in the `templates.steps` column.
+
+---
+
+## 10. TEAM MANAGEMENT — `app/(admin)/team/page.tsx`
+
+Table of staff: Name, Email, Role (admin/cs_rep), Active Orgs count, Email notifications toggle.
+Add new staff member form (name, email, role).
+Edit/remove staff.
+Note: Adding a staff member here does NOT create a Supabase Auth user. The staff member must sign up via `/admin/login` separately. The staff table is just the permission/role layer.
+
+---
+
+## 11. NOTIFICATION API ROUTE — `app/api/webhooks/step-completed/route.ts`
+
+This is called by a Supabase Database Webhook configured on `step_progress` table (on UPDATE where `completed` changes to `true`).
+
+```ts
+import { NextRequest, NextResponse } from 'next/server'
+import { adminClient } from '@/lib/supabase/admin'
+import { Resend } from 'resend'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+export async function POST(req: NextRequest) {
+  const payload = await req.json()
+  const { record } = payload // Supabase webhook payload
+  
+  if (!record.completed) return NextResponse.json({ skipped: true })
+  
+  // Look up org and rep
+  const { data: org } = await adminClient
+    .from('orgs')
+    .select('name, slug, assigned_rep, staff:assigned_rep(name, email, notify_email)')
+    .eq('id', record.org_id)
+    .single()
+  
+  if (!org?.staff?.notify_email) return NextResponse.json({ skipped: true })
+  
+  // Look up step title from template
+  const { data: orgFull } = await adminClient
+    .from('orgs')
+    .select('template:template_id(steps)')
+    .eq('id', record.org_id)
+    .single()
+  
+  const stepTitle = orgFull?.template?.steps?.[record.step_index]?.title ?? `Step ${record.step_index + 1}`
+  
+  await resend.emails.send({
+    from: 'Bond Onboarding <onboarding@yourdomain.com>',
+    to: org.staff.email,
+    subject: `✅ ${org.name} completed: ${stepTitle}`,
+    html: `<p><strong>${org.name}</strong> just completed <strong>${stepTitle}</strong>.</p>
+           <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/orgs/${record.org_id}">View progress →</a></p>`,
+  })
+  
+  return NextResponse.json({ sent: true })
+}
+```
+
+---
+
+## 12. GLOBAL LAYOUT + STYLING
+
+### `app/layout.tsx`
+Standard root layout. Set the `<html>` lang to "en". Use the system font stack via Tailwind config. Set `bg-[#f7f7f5]` as the default body background.
+
+### `tailwind.config.ts`
+Extend the theme with the Bond design tokens:
+```ts
+extend: {
+  colors: {
+    bond: {
+      bg: '#f7f7f5',
+      text: '#2c2c2a',
+      border: '#e0dfd8',
+      green: '#22c55e',
+      'green-dark': '#16a34a',
+      'green-light': '#86efac',
+      'green-bg': '#f0fdf4',
+      orange: '#eb6d4a',
+      blue: '#1a6ef5',
+      'blue-bg': '#f0f5ff',
+      muted: '#888',
+      'muted-dark': '#555',
+      'note-bg': '#fffbeb',
+      'note-border': '#fbbf24',
+      'note-text': '#78350f',
+      'optional-bg': '#fef9c3',
+      'optional-text': '#a16207',
+      'badge-bg': '#f3f2ee',
+      'badge-text': '#7a7a75',
+    }
+  }
+}
+```
+
+---
+
+## CRITICAL REQUIREMENTS
+
+1. **The org-facing page must be pixel-accurate to the original HTML.** Same spacing, same colors, same border-radius, same typography, same interaction patterns (click header to expand, click checkbox to complete, progress bar animation). Do NOT modernize or redesign it.
+
+2. **All database mutations use server actions or API routes with the `adminClient` (service role).** Never expose the service role key to the client. The browser client uses the anon key only for Realtime subscriptions and reads.
+
+3. **Optimistic UI on the org page.** When a user clicks a checkbox, update the UI immediately, then call the server action. If the server action fails, revert.
+
+4. **Supabase Realtime on the admin org detail page.** Subscribe to `step_progress` changes for the specific org. When changes come in, refresh the progress display without a full page reload.
+
+5. **Every admin page must be a server component at the top level** that fetches data, with client components only where interactivity is needed (forms, filters, realtime subscriptions).
+
+6. **Use URL search params for all admin filtering/pagination** so that filter state is shareable and back-button-friendly.
+
+7. **Slug generation:** Use the `slugify` library on the org name, then check uniqueness. If taken, append a random 4-char suffix.
+
+8. **Error handling:** Every server action returns `{ success: boolean, error?: string }` or throws. Every form shows inline error messages. Every page has loading states.
+
+9. **No placeholder pages.** Every route listed above must be fully functional with real Supabase queries, real forms, real data display. If you're unsure about a detail, make a reasonable implementation choice and move on.
+
+10. **File structure must match exactly:**
+```
+app/
+├── (public)/
+│   └── onboard/
+│       └── [slug]/
+│           ├── page.tsx
+│           ├── actions.ts
+│           └── components/
+│               ├── OnboardingChecklist.tsx  (client component)
+│               └── PinGate.tsx             (client component)
+├── (admin)/
+│   ├── layout.tsx
+│   ├── login/
+│   │   └── page.tsx
+│   ├── dashboard/
+│   │   └── page.tsx
+│   ├── orgs/
+│   │   ├── page.tsx
+│   │   ├── new/
+│   │   │   └── page.tsx
+│   │   └── [id]/
+│   │       ├── page.tsx
+│   │       └── settings/
+│   │           └── page.tsx
+│   ├── templates/
+│   │   └── page.tsx
+│   ├── team/
+│   │   └── page.tsx
+│   └── settings/
+│       └── page.tsx
+├── api/
+│   └── webhooks/
+│       └── step-completed/
+│           └── route.ts
+└── layout.tsx
+lib/
+├── supabase/
+│   ├── client.ts
+│   ├── server.ts
+│   └── admin.ts
+└── types.ts
+middleware.ts
+```
+
+Build all of this. Every file. Every route. Fully functional. Go.
