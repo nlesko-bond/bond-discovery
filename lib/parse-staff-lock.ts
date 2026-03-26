@@ -19,7 +19,7 @@ export function parseStaffLockBoolean(v: unknown): boolean {
  * Missing, null, true, or ambiguous values keep the dropdown **hidden** (default form only).
  */
 export function isStaffFormDropdownExplicitlyAllowed(raw: unknown): boolean {
-  if (raw === false) return true;
+  if (raw === false || raw === 0) return true;
   if (typeof raw === 'string') {
     const s = raw.trim().toLowerCase();
     if (s === 'false' || s === '0') return true;
