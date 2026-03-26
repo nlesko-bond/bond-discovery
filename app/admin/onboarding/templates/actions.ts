@@ -15,7 +15,7 @@ export async function saveTemplate(formData: FormData): Promise<void> {
   const id = String(formData.get('id') ?? '').trim();
   const name = String(formData.get('name') ?? '').trim();
   const raw = String(formData.get('steps_json') ?? '');
-  const isDefault = formData.get('is_default') === 'on';
+  const isDefault = formData.has('is_default');
 
   if (!name) {
     err('Template name is required.');
@@ -58,8 +58,9 @@ export async function saveTemplate(formData: FormData): Promise<void> {
     if (error) err(error.message);
   }
 
-  revalidatePath(`${ONBOARDING_BASE}/templates`);
-  redirect(`${ONBOARDING_BASE}/templates`);
+  revalidatePath(`${ONBOARDING_BASE}/templates`, 'page');
+  revalidatePath(`${ONBOARDING_BASE}`, 'layout');
+  redirect(`${ONBOARDING_BASE}/templates?saved=1`);
 }
 
 export async function deleteTemplate(templateId: string): Promise<void> {
@@ -68,6 +69,7 @@ export async function deleteTemplate(templateId: string): Promise<void> {
   if (error) {
     redirect(`${ONBOARDING_BASE}/templates?error=${encodeURIComponent(error.message)}`);
   }
-  revalidatePath(`${ONBOARDING_BASE}/templates`);
-  redirect(`${ONBOARDING_BASE}/templates`);
+  revalidatePath(`${ONBOARDING_BASE}/templates`, 'page');
+  revalidatePath(`${ONBOARDING_BASE}`, 'layout');
+  redirect(`${ONBOARDING_BASE}/templates?deleted=1`);
 }

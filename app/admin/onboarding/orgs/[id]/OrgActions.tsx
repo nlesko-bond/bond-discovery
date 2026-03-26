@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { setOrgStatus } from '../actions';
+import { useOptionalOrgDetailLive } from './OrgDetailLive';
 
 export function OrgActions({
   orgId,
@@ -12,6 +13,8 @@ export function OrgActions({
   currentStatus: string;
 }) {
   const router = useRouter();
+  const live = useOptionalOrgDetailLive();
+  const currentStatusLive = live?.status ?? currentStatus;
   const [pending, setPending] = useState(false);
 
   async function run(status: 'active' | 'paused' | 'archived') {
@@ -23,7 +26,7 @@ export function OrgActions({
 
   return (
     <div className="flex flex-wrap gap-2">
-      {currentStatus === 'paused' ? (
+      {currentStatusLive === 'paused' ? (
         <button
           type="button"
           disabled={pending}
@@ -33,7 +36,7 @@ export function OrgActions({
           Resume
         </button>
       ) : null}
-      {currentStatus === 'active' ? (
+      {currentStatusLive === 'active' ? (
         <button
           type="button"
           disabled={pending}
@@ -43,7 +46,7 @@ export function OrgActions({
           Pause
         </button>
       ) : null}
-      {currentStatus !== 'archived' ? (
+      {currentStatusLive !== 'archived' ? (
         <button
           type="button"
           disabled={pending}

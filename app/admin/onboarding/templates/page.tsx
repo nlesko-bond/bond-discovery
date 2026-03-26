@@ -1,20 +1,28 @@
 import Link from 'next/link';
+import { unstable_noStore as noStore } from 'next/cache';
+import { Suspense } from 'react';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
 import type { TemplateStep } from '@/lib/onboarding/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { DeleteTemplateForm } from './DeleteTemplateForm';
 import { saveTemplate } from './actions';
+import { TemplatesSavedRefresh } from './TemplatesSavedRefresh';
 
-type SearchParams = Promise<{ error?: string }>;
+export const dynamic = 'force-dynamic';
+
+type SearchParams = Promise<{ error?: string; saved?: string; deleted?: string }>;
 
 export default async function OnboardingTemplatesPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
+  noStore();
   const admin = getSupabaseAdmin();
   const sp = await searchParams;
   const errorMsg = sp.error ? decodeURIComponent(sp.error) : null;
+  const showSaved = sp.saved === '1';
+  const showDeleted = sp.deleted === '1';
 
   const { data: templates } = await admin.from('templates').select('*').order('created_at', { ascending: false });
 
@@ -22,6 +30,10 @@ export default async function OnboardingTemplatesPage({
 
   return (
     <div className="space-y-10">
+      <Suspense fallback={null}>
+        <TemplatesSavedRefresh />
+      </Suspense>
+
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">Onboarding templates</h1>
         <p className="mt-1 text-sm text-gray-600">
@@ -33,6 +45,18 @@ export default async function OnboardingTemplatesPage({
       {errorMsg ? (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
           {errorMsg}
+        </div>
+      ) : null}
+
+      {showSaved ? (
+        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">
+          Template saved. The list below is up to date.
+        </div>
+      ) : null}
+
+      {showDeleted ? (
+        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">
+          Template deleted.
         </div>
       ) : null}
 
@@ -65,7 +89,7 @@ export default async function OnboardingTemplatesPage({
             />
           </div>
           <label className="flex items-center gap-2 text-sm text-gray-900">
-            <input type="checkbox" name="is_default" />
+            <input type="checkbox" name="is_default" value="on" />
             Set as default template
           </label>
           <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white">
@@ -112,7 +136,7 @@ export default async function OnboardingTemplatesPage({
                   />
                 </div>
                 <label className="flex items-center gap-2 text-sm text-gray-900">
-                  <input type="checkbox" name="is_default" defaultChecked={t.is_default} />
+                  <input type="checkbox" name="is_default" value="on" defaultChecked={t.is_default} />
                   Default template
                 </label>
                 <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white">
