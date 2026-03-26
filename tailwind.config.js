@@ -35,13 +35,20 @@ module.exports = {
               bg: '#f7f7f5',
               text: '#2c2c2a',
               border: '#e0dfd8',
+              /** Primary Bond brand blue (kicker, step pills, primary actions) */
+              brand: '#0d4774',
+              'brand-light': '#e8eef4',
+              /** Gold accent (highlights, %, focus) */
+              accent: '#f7b500',
+              'accent-muted': '#fef6e0',
               green: '#22c55e',
               'green-dark': '#16a34a',
               'green-light': '#86efac',
               'green-bg': '#f0fdf4',
+              /** @deprecated prefer bond-brand / bond-accent */
               orange: '#eb6d4a',
-              blue: '#1a6ef5',
-              'blue-bg': '#f0f5ff',
+              blue: '#0d4774',
+              'blue-bg': '#e8eef4',
               muted: '#888888',
               'muted-dark': '#555555',
               'note-bg': '#fffbeb',

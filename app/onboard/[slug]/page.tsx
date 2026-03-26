@@ -51,10 +51,13 @@ export default async function OnboardSlugPage({ params }: Props) {
 
   const steps = template.steps as TemplateStep[];
 
+  const logoUrl = (org as { logo_url?: string | null }).logo_url ?? null;
+
   return (
     <OnboardingChecklist
       orgId={org.id}
       orgName={org.name}
+      logoUrl={logoUrl}
       steps={steps}
       initialProgress={progressRows ?? []}
     />

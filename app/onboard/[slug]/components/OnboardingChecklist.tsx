@@ -1,10 +1,14 @@
 'use client';
 
+import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
+import { BOND_LOGO_URL } from '@/lib/onboarding/bond-brand';
 import type { StepProgress, TemplateStep } from '@/lib/onboarding/types';
 import { fireOnboardingConfetti, getStepEncouragement } from '@/lib/onboarding/encouragements';
 import { getOnboardingBrowserClient } from '@/lib/onboarding/supabase-browser';
 import { toggleStep } from '../actions';
+
+const BONDY_CELEBRATION = '/images/onboarding/bondy-celebration.png';
 
 const GOALS = [
   'Payments and banking are connected so you can collect revenue.',
@@ -18,6 +22,8 @@ const GOALS = [
 type Props = {
   orgId: string;
   orgName: string;
+  /** Public image URL from org settings (optional) */
+  logoUrl?: string | null;
   steps: TemplateStep[];
   initialProgress: StepProgress[];
 };
@@ -46,6 +52,7 @@ function CheckIcon() {
 export function OnboardingChecklist({
   orgId,
   orgName,
+  logoUrl,
   steps,
   initialProgress,
 }: Props) {
@@ -153,8 +160,6 @@ export function OnboardingChecklist({
       const prev = progressMap.get(stepIndex);
       if (!prev) return;
 
-      const oldRequiredDone = requiredIndices.filter((i) => progressMap.get(i)?.completed).length;
-
       const optimistic: StepProgress = {
         ...prev,
         completed: nextVal,
@@ -164,6 +169,8 @@ export function OnboardingChecklist({
 
       const nextMap = new Map(progressMap);
       nextMap.set(stepIndex, optimistic);
+
+      const oldRequiredDone = requiredIndices.filter((i) => progressMap.get(i)?.completed).length;
       const newRequiredDone = requiredIndices.filter((i) => nextMap.get(i)?.completed).length;
 
       if (nextVal) {
@@ -178,7 +185,6 @@ export function OnboardingChecklist({
             void fireOnboardingConfetti();
           });
         }
-
         let nextOpen: number | null = null;
         for (let j = stepIndex + 1; j < steps.length; j++) {
           if (!nextMap.get(j)?.completed) {
@@ -218,12 +224,79 @@ export function OnboardingChecklist({
     [orgId, progressMap, requiredIndices, steps],
   );
 
+  const logoPair = (
+    <>
+      <div className="flex h-14 max-w-[200px] items-center justify-center sm:h-16 sm:max-w-[220px]">
+        <Image
+          src={BOND_LOGO_URL}
+          alt="Bond Sports"
+          width={220}
+          height={64}
+          className="h-full w-auto max-w-full object-contain object-center"
+          unoptimized
+        />
+      </div>
+      {logoUrl ? (
+        <>
+          <span className="text-lg font-light text-bond-border sm:text-xl" aria-hidden>
+            ·
+          </span>
+          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-bond-border bg-white shadow-sm sm:h-16 sm:w-16">
+            <Image
+              src={logoUrl}
+              alt={`${orgName} logo`}
+              width={64}
+              height={64}
+              className="h-full w-full object-cover"
+              unoptimized
+            />
+          </div>
+        </>
+      ) : null}
+    </>
+  );
+
+  const logoPairSticky = (
+    <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
+      <div className="flex h-9 max-w-[100px] items-center sm:h-10 sm:max-w-[110px]">
+        <Image
+          src={BOND_LOGO_URL}
+          alt=""
+          width={110}
+          height={32}
+          className="h-full w-auto max-w-full object-contain"
+          unoptimized
+        />
+      </div>
+      {logoUrl ? (
+        <>
+          <span className="text-bond-border/70" aria-hidden>
+            ·
+          </span>
+          <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-bond-border/80 bg-white shadow-sm sm:h-10 sm:w-10">
+            <Image
+              src={logoUrl}
+              alt={`${orgName} logo`}
+              width={40}
+              height={40}
+              className="h-full w-full object-cover"
+              unoptimized
+            />
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+
+  const requiredTotal = requiredIndices.length;
+
   return (
-    <div className="relative mx-auto max-w-[min(100%,760px)] px-4 pb-16 pt-8 sm:px-6">
-      <header className="mb-8 text-center">
-        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-bond-orange">BOND SPORTS</p>
+    <div className="relative mx-auto max-w-[min(100%,780px)] px-4 pb-16 pt-8 sm:px-6">
+      <header className="mb-6 text-center sm:mb-8">
+        <div className="mb-5 flex flex-wrap items-center justify-center gap-3 sm:mb-6 sm:gap-5">{logoPair}</div>
+        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-bond-brand">BOND SPORTS</p>
         <h1 className="text-[1.65rem] font-semibold leading-tight text-bond-text sm:text-[1.85rem]">
-          Welcome to Bond Sports 🎉
+          Welcome to Bond Sports
         </h1>
         <p className="mt-3 text-base leading-relaxed text-bond-muted-dark sm:text-[17px]">
           Hi {orgName} — this checklist walks through the core setup steps so you can go live with confidence.
@@ -236,16 +309,41 @@ export function OnboardingChecklist({
             ✅ {totalDone} of {steps.length} steps complete
           </span>
         </div>
-        <div className="mt-4 h-[6px] w-full overflow-hidden rounded-[99px] bg-[#e5e4e0]">
-          <div
-            className="h-full rounded-[99px] bg-bond-green transition-[width] duration-300 ease-out"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
       </header>
 
+      <div className="sticky top-0 z-40 -mx-4 mb-8 border-b border-bond-border/90 border-t-[3px] border-t-bond-accent bg-bond-bg/95 px-4 py-3.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] backdrop-blur-md sm:-mx-6 sm:mb-10 sm:px-6 sm:py-4">
+        <div className="mx-auto flex max-w-[min(100%,780px)] items-center gap-3 sm:gap-4">
+          {logoPairSticky}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="truncate text-[15px] font-semibold text-bond-text sm:text-base">Your progress</span>
+              <span className="shrink-0 tabular-nums text-xl font-bold tracking-tight text-bond-accent sm:text-2xl">
+                {pct}%
+              </span>
+            </div>
+            <div className="mt-2.5 h-2.5 w-full overflow-hidden rounded-full bg-[#e5e4e0] shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)]">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#0a3558] via-bond-brand to-[#135a8a] transition-[width] duration-300 ease-out"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <p className="mt-2 text-[13px] text-bond-muted-dark sm:text-sm">
+              {requiredTotal > 0 ? (
+                <>
+                  {requiredDone} of {requiredTotal} required steps
+                </>
+              ) : (
+                <>No required steps in this template</>
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <section className="mb-10 rounded-[12px] border border-bond-border bg-white p-5 sm:p-6">
-        <h2 className="text-[15px] font-semibold text-bond-text">Goals for this setup</h2>
+        <h2 className="border-l-[3px] border-bond-accent pl-3 text-[15px] font-semibold text-bond-text">
+          Goals for this setup
+        </h2>
         <ul className="mt-3 space-y-2 text-[15px] leading-relaxed text-bond-muted-dark sm:text-base">
           {GOALS.map((g) => (
             <li key={g} className="flex gap-2">
@@ -287,7 +385,7 @@ export function OnboardingChecklist({
                 </button>
                 <button type="button" onClick={() => toggleExpanded(idx)} className="min-w-0 flex-1 text-left">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-[999px] bg-bond-orange px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                    <span className="rounded-[999px] bg-bond-brand px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
                       Step {idx + 1}
                     </span>
                     {showOptional ? (
@@ -336,7 +434,7 @@ export function OnboardingChecklist({
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 rounded-[7px] bg-bond-blue-bg px-3 py-2 text-[15px] font-medium text-bond-blue transition hover:opacity-90 sm:text-base"
+                        className="inline-flex items-center gap-2 rounded-[7px] bg-bond-brand-light px-3 py-2 text-[15px] font-medium text-bond-brand transition hover:opacity-90 sm:text-base"
                       >
                         <span>{link.icon}</span>
                         {link.label}
@@ -356,11 +454,21 @@ export function OnboardingChecklist({
 
       {requiredComplete ? (
         <section className="mt-10 rounded-[12px] border border-bond-green-light bg-bond-green-bg p-6 text-center sm:p-8">
+          <div className="mx-auto mb-4 flex justify-center">
+            <Image
+              src={BONDY_CELEBRATION}
+              alt=""
+              width={200}
+              height={200}
+              className="h-40 w-auto max-w-full object-contain sm:h-48"
+              priority
+            />
+          </div>
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bond-green-dark">Congratulations</p>
           <h2 className="mt-2 text-xl font-semibold text-bond-green-dark">You&apos;re all set</h2>
           <p className="mt-2 text-[15px] text-bond-muted-dark sm:text-base">
-            Required onboarding is complete — confetti deserved. Your Bond team has been notified. Optional steps are
-            still above if you want to polish further.
+            Required onboarding is complete. Your Bond team has been notified. Optional steps are still above if you
+            want to polish further.
           </p>
         </section>
       ) : null}
@@ -371,11 +479,17 @@ export function OnboardingChecklist({
           role="status"
           aria-live="polite"
         >
-          <div className="pointer-events-auto w-full max-w-[min(100%,22rem)] animate-slide-up rounded-[12px] border border-bond-border bg-white px-4 py-3.5 text-[15px] leading-snug text-bond-text shadow-lg motion-reduce:animate-none sm:max-w-[20rem] sm:text-base">
-            <span className="mr-1.5 inline-block text-lg leading-none" aria-hidden>
-              ✨
-            </span>
-            <span className="text-bond-muted-dark">{encouragement}</span>
+          <div className="pointer-events-auto flex w-full max-w-[min(100%,24rem)] animate-slide-up gap-3 rounded-[12px] border border-bond-border border-l-[4px] border-l-bond-accent bg-white px-3 py-3 text-[15px] leading-snug text-bond-text shadow-lg motion-reduce:animate-none sm:max-w-[22rem] sm:gap-3.5 sm:px-4 sm:py-3.5 sm:text-base">
+            <div className="relative h-16 w-16 shrink-0 sm:h-[4.5rem] sm:w-[4.5rem]">
+              <Image
+                src={BONDY_CELEBRATION}
+                alt=""
+                fill
+                className="object-contain object-bottom"
+                sizes="(max-width: 640px) 64px, 72px"
+              />
+            </div>
+            <p className="min-w-0 flex-1 self-center text-bond-muted-dark">{encouragement}</p>
           </div>
         </div>
       ) : null}
@@ -384,7 +498,7 @@ export function OnboardingChecklist({
         <p>Questions? Reach out to your Bond onboarding contact or visit</p>
         <a
           href="https://help.bondsports.co"
-          className="mt-1 inline-block text-bond-blue underline"
+          className="mt-1 inline-block font-medium text-bond-brand underline decoration-bond-accent underline-offset-2"
           target="_blank"
           rel="noopener noreferrer"
         >

@@ -38,7 +38,7 @@ export function PinGate({ slug }: Props) {
             autoComplete="one-time-code"
             value={pin}
             onChange={(e) => setPin(e.target.value)}
-            className="w-full rounded-[8px] border border-bond-border px-3 py-2 text-bond-text outline-none focus:border-bond-blue"
+            className="w-full rounded-[8px] border border-bond-border px-3 py-2 text-bond-text outline-none ring-bond-accent/30 focus:border-bond-brand focus:ring-2"
             placeholder="PIN"
           />
           {error ? (
@@ -49,7 +49,7 @@ export function PinGate({ slug }: Props) {
           <button
             type="submit"
             disabled={pending || !pin.trim()}
-            className="rounded-[8px] bg-bond-orange px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-[8px] bg-bond-brand px-4 py-2 text-sm font-medium text-white shadow-sm ring-2 ring-bond-accent/25 transition hover:brightness-110 disabled:opacity-50"
           >
             {pending ? 'Checking…' : 'Continue'}
           </button>

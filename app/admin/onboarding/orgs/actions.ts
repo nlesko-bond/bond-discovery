@@ -114,12 +114,27 @@ export async function updateOrg(
   const assignedRep = String(formData.get('assigned_rep') ?? '');
   const pinRaw = String(formData.get('pin') ?? '').trim();
   const status = String(formData.get('status') ?? 'active');
+  const logoUrlRaw = String(formData.get('logo_url') ?? '').trim();
 
   if (!name || !slug) {
     return { success: false, error: 'Name and slug are required.' };
   }
 
-  const { data: existing } = await admin.from('orgs').select('pin').eq('id', orgId).single();
+  let logo_url: string | null = null;
+  if (logoUrlRaw) {
+    let parsed: URL;
+    try {
+      parsed = new URL(logoUrlRaw);
+    } catch {
+      return { success: false, error: 'Logo URL must be a valid URL.' };
+    }
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return { success: false, error: 'Logo URL must use http:// or https://' };
+    }
+    logo_url = parsed.toString();
+  }
+
+  const { data: existing } = await admin.from('orgs').select('pin, slug').eq('id', orgId).single();
 
   const pin = pinRaw === '' ? existing?.pin ?? null : pinRaw;
 
@@ -134,6 +149,7 @@ export async function updateOrg(
       assigned_rep: assignedRep || null,
       pin,
       status,
+      logo_url,
     })
     .eq('id', orgId);
 
@@ -144,6 +160,12 @@ export async function updateOrg(
   revalidatePath(`${ONBOARDING_BASE}/orgs/${orgId}`);
   revalidatePath(`${ONBOARDING_BASE}/orgs`);
   revalidatePath(`${ONBOARDING_BASE}/dashboard`);
+  if (existing?.slug) {
+    revalidatePath(`/onboard/${existing.slug}`);
+  }
+  if (slug !== existing?.slug) {
+    revalidatePath(`/onboard/${slug}`);
+  }
 
   return { success: true };
 }

@@ -32,6 +32,8 @@ export interface Org {
   pin: string | null;
   template_id: string | null;
   assigned_rep: string | null;
+  /** HTTPS URL to a logo image, shown on the public onboarding checklist */
+  logo_url?: string | null;
   status: 'active' | 'completed' | 'paused' | 'archived';
   created_at: string;
   completed_at: string | null;

@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
@@ -26,6 +27,7 @@ export default async function OnboardingOrgSettingsPage({ params, searchParams }
   const { data: staff } = await admin.from('staff').select('id, name, email').order('name');
 
   const save = saveOrgSettings.bind(null, id);
+  const logoUrl = (org as { logo_url?: string | null }).logo_url ?? null;
 
   return (
     <div className="mx-auto max-w-xl space-y-8">
@@ -66,6 +68,39 @@ export default async function OnboardingOrgSettingsPage({ params, searchParams }
             defaultValue={org.slug}
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
           />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-900" htmlFor="logo_url">
+            Logo image URL (optional)
+          </label>
+          <input
+            id="logo_url"
+            name="logo_url"
+            type="url"
+            inputMode="url"
+            autoComplete="off"
+            placeholder="https://example.com/logo.png"
+            defaultValue={logoUrl ?? ''}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Direct HTTPS link to a PNG, JPG, or SVG. Shown on the public onboarding checklist. Leave empty to hide.
+          </p>
+          {logoUrl ? (
+            <div className="mt-3 flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3">
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-gray-200 bg-white">
+                <Image
+                  src={logoUrl}
+                  alt=""
+                  width={48}
+                  height={48}
+                  className="h-full w-full object-cover"
+                  unoptimized
+                />
+              </div>
+              <span className="text-xs text-gray-600">How it will appear on the checklist</span>
+            </div>
+          ) : null}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-900" htmlFor="contact_name">
