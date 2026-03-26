@@ -127,6 +127,11 @@
   }
 }
 
+/* Staff form responses: per-participant print summary row (hidden on screen) */
+.form-responses-print-participant-detail {
+  display: none;
+}
+
 /* Print styles */
 @media print {
   .form-responses-no-print {
@@ -178,6 +183,24 @@
 
   .form-responses-print-table tbody tr {
     break-inside: avoid;
+  }
+
+  .form-responses-print-participant-detail {
+    display: table-row !important;
+  }
+
+  .form-responses-print-participant-detail > td {
+    border-top: 2px solid #64748b !important;
+    padding: 10px 12px !important;
+    vertical-align: top !important;
+    background: #f1f5f9 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .form-responses-print-row-group {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
   }
 
   /* Sort controls: show as plain text in print */

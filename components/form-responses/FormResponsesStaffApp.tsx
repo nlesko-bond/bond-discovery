@@ -19,6 +19,56 @@ import {
 
 const STAFF_STATUS_ORDER: StaffInquiryStatus[] = ['pending', 'in_progress', 'resolved'];
 
+function answerTextForPrint(
+  cell: { display?: string; linkUrl?: string; checkmark?: boolean } | undefined
+): string {
+  if (!cell) return '';
+  if (cell.checkmark) return 'Yes';
+  if (cell.linkUrl) return (cell.display?.trim() || cell.linkUrl).trim();
+  return (cell.display ?? '').trim();
+}
+
+function ParticipantPrintDetail({
+  row,
+  columns,
+}: {
+  row: FormResponseRow;
+  columns: QuestionColumnMeta[];
+}) {
+  const u = row.user;
+  const name = [u?.firstName, u?.lastName].filter(Boolean).join(' ') || '—';
+  const rowStatus = (row.staffStatus ?? 'pending') as StaffInquiryStatus;
+  return (
+    <div className="space-y-3 text-slate-900 print:py-1">
+      <div className="flex flex-col gap-1 border-b border-slate-200 pb-2 print:border-slate-400">
+        <p className="text-sm font-bold text-slate-900">{name}</p>
+        <p className="text-xs text-slate-600 break-all">
+          {[u?.email, u?.phone].filter(Boolean).join(' · ') || '—'}
+        </p>
+        <p className="text-xs text-slate-600">
+          Submitted {new Date(row.createdAt).toLocaleString()} · Inquiry:{' '}
+          {STAFF_INQUIRY_STATUS_LABELS[rowStatus]}
+        </p>
+      </div>
+      <dl className="grid gap-3 sm:grid-cols-2 print:grid-cols-2 print:gap-2">
+        {columns.map((c) => {
+          const cell = row.answers[c.id];
+          const label = c.question?.trim() || `Question ${c.id}`;
+          const text = answerTextForPrint(cell);
+          return (
+            <div key={c.id} className="min-w-0">
+              <dt className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-0.5 print:text-slate-600">
+                {label}
+              </dt>
+              <dd className="text-xs text-slate-800 leading-snug break-words">{text || '—'}</dd>
+            </div>
+          );
+        })}
+      </dl>
+    </div>
+  );
+}
+
 /** Default: hide Done. All: show every row. Completed only: find mistaken Done marks. */
 type StatusViewFilter = 'active' | 'all' | 'completed_only';
 
@@ -729,9 +779,16 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
       </main>
 
       <div className="max-w-[1600px] mx-auto px-4 pb-12">
+        <p className="form-responses-no-print hidden md:block text-xs text-slate-500 mb-2 leading-snug">
+          Tip: On desktop, Status, Submitted, and Participant stay pinned when you scroll sideways to read
+          answers.
+        </p>
         <div
           ref={tableScrollRef}
-          className="form-responses-print-scroll rounded-xl border border-slate-200/90 bg-white shadow-md shadow-slate-200/40 overflow-x-auto max-h-[min(75vh,calc(100dvh-13rem))] overflow-y-auto print:max-h-none print:overflow-visible"
+          tabIndex={0}
+          role="region"
+          aria-label="Form responses table. Use arrow keys or swipe to scroll horizontally."
+          className="form-responses-print-scroll rounded-xl border border-slate-200/90 bg-white shadow-md shadow-slate-200/40 overflow-x-auto max-h-[min(75vh,calc(100dvh-13rem))] overflow-y-auto print:max-h-none print:overflow-visible focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/80 focus-visible:ring-offset-2"
         >
           <div className="hidden print:block px-3 pt-3 pb-1 print:border-b print:border-slate-300">
             <p className="text-sm font-bold text-slate-900">
@@ -751,12 +808,12 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
               </p>
             ) : null}
           </div>
-          <table className="form-responses-print-table min-w-max w-full text-sm print:text-xs border-collapse">
+          <table className="form-responses-print-table min-w-max w-full text-sm print:text-xs border-collapse isolate">
             <thead>
               <tr>
                 <th
                   scope="col"
-                  className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[9.5rem] min-w-[8.5rem] sticky top-0 z-30 print:static"
+                  className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[9.5rem] min-w-[8.5rem] box-border shrink-0 sticky top-0 z-30 print:static md:left-0 md:z-[41] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.08)]"
                   style={{
                     backgroundColor: stickyHeaderBg,
                     boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
@@ -772,7 +829,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                 </th>
                 <th
                   scope="col"
-                  className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[9rem] min-w-[8rem] sticky top-0 z-30 print:static"
+                  className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[9rem] min-w-[8rem] box-border shrink-0 sticky top-0 z-30 print:static md:left-[9.5rem] md:z-[42] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.08)]"
                   style={{
                     backgroundColor: stickyHeaderBg,
                     boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
@@ -788,7 +845,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                 </th>
                 <th
                   scope="col"
-                  className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle min-w-[9rem] max-w-[11rem] sticky top-0 z-30 print:static"
+                  className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[11rem] min-w-[9rem] max-w-[11rem] box-border shrink-0 sticky top-0 z-30 print:static md:left-[18.5rem] md:z-[43] md:border-r md:border-slate-300/90 md:shadow-[3px_0_10px_-4px_rgba(15,23,42,0.1)]"
                   style={{
                     backgroundColor: stickyHeaderBg,
                     boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
@@ -808,7 +865,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                   <th
                     key={c.id}
                     scope="col"
-                    className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle min-w-[8.5rem] max-w-[13rem] w-[11rem] sticky top-0 z-30 print:static"
+                    className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle min-w-[8.5rem] max-w-[13rem] w-[11rem] sticky top-0 z-20 print:static"
                     style={{
                       backgroundColor: stickyHeaderBg,
                       boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
@@ -828,98 +885,116 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                 ))}
               </tr>
             </thead>
-          <tbody>
-            {rowsLoading && accumulatedRows.length === 0 ? (
+          {rowsLoading && accumulatedRows.length === 0 ? (
+            <tbody>
               <tr>
                 <td colSpan={3 + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
                   Loading…
                 </td>
               </tr>
-            ) : accumulatedRows.length === 0 ? (
+            </tbody>
+          ) : accumulatedRows.length === 0 ? (
+            <tbody>
               <tr>
                 <td colSpan={3 + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
                   No responses in this range.
                 </td>
               </tr>
-            ) : displayRows.length === 0 ? (
+            </tbody>
+          ) : displayRows.length === 0 ? (
+            <tbody>
               <tr>
                 <td colSpan={3 + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
                   No loaded rows match your filters. Clear search, switch Inquiry view (All / Completed
                   only), or load more responses.
                 </td>
               </tr>
-            ) : (
-              displayRows.map((row) => {
-                const rowStatus = (row.staffStatus ?? 'pending') as StaffInquiryStatus;
-                return (
-                <tr key={row.answerTitleId} className="border-t border-slate-100 hover:bg-slate-50/90">
-                  <td className="p-2 align-top text-slate-800 min-w-[8.5rem] max-w-[11rem]">
-                    <label className="sr-only" htmlFor={`status-${row.answerTitleId}`}>
-                      Status
-                    </label>
-                    <select
-                      id={`status-${row.answerTitleId}`}
-                      value={rowStatus}
-                      disabled={savingStatusId === row.answerTitleId}
-                      onChange={(e) =>
-                        void setRowStatus(row.answerTitleId, e.target.value as StaffInquiryStatus)
-                      }
-                      className={`w-full max-w-[11rem] rounded-xl px-2.5 py-2 text-xs sm:text-sm font-semibold disabled:opacity-60 ${STATUS_SELECT_CLASSES[rowStatus]}`}
-                      style={{ accentColor: b.accentColor }}
+            </tbody>
+          ) : (
+            displayRows.map((row) => {
+              const rowStatus = (row.staffStatus ?? 'pending') as StaffInquiryStatus;
+              const colSpan = 3 + Math.max(visibleColumns.length, 1);
+              return (
+                <tbody key={row.answerTitleId} className="form-responses-print-row-group">
+                  <tr className="group border-t border-slate-100 hover:bg-slate-50/90">
+                    <td
+                      className={`p-2 align-top text-slate-800 w-[9.5rem] min-w-[8.5rem] max-w-[9.5rem] box-border shrink-0 bg-white md:sticky md:left-0 md:z-[15] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.06)] md:group-hover:bg-slate-50/90 print:static print:bg-transparent`}
                     >
-                      {STAFF_STATUS_ORDER.map((s) => (
-                        <option key={s} value={s}>
-                          {STAFF_INQUIRY_STATUS_LABELS[s]}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="p-3 align-top text-slate-600 whitespace-nowrap text-xs sm:text-sm">
-                    {new Date(row.createdAt).toLocaleString()}
-                  </td>
-                  <td className="p-3 align-top text-slate-800 min-w-[9rem] max-w-[11rem] break-words text-sm">
-                    {row.user ? (
-                      <div>
-                        <div className="font-medium">
-                          {[row.user.firstName, row.user.lastName].filter(Boolean).join(' ') || '—'}
-                        </div>
-                        <div className="text-xs text-slate-500 break-all">{row.user.email || ''}</div>
-                      </div>
-                    ) : (
-                      '—'
-                    )}
-                  </td>
-                  {visibleColumns.map((c) => {
-                    const cell = row.answers[c.id];
-                    return (
-                      <td
-                        key={c.id}
-                        className="p-3 align-top text-slate-800 max-w-[13rem] w-[11rem] break-words text-sm"
+                      <label className="sr-only" htmlFor={`status-${row.answerTitleId}`}>
+                        Status
+                      </label>
+                      <select
+                        id={`status-${row.answerTitleId}`}
+                        value={rowStatus}
+                        disabled={savingStatusId === row.answerTitleId}
+                        onChange={(e) =>
+                          void setRowStatus(row.answerTitleId, e.target.value as StaffInquiryStatus)
+                        }
+                        className={`w-full max-w-[11rem] rounded-xl px-2.5 py-2 text-xs sm:text-sm font-semibold disabled:opacity-60 ${STATUS_SELECT_CLASSES[rowStatus]}`}
+                        style={{ accentColor: b.accentColor }}
                       >
-                        {cell?.checkmark ? (
-                          <span className="text-lg text-emerald-700" title="Yes" aria-label="Yes">
-                            ✓
-                          </span>
-                        ) : cell?.linkUrl ? (
-                          <a
-                            href={cell.linkUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 underline"
-                          >
-                            {cell.display || 'Open'}
-                          </a>
-                        ) : (
-                          cell?.display || ''
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
+                        {STAFF_STATUS_ORDER.map((s) => (
+                          <option key={s} value={s}>
+                            {STAFF_INQUIRY_STATUS_LABELS[s]}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td
+                      className="p-3 align-top text-slate-600 whitespace-nowrap text-xs sm:text-sm w-[9rem] min-w-[8rem] max-w-[9rem] box-border shrink-0 bg-white md:sticky md:left-[9.5rem] md:z-[16] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.06)] md:group-hover:bg-slate-50/90 print:static print:bg-transparent"
+                    >
+                      {new Date(row.createdAt).toLocaleString()}
+                    </td>
+                    <td
+                      className="p-3 align-top text-slate-800 w-[11rem] min-w-[9rem] max-w-[11rem] box-border shrink-0 break-words text-sm bg-white md:sticky md:left-[18.5rem] md:z-[17] md:border-r md:border-slate-300/90 md:shadow-[3px_0_10px_-4px_rgba(15,23,42,0.08)] md:group-hover:bg-slate-50/90 print:static print:bg-transparent"
+                    >
+                      {row.user ? (
+                        <div>
+                          <div className="font-medium">
+                            {[row.user.firstName, row.user.lastName].filter(Boolean).join(' ') || '—'}
+                          </div>
+                          <div className="text-xs text-slate-500 break-all">{row.user.email || ''}</div>
+                        </div>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    {visibleColumns.map((c) => {
+                      const cell = row.answers[c.id];
+                      return (
+                        <td
+                          key={c.id}
+                          className="p-3 align-top text-slate-800 max-w-[13rem] w-[11rem] break-words text-sm"
+                        >
+                          {cell?.checkmark ? (
+                            <span className="text-lg text-emerald-700" title="Yes" aria-label="Yes">
+                              ✓
+                            </span>
+                          ) : cell?.linkUrl ? (
+                            <a
+                              href={cell.linkUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 underline"
+                            >
+                              {cell.display || 'Open'}
+                            </a>
+                          ) : (
+                            cell?.display || ''
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                  <tr className="form-responses-print-participant-detail" aria-hidden="true">
+                    <td colSpan={colSpan} className="p-0 border-0 print:p-3 print:bg-slate-50/80">
+                      <ParticipantPrintDetail row={row} columns={visibleColumns} />
+                    </td>
+                  </tr>
+                </tbody>
               );
-              })
-            )}
-          </tbody>
+            })
+          )}
         </table>
         </div>
         {cursor ? (
