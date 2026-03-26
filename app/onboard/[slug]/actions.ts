@@ -37,7 +37,7 @@ export async function toggleStep(
 
   const { data: orgRow } = await admin
     .from('orgs')
-    .select('template_id, status')
+    .select('template_id, status, slug')
     .eq('id', orgId)
     .single();
 
@@ -84,6 +84,9 @@ export async function toggleStep(
   revalidatePath(`${ONBOARDING_BASE}/dashboard`);
   revalidatePath(`${ONBOARDING_BASE}/orgs`);
   revalidatePath(`${ONBOARDING_BASE}/orgs/${orgId}`);
+  if (orgRow?.slug) {
+    revalidatePath(`/onboard/${orgRow.slug}`);
+  }
 
   return { success: true as const, allRequiredDone: requiredComplete };
 }

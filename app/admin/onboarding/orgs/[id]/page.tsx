@@ -8,6 +8,7 @@ import {
   OrgDetailTitleRow,
   OrgProgressSection,
 } from './OrgDetailLive';
+import { DeleteOrgButton } from './DeleteOrgButton';
 import { OrgActions } from './OrgActions';
 
 export const dynamic = 'force-dynamic';
@@ -96,6 +97,16 @@ export default async function OnboardingOrgDetailPage({ params, searchParams }: 
           <h2 className="text-lg font-semibold text-gray-900">Actions</h2>
           <div className="mt-3">
             <OrgActions orgId={org.id} currentStatus={org.status} />
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-red-200 bg-red-50/50 p-4">
+          <h2 className="text-sm font-semibold text-red-900">Danger zone</h2>
+          <p className="mt-1 text-sm text-red-800/90">
+            Permanently remove this organization and all related onboarding data. There is no undo.
+          </p>
+          <div className="mt-3">
+            <DeleteOrgButton orgId={org.id} orgName={org.name} />
           </div>
         </div>
 

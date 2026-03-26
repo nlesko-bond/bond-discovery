@@ -189,5 +189,21 @@ export async function setOrgStatus(
   if (error) return { success: false, error: error.message };
   revalidatePath(`${ONBOARDING_BASE}/orgs/${orgId}`);
   revalidatePath(`${ONBOARDING_BASE}/orgs`);
+  revalidatePath(`${ONBOARDING_BASE}/dashboard`);
+  return { success: true };
+}
+
+export async function deleteOrg(
+  orgId: string,
+): Promise<{ success: boolean; error?: string }> {
+  const admin = getSupabaseAdmin();
+  const { data: org } = await admin.from('orgs').select('slug').eq('id', orgId).maybeSingle();
+  const { error } = await admin.from('orgs').delete().eq('id', orgId);
+  if (error) return { success: false, error: error.message };
+  revalidatePath(`${ONBOARDING_BASE}/orgs`);
+  revalidatePath(`${ONBOARDING_BASE}/dashboard`);
+  if (org?.slug) {
+    revalidatePath(`/onboard/${org.slug}`);
+  }
   return { success: true };
 }

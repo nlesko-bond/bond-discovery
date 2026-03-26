@@ -15,8 +15,19 @@ import {
   ClipboardList,
   ListChecks
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { AdminProviders } from './AdminProviders';
 import { AdminAuthGuard } from './AdminAuthGuard';
+
+function isNavLinkActive(pathname: string, href: string, activePrefix?: string): boolean {
+  if (activePrefix) {
+    return pathname === activePrefix || pathname.startsWith(`${activePrefix}/`);
+  }
+  if (href === '/admin') {
+    return pathname === '/admin' || pathname === '/admin/';
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
@@ -69,30 +80,35 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         {/* Sidebar */}
         <aside className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-64px)] sticky top-16 hidden md:block">
           <nav className="p-4 space-y-1">
-            <NavLink href="/admin" icon={LayoutDashboard}>
+            <NavLink pathname={pathname} href="/admin" icon={LayoutDashboard}>
               Dashboard
             </NavLink>
-            <NavLink href="/admin/partners" icon={Users}>
+            <NavLink pathname={pathname} href="/admin/partners" icon={Users}>
               Partner Groups
             </NavLink>
-            <NavLink href="/admin/pages" icon={FileText}>
+            <NavLink pathname={pathname} href="/admin/pages" icon={FileText}>
               Discovery Pages
             </NavLink>
-            <NavLink href="/admin/memberships" icon={CreditCard}>
+            <NavLink pathname={pathname} href="/admin/memberships" icon={CreditCard}>
               Memberships
             </NavLink>
-            <NavLink href="/admin/form-pages" icon={ClipboardList}>
+            <NavLink pathname={pathname} href="/admin/form-pages" icon={ClipboardList}>
               Form responses
             </NavLink>
-            <NavLink href="/admin/onboarding/dashboard" icon={ListChecks}>
+            <NavLink
+              pathname={pathname}
+              href="/admin/onboarding/dashboard"
+              activePrefix="/admin/onboarding"
+              icon={ListChecks}
+            >
               Onboarding
             </NavLink>
-            <NavLink href="/admin/analytics" icon={BarChart3}>
+            <NavLink pathname={pathname} href="/admin/analytics" icon={BarChart3}>
               Analytics
             </NavLink>
-            
+
             <div className="pt-4 mt-4 border-t border-gray-200">
-              <NavLink href="/admin/help" icon={HelpCircle}>
+              <NavLink pathname={pathname} href="/admin/help" icon={HelpCircle}>
                 Help & Docs
               </NavLink>
             </div>
@@ -124,22 +140,33 @@ export default function AdminLayout({
   );
 }
 
-function NavLink({ 
-  href, 
-  icon: Icon, 
-  children 
-}: { 
-  href: string; 
-  icon: React.ComponentType<any>;
+function NavLink({
+  pathname,
+  href,
+  activePrefix,
+  icon: Icon,
+  children,
+}: {
+  pathname: string;
+  href: string;
+  activePrefix?: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
   children: React.ReactNode;
 }) {
+  const active = isNavLinkActive(pathname, href, activePrefix);
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-colors"
+      aria-current={active ? 'page' : undefined}
+      className={cn(
+        'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors',
+        active
+          ? 'bg-gray-100 text-gray-900 ring-1 ring-inset ring-gray-900/10 shadow-sm'
+          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900',
+      )}
     >
-      <Icon size={20} className="text-gray-500" />
-      <span className="font-medium">{children}</span>
+      <Icon size={20} className={active ? 'text-gray-900' : 'text-gray-500'} />
+      <span className={cn('font-medium', active && 'font-semibold')}>{children}</span>
     </Link>
   );
 }

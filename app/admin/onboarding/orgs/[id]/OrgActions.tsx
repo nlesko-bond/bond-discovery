@@ -26,6 +26,16 @@ export function OrgActions({
 
   return (
     <div className="flex flex-wrap gap-2">
+      {currentStatusLive === 'archived' ? (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => void run('active')}
+          className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+        >
+          Unarchive
+        </button>
+      ) : null}
       {currentStatusLive === 'paused' ? (
         <button
           type="button"
