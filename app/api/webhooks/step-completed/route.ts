@@ -10,8 +10,17 @@ type WebhookPayload = {
   old_record?: Record<string, unknown>;
 };
 
+/** Slack header `plain_text` max length */
+const SLACK_HEADER_MAX = 150;
+
 function slackEscape(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function slackHeaderPlain(text: string): string {
+  const t = text.trim();
+  if (t.length <= SLACK_HEADER_MAX) return t;
+  return `${t.slice(0, SLACK_HEADER_MAX - 1)}…`;
 }
 
 /** Slack user IDs start with U or W (e.g. U01ABC…). Returns normalized id or null. */
@@ -68,10 +77,12 @@ function buildStepCompletedBlocks(params: {
     adminLink,
   } = params;
 
+  const headerLine = slackHeaderPlain(`✅ ${orgName} · ${stepTitle}`);
+
   const blocks: unknown[] = [
     {
       type: 'header',
-      text: { type: 'plain_text', text: '✅ Onboarding step completed', emoji: true },
+      text: { type: 'plain_text', text: headerLine, emoji: true },
     },
     {
       type: 'section',
@@ -132,10 +143,12 @@ function buildAllRequiredDoneBlocks(params: {
 }): unknown[] {
   const { repName, slackMemberId, orgName, contactName, contactEmail, adminLink } = params;
 
+  const headerLine = slackHeaderPlain(`🎉 ${orgName} · all required steps complete`);
+
   return [
     {
       type: 'header',
-      text: { type: 'plain_text', text: '🎉 Required onboarding complete', emoji: true },
+      text: { type: 'plain_text', text: headerLine, emoji: true },
     },
     {
       type: 'section',

@@ -15,15 +15,16 @@ export async function toggleStep(
   const admin = getSupabaseAdmin();
   const now = completed ? new Date().toISOString() : null;
 
-  const { error } = await admin
-    .from('step_progress')
-    .update({
+  const { error } = await admin.from('step_progress').upsert(
+    {
+      org_id: orgId,
+      step_index: stepIndex,
       completed,
       completed_at: now,
       completed_by: completed ? completedBy ?? 'org' : null,
-    })
-    .eq('org_id', orgId)
-    .eq('step_index', stepIndex);
+    },
+    { onConflict: 'org_id,step_index' },
+  );
 
   if (error) throw new Error(error.message);
 

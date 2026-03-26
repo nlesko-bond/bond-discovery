@@ -52,8 +52,21 @@ export function OnboardingChecklist({
   const byIndex = useMemo(() => {
     const m = new Map<number, StepProgress>();
     initialProgress.forEach((p) => m.set(p.step_index, p));
+    for (let i = 0; i < steps.length; i++) {
+      if (!m.has(i)) {
+        m.set(i, {
+          id: '',
+          org_id: orgId,
+          step_index: i,
+          completed: false,
+          completed_at: null,
+          completed_by: null,
+          notes: null,
+        });
+      }
+    }
     return m;
-  }, [initialProgress]);
+  }, [initialProgress, steps, orgId]);
 
   const [progressMap, setProgressMap] = useState<Map<number, StepProgress>>(() => byIndex);
   const [expanded, setExpanded] = useState<Set<number>>(() => {
@@ -69,7 +82,7 @@ export function OnboardingChecklist({
 
   useEffect(() => {
     if (!encouragement) return;
-    const t = window.setTimeout(() => setEncouragement(null), 4200);
+    const t = window.setTimeout(() => setEncouragement(null), 5200);
     return () => window.clearTimeout(t);
   }, [encouragement]);
 
@@ -165,6 +178,27 @@ export function OnboardingChecklist({
             void fireOnboardingConfetti();
           });
         }
+
+        let nextOpen: number | null = null;
+        for (let j = stepIndex + 1; j < steps.length; j++) {
+          if (!nextMap.get(j)?.completed) {
+            nextOpen = j;
+            break;
+          }
+        }
+        setExpanded((prev) => {
+          const s = new Set(prev);
+          s.delete(stepIndex);
+          if (nextOpen !== null) s.add(nextOpen);
+          return s;
+        });
+        if (nextOpen !== null) {
+          queueMicrotask(() => {
+            document
+              .getElementById(`onboard-step-${nextOpen}`)
+              ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          });
+        }
       }
 
       setProgressMap(nextMap);
@@ -185,15 +219,17 @@ export function OnboardingChecklist({
   );
 
   return (
-    <div className="mx-auto max-w-[680px] px-4 pb-16 pt-8">
+    <div className="relative mx-auto max-w-[min(100%,760px)] px-4 pb-16 pt-8 sm:px-6">
       <header className="mb-8 text-center">
         <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-bond-orange">BOND SPORTS</p>
-        <h1 className="text-2xl font-semibold text-bond-text">Welcome to Bond Sports 🎉</h1>
-        <p className="mt-3 text-[15px] leading-relaxed text-bond-muted-dark">
+        <h1 className="text-[1.65rem] font-semibold leading-tight text-bond-text sm:text-[1.85rem]">
+          Welcome to Bond Sports 🎉
+        </h1>
+        <p className="mt-3 text-base leading-relaxed text-bond-muted-dark sm:text-[17px]">
           Hi {orgName} — this checklist walks through the core setup steps so you can go live with confidence.
           Work through each section in order; your Bond team sees your progress in real time.
         </p>
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-sm text-bond-muted-dark">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-[15px] text-bond-muted-dark sm:text-base">
           <span>⏱ Total time: {estimatedTotal}</span>
           <span className="text-bond-border">|</span>
           <span>
@@ -206,20 +242,11 @@ export function OnboardingChecklist({
             style={{ width: `${pct}%` }}
           />
         </div>
-        {encouragement ? (
-          <p
-            className="mt-4 animate-fade-in text-[13px] leading-snug text-bond-muted-dark motion-reduce:animate-none"
-            role="status"
-            aria-live="polite"
-          >
-            <span className="text-bond-green-dark">✓</span> {encouragement}
-          </p>
-        ) : null}
       </header>
 
-      <section className="mb-10 rounded-[12px] border border-bond-border bg-white p-5">
-        <h2 className="text-sm font-semibold text-bond-text">Goals for this setup</h2>
-        <ul className="mt-3 space-y-2 text-sm leading-relaxed text-bond-muted-dark">
+      <section className="mb-10 rounded-[12px] border border-bond-border bg-white p-5 sm:p-6">
+        <h2 className="text-[15px] font-semibold text-bond-text">Goals for this setup</h2>
+        <ul className="mt-3 space-y-2 text-[15px] leading-relaxed text-bond-muted-dark sm:text-base">
           {GOALS.map((g) => (
             <li key={g} className="flex gap-2">
               <span className="text-bond-green-dark">✓</span>
@@ -239,11 +266,12 @@ export function OnboardingChecklist({
           return (
             <div
               key={idx}
-              className={`overflow-hidden rounded-[12px] border bg-white transition-colors ${
+              id={`onboard-step-${idx}`}
+              className={`scroll-mt-4 overflow-hidden rounded-[12px] border bg-white transition-colors ${
                 done ? 'border-bond-green-light' : 'border-[0.5px] border-bond-border'
               }`}
             >
-              <div className="flex items-start gap-3 p-4">
+              <div className="flex items-start gap-3 p-4 sm:p-5">
                 <button
                   type="button"
                   className={`mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[6px] border-[1.5px] border-[#d0cec8] transition-colors ${
@@ -272,7 +300,7 @@ export function OnboardingChecklist({
                     </span>
                   </div>
                   <h3
-                    className={`mt-1 text-[17px] font-semibold leading-snug ${
+                    className={`mt-1 text-[1.05rem] font-semibold leading-snug sm:text-[1.125rem] ${
                       done ? 'text-bond-green-dark' : 'text-bond-text'
                     }`}
                   >
@@ -282,17 +310,19 @@ export function OnboardingChecklist({
               </div>
 
               {isOpen ? (
-                <div className="border-t border-bond-border px-4 pb-4 pt-0 pl-[52px]">
-                  <p className="mt-3 text-[15px] leading-relaxed text-bond-muted-dark">{step.description}</p>
+                <div className="border-t border-bond-border px-4 pb-4 pt-0 pl-[52px] sm:px-5 sm:pb-5">
+                  <p className="mt-3 text-base leading-relaxed text-bond-muted-dark sm:text-[17px]">
+                    {step.description}
+                  </p>
 
                   {step.note ? (
-                    <div className="mt-4 border-l-[3px] border-bond-note-border bg-bond-note-bg px-3 py-2 text-sm text-bond-note-text">
+                    <div className="mt-4 border-l-[3px] border-bond-note-border bg-bond-note-bg px-3 py-2 text-[15px] text-bond-note-text sm:text-base">
                       {step.note}
                     </div>
                   ) : null}
 
                   {step.checklist?.length ? (
-                    <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-bond-muted-dark">
+                    <ul className="mt-4 list-disc space-y-1 pl-5 text-[15px] text-bond-muted-dark sm:text-base">
                       {step.checklist.map((c) => (
                         <li key={c}>{c}</li>
                       ))}
@@ -306,7 +336,7 @@ export function OnboardingChecklist({
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 rounded-[7px] bg-bond-blue-bg px-3 py-2 text-sm font-medium text-bond-blue transition hover:opacity-90"
+                        className="inline-flex items-center gap-2 rounded-[7px] bg-bond-blue-bg px-3 py-2 text-[15px] font-medium text-bond-blue transition hover:opacity-90 sm:text-base"
                       >
                         <span>{link.icon}</span>
                         {link.label}
@@ -314,7 +344,7 @@ export function OnboardingChecklist({
                     ))}
                   </div>
 
-                  <div className="mt-4 rounded-[8px] bg-bond-green-bg px-3 py-2 text-sm text-bond-green-dark">
+                  <div className="mt-4 rounded-[8px] bg-bond-green-bg px-3 py-2 text-[15px] text-bond-green-dark sm:text-base">
                     <strong className="font-semibold">Done when:</strong> {step.doneWhen}
                   </div>
                 </div>
@@ -325,17 +355,32 @@ export function OnboardingChecklist({
       </div>
 
       {requiredComplete ? (
-        <section className="mt-10 rounded-[12px] border border-bond-green-light bg-bond-green-bg p-6 text-center">
+        <section className="mt-10 rounded-[12px] border border-bond-green-light bg-bond-green-bg p-6 text-center sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bond-green-dark">Congratulations</p>
-          <h2 className="mt-2 text-lg font-semibold text-bond-green-dark">You&apos;re all set</h2>
-          <p className="mt-2 text-sm text-bond-muted-dark">
+          <h2 className="mt-2 text-xl font-semibold text-bond-green-dark">You&apos;re all set</h2>
+          <p className="mt-2 text-[15px] text-bond-muted-dark sm:text-base">
             Required onboarding is complete — confetti deserved. Your Bond team has been notified. Optional steps are
             still above if you want to polish further.
           </p>
         </section>
       ) : null}
 
-      <footer className="mt-12 border-t border-bond-border pt-8 text-center text-xs text-bond-muted">
+      {encouragement ? (
+        <div
+          className="pointer-events-none fixed bottom-4 left-4 right-4 z-[100] flex justify-center sm:pointer-events-auto sm:bottom-6 sm:left-auto sm:right-6 sm:justify-end"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="pointer-events-auto w-full max-w-[min(100%,22rem)] animate-slide-up rounded-[12px] border border-bond-border bg-white px-4 py-3.5 text-[15px] leading-snug text-bond-text shadow-lg motion-reduce:animate-none sm:max-w-[20rem] sm:text-base">
+            <span className="mr-1.5 inline-block text-lg leading-none" aria-hidden>
+              ✨
+            </span>
+            <span className="text-bond-muted-dark">{encouragement}</span>
+          </div>
+        </div>
+      ) : null}
+
+      <footer className="mt-12 border-t border-bond-border pt-8 text-center text-[13px] text-bond-muted sm:text-sm">
         <p>Questions? Reach out to your Bond onboarding contact or visit</p>
         <a
           href="https://help.bondsports.co"
