@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import type { StepProgress, TemplateStep } from '@/lib/onboarding/types';
+import { fireOnboardingConfetti, getStepEncouragement } from '@/lib/onboarding/encouragements';
 import { getOnboardingBrowserClient } from '@/lib/onboarding/supabase-browser';
 import { toggleStep } from '../actions';
 
@@ -60,10 +61,17 @@ export function OnboardingChecklist({
     return new Set([firstIncomplete >= 0 ? firstIncomplete : 0]);
   });
   const [pending, startTransition] = useTransition();
+  const [encouragement, setEncouragement] = useState<string | null>(null);
 
   useEffect(() => {
     setProgressMap(byIndex);
   }, [byIndex]);
+
+  useEffect(() => {
+    if (!encouragement) return;
+    const t = window.setTimeout(() => setEncouragement(null), 4200);
+    return () => window.clearTimeout(t);
+  }, [encouragement]);
 
   const supabase = useMemo(() => getOnboardingBrowserClient(), []);
 
@@ -132,6 +140,8 @@ export function OnboardingChecklist({
       const prev = progressMap.get(stepIndex);
       if (!prev) return;
 
+      const oldRequiredDone = requiredIndices.filter((i) => progressMap.get(i)?.completed).length;
+
       const optimistic: StepProgress = {
         ...prev,
         completed: nextVal,
@@ -139,11 +149,25 @@ export function OnboardingChecklist({
         completed_by: nextVal ? prev.completed_by ?? 'org' : null,
       };
 
-      setProgressMap((m) => {
-        const n = new Map(m);
-        n.set(stepIndex, optimistic);
-        return n;
-      });
+      const nextMap = new Map(progressMap);
+      nextMap.set(stepIndex, optimistic);
+      const newRequiredDone = requiredIndices.filter((i) => nextMap.get(i)?.completed).length;
+
+      if (nextVal) {
+        const step = steps[stepIndex];
+        setEncouragement(getStepEncouragement(stepIndex, Boolean(step?.optional)));
+        const justFinishedAllRequired =
+          requiredIndices.length > 0 &&
+          oldRequiredDone < requiredIndices.length &&
+          newRequiredDone === requiredIndices.length;
+        if (justFinishedAllRequired) {
+          queueMicrotask(() => {
+            void fireOnboardingConfetti();
+          });
+        }
+      }
+
+      setProgressMap(nextMap);
 
       startTransition(async () => {
         try {
@@ -157,7 +181,7 @@ export function OnboardingChecklist({
         }
       });
     },
-    [orgId, progressMap],
+    [orgId, progressMap, requiredIndices, steps],
   );
 
   return (
@@ -182,6 +206,15 @@ export function OnboardingChecklist({
             style={{ width: `${pct}%` }}
           />
         </div>
+        {encouragement ? (
+          <p
+            className="mt-4 animate-fade-in text-[13px] leading-snug text-bond-muted-dark motion-reduce:animate-none"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="text-bond-green-dark">✓</span> {encouragement}
+          </p>
+        ) : null}
       </header>
 
       <section className="mb-10 rounded-[12px] border border-bond-border bg-white p-5">
@@ -293,10 +326,11 @@ export function OnboardingChecklist({
 
       {requiredComplete ? (
         <section className="mt-10 rounded-[12px] border border-bond-green-light bg-bond-green-bg p-6 text-center">
-          <h2 className="text-lg font-semibold text-bond-green-dark">You&apos;re all set! 🎉</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bond-green-dark">Congratulations</p>
+          <h2 className="mt-2 text-lg font-semibold text-bond-green-dark">You&apos;re all set</h2>
           <p className="mt-2 text-sm text-bond-muted-dark">
-            You&apos;ve finished the required onboarding steps. Your Bond team has been notified. Optional steps are
-            still available above if you want to go further.
+            Required onboarding is complete — confetti deserved. Your Bond team has been notified. Optional steps are
+            still above if you want to polish further.
           </p>
         </section>
       ) : null}
