@@ -9,13 +9,24 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Admin client with service key - for privileged operations (lazy init to avoid build errors)
 let _supabaseAdmin: SupabaseClient | null = null;
 
+/**
+ * Supabase dashboard / Vercel integrations often set `SUPABASE_SERVICE_ROLE_KEY`.
+ * This repo historically used `SUPABASE_SERVICE_KEY` — accept both so server reads
+ * (e.g. form_pages) use the service role instead of falling back to anon + RLS.
+ */
+export function getSupabaseServiceRoleKey(): string | undefined {
+  return process.env.SUPABASE_SERVICE_KEY?.trim() || process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+}
+
 export function getSupabaseAdmin(): SupabaseClient {
   if (!_supabaseAdmin) {
-    const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+    const serviceKey = getSupabaseServiceRoleKey();
     if (!serviceKey) {
       // During build time, service key may not be available
       // Fall back to anon client (limited by RLS, but allows build to complete)
-      console.warn('SUPABASE_SERVICE_KEY not available, falling back to anon client');
+      console.warn(
+        'SUPABASE_SERVICE_KEY / SUPABASE_SERVICE_ROLE_KEY not available, falling back to anon client'
+      );
       return supabase;
     }
     _supabaseAdmin = createClient(supabaseUrl, serviceKey);
