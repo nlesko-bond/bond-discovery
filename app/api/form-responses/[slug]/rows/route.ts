@@ -46,7 +46,6 @@ export async function GET(request: NextRequest, context: Ctx) {
     );
   }
 
-  const search = request.nextUrl.searchParams.get('q') || '';
   const cursor = parseTitleCursor(request.nextUrl.searchParams);
 
   try {
@@ -54,7 +53,6 @@ export async function GET(request: NextRequest, context: Ctx) {
       questionnaireId,
       from,
       to,
-      search,
       cursor,
     });
     return NextResponse.json({ data });

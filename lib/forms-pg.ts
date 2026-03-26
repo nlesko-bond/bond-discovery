@@ -15,6 +15,7 @@
 
 import type { ConnectionOptions } from 'tls';
 import { Pool, type PoolClient } from 'pg';
+import { filterStaffQuestionColumns } from '@/lib/form-question-visibility';
 import type { QuestionColumnMeta, QuestionnaireListItem } from '@/types/form-pages';
 import { getFormsPgSchemaQualifier } from '@/lib/forms-pg-dialect';
 
@@ -158,14 +159,16 @@ export async function listQuestionsForQuestionnaire(
       metaData?: unknown;
       metadata?: unknown;
     }>(sql, [questionnaireId]);
-    return rows.map((r) => ({
-      id: r.id,
-      questionnaireId: r.questionnaireid,
-      ordinal: r.ordinal,
-      questionType: r.questiontype,
-      question: r.question,
-      metaData: r.metaData ?? r.metadata,
-    }));
+    return filterStaffQuestionColumns(
+      rows.map((r) => ({
+        id: r.id,
+        questionnaireId: r.questionnaireid,
+        ordinal: r.ordinal,
+        questionType: r.questiontype,
+        question: r.question,
+        metaData: r.metaData ?? r.metadata,
+      }))
+    );
   });
 }
 
@@ -181,16 +184,12 @@ export interface AnswerTitlePageParams {
   from: Date;
   to: Date;
   limit: number;
-  search: string;
   cursor: { createdAt: string; id: number } | null;
 }
 
 export async function listAnswerTitlesPage(
   params: AnswerTitlePageParams
 ): Promise<{ titles: AnswerTitleRow[]; nextCursor: { createdAt: string; id: number } | null }> {
-  const search = String(params.search ?? '')
-    .trim()
-    .toLowerCase();
   return withClient(async (c) => {
     const sq = schemaQ();
 
@@ -207,22 +206,6 @@ export async function listAnswerTitlesPage(
       values.push(params.cursor.createdAt, params.cursor.id);
       sqlExtra += ` AND (at."createdAt", at."id") < ($${idx}::timestamptz, $${idx + 1}::int)`;
       idx += 2;
-    }
-
-    if (search.length > 0) {
-      values.push(search);
-      sqlExtra += `
-        AND EXISTS (
-          SELECT 1 FROM ${sq}"Answers" a
-          WHERE a."answerTitleId" = at."id"
-            AND a."organizationId" = $1
-            AND (
-              position($${idx} in lower(coalesce(a."questionText", ''))) > 0
-              OR position($${idx} in lower(coalesce(a."answerValue"::text, ''))) > 0
-            )
-        )
-      `;
-      idx += 1;
     }
 
     values.push(params.limit + 1);
@@ -268,7 +251,8 @@ export async function listAnswerTitlesPage(
 export interface AnswerRowDb {
   answerTitleId: number;
   questionId: number;
-  answerValue: string | null;
+  /** json/jsonb from Postgres may be object/array; text column is string */
+  answerValue: unknown;
   questionType: string | null;
 }
 
@@ -293,7 +277,7 @@ export async function listAnswersForTitleIds(
     const { rows } = await c.query<{
       answerTitleId: number;
       questionId: number;
-      answerValue: string | null;
+      answerValue: unknown;
       questionType: string | null;
     }>(sql, [organizationId, titleIds]);
     return rows;

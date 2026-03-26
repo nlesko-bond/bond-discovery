@@ -60,7 +60,7 @@ export interface FormResponseRow {
   createdAt: string;
   user: FormResponseUser | null;
   /** questionId -> display string */
-  answers: Record<number, { display: string; linkUrl?: string }>;
+  answers: Record<number, { display: string; linkUrl?: string; checkmark?: boolean }>;
 }
 
 export interface FormResponsesPage {

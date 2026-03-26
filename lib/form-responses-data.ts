@@ -1,4 +1,5 @@
 import { formatAnswerValue } from '@/lib/answer-value-format';
+import { filterColumnsWithAnswersInRows } from '@/lib/form-question-visibility';
 import {
   getQuestionnaireTitle,
   listAnswerTitlesPage,
@@ -19,7 +20,6 @@ export async function loadFormResponsesPage(
     questionnaireId: number;
     from: Date;
     to: Date;
-    search: string;
     cursor: { createdAt: string; id: number } | null;
   }
 ): Promise<FormResponsesPage> {
@@ -34,7 +34,6 @@ export async function loadFormResponsesPage(
       from: opts.from,
       to: opts.to,
       limit,
-      search: opts.search,
       cursor: opts.cursor,
     }),
   ]);
@@ -54,7 +53,7 @@ export async function loadFormResponsesPage(
   const rows = titles.map((t) => {
     const u = t.userId != null ? users.get(t.userId) : null;
     const ansList = byTitle.get(t.id) ?? [];
-    const answers: Record<number, { display: string; linkUrl?: string }> = {};
+    const answers: Record<number, { display: string; linkUrl?: string; checkmark?: boolean }> = {};
     for (const ar of ansList) {
       answers[ar.questionId] = formatAnswerValue(ar.answerValue, ar.questionType);
     }
@@ -88,7 +87,6 @@ export async function loadFormResponsesForExport(
     questionnaireId: number;
     from: Date;
     to: Date;
-    search: string;
   },
   maxTitles = 2000
 ): Promise<{ columns: QuestionColumnMeta[]; rows: FormResponseRow[] }> {
@@ -104,7 +102,9 @@ export async function loadFormResponsesForExport(
     cursor = page.nextCursor;
   }
 
-  return { columns, rows };
+  const exportColumns = filterColumnsWithAnswersInRows(columns, rows);
+
+  return { columns: exportColumns, rows };
 }
 
 function csvEscape(value: string): string {
@@ -137,7 +137,11 @@ export function formResponsesToCsv(
       r.user?.email ?? '',
       r.user?.phone ?? '',
     ];
-    const cells = columns.map((c) => r.answers[c.id]?.display ?? '');
+    const cells = columns.map((c) => {
+      const a = r.answers[c.id];
+      if (a?.checkmark) return 'Yes';
+      return a?.display ?? '';
+    });
     lines.push([...base, ...cells].map(csvEscape).join(','));
   }
   return lines.join('\r\n');
