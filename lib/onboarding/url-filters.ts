@@ -38,6 +38,60 @@ export function passesRepFilter(
   return idEquals(rowRepId, filterRepId);
 }
 
+/** Completion % bucket filter (dashboard / orgs). */
+export function matchesCompletionRange(row: OrgDashboardRow, range: string | undefined): boolean {
+  if (!range) return true;
+  const pct = Number(row.completion_pct ?? 0);
+  switch (range) {
+    case '0-25':
+      return pct >= 0 && pct <= 25;
+    case '25-50':
+      return pct > 25 && pct <= 50;
+    case '50-75':
+      return pct > 50 && pct <= 75;
+    case '75-100':
+      return pct > 75 && pct <= 100;
+    default:
+      return true;
+  }
+}
+
+/** Shared org_dashboard row filter (server or client — client should use URL from useSearchParams). */
+export function filterOrgDashboardRows(
+  rows: OrgDashboardRow[],
+  opts: { repId?: string; statusFilter?: string; completionRange?: string },
+): OrgDashboardRow[] {
+  return rows.filter((r) => {
+    if (!passesRepFilter(rowAssignedRepId(r), opts.repId)) return false;
+    if (opts.statusFilter && r.status !== opts.statusFilter) return false;
+    if (!matchesCompletionRange(r, opts.completionRange)) return false;
+    return true;
+  });
+}
+
+/** Organizations list: optional name search + same filters as dashboard. */
+export function filterOnboardingOrgListRows(
+  rows: OrgDashboardRow[],
+  opts: { q?: string; repId?: string; statusFilter?: string; completionRange?: string },
+): OrgDashboardRow[] {
+  let out = rows;
+  const q = opts.q?.trim();
+  if (q) {
+    const ql = q.toLowerCase();
+    out = out.filter((r) => r.name.toLowerCase().includes(ql));
+  }
+  return filterOrgDashboardRows(out, {
+    repId: opts.repId,
+    statusFilter: opts.statusFilter,
+    completionRange: opts.completionRange,
+  });
+}
+
+/** Read one query key from `URLSearchParams` (browser or Request). */
+export function searchParamFromUrl(sp: URLSearchParams, key: string): string | undefined {
+  return searchParamString(sp.get(key) ?? undefined);
+}
+
 /** Build list URL with optional page (page 1 omits `page` param). */
 export function onboardingListUrl(base: string, qs: URLSearchParams, page?: number): string {
   const next = new URLSearchParams(qs);
