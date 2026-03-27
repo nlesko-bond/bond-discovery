@@ -7,6 +7,24 @@ import { searchParamFromUrl } from '@/lib/onboarding/url-filters';
 
 type StaffOption = { id: string; name: string };
 
+/** Stable, fun “success” flair per rep (same id → same emoji). */
+const REP_SUCCESS_EMOJIS = ['💪', '🏆', '⭐', '🎯', '🚀', '✨', '🔥', '🥇', '🥳', '🎉', '🌟', '👑'];
+
+function repSuccessEmoji(staffId: string): string {
+  let h = 0;
+  for (let i = 0; i < staffId.length; i++) {
+    h = (h * 31 + staffId.charCodeAt(i)) >>> 0;
+  }
+  return REP_SUCCESS_EMOJIS[h % REP_SUCCESS_EMOJIS.length];
+}
+
+const fieldClass =
+  'h-10 w-full min-w-[11rem] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm transition ' +
+  'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 ' +
+  'hover:border-zinc-300';
+
+const labelClass = 'text-xs font-semibold uppercase tracking-wide text-zinc-500';
+
 type OnboardingFiltersFormProps = {
   /** Absolute path for this page, e.g. `/admin/onboarding/dashboard` (no query). */
   basePath: string;
@@ -81,87 +99,126 @@ export function OnboardingFiltersForm({
   }
 
   return (
-    <div className="flex flex-wrap items-end gap-3" role="search" aria-label="Filter organizations">
-      {showSearch ? (
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-gray-600">Search</span>
-          <input
-            value={qDraft}
-            onChange={(e) => onSearchInputChange(e.target.value)}
-            placeholder="Organization name"
-            autoComplete="off"
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
-          />
+    <div
+      className="rounded-2xl border border-zinc-200/90 bg-gradient-to-b from-white to-zinc-50/90 p-4 shadow-sm"
+      role="search"
+      aria-label="Filter organizations"
+    >
+      <div className="mb-3 flex items-center gap-2 border-b border-zinc-100 pb-3">
+        <span className="text-lg" aria-hidden>
+          🎛️
+        </span>
+        <span className="text-sm font-semibold text-zinc-800">Filters</span>
+      </div>
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+        {showSearch ? (
+          <label className="flex min-w-[12rem] flex-1 flex-col gap-1.5 sm:max-w-xs">
+            <span className={labelClass}>Search</span>
+            <input
+              value={qDraft}
+              onChange={(e) => onSearchInputChange(e.target.value)}
+              placeholder="Organization name"
+              autoComplete="off"
+              className={fieldClass}
+            />
+          </label>
+        ) : null}
+        <label className="flex min-w-[12rem] flex-col gap-1.5">
+          <span className={labelClass}>{repSelectLabel}</span>
+          <div className="relative">
+            <select
+              value={repId}
+              onChange={(e) => {
+                const v = e.target.value;
+                replaceQuery((p) => {
+                  if (v) p.set('rep', v);
+                  else p.delete('rep');
+                });
+              }}
+              className={`${fieldClass} appearance-none pr-9`}
+            >
+              <option value="">All reps</option>
+              {staffList.map((s) => {
+                const emoji = repSuccessEmoji(s.id);
+                return (
+                  <option key={s.id} value={s.id}>
+                    {emoji} {s.name}
+                  </option>
+                );
+              })}
+            </select>
+            <span
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400"
+              aria-hidden
+            >
+              ▼
+            </span>
+          </div>
         </label>
-      ) : null}
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-gray-600">{repSelectLabel}</span>
-        <select
-          value={repId}
-          onChange={(e) => {
-            const v = e.target.value;
-            replaceQuery((p) => {
-              if (v) p.set('rep', v);
-              else p.delete('rep');
-            });
-          }}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
+        <label className="flex min-w-[10rem] flex-col gap-1.5">
+          <span className={labelClass}>Status</span>
+          <div className="relative">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                const v = e.target.value;
+                replaceQuery((p) => {
+                  if (v) p.set('status', v);
+                  else p.delete('status');
+                });
+              }}
+              className={`${fieldClass} appearance-none pr-9`}
+            >
+              <option value="">All statuses</option>
+              <option value="active">🟢 Active</option>
+              <option value="completed">✅ Completed</option>
+              <option value="paused">⏸️ Paused</option>
+              <option value="archived">📦 Archived</option>
+            </select>
+            <span
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400"
+              aria-hidden
+            >
+              ▼
+            </span>
+          </div>
+        </label>
+        <label className="flex min-w-[10rem] flex-col gap-1.5">
+          <span className={labelClass}>Completion</span>
+          <div className="relative">
+            <select
+              value={completionRange}
+              onChange={(e) => {
+                const v = e.target.value;
+                replaceQuery((p) => {
+                  if (v) p.set('completion', v);
+                  else p.delete('completion');
+                });
+              }}
+              className={`${fieldClass} appearance-none pr-9`}
+            >
+              <option value="">All ranges</option>
+              <option value="0-25">📊 0–25%</option>
+              <option value="25-50">📈 25–50%</option>
+              <option value="50-75">📈 50–75%</option>
+              <option value="75-100">🎊 75–100%</option>
+            </select>
+            <span
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400"
+              aria-hidden
+            >
+              ▼
+            </span>
+          </div>
+        </label>
+        <Link
+          href={basePath}
+          scroll={false}
+          className="inline-flex h-10 items-center justify-center self-end rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50"
         >
-          <option value="">All</option>
-          {staffList.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-gray-600">Status</span>
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            const v = e.target.value;
-            replaceQuery((p) => {
-              if (v) p.set('status', v);
-              else p.delete('status');
-            });
-          }}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
-        >
-          <option value="">All</option>
-          <option value="active">Active</option>
-          <option value="completed">Completed</option>
-          <option value="paused">Paused</option>
-          <option value="archived">Archived</option>
-        </select>
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-gray-600">Completion</span>
-        <select
-          value={completionRange}
-          onChange={(e) => {
-            const v = e.target.value;
-            replaceQuery((p) => {
-              if (v) p.set('completion', v);
-              else p.delete('completion');
-            });
-          }}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
-        >
-          <option value="">All</option>
-          <option value="0-25">0–25%</option>
-          <option value="25-50">25–50%</option>
-          <option value="50-75">50–75%</option>
-          <option value="75-100">75–100%</option>
-        </select>
-      </label>
-      <Link
-        href={basePath}
-        scroll={false}
-        className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 self-end"
-      >
-        Reset
-      </Link>
+          Clear filters
+        </Link>
+      </div>
     </div>
   );
 }
