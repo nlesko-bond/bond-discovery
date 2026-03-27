@@ -1,10 +1,12 @@
 import Link from 'next/link';
+import { OnboardingFiltersForm } from '@/app/admin/onboarding/components/OnboardingFiltersForm';
 import { OnboardingListRealtimeRefresh } from '@/app/admin/onboarding/components/OnboardingListRealtimeRefresh';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
 import type { OrgDashboardRow } from '@/lib/onboarding/types';
 import {
   onboardingListUrl,
   passesRepFilter,
+  rowAssignedRepId,
   searchParamString,
 } from '@/lib/onboarding/url-filters';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -58,7 +60,7 @@ export default async function OnboardingOrgsPage({
     rows = rows.filter((r) => r.name.toLowerCase().includes(q));
   }
   rows = rows.filter((r) => {
-    if (!passesRepFilter(r.rep_id, repId)) return false;
+    if (!passesRepFilter(rowAssignedRepId(r), repId)) return false;
     if (statusFilter && r.status !== statusFilter) return false;
     if (!rangeFilter(r, completionRange)) return false;
     return true;
@@ -69,12 +71,18 @@ export default async function OnboardingOrgsPage({
   const slice = rows.slice((page - 1) * pageSize, page * pageSize);
 
   const qs = new URLSearchParams();
-  if (q) qs.set('q', q);
+  if (qRaw) qs.set('q', qRaw);
   if (repId) qs.set('rep', repId);
   if (statusFilter) qs.set('status', statusFilter);
   if (completionRange) qs.set('completion', completionRange);
 
   const base = `${ONBOARDING_BASE}/orgs`;
+  const filterStateKey = JSON.stringify({
+    q: qRaw ?? '',
+    rep: repId ?? '',
+    status: statusFilter ?? '',
+    completion: completionRange ?? '',
+  });
 
   return (
     <div className="space-y-8">
@@ -92,66 +100,16 @@ export default async function OnboardingOrgsPage({
         </Link>
       </div>
 
-      <form className="flex flex-wrap items-end gap-3" method="get">
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-gray-600">Search</span>
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="Organization name"
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-gray-600">Rep</span>
-          <select
-            name="rep"
-            defaultValue={repId ?? ''}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
-          >
-            <option value="">All</option>
-            {(staffList ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-gray-600">Status</span>
-          <select
-            name="status"
-            defaultValue={statusFilter ?? ''}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
-          >
-            <option value="">All</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
-            <option value="paused">Paused</option>
-            <option value="archived">Archived</option>
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-gray-600">Completion</span>
-          <select
-            name="completion"
-            defaultValue={completionRange ?? ''}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
-          >
-            <option value="">All</option>
-            <option value="0-25">0–25%</option>
-            <option value="25-50">25–50%</option>
-            <option value="50-75">50–75%</option>
-            <option value="75-100">75–100%</option>
-          </select>
-        </label>
-        <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white">
-          Apply
-        </button>
-        <Link href={base} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600">
-          Reset
-        </Link>
-      </form>
+      <OnboardingFiltersForm
+        basePath={base}
+        staffList={staffList ?? []}
+        q={qRaw ?? ''}
+        repId={repId}
+        statusFilter={statusFilter}
+        completionRange={completionRange}
+        showSearch
+        filterStateKey={filterStateKey}
+      />
 
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
         <table className="w-full min-w-[800px] text-left text-sm">

@@ -2,6 +2,8 @@
  * Helpers for onboarding admin list pages (orgs, dashboard) — URL params and row filters.
  */
 
+import type { OrgDashboardRow } from '@/lib/onboarding/types';
+
 /** Next.js searchParams values may be string | string[]; normalize to one trimmed string. */
 export function searchParamString(v: string | string[] | undefined): string | undefined {
   if (v == null) return undefined;
@@ -15,6 +17,15 @@ export function searchParamString(v: string | string[] | undefined): string | un
 export function idEquals(a: unknown, b: unknown): boolean {
   if (a == null || b == null) return false;
   return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+}
+
+/** Read assigned rep id from a view row (PostgREST is snake_case; guard for stray shapes). */
+export function rowAssignedRepId(row: OrgDashboardRow): string | null {
+  const rec = row as OrgDashboardRow & Record<string, unknown>;
+  const raw = rec.rep_id ?? rec.repId;
+  if (raw == null) return null;
+  const s = String(raw).trim();
+  return s === '' ? null : s;
 }
 
 /** Assigned-rep filter: when a rep is selected, only rows with that rep_id match. */

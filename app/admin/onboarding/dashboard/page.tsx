@@ -1,8 +1,9 @@
 import Link from 'next/link';
+import { OnboardingFiltersForm } from '@/app/admin/onboarding/components/OnboardingFiltersForm';
 import { OnboardingListRealtimeRefresh } from '@/app/admin/onboarding/components/OnboardingListRealtimeRefresh';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
 import type { OrgDashboardRow } from '@/lib/onboarding/types';
-import { passesRepFilter, searchParamString } from '@/lib/onboarding/url-filters';
+import { passesRepFilter, rowAssignedRepId, searchParamString } from '@/lib/onboarding/url-filters';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -47,7 +48,7 @@ export default async function OnboardingDashboardPage({
   const rows = (viewRows ?? []) as OrgDashboardRow[];
 
   const filtered = rows.filter((r) => {
-    if (!passesRepFilter(r.rep_id, repId)) return false;
+    if (!passesRepFilter(rowAssignedRepId(r), repId)) return false;
     if (statusFilter && r.status !== statusFilter) return false;
     if (!rangeFilter(r, completionRange)) return false;
     return true;
@@ -73,6 +74,11 @@ export default async function OnboardingDashboardPage({
   }).length;
 
   const base = `${ONBOARDING_BASE}/dashboard`;
+  const filterStateKey = JSON.stringify({
+    rep: repId ?? '',
+    status: statusFilter ?? '',
+    completion: completionRange ?? '',
+  });
 
   return (
     <div className="space-y-8">
@@ -89,57 +95,14 @@ export default async function OnboardingDashboardPage({
         <StatCard label="Stalled (7+ days)" value={stalled} />
       </div>
 
-      <form className="flex flex-wrap items-end gap-3" method="get">
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-gray-600">Rep</span>
-          <select
-            name="rep"
-            defaultValue={repId ?? ''}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
-          >
-            <option value="">All</option>
-            {(staffList ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-gray-600">Status</span>
-          <select
-            name="status"
-            defaultValue={statusFilter ?? ''}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
-          >
-            <option value="">All</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
-            <option value="paused">Paused</option>
-            <option value="archived">Archived</option>
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-gray-600">Completion</span>
-          <select
-            name="completion"
-            defaultValue={completionRange ?? ''}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
-          >
-            <option value="">All</option>
-            <option value="0-25">0–25%</option>
-            <option value="25-50">25–50%</option>
-            <option value="50-75">50–75%</option>
-            <option value="75-100">75–100%</option>
-          </select>
-        </label>
-        <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white">
-          Apply
-        </button>
-        <Link href={base} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600">
-          Reset
-        </Link>
-      </form>
+      <OnboardingFiltersForm
+        basePath={base}
+        staffList={staffList ?? []}
+        repId={repId}
+        statusFilter={statusFilter}
+        completionRange={completionRange}
+        filterStateKey={filterStateKey}
+      />
 
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
         <table className="w-full min-w-[800px] text-left text-sm">
