@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { OnboardingListRealtimeRefresh } from '@/app/admin/onboarding/components/OnboardingListRealtimeRefresh';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
 import type { OrgDashboardRow } from '@/lib/onboarding/types';
+import { passesRepFilter, searchParamString } from '@/lib/onboarding/url-filters';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +11,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 function rangeFilter(row: OrgDashboardRow, range: string | undefined): boolean {
   if (!range) return true;
-  const pct = row.completion_pct ?? 0;
+  const pct = Number(row.completion_pct ?? 0);
   switch (range) {
     case '0-25':
       return pct >= 0 && pct <= 25;
@@ -32,9 +33,9 @@ export default async function OnboardingDashboardPage({
 }) {
   const admin = getSupabaseAdmin();
   const sp = await searchParams;
-  const repId = typeof sp.rep === 'string' ? sp.rep : undefined;
-  const statusFilter = typeof sp.status === 'string' ? sp.status : undefined;
-  const completionRange = typeof sp.completion === 'string' ? sp.completion : undefined;
+  const repId = searchParamString(sp.rep);
+  const statusFilter = searchParamString(sp.status);
+  const completionRange = searchParamString(sp.completion);
 
   const { data: staffList } = await admin.from('staff').select('id, name').order('name');
 
@@ -46,7 +47,7 @@ export default async function OnboardingDashboardPage({
   const rows = (viewRows ?? []) as OrgDashboardRow[];
 
   const filtered = rows.filter((r) => {
-    if (repId && r.rep_id !== repId) return false;
+    if (!passesRepFilter(r.rep_id, repId)) return false;
     if (statusFilter && r.status !== statusFilter) return false;
     if (!rangeFilter(r, completionRange)) return false;
     return true;

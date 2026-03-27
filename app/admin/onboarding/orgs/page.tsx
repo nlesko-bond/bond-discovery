@@ -2,6 +2,11 @@ import Link from 'next/link';
 import { OnboardingListRealtimeRefresh } from '@/app/admin/onboarding/components/OnboardingListRealtimeRefresh';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
 import type { OrgDashboardRow } from '@/lib/onboarding/types';
+import {
+  onboardingListUrl,
+  passesRepFilter,
+  searchParamString,
+} from '@/lib/onboarding/url-filters';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +15,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 function rangeFilter(row: OrgDashboardRow, range: string | undefined): boolean {
   if (!range) return true;
-  const pct = row.completion_pct ?? 0;
+  const pct = Number(row.completion_pct ?? 0);
   switch (range) {
     case '0-25':
       return pct >= 0 && pct <= 25;
@@ -32,11 +37,12 @@ export default async function OnboardingOrgsPage({
 }) {
   const admin = getSupabaseAdmin();
   const sp = await searchParams;
-  const q = typeof sp.q === 'string' ? sp.q.toLowerCase().trim() : '';
-  const repId = typeof sp.rep === 'string' ? sp.rep : undefined;
-  const statusFilter = typeof sp.status === 'string' ? sp.status : undefined;
-  const completionRange = typeof sp.completion === 'string' ? sp.completion : undefined;
-  const page = Math.max(1, parseInt(String(sp.page ?? '1'), 10) || 1);
+  const qRaw = searchParamString(sp.q);
+  const q = qRaw ? qRaw.toLowerCase() : '';
+  const repId = searchParamString(sp.rep);
+  const statusFilter = searchParamString(sp.status);
+  const completionRange = searchParamString(sp.completion);
+  const page = Math.max(1, parseInt(searchParamString(sp.page) ?? '1', 10) || 1);
   const pageSize = 20;
 
   const { data: staffList } = await admin.from('staff').select('id, name').order('name');
@@ -52,7 +58,7 @@ export default async function OnboardingOrgsPage({
     rows = rows.filter((r) => r.name.toLowerCase().includes(q));
   }
   rows = rows.filter((r) => {
-    if (repId && r.rep_id !== repId) return false;
+    if (!passesRepFilter(r.rep_id, repId)) return false;
     if (statusFilter && r.status !== statusFilter) return false;
     if (!rangeFilter(r, completionRange)) return false;
     return true;
@@ -203,7 +209,7 @@ export default async function OnboardingOrgsPage({
       {totalPages > 1 ? (
         <div className="flex items-center gap-2 text-sm">
           {page > 1 ? (
-            <Link href={`${base}?${qs.toString()}&page=${page - 1}`} className="text-primary">
+            <Link href={onboardingListUrl(base, qs, page - 1)} className="text-primary">
               Previous
             </Link>
           ) : null}
@@ -211,7 +217,7 @@ export default async function OnboardingOrgsPage({
             Page {page} of {totalPages}
           </span>
           {page < totalPages ? (
-            <Link href={`${base}?${qs.toString()}&page=${page + 1}`} className="text-primary">
+            <Link href={onboardingListUrl(base, qs, page + 1)} className="text-primary">
               Next
             </Link>
           ) : null}
