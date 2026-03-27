@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import type { FormEvent } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { searchParamFromUrl } from '@/lib/onboarding/url-filters';
 
 type StaffOption = { id: string; name: string };
 
@@ -10,72 +11,85 @@ type OnboardingFiltersFormProps = {
   /** Absolute path for this page, e.g. `/admin/onboarding/dashboard` (no query). */
   basePath: string;
   staffList: StaffOption[];
-  /** Current values from the server (URL). */
-  q?: string;
-  repId?: string;
-  statusFilter?: string;
-  completionRange?: string;
   /** When true, show the name search field (organizations list). */
   showSearch?: boolean;
-  /** Stable key so selects reset after navigation when URL changes. */
-  filterStateKey: string;
-  /** Visible label for the assigned-rep control (onboarding dashboard / orgs). */
+  /** Visible label for the assigned-rep control. */
   repSelectLabel?: string;
 };
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 /**
- * Client-side Apply uses `router.push` with an explicit query string so filters always
- * navigate reliably; plain GET forms can be flaky with the App Router + soft navigation.
+ * Filters update the URL on every change (no Apply). Table/list read the same query via
+ * `useSearchParams`, so results stay in sync immediately.
  */
 export function OnboardingFiltersForm({
   basePath,
   staffList,
-  q = '',
-  repId,
-  statusFilter,
-  completionRange,
   showSearch = false,
-  filterStateKey,
   repSelectLabel = 'CS rep',
 }: OnboardingFiltersFormProps) {
   const router = useRouter();
+  const sp = useSearchParams();
+  const spRef = useRef(sp);
+  spRef.current = sp;
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const params = new URLSearchParams();
+  const repId = searchParamFromUrl(sp, 'rep') ?? '';
+  const statusFilter = searchParamFromUrl(sp, 'status') ?? '';
+  const completionRange = searchParamFromUrl(sp, 'completion') ?? '';
+  const qFromUrl = searchParamFromUrl(sp, 'q') ?? '';
 
-    if (showSearch) {
-      const qRaw = (fd.get('q') as string | null)?.trim();
-      if (qRaw) params.set('q', qRaw);
+  const [qDraft, setQDraft] = useState(qFromUrl);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    setQDraft(qFromUrl);
+  }, [qFromUrl]);
+
+  useEffect(
+    () => () => {
+      if (searchDebounceRef.current !== undefined) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    },
+    [],
+  );
+
+  const replaceQuery = useCallback(
+    (mutate: (p: URLSearchParams) => void) => {
+      const next = new URLSearchParams(spRef.current.toString());
+      mutate(next);
+      next.delete('page');
+      const qs = next.toString();
+      router.replace(qs ? `${basePath}?${qs}` : basePath, { scroll: false });
+    },
+    [router, basePath],
+  );
+
+  function onSearchInputChange(raw: string) {
+    setQDraft(raw);
+    if (searchDebounceRef.current !== undefined) {
+      clearTimeout(searchDebounceRef.current);
     }
-
-    const rep = (fd.get('rep') as string | null)?.trim();
-    const status = (fd.get('status') as string | null)?.trim();
-    const completion = (fd.get('completion') as string | null)?.trim();
-    if (rep) params.set('rep', rep);
-    if (status) params.set('status', status);
-    if (completion) params.set('completion', completion);
-
-    const qs = params.toString();
-    router.push(qs ? `${basePath}?${qs}` : basePath);
+    searchDebounceRef.current = setTimeout(() => {
+      const v = raw.trim();
+      replaceQuery((p) => {
+        if (v) p.set('q', v);
+        else p.delete('q');
+      });
+    }, SEARCH_DEBOUNCE_MS);
   }
 
   return (
-    <form
-      key={filterStateKey}
-      className="flex flex-wrap items-end gap-3"
-      onSubmit={onSubmit}
-      action={basePath}
-      method="get"
-    >
+    <div className="flex flex-wrap items-end gap-3" role="search" aria-label="Filter organizations">
       {showSearch ? (
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-gray-600">Search</span>
           <input
-            name="q"
-            defaultValue={q}
+            value={qDraft}
+            onChange={(e) => onSearchInputChange(e.target.value)}
             placeholder="Organization name"
+            autoComplete="off"
             className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
           />
         </label>
@@ -83,8 +97,14 @@ export function OnboardingFiltersForm({
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-gray-600">{repSelectLabel}</span>
         <select
-          name="rep"
-          defaultValue={repId ?? ''}
+          value={repId}
+          onChange={(e) => {
+            const v = e.target.value;
+            replaceQuery((p) => {
+              if (v) p.set('rep', v);
+              else p.delete('rep');
+            });
+          }}
           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
         >
           <option value="">All</option>
@@ -98,8 +118,14 @@ export function OnboardingFiltersForm({
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-gray-600">Status</span>
         <select
-          name="status"
-          defaultValue={statusFilter ?? ''}
+          value={statusFilter}
+          onChange={(e) => {
+            const v = e.target.value;
+            replaceQuery((p) => {
+              if (v) p.set('status', v);
+              else p.delete('status');
+            });
+          }}
           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
         >
           <option value="">All</option>
@@ -112,8 +138,14 @@ export function OnboardingFiltersForm({
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-gray-600">Completion</span>
         <select
-          name="completion"
-          defaultValue={completionRange ?? ''}
+          value={completionRange}
+          onChange={(e) => {
+            const v = e.target.value;
+            replaceQuery((p) => {
+              if (v) p.set('completion', v);
+              else p.delete('completion');
+            });
+          }}
           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
         >
           <option value="">All</option>
@@ -123,12 +155,13 @@ export function OnboardingFiltersForm({
           <option value="75-100">75–100%</option>
         </select>
       </label>
-      <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white">
-        Apply
-      </button>
-      <Link href={basePath} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600">
+      <Link
+        href={basePath}
+        scroll={false}
+        className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 self-end"
+      >
         Reset
       </Link>
-    </form>
+    </div>
   );
 }

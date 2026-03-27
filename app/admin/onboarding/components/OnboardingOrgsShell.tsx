@@ -50,20 +50,10 @@ export function OnboardingOrgsShell({
   const slice = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const qs = useMemo(() => new URLSearchParams(sp.toString()), [sp]);
-  const filterStateKey = sp.toString() || 'default';
 
   return (
     <>
-      <OnboardingFiltersForm
-        basePath={basePath}
-        staffList={staffList}
-        q={qRaw}
-        repId={repId}
-        statusFilter={statusFilter}
-        completionRange={completionRange}
-        showSearch
-        filterStateKey={filterStateKey}
-      />
+      <OnboardingFiltersForm basePath={basePath} staffList={staffList} showSearch />
 
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
         <table className="w-full min-w-[800px] text-left text-sm">

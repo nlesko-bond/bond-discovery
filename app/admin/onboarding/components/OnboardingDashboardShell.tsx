@@ -42,18 +42,9 @@ export function OnboardingDashboardShell({
     [rows, repId, statusFilter, completionRange],
   );
 
-  const filterStateKey = sp.toString() || 'default';
-
   return (
     <>
-      <OnboardingFiltersForm
-        basePath={basePath}
-        staffList={staffList}
-        repId={repId}
-        statusFilter={statusFilter}
-        completionRange={completionRange}
-        filterStateKey={filterStateKey}
-      />
+      <OnboardingFiltersForm basePath={basePath} staffList={staffList} />
 
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
         <table className="w-full min-w-[800px] text-left text-sm">
