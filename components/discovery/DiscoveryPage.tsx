@@ -57,11 +57,13 @@ export function DiscoveryPage({
   const router = useRouter();
   const pathname = usePathname();
   const urlSearchParams = useSearchParams();
-  
+
+  const persistFiltersInBrowser = config.features.persistFiltersInLocalStorage !== false;
+
   // Generate localStorage key based on page slug
   const storageKey = `discovery-filters-${config.slug}`;
-  
-  // Initialize filters from URL params first, then localStorage, then defaults
+
+  // Initialize filters from URL params first, then localStorage (if enabled), then defaults
   const getInitialFilters = (): DiscoveryFilters => {
     // URL params always take priority
     if (Object.keys(searchParams).length > 0) {
@@ -105,9 +107,9 @@ export function DiscoveryPage({
           : undefined,
       };
     }
-    
-    // Try localStorage
-    if (typeof window !== 'undefined') {
+
+    // Try localStorage (opt out per page in admin for compliance)
+    if (persistFiltersInBrowser && typeof window !== 'undefined') {
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         try {
@@ -352,13 +354,26 @@ export function DiscoveryPage({
       }));
     }
   }, [urlSearchParams]);
-  
-  // Save filters to localStorage when they change
+
+  // Remove stale saved filters when persistence is disabled (compliance)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(storageKey, JSON.stringify(filters));
+    if (typeof window === 'undefined' || persistFiltersInBrowser) return;
+    try {
+      localStorage.removeItem(storageKey);
+    } catch {
+      // ignore
     }
-  }, [filters, storageKey]);
+  }, [persistFiltersInBrowser, storageKey]);
+
+  // Save filters to localStorage when they change (if enabled for this page)
+  useEffect(() => {
+    if (!persistFiltersInBrowser || typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(filters));
+    } catch {
+      // ignore quota / private mode
+    }
+  }, [filters, storageKey, persistFiltersInBrowser]);
 
   // Filter programs based on current filters
   const filteredPrograms = useMemo(() => {

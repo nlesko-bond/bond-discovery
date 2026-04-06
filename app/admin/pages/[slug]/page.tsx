@@ -74,6 +74,8 @@ interface PageConfig {
     showPunchPassRedeemButton?: boolean;
     punchPassRedeemUrl?: string;
     showScheduleTableDateFilters?: boolean;
+    /** Discovery only: save filter state in localStorage (default true). */
+    persistFiltersInLocalStorage?: boolean;
   };
   defaultParams?: Record<string, string>;
   cacheTtl?: number;
@@ -900,6 +902,34 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
               )}
             </div>
             
+            <hr className="my-6" />
+
+            <h3 className="font-semibold text-gray-900 mb-4">Browser storage (privacy)</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Applies to this discovery page only (not onboarding, forms, or memberships). When enabled, visitors&apos;
+              filter choices are saved in the browser and restored on return visits. Disable for stricter consent or
+              embedded experiences; shared links with query parameters always work.
+            </p>
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                className="mt-1 rounded border-gray-300"
+                checked={config.features.persistFiltersInLocalStorage !== false}
+                onChange={(e) =>
+                  setConfig({
+                    ...config,
+                    features: { ...config.features, persistFiltersInLocalStorage: e.target.checked },
+                  })
+                }
+              />
+              <div>
+                <span className="font-medium text-gray-900">Remember filter selections (localStorage)</span>
+                <p className="text-xs text-gray-500 mt-1">
+                  Default: on. When off, the app does not read or write filter storage for this page.
+                </p>
+              </div>
+            </label>
+
             <hr className="my-6" />
             
             <h3 className="font-semibold text-gray-900 mb-4">Embed Options</h3>

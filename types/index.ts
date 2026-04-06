@@ -410,6 +410,11 @@ export interface FeatureConfig {
    * Default off — opt in per page after testing.
    */
   showScheduleTableDateFilters?: boolean;
+  /**
+   * When true (default), discovery filter state is saved/restored via `localStorage` for this slug.
+   * Set false in admin to disable browser storage for compliance (URL params still work).
+   */
+  persistFiltersInLocalStorage?: boolean;
 }
 
 export type FilterType = 
