@@ -58,7 +58,12 @@ export function DiscoveryPage({
   const pathname = usePathname();
   const urlSearchParams = useSearchParams();
 
-  const persistFiltersInBrowser = config.features.persistFiltersInLocalStorage !== false;
+  // Third-party iframes: never persist filters to localStorage (compliance / consent tools).
+  // Partners often embed `/{slug}` instead of `/embed/{slug}`; this avoids discovery-filters-* keys there.
+  const isEmbeddedInIframe =
+    typeof window !== 'undefined' && window.self !== window.top;
+  const persistFiltersInBrowser =
+    config.features.persistFiltersInLocalStorage !== false && !isEmbeddedInIframe;
 
   // Generate localStorage key based on page slug
   const storageKey = `discovery-filters-${config.slug}`;
