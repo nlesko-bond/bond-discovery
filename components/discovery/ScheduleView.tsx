@@ -1609,8 +1609,10 @@ function TableView({
   const showTimeColumn = tableColumns.includes('time');
   const showEventColumn = tableColumns.includes('event');
   const showProgramColumn = tableColumns.includes('program');
-  const showLocationColumn = tableColumns.includes('location');
+  const showLocationColumn =
+    tableColumns.includes('location') && (hasMultipleFacilities ?? false);
   const showSpaceColumn = tableColumns.includes('space');
+  const spaceColumnLabel = config.features.spaceColumnLabel?.trim() || 'Space';
   const showSpotsColumn = tableColumns.includes('spots') && config.features.showAvailability;
   const punchPassFeatureOn = config.features.showPunchPassRedeemButton === true;
   const showActionColumn =
@@ -1716,7 +1718,7 @@ function TableView({
               )}
               {showSpaceColumn && (
                 <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
-                  Space
+                  {spaceColumnLabel}
                 </th>
               )}
               {showSpotsColumn && (

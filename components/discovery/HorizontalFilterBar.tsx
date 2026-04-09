@@ -170,6 +170,7 @@ export function HorizontalFilterBar({
   // Dynamic colors from config
   const primaryColor = config.branding.primaryColor || '#1E2761';
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  const spaceFilterLabel = config.features.spaceColumnLabel?.trim() || 'Space';
   
   // Use ref to avoid stale closure in debounce effect
   const filtersRef = useRef(filters);
@@ -538,7 +539,7 @@ export function HorizontalFilterBar({
           enabledFilters.includes('space') &&
           (filterOptions.spaces?.length ?? 0) > 0 && (
             <FilterDropdown
-              label="Space"
+              label={spaceFilterLabel}
               icon={<Warehouse size={14} />}
               isOpen={openDropdown === 'space'}
               onToggle={() => setOpenDropdown(openDropdown === 'space' ? null : 'space')}

@@ -423,6 +423,8 @@ export interface FeatureConfig {
    * Set false in admin to disable browser storage for compliance (URL params still work).
    */
   persistFiltersInLocalStorage?: boolean;
+  /** Label for the space/court column and space filter (default: "Space") */
+  spaceColumnLabel?: string;
 }
 
 export type FilterType = 

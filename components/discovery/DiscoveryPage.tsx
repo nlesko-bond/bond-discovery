@@ -1080,9 +1080,16 @@ export function DiscoveryPage({
       params.spaceNames = newFilters.spaceNames.map(encodeURIComponent).join('|');
     }
 
+    // buildUrl replaces the entire query string — preserve schedule sub-view (list/table/week/month/day)
+    // so filter changes don't reset to the default table view.
+    if (newViewMode === 'schedule') {
+      const scheduleView = urlSearchParams.get('scheduleView');
+      if (scheduleView) params.scheduleView = scheduleView;
+    }
+
     const url = buildUrl(pathname, params);
     router.replace(url, { scroll: false });
-  }, [router, pathname, config.features.showScheduleTableDateFilters]);
+  }, [router, pathname, urlSearchParams, config.features.showScheduleTableDateFilters]);
 
   // Handle filter changes
   const handleFiltersChange = useCallback((newFilters: DiscoveryFilters) => {
@@ -1495,6 +1502,7 @@ export function DiscoveryPage({
         resultCount={viewMode === 'schedule' ? filteredEvents.length : filteredPrograms.length}
         showSearch={config.features.showSearch !== false}
         brandColor={config.branding.secondaryColor}
+        spaceFilterLabel={config.features.spaceColumnLabel?.trim() || 'Space'}
       />
 
       {/* Footer */}

@@ -38,6 +38,8 @@ interface MobileFiltersProps {
   resultCount: number;
   showSearch?: boolean;
   brandColor?: string;
+  /** Label for space filter section (default: Space). When default, mobile shows "Space / court". */
+  spaceFilterLabel?: string;
 }
 
 export function MobileFilters({
@@ -51,6 +53,7 @@ export function MobileFilters({
   resultCount,
   showSearch = true,
   brandColor = '#6366F1',
+  spaceFilterLabel = 'Space',
 }: MobileFiltersProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -147,7 +150,9 @@ export function MobileFilters({
             options.spaces &&
             options.spaces.length > 0 && (
               <div>
-                <label className="label text-base mb-3">Space / court</label>
+                <label className="label text-base mb-3">
+                  {spaceFilterLabel === 'Space' ? 'Space / court' : spaceFilterLabel}
+                </label>
                 <div className="space-y-3 max-h-56 overflow-y-auto">
                   {options.spaces.map((sp) => {
                     const isSelected = filters.spaceNames?.includes(sp.id) || false;

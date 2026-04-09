@@ -11,7 +11,6 @@ const DEFAULT_TABLE_COLUMNS: ScheduleTableColumn[] = [
   'time',
   'event',
   'program',
-  'location',
   'spots',
   'action',
 ];
@@ -88,6 +87,10 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
         typeof features.punchPassRedeemUrl === 'string' ? features.punchPassRedeemUrl : undefined,
       showScheduleTableDateFilters: features.showScheduleTableDateFilters === true,
       persistFiltersInLocalStorage: features.persistFiltersInLocalStorage !== false,
+      spaceColumnLabel:
+        typeof features.spaceColumnLabel === 'string' && features.spaceColumnLabel.trim()
+          ? features.spaceColumnLabel.trim()
+          : undefined,
     },
     allowedParams: row.allowed_params || [],
     defaultParams: row.default_params || {},

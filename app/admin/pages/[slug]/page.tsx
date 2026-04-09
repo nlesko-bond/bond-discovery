@@ -85,6 +85,8 @@ interface PageConfig {
     showScheduleTableDateFilters?: boolean;
     /** Discovery only: save filter state in localStorage (default true). */
     persistFiltersInLocalStorage?: boolean;
+    /** Schedule table + space filter label (default: Space) */
+    spaceColumnLabel?: string;
   };
   defaultParams?: Record<string, string>;
   cacheTtl?: number;
@@ -757,6 +759,28 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                       <span>{column.label}</span>
                     </label>
                   ))}
+                </div>
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <label className="block text-sm font-medium text-gray-900">Space column label (optional)</label>
+                  <p className="text-xs text-gray-500 mt-0.5 mb-2">
+                    Shown on the schedule table header and space filter when Space is enabled. Leave blank for &quot;Space&quot;.
+                  </p>
+                  <input
+                    type="text"
+                    className="w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    placeholder="Space"
+                    value={config.features.spaceColumnLabel ?? ''}
+                    onChange={(e) => {
+                      const v = e.target.value.trim();
+                      setConfig({
+                        ...config,
+                        features: {
+                          ...config.features,
+                          spaceColumnLabel: v.length > 0 ? v : undefined,
+                        },
+                      });
+                    }}
+                  />
                 </div>
                 <label className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200 text-sm text-gray-700">
                   <input

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getConfigBySlug, updatePageConfig, deletePageConfig } from '@/lib/config';
 
 // Disable caching for this route
@@ -39,7 +40,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     
     // Update the page
     const updatedConfig = await updatePageConfig(params.slug, body);
-    
+
+    // Invalidate ISR for the discovery page so admin changes show immediately (page uses revalidate = 300).
+    revalidatePath(`/${updatedConfig.slug}`);
+    if (body.slug && typeof body.slug === 'string' && body.slug !== params.slug) {
+      revalidatePath(`/${params.slug}`);
+    }
+
     return NextResponse.json({ page: updatedConfig });
   } catch (error: any) {
     console.error('Error updating page:', error);
