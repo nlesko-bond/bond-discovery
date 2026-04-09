@@ -17,7 +17,11 @@ import { ProgramGrid } from './ProgramGrid';
 import { ScheduleView } from './ScheduleView';
 import { programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers';
 import { buildUrl, getSportGradient, getProgramTypeLabel, cn, isLightColor } from '@/lib/utils';
-import { eventMatchesDateRange, eventMatchesDaysOfWeek } from '@/lib/schedule-event-filters';
+import {
+  eventMatchesDateRange,
+  eventMatchesDaysOfWeek,
+  eventMatchesSpaceNames,
+} from '@/lib/schedule-event-filters';
 import { scheduleViewParamFromPageSearchParams } from '@/lib/schedule-view-resolution';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skeleton';
@@ -110,6 +114,12 @@ export function DiscoveryPage({
               .map((n) => parseInt(n, 10))
               .filter((n) => !Number.isNaN(n) && n >= 0 && n <= 6)
           : undefined,
+        spaceNames: searchParams.spaceNames
+          ? (typeof searchParams.spaceNames === 'string'
+              ? searchParams.spaceNames.split('|').map((s) => decodeURIComponent(s)).filter(Boolean)
+              : []
+            )
+          : undefined,
       };
     }
 
@@ -139,6 +149,7 @@ export function DiscoveryPage({
       availability: 'all',
       membershipRequired: null,
       daysOfWeek: undefined,
+      spaceNames: undefined,
     };
   };
 
@@ -815,15 +826,20 @@ export function DiscoveryPage({
       });
     }
     
-    // Filter by search term - searches event name, program name, session name, and facility
+    // Filter by search term - searches event name, program name, session name, facility, space
     if (filters.search) {
       const search = filters.search.toLowerCase();
       result = result.filter(event => 
         event.title?.toLowerCase().includes(search) ||
         event.programName?.toLowerCase().includes(search) ||
         event.sessionName?.toLowerCase().includes(search) ||
-        event.facilityName?.toLowerCase().includes(search)
+        event.facilityName?.toLowerCase().includes(search) ||
+        (event.spaceName && event.spaceName.toLowerCase().includes(search))
       );
+    }
+
+    if (filters.spaceNames && filters.spaceNames.length > 0) {
+      result = result.filter((event) => eventMatchesSpaceNames(event, filters.spaceNames));
     }
     
     // Filter by program type
@@ -1026,6 +1042,18 @@ export function DiscoveryPage({
     };
   }, [initialPrograms]);
 
+  /** Distinct space/resource labels from loaded schedule events (schedule filter only). */
+  const scheduleSpaceOptions = useMemo(() => {
+    const m = new Map<string, number>();
+    apiEvents.forEach((e: { spaceName?: string }) => {
+      const sn = (e.spaceName || '').trim();
+      if (sn) m.set(sn, (m.get(sn) || 0) + 1);
+    });
+    return Array.from(m.entries())
+      .map(([id, count]) => ({ id, name: id, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [apiEvents]);
+
   // Update URL when filters or view mode change
   const updateUrl = useCallback((newFilters: DiscoveryFilters, newViewMode: ViewMode) => {
     const params: Record<string, any> = {
@@ -1047,6 +1075,9 @@ export function DiscoveryPage({
     if (newFilters.membershipRequired !== null) params.membershipRequired = newFilters.membershipRequired;
     if (config.features.showScheduleTableDateFilters && newFilters.daysOfWeek?.length) {
       params.daysOfWeek = newFilters.daysOfWeek.join('_');
+    }
+    if (newFilters.spaceNames?.length) {
+      params.spaceNames = newFilters.spaceNames.map(encodeURIComponent).join('|');
     }
 
     const url = buildUrl(pathname, params);
@@ -1108,6 +1139,7 @@ export function DiscoveryPage({
     if (config.features.showScheduleTableDateFilters && filters.daysOfWeek && filters.daysOfWeek.length > 0) {
       count++;
     }
+    if (filters.spaceNames && filters.spaceNames.length > 0) count++;
     return count;
   }, [filters, config.features.showScheduleTableDateFilters]);
 
@@ -1378,6 +1410,7 @@ export function DiscoveryPage({
                 sessions: filterOptions.sessions,
                 ages: [],
                 hasMultipleFacilities: filterOptions.hasMultipleFacilities,
+                spaces: scheduleSpaceOptions,
               }}
               config={config}
               isScheduleView={viewMode === 'schedule'}
@@ -1456,8 +1489,9 @@ export function DiscoveryPage({
         onClose={() => setShowMobileFilters(false)}
         filters={filters}
         onFiltersChange={handleFiltersChange}
-        options={filterOptions}
+        options={{ ...filterOptions, spaces: scheduleSpaceOptions }}
         enabledFilters={config.features.enableFilters}
+        isScheduleView={viewMode === 'schedule'}
         resultCount={viewMode === 'schedule' ? filteredEvents.length : filteredPrograms.length}
         showSearch={config.features.showSearch !== false}
         brandColor={config.branding.secondaryColor}

@@ -6,7 +6,15 @@ import { supabase, getSupabaseAdmin, DiscoveryPageRow } from './supabase';
  * Convert database row to DiscoveryConfig
  */
 const DEFAULT_ENABLED_FILTERS: FilterType[] = ['search', 'facility', 'programType', 'sport', 'age', 'dateRange', 'program'];
-const DEFAULT_TABLE_COLUMNS: ScheduleTableColumn[] = ['date', 'time', 'event', 'program', 'location', 'spots', 'action'];
+const DEFAULT_TABLE_COLUMNS: ScheduleTableColumn[] = [
+  'date',
+  'time',
+  'event',
+  'program',
+  'location',
+  'spots',
+  'action',
+];
 
 function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
   // Use defaults if enableFilters is empty or missing
@@ -134,6 +142,7 @@ export const defaultConfig: DiscoveryConfig = {
     'startDate',
     'endDate',
     'daysOfWeek',
+    'spaceNames',
   ],
   defaultParams: {},
   cacheTtl: 300,

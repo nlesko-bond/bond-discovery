@@ -30,8 +30,11 @@ interface MobileFiltersProps {
     programTypes: FilterOption[];
     programs?: ProgramFilterOption[];
     sessions?: SessionFilterOption[];
+    spaces?: { id: string; name: string; count?: number }[];
   };
   enabledFilters: FilterType[];
+  /** When false, schedule-only filters (e.g. space) are hidden */
+  isScheduleView?: boolean;
   resultCount: number;
   showSearch?: boolean;
   brandColor?: string;
@@ -44,6 +47,7 @@ export function MobileFilters({
   onFiltersChange,
   options,
   enabledFilters,
+  isScheduleView = false,
   resultCount,
   showSearch = true,
   brandColor = '#6366F1',
@@ -80,6 +84,7 @@ export function MobileFilters({
       gender: 'all',
       availability: 'all',
       membershipRequired: null,
+      spaceNames: undefined,
     });
   };
 
@@ -135,6 +140,50 @@ export function MobileFilters({
               </div>
             </div>
           )}
+
+          {/* Space (schedule only) */}
+          {isScheduleView &&
+            isEnabled('space') &&
+            options.spaces &&
+            options.spaces.length > 0 && (
+              <div>
+                <label className="label text-base mb-3">Space / court</label>
+                <div className="space-y-3 max-h-56 overflow-y-auto">
+                  {options.spaces.map((sp) => {
+                    const isSelected = filters.spaceNames?.includes(sp.id) || false;
+                    return (
+                      <label
+                        key={sp.id}
+                        className="flex items-center gap-3 cursor-pointer touch-manipulation"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            const updated = e.target.checked
+                              ? [...(filters.spaceNames || []), sp.id]
+                              : (filters.spaceNames || []).filter((n) => n !== sp.id);
+                            onFiltersChange({
+                              ...filters,
+                              spaceNames: updated.length > 0 ? updated : undefined,
+                            });
+                            if (e.target.checked) {
+                              gtmEvent.filterApplied('space', sp.name);
+                            }
+                          }}
+                          className="w-5 h-5 rounded"
+                          style={{ accentColor: brandColor }}
+                        />
+                        <span className="text-base text-gray-700 flex-1">{sp.name}</span>
+                        {sp.count !== undefined && (
+                          <span className="text-sm text-gray-400">({sp.count})</span>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
           {/* Facility Filter */}
           {isEnabled('facility') && options.facilities.length > 0 && (

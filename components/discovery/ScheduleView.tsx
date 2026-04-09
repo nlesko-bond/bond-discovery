@@ -60,7 +60,15 @@ function initialScheduleViewParamForHydration(
   }
   return searchParams.get('scheduleView');
 }
-type TableColumn = 'date' | 'time' | 'event' | 'program' | 'location' | 'spots' | 'action';
+type TableColumn =
+  | 'date'
+  | 'time'
+  | 'event'
+  | 'program'
+  | 'location'
+  | 'space'
+  | 'spots'
+  | 'action';
 
 function formatEventCountForHydration(n: number | undefined): string {
   return (n ?? 0).toLocaleString('en-US');
@@ -1587,13 +1595,22 @@ function TableView({
       : `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`;
   
   // Table column visibility
-  const defaultTableColumns: TableColumn[] = ['date', 'time', 'event', 'program', 'location', 'spots', 'action'];
+  const defaultTableColumns: TableColumn[] = [
+    'date',
+    'time',
+    'event',
+    'program',
+    'location',
+    'spots',
+    'action',
+  ];
   const tableColumns = (config.features.tableColumns || defaultTableColumns) as TableColumn[];
   const showDateColumn = tableColumns.includes('date');
   const showTimeColumn = tableColumns.includes('time');
   const showEventColumn = tableColumns.includes('event');
   const showProgramColumn = tableColumns.includes('program');
-  const showLocationColumn = tableColumns.includes('location') && hasMultipleFacilities;
+  const showLocationColumn = tableColumns.includes('location');
+  const showSpaceColumn = tableColumns.includes('space');
   const showSpotsColumn = tableColumns.includes('spots') && config.features.showAvailability;
   const punchPassFeatureOn = config.features.showPunchPassRedeemButton === true;
   const showActionColumn =
@@ -1695,6 +1712,11 @@ function TableView({
               {showLocationColumn && (
                 <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
                   Location
+                </th>
+              )}
+              {showSpaceColumn && (
+                <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
+                  Space
                 </th>
               )}
               {showSpotsColumn && (
@@ -1804,17 +1826,48 @@ function TableView({
                     </td>
                   )}
                   
-                  {/* Location */}
+                  {/* Location: multi-facility = facility + nested space (unless space has its own column); single = space primary when no space column */}
                   {showLocationColumn && (
                     <td className="px-4 py-3">
-                      <div className="text-sm text-gray-700 truncate max-w-[150px]">
-                        {event.facilityName}
-                      </div>
-                      {event.spaceName && (
-                        <div className="text-xs text-gray-500 truncate max-w-[150px]">
-                          {event.spaceName}
+                      {hasMultipleFacilities ? (
+                        showSpaceColumn ? (
+                          <div className="text-sm text-gray-800 truncate max-w-[160px]" title={event.facilityName}>
+                            {event.facilityName || '—'}
+                          </div>
+                        ) : (
+                          <>
+                            <div className="text-sm font-medium text-gray-900 truncate max-w-[160px]">
+                              {event.facilityName || '—'}
+                            </div>
+                            {event.spaceName && (
+                              <div className="text-xs text-gray-500 truncate max-w-[160px]">{event.spaceName}</div>
+                            )}
+                          </>
+                        )
+                      ) : showSpaceColumn ? (
+                        <div className="text-sm text-gray-800 truncate max-w-[160px]" title={event.facilityName}>
+                          {event.facilityName || '—'}
                         </div>
+                      ) : event.spaceName ? (
+                        <>
+                          <div className="text-sm font-medium text-gray-900 truncate max-w-[160px]">
+                            {event.spaceName}
+                          </div>
+                          {event.facilityName && (
+                            <div className="text-xs text-gray-500 truncate max-w-[160px]">{event.facilityName}</div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-sm text-gray-700 truncate max-w-[160px]">{event.facilityName || '—'}</div>
                       )}
+                    </td>
+                  )}
+
+                  {showSpaceColumn && (
+                    <td className="px-4 py-3">
+                      <div className="text-sm text-gray-800 truncate max-w-[140px]" title={event.spaceName}>
+                        {event.spaceName || '—'}
+                      </div>
                     </td>
                   )}
                   

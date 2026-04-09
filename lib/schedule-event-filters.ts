@@ -48,3 +48,14 @@ export function eventMatchesDaysOfWeek(
   const wd = getLocalWeekday(event.startDate, event.timezone);
   return daysOfWeek.includes(wd);
 }
+
+/** Schedule: filter events whose `spaceName` exactly matches one of the selected labels. */
+export function eventMatchesSpaceNames(
+  event: { spaceName?: string },
+  spaceNames?: string[],
+): boolean {
+  if (!spaceNames || spaceNames.length === 0) return true;
+  const selected = new Set(spaceNames.map((s) => s.trim()).filter(Boolean));
+  const sn = (event.spaceName || '').trim();
+  return sn.length > 0 && selected.has(sn);
+}

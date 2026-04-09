@@ -49,7 +49,16 @@ interface PageConfig {
     mobileDefaultScheduleView?: 'list' | 'table' | 'day' | 'week' | 'month';
     allowViewToggle: boolean;
     showTableView?: boolean;
-    tableColumns?: ('date' | 'time' | 'event' | 'program' | 'location' | 'spots' | 'action')[];
+    tableColumns?: (
+      | 'date'
+      | 'time'
+      | 'event'
+      | 'program'
+      | 'location'
+      | 'space'
+      | 'spots'
+      | 'action'
+    )[];
     allowTableViewOnMobile?: boolean;
     // Tab visibility
     enabledTabs?: ('programs' | 'schedule')[];
@@ -84,6 +93,11 @@ interface PageConfig {
 
 const ALL_FILTERS = [
   { id: 'facility', name: 'Facility', description: 'Filter by location/facility' },
+  {
+    id: 'space',
+    name: 'Space',
+    description: 'Schedule: filter by court/field/space (from event resources)',
+  },
   { id: 'programType', name: 'Program Type', description: 'Filter by camp, clinic, class, etc.' },
   { id: 'sport', name: 'Sport', description: 'Filter by sport type' },
   { id: 'age', name: 'Age Range', description: 'Filter by age restrictions' },
@@ -100,6 +114,7 @@ const TABLE_COLUMNS = [
   { id: 'event', label: 'Event' },
   { id: 'program', label: 'Program' },
   { id: 'location', label: 'Location' },
+  { id: 'space', label: 'Space' },
   { id: 'spots', label: 'Spots' },
   { id: 'action', label: 'Action' },
 ] as const;

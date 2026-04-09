@@ -352,7 +352,15 @@ export interface BrandingConfig {
 }
 
 export type ScheduleViewType = 'list' | 'table' | 'day' | 'week' | 'month';
-export type ScheduleTableColumn = 'date' | 'time' | 'event' | 'program' | 'location' | 'spots' | 'action';
+export type ScheduleTableColumn =
+  | 'date'
+  | 'time'
+  | 'event'
+  | 'program'
+  | 'location'
+  | 'space'
+  | 'spots'
+  | 'action';
 
 export type LinkBehavior = 'new_tab' | 'same_window' | 'in_frame';
 export type ProgramFilterMode = 'all' | 'exclude' | 'include';
@@ -429,7 +437,8 @@ export type FilterType =
   | 'gender' 
   | 'price' 
   | 'availability'
-  | 'membership';
+  | 'membership'
+  | 'space';
 
 // ============================================
 // Discovery UI Types
@@ -461,6 +470,8 @@ export interface DiscoveryFilters {
   membershipRequired?: boolean | null;
   /** Local weekdays (0=Sun … 6=Sat) to include; empty/undefined = all */
   daysOfWeek?: number[];
+  /** Schedule: filter events whose `spaceName` matches (court/field/resource label) */
+  spaceNames?: string[];
 }
 
 // Calendar/Schedule Types

@@ -7,7 +7,11 @@ import { ScheduleView } from '@/components/discovery/ScheduleView';
 import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode, CalendarEvent } from '@/types';
 import { buildWeekSchedules } from '@/lib/transformers';
 import { getSportGradient } from '@/lib/utils';
-import { eventMatchesDateRange, eventMatchesDaysOfWeek } from '@/lib/schedule-event-filters';
+import {
+  eventMatchesDateRange,
+  eventMatchesDaysOfWeek,
+  eventMatchesSpaceNames,
+} from '@/lib/schedule-event-filters';
 import { scheduleViewParamFromPageSearchParams } from '@/lib/schedule-view-resolution';
 import { Calendar, Grid3X3, Filter } from 'lucide-react';
 
@@ -63,6 +67,11 @@ export function EmbedDiscoveryPage({
           .split('_')
           .map((n) => parseInt(n, 10))
           .filter((n) => !Number.isNaN(n) && n >= 0 && n <= 6)
+      : undefined,
+    spaceNames: searchParams.spaceNames
+      ? (typeof searchParams.spaceNames === 'string'
+          ? searchParams.spaceNames.split('|').map((s) => decodeURIComponent(s)).filter(Boolean)
+          : [])
       : undefined,
   });
 
@@ -152,8 +161,10 @@ export function EmbedDiscoveryPage({
       }
     });
 
+    const facilitiesList = Array.from(facilities.values()).sort((a, b) => a.name.localeCompare(b.name));
     return {
-      facilities: Array.from(facilities.values()).sort((a, b) => a.name.localeCompare(b.name)),
+      facilities: facilitiesList,
+      hasMultipleFacilities: facilitiesList.length > 1,
       sports: Array.from(sports.entries())
         .map(([id, count]) => ({ id, label: id, count }))
         .sort((a, b) => b.count - a.count),
@@ -240,6 +251,17 @@ export function EmbedDiscoveryPage({
       .finally(() => setLoadingMore(false));
   }, [loadingMore, apiEvents.length, totalServerEvents, config.slug]);
 
+  const scheduleSpaceOptions = useMemo(() => {
+    const m = new Map<string, number>();
+    apiEvents.forEach((e: { spaceName?: string }) => {
+      const sn = (e.spaceName || '').trim();
+      if (sn) m.set(sn, (m.get(sn) || 0) + 1);
+    });
+    return Array.from(m.entries())
+      .map(([id, count]) => ({ id, name: id, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [apiEvents]);
+
   const filteredEvents = useMemo(() => {
     let result = [...apiEvents];
     if (filters.programIds && filters.programIds.length > 0) {
@@ -263,6 +285,20 @@ export function EmbedDiscoveryPage({
           )
         );
       });
+    }
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      result = result.filter(
+        (e) =>
+          e.title?.toLowerCase().includes(q) ||
+          e.programName?.toLowerCase().includes(q) ||
+          e.sessionName?.toLowerCase().includes(q) ||
+          e.facilityName?.toLowerCase().includes(q) ||
+          (e.spaceName && e.spaceName.toLowerCase().includes(q)),
+      );
+    }
+    if (filters.spaceNames && filters.spaceNames.length > 0) {
+      result = result.filter((e) => eventMatchesSpaceNames(e, filters.spaceNames));
     }
     if (config.features.showScheduleTableDateFilters) {
       if (filters.dateRange?.start || filters.dateRange?.end) {
@@ -372,8 +408,11 @@ export function EmbedDiscoveryPage({
               filteredPrograms.some(fp => fp.id === p.id)
             ),
             ages: [],
+            hasMultipleFacilities: filterOptions.hasMultipleFacilities,
+            spaces: scheduleSpaceOptions,
           }}
           config={config}
+          isScheduleView={viewMode === 'schedule'}
         />
       </div>
 
@@ -394,6 +433,7 @@ export function EmbedDiscoveryPage({
             totalServerEvents={totalServerEvents}
             onLoadMore={loadMoreEvents}
             loadingMore={loadingMore}
+            hasMultipleFacilities={filterOptions.hasMultipleFacilities}
             linkTarget={linkTarget}
             hideRegistrationLinks={config.features.hideRegistrationLinks}
             customRegistrationUrl={config.features.customRegistrationUrl}

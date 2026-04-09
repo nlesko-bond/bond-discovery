@@ -19,6 +19,7 @@ import {
   Swords,
   UsersRound,
   DoorOpen,
+  Warehouse,
   Key,
   CircleDot,
   Dumbbell,
@@ -131,6 +132,8 @@ interface FilterOptions {
   sessions?: SessionOption[]; // Sessions, filtered by selected programs
   ages: { min: number; max: number }[];
   hasMultipleFacilities?: boolean;
+  /** Schedule: distinct space/resource labels from events */
+  spaces?: FilterOption[];
 }
 
 interface HorizontalFilterBarProps {
@@ -244,6 +247,7 @@ export function HorizontalFilterBar({
     (filters.gender && filters.gender !== 'all') ? 1 : 0,
     (filters.availability && filters.availability !== 'all') ? 1 : 0,
     filters.dateRange?.start || filters.dateRange?.end ? 1 : 0,
+    (isScheduleView && filters.spaceNames?.length) ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
 
   // Close dropdown when clicking outside
@@ -275,7 +279,7 @@ export function HorizontalFilterBar({
   };
 
   const handleMultiSelect = (
-    key: 'facilityIds' | 'programIds' | 'programTypes' | 'sports' | 'sessionIds',
+    key: 'facilityIds' | 'programIds' | 'programTypes' | 'sports' | 'sessionIds' | 'spaceNames',
     value: string
   ) => {
     const current = (filters[key] || []) as string[];
@@ -307,6 +311,9 @@ export function HorizontalFilterBar({
         const session = filterOptions.sessions?.find(s => s.id === value);
         filterType = 'session';
         filterValue = session?.name || value;
+      } else if (key === 'spaceNames') {
+        filterType = 'space';
+        filterValue = value;
       }
       
       gtmEvent.filterApplied(filterType, filterValue);
@@ -343,6 +350,9 @@ export function HorizontalFilterBar({
     }
     if (key === 'date') {
       newFilters.dateRange = undefined;
+    }
+    if (key === 'spaceNames') {
+      newFilters.spaceNames = undefined;
     }
     onFilterChange(newFilters);
   };
@@ -522,6 +532,48 @@ export function HorizontalFilterBar({
             </div>
           </FilterDropdown>
         )}
+
+        {/* Space / resource (schedule only) */}
+        {isScheduleView &&
+          enabledFilters.includes('space') &&
+          (filterOptions.spaces?.length ?? 0) > 0 && (
+            <FilterDropdown
+              label="Space"
+              icon={<Warehouse size={14} />}
+              isOpen={openDropdown === 'space'}
+              onToggle={() => setOpenDropdown(openDropdown === 'space' ? null : 'space')}
+              hasSelection={(filters.spaceNames?.length || 0) > 0}
+              selectionCount={filters.spaceNames?.length}
+              brandColor={secondaryColor}
+            >
+              <div className="p-2 max-h-64 overflow-y-auto">
+                {filterOptions.spaces!.map((sp) => {
+                  const isSelected = filters.spaceNames?.includes(sp.id);
+                  return (
+                    <button
+                      key={sp.id}
+                      onClick={() => handleMultiSelect('spaceNames', sp.id)}
+                      className={cn(
+                        'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 transition-colors',
+                        !isSelected && 'hover:bg-gray-50'
+                      )}
+                      style={isSelected ? { backgroundColor: `${secondaryColor}15`, color: secondaryColor } : undefined}
+                    >
+                      <span className="truncate">{sp.name}</span>
+                      <div className="flex items-center gap-2">
+                        {sp.count !== undefined && (
+                          <span className="text-xs text-gray-400">{sp.count}</span>
+                        )}
+                        {isSelected && (
+                          <Check size={14} style={{ color: secondaryColor }} />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </FilterDropdown>
+          )}
 
         {/* Program Filter - only show if enabled */}
         {enabledFilters.includes('program') && filterOptions.programs.length > 0 && (
