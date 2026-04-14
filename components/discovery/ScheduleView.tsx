@@ -340,7 +340,7 @@ export function ScheduleView({
       lines.push(`UID:${event.id}@bondsports.co`);
       lines.push(`DTSTART:${formatDate(startDate)}`);
       lines.push(`DTEND:${formatDate(endDate)}`);
-      lines.push(`SUMMARY:${event.title || event.programName || 'Event'}`);
+      lines.push(`SUMMARY:${event.title || event.sessionName || event.programName || 'Event'}`);
       const descParts = [event.programName, event.sessionName].filter(Boolean);
       if (descParts.length > 0) lines.push(`DESCRIPTION:${descParts.join(' - ')}`);
       if (event.facilityName) lines.push(`LOCATION:${event.facilityName}`);
@@ -378,7 +378,17 @@ export function ScheduleView({
   
   // CSV export
   const handleExportCSV = useCallback(() => {
-    const headers = ['Date', 'Time', 'Program', 'Session', 'Location', 'Spots', 'Price', 'Registration Link'];
+    const headers = [
+      'Date',
+      'Time',
+      'Event',
+      'Program',
+      'Session',
+      'Location',
+      'Spots',
+      'Price',
+      'Registration Link',
+    ];
     const rows = allEvents.map(event => {
       const date = event.startTime ? format(new Date(event.startTime), 'yyyy-MM-dd') : event.date;
       const time = event.startTime ? format(new Date(event.startTime), 'h:mm a') : '';
@@ -387,16 +397,18 @@ export function ScheduleView({
       const link = event.linkSEO ? `https://app.bondsports.co${event.linkSEO}` : '';
       const price = event.startingPrice ? `$${event.startingPrice}` : '';
       const location = [event.facilityName, event.spaceName].filter(Boolean).join(' - ');
-      
+      const eventName = event.title || event.sessionName || event.programName || '';
+
       return [
         date,
         timeRange,
+        eventName,
         event.programName || '',
         event.sessionName || '',
         location,
         event.spotsRemaining !== undefined ? `${event.spotsRemaining} available` : '',
         price,
-        link
+        link,
       ].map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',');
     });
     
@@ -1701,11 +1713,14 @@ function TableView({
                   Time
                 </th>
               )}
-              {showEventColumn && (
-                <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
-                  Event
-                </th>
-              )}
+              <th
+                className={cn(
+                  'px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600',
+                  !showEventColumn && 'hidden print:table-cell',
+                )}
+              >
+                Event
+              </th>
               {showProgramColumn && (
                 <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
                   Program
@@ -1743,7 +1758,9 @@ function TableView({
               const isFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 0;
               const isAlmostFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 5 && !isFull;
               const isWaitlistJoinable = Boolean(event.isWaitlistEnabled && isFull && isRegistrationOpen);
-              
+              const eventPrimary =
+                event.title || event.sessionName || event.programName;
+
               return (
                 <tr 
                   key={event.id} 
@@ -1778,20 +1795,25 @@ function TableView({
                     </td>
                   )}
                   
-                  {/* Event Title */}
-                  {showEventColumn && (
-                    <td className="px-4 py-3 print:px-2 print:py-1">
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-gray-900 line-clamp-2 print:whitespace-normal">
-                          {event.title || event.sessionName || event.programName}
-                        </div>
-                        {event.sessionName && event.sessionName !== event.title && (
+                  {/* Event title — always in print/PDF; on screen hidden when Event column is disabled in config */}
+                  <td
+                    className={cn(
+                      'px-4 py-3 print:px-2 print:py-1',
+                      !showEventColumn && 'hidden print:table-cell',
+                    )}
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-gray-900 line-clamp-2 print:whitespace-normal">
+                        {eventPrimary}
+                      </div>
+                      {event.sessionName &&
+                        event.sessionName !== eventPrimary && (
                           <div className="text-xs text-gray-500 line-clamp-1 print:whitespace-normal">
                             {event.sessionName}
                           </div>
                         )}
-                        {/* Status badges - hide in print */}
-                        <div className="flex items-center gap-1 mt-0.5 print:hidden">
+                      {/* Status badges - hide in print */}
+                      <div className="flex items-center gap-1 mt-0.5 print:hidden">
                           {isRegistrationClosed && (
                             <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">Closed</span>
                           )}
@@ -1806,7 +1828,6 @@ function TableView({
                         </div>
                       </div>
                     </td>
-                  )}
                   
                   {/* Program */}
                   {showProgramColumn && (
