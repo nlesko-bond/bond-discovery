@@ -425,6 +425,12 @@ export interface FeatureConfig {
   persistFiltersInLocalStorage?: boolean;
   /** Label for the space/court column and space filter (default: "Space") */
   spaceColumnLabel?: string;
+  /**
+   * When true, discovery can show league-specific schedule table columns and CSV export
+   * after the visitor narrows to league program type or only league programs
+   * (`lib/league-schedule-context.ts`). Default off — opt in per page in admin.
+   */
+  showLeagueScheduleTableAndExport?: boolean;
 }
 
 export type FilterType = 

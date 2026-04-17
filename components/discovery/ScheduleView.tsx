@@ -47,6 +47,7 @@ import {
   shouldRewriteScheduleViewParam,
   VALID_SCHEDULE_VIEW_MODES,
 } from '@/lib/schedule-view-resolution';
+import { parseHomeAwayFromEventTitle } from '@/lib/parse-league-event-title';
 
 type ViewMode = 'list' | 'table' | 'day' | 'week' | 'month';
 
@@ -92,6 +93,10 @@ interface ScheduleViewProps {
   onScheduleFiltersChange?: (next: DiscoveryFilters) => void;
   /** From page `searchParams` via `scheduleViewParamFromPageSearchParams` — keeps SSR and first client render aligned. */
   initialUrlScheduleView?: string | null;
+  /**
+   * League layout for table + CSV when admin enabled and filters narrowed to leagues.
+   */
+  leagueTableMode?: boolean;
 }
 
 export function ScheduleView({
@@ -111,6 +116,7 @@ export function ScheduleView({
   filters,
   onScheduleFiltersChange,
   initialUrlScheduleView,
+  leagueTableMode = false,
 }: ScheduleViewProps) {
   const searchParams = useSearchParams();
   const searchParamsRef = useRef(searchParams);
@@ -378,6 +384,53 @@ export function ScheduleView({
   
   // CSV export
   const handleExportCSV = useCallback(() => {
+    const surfaceHeader =
+      config.features.spaceColumnLabel?.trim() || 'Surface';
+
+    if (leagueTableMode) {
+      const headers = [
+        'League',
+        'Season',
+        'Date',
+        'Start Time - End Time',
+        surfaceHeader,
+        'Home Team',
+        'Away Team',
+      ];
+      const rows = allEvents.map((event) => {
+        const titleForTeams = event.title || event.sessionName || event.programName || '';
+        const { home, away } = parseHomeAwayFromEventTitle(titleForTeams);
+        const date = event.date;
+        const start = formatTime(event.startTime, event.timezone);
+        const end = event.endTime ? formatTime(event.endTime, event.timezone) : '';
+        const timeRange = end ? `${start} - ${end}` : start;
+
+        return [
+          event.programName || '',
+          event.sessionName || '',
+          date,
+          timeRange,
+          event.spaceName || '',
+          home,
+          away,
+        ]
+          .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+          .join(',');
+      });
+      const csv = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'league-schedule.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setShowExportMenu(false);
+      return;
+    }
+
     const headers = [
       'Date',
       'Time',
@@ -423,7 +476,7 @@ export function ScheduleView({
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     setShowExportMenu(false);
-  }, [allEvents]);
+  }, [allEvents, leagueTableMode, config.features.spaceColumnLabel]);
   
   // Get all days with events (for list view), grouped by date
   const allDaysWithEvents = useMemo(() => {
@@ -927,6 +980,7 @@ export function ScheduleView({
             totalServerEvents={totalServerEvents}
             onLoadMore={onLoadMore}
             loadingMore={loadingMore}
+            leagueTableMode={leagueTableMode}
           />
         </>
       )}
@@ -1582,6 +1636,7 @@ function TableView({
   totalServerEvents,
   onLoadMore,
   loadingMore,
+  leagueTableMode = false,
 }: {
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
@@ -1595,6 +1650,7 @@ function TableView({
   totalServerEvents?: number;
   onLoadMore?: () => void;
   loadingMore?: boolean;
+  leagueTableMode?: boolean;
 }) {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [visibleCount, setVisibleCount] = useState(50);
@@ -1628,6 +1684,12 @@ function TableView({
   const showSpotsColumn = tableColumns.includes('spots') && config.features.showAvailability;
   const punchPassFeatureOn = config.features.showPunchPassRedeemButton === true;
   const showActionColumn =
+    tableColumns.includes('action') &&
+    (!hideRegistrationLinks || punchPassFeatureOn);
+
+  const leagueMode = Boolean(leagueTableMode);
+  const leagueShowActionColumn =
+    leagueMode &&
     tableColumns.includes('action') &&
     (!hideRegistrationLinks || punchPassFeatureOn);
   
@@ -1703,49 +1765,82 @@ function TableView({
             style={{ top: stickyOffset, background: tableHeaderBackground }}
           >
             <tr className="print:bg-gray-100 print:text-gray-600">
-              {showDateColumn && (
-                <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600 first:rounded-tl-lg">
-                  Date
-                </th>
-              )}
-              {showTimeColumn && (
-                <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
-                  Time
-                </th>
-              )}
-              <th
-                className={cn(
-                  'px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600',
-                  !showEventColumn && 'hidden print:table-cell',
-                )}
-              >
-                Event
-              </th>
-              {showProgramColumn && (
-                <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
-                  Program
-                </th>
-              )}
-              {showLocationColumn && (
-                <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
-                  Location
-                </th>
-              )}
-              {showSpaceColumn && (
-                <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
-                  {spaceColumnLabel}
-                </th>
-              )}
-              {showSpotsColumn && (
-                <th className="px-1 min-[480px]:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:hidden">
-                  <span className="hidden min-[480px]:inline">Spots Left</span>
-                  <span className="min-[480px]:hidden">Spots<br/>Left</span>
-                </th>
-              )}
-              {showActionColumn && (
-                <th className="px-2 sm:px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider print:hidden last:rounded-tr-lg">
-                  Action
-                </th>
+              {leagueMode ? (
+                <>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600 first:rounded-tl-lg">
+                    League
+                  </th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
+                    Season
+                  </th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
+                    Date
+                  </th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
+                    Time
+                  </th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
+                    {spaceColumnLabel}
+                  </th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
+                    Home
+                  </th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
+                    Away
+                  </th>
+                  {leagueShowActionColumn && (
+                    <th className="px-2 sm:px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider print:hidden last:rounded-tr-lg">
+                      Action
+                    </th>
+                  )}
+                </>
+              ) : (
+                <>
+                  {showDateColumn && (
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600 first:rounded-tl-lg">
+                      Date
+                    </th>
+                  )}
+                  {showTimeColumn && (
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
+                      Time
+                    </th>
+                  )}
+                  <th
+                    className={cn(
+                      'px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600',
+                      !showEventColumn && 'hidden print:table-cell',
+                    )}
+                  >
+                    Event
+                  </th>
+                  {showProgramColumn && (
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
+                      Program
+                    </th>
+                  )}
+                  {showLocationColumn && (
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
+                      Location
+                    </th>
+                  )}
+                  {showSpaceColumn && (
+                    <th className="px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:px-2 print:py-1 print:text-gray-600">
+                      {spaceColumnLabel}
+                    </th>
+                  )}
+                  {showSpotsColumn && (
+                    <th className="px-1 min-[480px]:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider print:hidden">
+                      <span className="hidden min-[480px]:inline">Spots Left</span>
+                      <span className="min-[480px]:hidden">Spots<br/>Left</span>
+                    </th>
+                  )}
+                  {showActionColumn && (
+                    <th className="px-2 sm:px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider print:hidden last:rounded-tr-lg">
+                      Action
+                    </th>
+                  )}
+                </>
               )}
             </tr>
           </thead>
@@ -1760,6 +1855,9 @@ function TableView({
               const isWaitlistJoinable = Boolean(event.isWaitlistEnabled && isFull && isRegistrationOpen);
               const eventPrimary =
                 event.title || event.sessionName || event.programName;
+              const { home: leagueHome, away: leagueAway } = parseHomeAwayFromEventTitle(
+                event.title || event.sessionName || event.programName || '',
+              );
 
               return (
                 <tr 
@@ -1770,208 +1868,313 @@ function TableView({
                   )}
                   onClick={() => onEventClick(event)}
                 >
-                  {/* Date - always one line */}
-                  {showDateColumn && (
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1 whitespace-nowrap">
-                      <div className="text-xs sm:text-sm font-medium text-gray-900">
-                        {format(parseISO(event.date), 'EEE, MMM d')}
-                      </div>
-                    </td>
-                  )}
-                  
-                  {/* Time - stacks only on very small screens */}
-                  {showTimeColumn && (
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1">
-                      <div className="text-xs sm:text-sm text-gray-700">
-                        <span className="hidden min-[480px]:inline whitespace-nowrap">
-                          {formatTime(event.startTime, event.timezone) || 'TBD'}
-                          {event.endTime && ` - ${formatTime(event.endTime, event.timezone)}`}
-                        </span>
-                        <span className="min-[480px]:hidden">
-                          <span className="block whitespace-nowrap">{formatTime(event.startTime, event.timezone) || 'TBD'}{event.endTime && ' -'}</span>
-                          {event.endTime && <span className="block whitespace-nowrap">{formatTime(event.endTime, event.timezone)}</span>}
-                        </span>
-                      </div>
-                    </td>
-                  )}
-                  
-                  {/* Event title — always in print/PDF; on screen hidden when Event column is disabled in config */}
-                  <td
-                    className={cn(
-                      'px-4 py-3 print:px-2 print:py-1',
-                      !showEventColumn && 'hidden print:table-cell',
-                    )}
-                  >
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-gray-900 line-clamp-2 print:whitespace-normal">
-                        {eventPrimary}
-                      </div>
-                      {event.sessionName &&
-                        event.sessionName !== eventPrimary && (
-                          <div className="text-xs text-gray-500 line-clamp-1 print:whitespace-normal">
-                            {event.sessionName}
+                  {leagueMode ? (
+                    <>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 line-clamp-2 print:whitespace-normal">
+                          {event.programName || '—'}
+                        </div>
+                      </td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1">
+                        <div className="text-xs sm:text-sm text-gray-700 line-clamp-2 print:whitespace-normal">
+                          {event.sessionName || '—'}
+                        </div>
+                      </td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900">
+                          {format(parseISO(event.date), 'EEE, MMM d')}
+                        </div>
+                      </td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1">
+                        <div className="text-xs sm:text-sm text-gray-700">
+                          <span className="hidden min-[480px]:inline whitespace-nowrap">
+                            {formatTime(event.startTime, event.timezone) || 'TBD'}
+                            {event.endTime && ` - ${formatTime(event.endTime, event.timezone)}`}
+                          </span>
+                          <span className="min-[480px]:hidden">
+                            <span className="block whitespace-nowrap">{formatTime(event.startTime, event.timezone) || 'TBD'}{event.endTime && ' -'}</span>
+                            {event.endTime && <span className="block whitespace-nowrap">{formatTime(event.endTime, event.timezone)}</span>}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1">
+                        <div className="text-xs sm:text-sm text-gray-800 truncate max-w-[160px]" title={event.spaceName}>
+                          {event.spaceName || '—'}
+                        </div>
+                      </td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1">
+                        <div className="text-xs sm:text-sm text-gray-900 print:whitespace-normal">{leagueHome || '—'}</div>
+                      </td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1">
+                        <div className="text-xs sm:text-sm text-gray-900 print:whitespace-normal">{leagueAway || '—'}</div>
+                      </td>
+                      {leagueShowActionColumn && (
+                        <td className="min-w-0 px-1.5 sm:px-4 py-2 sm:py-3 print:hidden">
+                          <div className="flex flex-col gap-1.5 w-full min-w-0 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                            <div className="flex justify-stretch sm:flex-1 sm:justify-start min-w-0">
+                              {eventShowsRedeemPass(event, config) && (
+                                <a
+                                  href={getPunchPassRedeemUrl(config)}
+                                  target={linkTarget}
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    trackRedeemPassClick(config, event);
+                                  }}
+                                  className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg border print:hidden hover:opacity-90 w-full sm:w-auto"
+                                  style={{ color: secondaryColor, borderColor: `${secondaryColor}66`, backgroundColor: `${secondaryColor}0d` }}
+                                >
+                                  <Ticket size={12} className="shrink-0" />
+                                  Redeem
+                                </a>
+                              )}
+                            </div>
+                            <div className="flex justify-stretch sm:justify-end sm:shrink-0 min-w-0">
+                              {!hideRegistrationLinks && event.linkSEO && (
+                                <a
+                                  href={customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
+                                  target={linkTarget}
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!isRegistrationUnavailable) {
+                                      gtmEvent.clickRegister({
+                                        programId: event.programId,
+                                        programName: event.programName,
+                                        sessionId: event.sessionId,
+                                        sessionName: event.sessionName,
+                                      });
+                                      bondAnalytics.clickRegister(config.slug, {
+                                        programId: event.programId,
+                                        programName: event.programName,
+                                        sessionId: event.sessionId,
+                                        sessionName: event.sessionName,
+                                      });
+                                    }
+                                  }}
+                                  className={cn(
+                                    'inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-medium rounded-lg transition-colors print:hidden w-full sm:w-auto',
+                                    isRegistrationUnavailable
+                                      ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                      : 'text-white hover:opacity-90'
+                                  )}
+                                  style={!isRegistrationUnavailable ? { backgroundColor: secondaryColor } : undefined}
+                                >
+                                  {isRegistrationUnavailable ? 'Details' : (isWaitlistJoinable ? 'Join Waitlist' : 'Register')}
+                                  {config.features.showRegisterIcon !== false && <ExternalLink size={12} className="shrink-0" />}
+                                </a>
+                              )}
+                            </div>
                           </div>
+                        </td>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {/* Date - always one line */}
+                      {showDateColumn && (
+                        <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1 whitespace-nowrap">
+                          <div className="text-xs sm:text-sm font-medium text-gray-900">
+                            {format(parseISO(event.date), 'EEE, MMM d')}
+                          </div>
+                        </td>
+                      )}
+                      
+                      {/* Time - stacks only on very small screens */}
+                      {showTimeColumn && (
+                        <td className="px-2 sm:px-4 py-2 sm:py-3 print:px-2 print:py-1">
+                          <div className="text-xs sm:text-sm text-gray-700">
+                            <span className="hidden min-[480px]:inline whitespace-nowrap">
+                              {formatTime(event.startTime, event.timezone) || 'TBD'}
+                              {event.endTime && ` - ${formatTime(event.endTime, event.timezone)}`}
+                            </span>
+                            <span className="min-[480px]:hidden">
+                              <span className="block whitespace-nowrap">{formatTime(event.startTime, event.timezone) || 'TBD'}{event.endTime && ' -'}</span>
+                              {event.endTime && <span className="block whitespace-nowrap">{formatTime(event.endTime, event.timezone)}</span>}
+                            </span>
+                          </div>
+                        </td>
+                      )}
+                      
+                      {/* Event title — always in print/PDF; on screen hidden when Event column is disabled in config */}
+                      <td
+                        className={cn(
+                          'px-4 py-3 print:px-2 print:py-1',
+                          !showEventColumn && 'hidden print:table-cell',
                         )}
-                      {/* Status badges - hide in print */}
-                      <div className="flex items-center gap-1 mt-0.5 print:hidden">
-                          {isRegistrationClosed && (
-                            <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">Closed</span>
-                          )}
-                          {isRegistrationNotYetOpen && (
-                            <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded">Coming Soon</span>
-                          )}
-                          {event.isWaitlistEnabled && (
-                            <span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-600 rounded flex items-center gap-0.5">
-                              <Users size={10} />Waitlist
+                      >
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-gray-900 line-clamp-2 print:whitespace-normal">
+                            {eventPrimary}
+                          </div>
+                          {event.sessionName &&
+                            event.sessionName !== eventPrimary && (
+                              <div className="text-xs text-gray-500 line-clamp-1 print:whitespace-normal">
+                                {event.sessionName}
+                              </div>
+                            )}
+                          {/* Status badges - hide in print */}
+                          <div className="flex items-center gap-1 mt-0.5 print:hidden">
+                              {isRegistrationClosed && (
+                                <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">Closed</span>
+                              )}
+                              {isRegistrationNotYetOpen && (
+                                <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded">Coming Soon</span>
+                              )}
+                              {event.isWaitlistEnabled && (
+                                <span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-600 rounded flex items-center gap-0.5">
+                                  <Users size={10} />Waitlist
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      
+                      {/* Program */}
+                      {showProgramColumn && (
+                        <td className="px-4 py-3 print:px-2 print:py-1">
+                          <div 
+                            className="text-sm text-gray-700 line-clamp-2 max-w-[200px] hover:line-clamp-none cursor-default print:whitespace-normal"
+                            title={event.programName}
+                          >
+                            {event.programName}
+                          </div>
+                          {event.programType && (
+                            <span 
+                              className="text-xs px-1.5 py-0.5 rounded mt-0.5 inline-block print:hidden"
+                              style={{ backgroundColor: `${secondaryColor}15`, color: secondaryColor }}
+                            >
+                              {getProgramTypeLabel(event.programType)}
                             </span>
                           )}
-                        </div>
-                      </div>
-                    </td>
-                  
-                  {/* Program */}
-                  {showProgramColumn && (
-                    <td className="px-4 py-3 print:px-2 print:py-1">
-                      <div 
-                        className="text-sm text-gray-700 line-clamp-2 max-w-[200px] hover:line-clamp-none cursor-default print:whitespace-normal"
-                        title={event.programName}
-                      >
-                        {event.programName}
-                      </div>
-                      {event.programType && (
-                        <span 
-                          className="text-xs px-1.5 py-0.5 rounded mt-0.5 inline-block print:hidden"
-                          style={{ backgroundColor: `${secondaryColor}15`, color: secondaryColor }}
-                        >
-                          {getProgramTypeLabel(event.programType)}
-                        </span>
+                        </td>
                       )}
-                    </td>
-                  )}
-                  
-                  {/* Location: multi-facility = facility + nested space (unless space has its own column); single = space primary when no space column */}
-                  {showLocationColumn && (
-                    <td className="px-4 py-3">
-                      {hasMultipleFacilities ? (
-                        showSpaceColumn ? (
-                          <div className="text-sm text-gray-800 truncate max-w-[160px]" title={event.facilityName}>
-                            {event.facilityName || '—'}
-                          </div>
-                        ) : (
-                          <>
-                            <div className="text-sm font-medium text-gray-900 truncate max-w-[160px]">
+                      
+                      {/* Location: multi-facility = facility + nested space (unless space has its own column); single = space primary when no space column */}
+                      {showLocationColumn && (
+                        <td className="px-4 py-3">
+                          {hasMultipleFacilities ? (
+                            showSpaceColumn ? (
+                              <div className="text-sm text-gray-800 truncate max-w-[160px]" title={event.facilityName}>
+                                {event.facilityName || '—'}
+                              </div>
+                            ) : (
+                              <>
+                                <div className="text-sm font-medium text-gray-900 truncate max-w-[160px]">
+                                  {event.facilityName || '—'}
+                                </div>
+                                {event.spaceName && (
+                                  <div className="text-xs text-gray-500 truncate max-w-[160px]">{event.spaceName}</div>
+                                )}
+                              </>
+                            )
+                          ) : showSpaceColumn ? (
+                            <div className="text-sm text-gray-800 truncate max-w-[160px]" title={event.facilityName}>
                               {event.facilityName || '—'}
                             </div>
-                            {event.spaceName && (
-                              <div className="text-xs text-gray-500 truncate max-w-[160px]">{event.spaceName}</div>
-                            )}
-                          </>
-                        )
-                      ) : showSpaceColumn ? (
-                        <div className="text-sm text-gray-800 truncate max-w-[160px]" title={event.facilityName}>
-                          {event.facilityName || '—'}
-                        </div>
-                      ) : event.spaceName ? (
-                        <>
-                          <div className="text-sm font-medium text-gray-900 truncate max-w-[160px]">
-                            {event.spaceName}
-                          </div>
-                          {event.facilityName && (
-                            <div className="text-xs text-gray-500 truncate max-w-[160px]">{event.facilityName}</div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="text-sm text-gray-700 truncate max-w-[160px]">{event.facilityName || '—'}</div>
-                      )}
-                    </td>
-                  )}
-
-                  {showSpaceColumn && (
-                    <td className="px-4 py-3">
-                      <div className="text-sm text-gray-800 truncate max-w-[140px]" title={event.spaceName}>
-                        {event.spaceName || '—'}
-                      </div>
-                    </td>
-                  )}
-                  
-                  {/* Availability */}
-                  {showSpotsColumn && (
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 print:hidden">
-                      {event.spotsRemaining !== undefined ? (
-                        <span className={cn(
-                          'text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap',
-                          isFull && 'bg-red-100 text-red-700',
-                          isAlmostFull && 'bg-yellow-100 text-yellow-700',
-                          !isFull && !isAlmostFull && 'bg-green-100 text-green-700'
-                        )}>
-                          {isWaitlistJoinable ? 'Waitlist' : (isFull ? 'Full' : `${event.spotsRemaining}`)}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-400">—</span>
-                      )}
-                    </td>
-                  )}
-                  
-                  {/* Action — stack on narrow widths; row layout from sm up (punch pass + register) */}
-                  {showActionColumn && (
-                    <td className="min-w-0 px-1.5 sm:px-4 py-2 sm:py-3 print:hidden">
-                      <div className="flex flex-col gap-1.5 w-full min-w-0 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                        <div className="flex justify-stretch sm:flex-1 sm:justify-start min-w-0">
-                          {eventShowsRedeemPass(event, config) && (
-                            <a
-                              href={getPunchPassRedeemUrl(config)}
-                              target={linkTarget}
-                              rel="noopener noreferrer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                trackRedeemPassClick(config, event);
-                              }}
-                              className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg border print:hidden hover:opacity-90 w-full sm:w-auto"
-                              style={{ color: secondaryColor, borderColor: `${secondaryColor}66`, backgroundColor: `${secondaryColor}0d` }}
-                            >
-                              <Ticket size={12} className="shrink-0" />
-                              Redeem
-                            </a>
-                          )}
-                        </div>
-                        <div className="flex justify-stretch sm:justify-end sm:shrink-0 min-w-0">
-                          {!hideRegistrationLinks && event.linkSEO && (
-                            <a
-                              href={customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
-                              target={linkTarget}
-                              rel="noopener noreferrer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (!isRegistrationUnavailable) {
-                                  gtmEvent.clickRegister({
-                                    programId: event.programId,
-                                    programName: event.programName,
-                                    sessionId: event.sessionId,
-                                    sessionName: event.sessionName,
-                                  });
-                                  bondAnalytics.clickRegister(config.slug, {
-                                    programId: event.programId,
-                                    programName: event.programName,
-                                    sessionId: event.sessionId,
-                                    sessionName: event.sessionName,
-                                  });
-                                }
-                              }}
-                              className={cn(
-                                'inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-medium rounded-lg transition-colors print:hidden w-full sm:w-auto',
-                                isRegistrationUnavailable
-                                  ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                  : 'text-white hover:opacity-90'
+                          ) : event.spaceName ? (
+                            <>
+                              <div className="text-sm font-medium text-gray-900 truncate max-w-[160px]">
+                                {event.spaceName}
+                              </div>
+                              {event.facilityName && (
+                                <div className="text-xs text-gray-500 truncate max-w-[160px]">{event.facilityName}</div>
                               )}
-                              style={!isRegistrationUnavailable ? { backgroundColor: secondaryColor } : undefined}
-                            >
-                              {isRegistrationUnavailable ? 'Details' : (isWaitlistJoinable ? 'Join Waitlist' : 'Register')}
-                              {config.features.showRegisterIcon !== false && <ExternalLink size={12} className="shrink-0" />}
-                            </a>
+                            </>
+                          ) : (
+                            <div className="text-sm text-gray-700 truncate max-w-[160px]">{event.facilityName || '—'}</div>
                           )}
-                        </div>
-                      </div>
-                    </td>
+                        </td>
+                      )}
+
+                      {showSpaceColumn && (
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-800 truncate max-w-[140px]" title={event.spaceName}>
+                            {event.spaceName || '—'}
+                          </div>
+                        </td>
+                      )}
+                      
+                      {/* Availability */}
+                      {showSpotsColumn && (
+                        <td className="px-2 sm:px-4 py-2 sm:py-3 print:hidden">
+                          {event.spotsRemaining !== undefined ? (
+                            <span className={cn(
+                              'text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap',
+                              isFull && 'bg-red-100 text-red-700',
+                              isAlmostFull && 'bg-yellow-100 text-yellow-700',
+                              !isFull && !isAlmostFull && 'bg-green-100 text-green-700'
+                            )}>
+                              {isWaitlistJoinable ? 'Waitlist' : (isFull ? 'Full' : `${event.spotsRemaining}`)}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400">—</span>
+                          )}
+                        </td>
+                      )}
+                      
+                      {/* Action — stack on narrow widths; row layout from sm up (punch pass + register) */}
+                      {showActionColumn && (
+                        <td className="min-w-0 px-1.5 sm:px-4 py-2 sm:py-3 print:hidden">
+                          <div className="flex flex-col gap-1.5 w-full min-w-0 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                            <div className="flex justify-stretch sm:flex-1 sm:justify-start min-w-0">
+                              {eventShowsRedeemPass(event, config) && (
+                                <a
+                                  href={getPunchPassRedeemUrl(config)}
+                                  target={linkTarget}
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    trackRedeemPassClick(config, event);
+                                  }}
+                                  className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg border print:hidden hover:opacity-90 w-full sm:w-auto"
+                                  style={{ color: secondaryColor, borderColor: `${secondaryColor}66`, backgroundColor: `${secondaryColor}0d` }}
+                                >
+                                  <Ticket size={12} className="shrink-0" />
+                                  Redeem
+                                </a>
+                              )}
+                            </div>
+                            <div className="flex justify-stretch sm:justify-end sm:shrink-0 min-w-0">
+                              {!hideRegistrationLinks && event.linkSEO && (
+                                <a
+                                  href={customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
+                                  target={linkTarget}
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!isRegistrationUnavailable) {
+                                      gtmEvent.clickRegister({
+                                        programId: event.programId,
+                                        programName: event.programName,
+                                        sessionId: event.sessionId,
+                                        sessionName: event.sessionName,
+                                      });
+                                      bondAnalytics.clickRegister(config.slug, {
+                                        programId: event.programId,
+                                        programName: event.programName,
+                                        sessionId: event.sessionId,
+                                        sessionName: event.sessionName,
+                                      });
+                                    }
+                                  }}
+                                  className={cn(
+                                    'inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-medium rounded-lg transition-colors print:hidden w-full sm:w-auto',
+                                    isRegistrationUnavailable
+                                      ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                      : 'text-white hover:opacity-90'
+                                  )}
+                                  style={!isRegistrationUnavailable ? { backgroundColor: secondaryColor } : undefined}
+                                >
+                                  {isRegistrationUnavailable ? 'Details' : (isWaitlistJoinable ? 'Join Waitlist' : 'Register')}
+                                  {config.features.showRegisterIcon !== false && <ExternalLink size={12} className="shrink-0" />}
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      )}
+                    </>
                   )}
                 </tr>
               );

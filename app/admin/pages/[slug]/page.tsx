@@ -87,6 +87,8 @@ interface PageConfig {
     persistFiltersInLocalStorage?: boolean;
     /** Schedule table + space filter label (default: Space) */
     spaceColumnLabel?: string;
+    /** League-specific schedule table columns + CSV when filtered to leagues */
+    showLeagueScheduleTableAndExport?: boolean;
   };
   defaultParams?: Record<string, string>;
   cacheTtl?: number;
@@ -737,6 +739,23 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   })}
                 />
                 <span>Show Table view option on desktop (great for high-volume events)</span>
+              </label>
+              <label className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300 mt-1"
+                  checked={config.features.showLeagueScheduleTableAndExport || false}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    features: { ...config.features, showLeagueScheduleTableAndExport: e.target.checked }
+                  })}
+                />
+                <span>
+                  <span className="font-medium">Show league table &amp; export option</span>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    When visitors filter to program type League only, or select one or more programs that are all leagues, the schedule table and CSV export use league columns (league, season, date, time, surface, home, away). Other schedules are unchanged.
+                  </p>
+                </span>
               </label>
               <div className="rounded-lg border border-gray-200 p-3 bg-gray-50">
                 <div className="text-sm font-medium text-gray-900">Table columns</div>

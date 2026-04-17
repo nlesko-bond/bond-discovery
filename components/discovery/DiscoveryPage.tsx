@@ -12,7 +12,7 @@ import {
   Check,
   Link as LinkIcon
 } from 'lucide-react';
-import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode } from '@/types';
+import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode, ProgramType } from '@/types';
 import { ProgramGrid } from './ProgramGrid';
 import { ScheduleView } from './ScheduleView';
 import { programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers';
@@ -23,6 +23,7 @@ import {
   eventMatchesSpaceNames,
 } from '@/lib/schedule-event-filters';
 import { scheduleViewParamFromPageSearchParams } from '@/lib/schedule-view-resolution';
+import { isLeagueScheduleTableContext } from '@/lib/league-schedule-context';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
@@ -898,6 +899,11 @@ export function DiscoveryPage({
 
     return result;
   }, [apiEvents, filters, initialPrograms, config.features.showScheduleTableDateFilters]);
+
+  const leagueTableMode = useMemo(
+    () => isLeagueScheduleTableContext(config, filters, initialPrograms),
+    [config, filters, initialPrograms],
+  );
   
   // Generate schedule data for calendar view from real API events
   const scheduleData = useMemo(() => {
@@ -943,6 +949,7 @@ export function DiscoveryPage({
         facilityName: event.facilityName || '',
         spaceName: event.spaceName || '',  // Resource/court/field
         sport: event.sport,
+        programType: event.type as ProgramType | undefined,
         type: event.type,
         linkSEO: event.linkSEO,
         color: getSportGradient(event.sport || ''),
@@ -1485,6 +1492,7 @@ export function DiscoveryPage({
                 config.features.showScheduleTableDateFilters ? handleFiltersChange : undefined
               }
               initialUrlScheduleView={scheduleViewParamFromPageSearchParams(searchParams)}
+              leagueTableMode={leagueTableMode}
             />
           )}
         </main>

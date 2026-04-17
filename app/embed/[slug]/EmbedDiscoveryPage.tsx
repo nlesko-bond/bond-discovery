@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { ProgramGrid } from '@/components/discovery/ProgramGrid';
 import { ScheduleView } from '@/components/discovery/ScheduleView';
-import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode, CalendarEvent } from '@/types';
+import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode, CalendarEvent, ProgramType } from '@/types';
 import { buildWeekSchedules } from '@/lib/transformers';
 import { getSportGradient } from '@/lib/utils';
 import {
@@ -13,6 +13,7 @@ import {
   eventMatchesSpaceNames,
 } from '@/lib/schedule-event-filters';
 import { scheduleViewParamFromPageSearchParams } from '@/lib/schedule-view-resolution';
+import { isLeagueScheduleTableContext } from '@/lib/league-schedule-context';
 import { Calendar, Grid3X3, Filter } from 'lucide-react';
 
 const HorizontalFilterBar = dynamic(
@@ -300,6 +301,11 @@ export function EmbedDiscoveryPage({
     if (filters.spaceNames && filters.spaceNames.length > 0) {
       result = result.filter((e) => eventMatchesSpaceNames(e, filters.spaceNames));
     }
+    if (filters.programTypes && filters.programTypes.length > 0) {
+      result = result.filter(
+        (e) => e.type && filters.programTypes!.includes(e.type as ProgramType),
+      );
+    }
     if (config.features.showScheduleTableDateFilters) {
       if (filters.dateRange?.start || filters.dateRange?.end) {
         result = result.filter((e) => eventMatchesDateRange(e, filters.dateRange));
@@ -310,6 +316,11 @@ export function EmbedDiscoveryPage({
     }
     return result;
   }, [apiEvents, filters, initialPrograms, config.features.showScheduleTableDateFilters]);
+
+  const leagueTableMode = useMemo(
+    () => isLeagueScheduleTableContext(config, filters, initialPrograms),
+    [config, filters, initialPrograms],
+  );
 
   const scheduleData = useMemo(() => {
     if (viewMode !== 'schedule') return null;
@@ -328,7 +339,9 @@ export function EmbedDiscoveryPage({
         title: event.title || event.sessionName || event.programName,
         date: start.date, startTime: start.time, endTime: end.time,
         timezone: event.timezone, facilityId: '', facilityName: event.facilityName || '',
-        spaceName: event.spaceName || '', sport: event.sport, type: event.type,
+        spaceName: event.spaceName || '', sport: event.sport,
+        programType: event.type as ProgramType | undefined,
+        type: event.type,
         linkSEO: event.linkSEO, color: getSportGradient(event.sport || ''),
         maxParticipants: event.maxParticipants, currentParticipants: event.currentParticipants,
         spotsRemaining: event.spotsRemaining, startingPrice: event.startingPrice,
@@ -442,6 +455,7 @@ export function EmbedDiscoveryPage({
               config.features.showScheduleTableDateFilters ? handleFiltersChange : undefined
             }
             initialUrlScheduleView={scheduleViewParamFromPageSearchParams(searchParams)}
+            leagueTableMode={leagueTableMode}
           />
         )}
       </main>
