@@ -97,9 +97,10 @@ export async function GET(request: Request) {
       { ...result.payload, data, meta: { ...result.payload.meta, totalFiltered } },
       {
         headers: {
-          'Cache-Control': mode === 'availability'
-            ? 's-maxage=30, stale-while-revalidate=60'
-            : 's-maxage=60, stale-while-revalidate=120',
+                   'Cache-Control':
+            mode === 'availability'
+              ? 'private, no-store'
+              : 's-maxage=60, stale-while-revalidate=120',
           'X-Bond-Events-Cache': result.cacheStatus,
           'X-Bond-Events-Mode': mode,
           'X-Bond-Events-Cache-Key': result.cacheKey,

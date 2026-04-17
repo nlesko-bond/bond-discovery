@@ -509,7 +509,8 @@ export function DiscoveryPage({
   const [eventsFetched, setEventsFetched] = useState(initialEventsFetched);
   const [totalServerEvents, setTotalServerEvents] = useState(initialTotalServerEvents);
   const [loadingMore, setLoadingMore] = useState(false);
-  const cacheV2Enabled = config.features.discoveryCacheEnabled === true;
+  // Match server + lib/config default: cache is on unless explicitly false.
+  const cacheV2Enabled = config.features.discoveryCacheEnabled !== false;
   
   // Ref to track the current fetch request for cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -643,8 +644,7 @@ export function DiscoveryPage({
       .finally(() => setLoadingMore(false));
   }, [loadingMore, apiEvents.length, totalServerEvents, config.slug]);
 
-  // Keep waitlist/spots data fresher with a lightweight availability overlay.
-  // Fires once when events are loaded; reads from cache only (no Bond API).
+  // Merge fresh capacity from Bond (`mode=availability`) over SSR/precomputed full events.
   const eventsCount = apiEvents.length;
   useEffect(() => {
     if (!cacheV2Enabled || eventsCount === 0) {

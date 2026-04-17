@@ -252,6 +252,54 @@ export function EmbedDiscoveryPage({
       .finally(() => setLoadingMore(false));
   }, [loadingMore, apiEvents.length, totalServerEvents, config.slug]);
 
+  // Same as DiscoveryPage: merge live spots/capacity from Bond over precomputed full events.
+  const cacheV2Enabled = config.features.discoveryCacheEnabled !== false;
+  const eventsCount = apiEvents.length;
+  useEffect(() => {
+    if (!cacheV2Enabled || eventsCount === 0) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const params = new URLSearchParams();
+    params.set('slug', config.slug);
+    params.set('mode', 'availability');
+
+    fetch(`/api/events?${params.toString()}`, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Availability API error: ${res.status}`);
+        return res.json();
+      })
+      .then((payload) => {
+        if (!payload?.data || !Array.isArray(payload.data)) return;
+        const availabilityById = new Map<string, any>();
+        payload.data.forEach((item: any) => {
+          availabilityById.set(String(item.id), item);
+        });
+
+        setApiEvents((prev) =>
+          prev.map((event) => {
+            const availability = availabilityById.get(String(event.id));
+            if (!availability) return event;
+            return {
+              ...event,
+              spotsRemaining: availability.spotsRemaining,
+              maxParticipants: availability.maxParticipants,
+              currentParticipants: availability.currentParticipants,
+              isWaitlistEnabled: availability.isWaitlistEnabled,
+              waitlistCount: availability.waitlistCount,
+            };
+          })
+        );
+      })
+      .catch((error) => {
+        if (controller.signal.aborted || error?.name === 'AbortError') return;
+        console.error('Availability refresh error:', error);
+      });
+
+    return () => controller.abort();
+  }, [cacheV2Enabled, config.slug, eventsCount]);
+
   const scheduleSpaceOptions = useMemo(() => {
     const m = new Map<string, number>();
     apiEvents.forEach((e: { spaceName?: string }) => {
