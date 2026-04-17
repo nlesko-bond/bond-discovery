@@ -110,12 +110,7 @@ export async function GET(request: NextRequest) {
           forceFresh: true,
         });
 
-        // Fetch availability ONCE for this scope
-        await getDiscoveryEvents({
-          slug: primary.slug,
-          mode: 'availability',
-          forceFresh: true,
-        });
+        // Availability is no longer written to KV (always fetched fresh from Bond per request).
 
         // Write discovery:response for EVERY slug that shares this scope
         const today = new Date().toISOString().split('T')[0];

@@ -56,10 +56,16 @@ async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
  * Read pre-computed events from KV (populated by the cron job or write-through).
  * Returns null on miss so the client falls back to fetching via /api/events.
  */
-async function getPrecomputedEvents(slug: string): Promise<{
+async function getPrecomputedEvents(
+  slug: string,
+  config: DiscoveryConfig,
+): Promise<{
   events: any[];
   total: number;
 } | null> {
+  if (config.features.discoveryCacheEnabled === false) {
+    return null;
+  }
   try {
     const precomputed = await cacheGet<any>(`discovery:response:${slug}`);
     if (precomputed?.data && Array.isArray(precomputed.data) && precomputed.data.length > 0) {
@@ -87,7 +93,7 @@ export default async function EmbedPage({ params, searchParams }: PageProps) {
 
   const [programs, eventsResult] = await Promise.all([
     getPrograms(config),
-    getPrecomputedEvents(slug),
+    getPrecomputedEvents(slug, config),
   ]);
   
   return (

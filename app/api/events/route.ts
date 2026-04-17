@@ -6,6 +6,7 @@ import {
   type FullDiscoveryEvent,
 } from '@/lib/discovery-events';
 import { cacheGet } from '@/lib/cache';
+import { getConfigBySlug } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,17 +28,23 @@ export async function GET(request: Request) {
   const mode: DiscoveryEventsMode = requestedMode === 'availability' ? 'availability' : 'full';
 
   // ── Fast path: pre-computed response from cron ──
+  // Pages with `discoveryCacheEnabled === false` skip this so full + availability
+  // both hit Bond (KV bypass in getDiscoveryEvents); cron does not warm those slugs.
   if (slug && mode === 'full') {
     try {
-      const precomputed = await cacheGet<any>(`discovery:response:${slug}`);
-      if (precomputed && Array.isArray(precomputed.data) && precomputed.data.length > 0) {
-        return NextResponse.json(precomputed, {
-          headers: {
-            'Cache-Control': 's-maxage=60, stale-while-revalidate=120',
-            'X-Bond-Events-Cache': 'PRECOMPUTED',
-            'X-Bond-Events-Mode': 'full',
-          },
-        });
+      const pageConfig = await getConfigBySlug(slug);
+      const allowPrecomputed = pageConfig?.features?.discoveryCacheEnabled !== false;
+      if (allowPrecomputed) {
+        const precomputed = await cacheGet<any>(`discovery:response:${slug}`);
+        if (precomputed && Array.isArray(precomputed.data) && precomputed.data.length > 0) {
+          return NextResponse.json(precomputed, {
+            headers: {
+              'Cache-Control': 's-maxage=60, stale-while-revalidate=120',
+              'X-Bond-Events-Cache': 'PRECOMPUTED',
+              'X-Bond-Events-Mode': 'full',
+            },
+          });
+        }
       }
     } catch (err) {
       // Pre-computed miss — fall through to full pipeline

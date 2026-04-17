@@ -93,7 +93,8 @@ export interface DiscoveryEventsPayload {
 
 export interface DiscoveryEventsResult {
   payload: DiscoveryEventsPayload;
-  cacheStatus: 'HIT' | 'MISS';
+  /** BYPASS = page opted out of discovery KV (always fresh Bond for this slug). */
+  cacheStatus: 'HIT' | 'MISS' | 'BYPASS';
   cacheKey: string;
   context: DiscoveryEventsContext;
 }
@@ -240,6 +241,21 @@ async function buildContext(request: DiscoveryEventsRequest): Promise<DiscoveryE
     availabilityCacheTtl,
     config,
   };
+}
+
+/**
+ * Skip Upstash read/write for discovery event pipelines when:
+ * - `mode=availability` — capacity must match Bond; KV was routinely stale vs live
+ *   enrollment (especially with precomputed full + long TTLs). Same Bond cost on miss
+ *   as full mode; caching saved little and broke spots for cache-on pages.
+ * - Page opted out: `features.discoveryCacheEnabled === false` — also skip **full**
+ *   mode KV/precomputed assumptions (see api/events + app pages).
+ */
+function shouldBypassDiscoveryKvCache(context: DiscoveryEventsContext): boolean {
+  if (context.mode === 'availability') {
+    return true;
+  }
+  return context.config?.features?.discoveryCacheEnabled === false;
 }
 
 function toCacheKey(context: DiscoveryEventsContext): string {
@@ -543,8 +559,10 @@ export async function getDiscoveryEvents(
   const context = await buildContext(request);
   const cacheKey = toCacheKey(context);
   const cacheTtl = context.mode === 'availability' ? context.availabilityCacheTtl : context.fullCacheTtl;
+  const bypassKv = shouldBypassDiscoveryKvCache(context);
+  const allowKv = !request.forceFresh && !bypassKv;
 
-  if (!request.forceFresh) {
+  if (allowKv) {
     const cachedPayload = await cacheGet<DiscoveryEventsPayload>(cacheKey);
     if (cachedPayload) {
       return {
@@ -559,23 +577,27 @@ export async function getDiscoveryEvents(
   let payload: DiscoveryEventsPayload;
   try {
     payload = await fetchAndTransformEvents(context);
-    await cacheSet(cacheKey, payload, { ttl: cacheTtl });
+    if (allowKv) {
+      await cacheSet(cacheKey, payload, { ttl: cacheTtl });
+    }
   } catch (error) {
-    const stalePayload = await cacheGet<DiscoveryEventsPayload>(cacheKey);
-    if (stalePayload) {
-      return {
-        payload: stalePayload,
-        cacheStatus: 'HIT',
-        cacheKey,
-        context,
-      };
+    if (allowKv) {
+      const stalePayload = await cacheGet<DiscoveryEventsPayload>(cacheKey);
+      if (stalePayload) {
+        return {
+          payload: stalePayload,
+          cacheStatus: 'HIT',
+          cacheKey,
+          context,
+        };
+      }
     }
     throw error;
   }
 
   return {
     payload,
-    cacheStatus: 'MISS',
+    cacheStatus: bypassKv ? 'BYPASS' : 'MISS',
     cacheKey,
     context,
   };
