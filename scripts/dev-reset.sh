@@ -15,5 +15,6 @@ done
 
 sleep 0.5
 rm -rf .next
-echo "Starting Next on http://localhost:3000 (clean .next)"
+rm -rf node_modules/.cache
+echo "Starting Next on http://localhost:3000 (clean .next + webpack cache)"
 exec npx next dev -p 3000

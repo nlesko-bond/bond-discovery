@@ -4,8 +4,9 @@ const nextConfig = {
   reactStrictMode: true,
 
   experimental: {
-    // Next 14: externalize `pg` so the server bundle loads it from node_modules (Vercel file tracing includes it).
-    serverComponentsExternalPackages: ['pg'],
+    // Next 14: load from node_modules instead of webpack vendor chunks (avoids missing
+    // `.next/server/vendor-chunks/@supabase.js` after interrupted compiles / iCloud on .next).
+    serverComponentsExternalPackages: ['pg', '@supabase/supabase-js'],
   },
   
   // Image optimization
