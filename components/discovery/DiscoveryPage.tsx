@@ -29,9 +29,7 @@ import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skele
 import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
 
-const HorizontalFilterBar = dynamic(
-  () => import('./HorizontalFilterBar').then(m => ({ default: m.HorizontalFilterBar }))
-);
+import { HorizontalFilterBar } from './HorizontalFilterBar';
 
 const MobileFilters = dynamic(
   () => import('./MobileFilters').then(m => ({ default: m.MobileFilters }))

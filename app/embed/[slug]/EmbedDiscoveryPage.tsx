@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import dynamic from 'next/dynamic';
 import { ProgramGrid } from '@/components/discovery/ProgramGrid';
 import { ScheduleView } from '@/components/discovery/ScheduleView';
+import { HorizontalFilterBar } from '@/components/discovery/HorizontalFilterBar';
 import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode, CalendarEvent, ProgramType } from '@/types';
 import { buildWeekSchedules } from '@/lib/transformers';
 import { getSportGradient } from '@/lib/utils';
@@ -15,10 +15,6 @@ import {
 import { scheduleViewParamFromPageSearchParams } from '@/lib/schedule-view-resolution';
 import { isLeagueScheduleTableContext } from '@/lib/league-schedule-context';
 import { Calendar, Grid3X3, Filter } from 'lucide-react';
-
-const HorizontalFilterBar = dynamic(
-  () => import('@/components/discovery/HorizontalFilterBar').then(m => ({ default: m.HorizontalFilterBar }))
-);
 
 const EMPTY_EVENTS: any[] = [];
 

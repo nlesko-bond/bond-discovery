@@ -1,14 +1,26 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable React strict mode
   reactStrictMode: true,
 
-  experimental: {
-    // Next 14: load from node_modules instead of webpack vendor chunks (avoids missing
-    // `.next/server/vendor-chunks/@supabase.js` after interrupted compiles / iCloud on .next).
-    serverComponentsExternalPackages: ['pg', '@supabase/supabase-js'],
+  // Dev-only workarounds for Next 14 bugs that cause `.next/` cache corruption
+  // mid-session, breaking the server with MODULE_NOT_FOUND, missing vendor chunks,
+  // missing CSS, and persistent 404s until `.next` is wiped. Production is untouched.
+  //
+  // 1. Disable server splitChunks in dev so webpack doesn't create per-vendor
+  //    chunk files (`.next/server/vendor-chunks/*.js`) that go missing.
+  // 2. Switch webpack's filesystem cache to in-memory in dev so the on-disk
+  //    `.next/cache/webpack/*.pack.gz` files — which regularly get corrupted
+  //    and cause asset-serving 404s — are not used.
+  webpack: (config, { isServer, dev }) => {
+    if (isServer && dev) {
+      config.optimization.splitChunks = false;
+    }
+    if (dev) {
+      config.cache = { type: 'memory' };
+    }
+    return config;
   },
-  
+
   // Image optimization
   images: {
     remotePatterns: [

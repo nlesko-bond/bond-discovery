@@ -7,6 +7,7 @@ import {
 } from '@/lib/discovery-events';
 import { cacheGet } from '@/lib/cache';
 import { getConfigBySlug } from '@/lib/config';
+import { getAvailabilityPayload } from '@/lib/availability-cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,28 @@ export async function GET(request: Request) {
   const slug = searchParams.get('slug');
   const requestedMode = searchParams.get('mode');
   const mode: DiscoveryEventsMode = requestedMode === 'availability' ? 'availability' : 'full';
+
+  // ── Fast path: availability SWR cache ──
+  // Sub-100ms responses; background refresh keeps data <=TTL seconds stale
+  // (default 180s, configurable per-slug via `features.availabilityCacheTtl`).
+  // This path replaces what used to hit Bond directly on every client overlay
+  // request and took 4-10s due to rate limiting.
+  if (slug && mode === 'availability') {
+    try {
+      const payload = await getAvailabilityPayload(slug);
+      if (payload) {
+        return NextResponse.json(payload, {
+          headers: {
+            'Cache-Control': 'private, no-store',
+            'X-Bond-Events-Cache': 'SWR',
+            'X-Bond-Events-Mode': 'availability',
+          },
+        });
+      }
+    } catch (err) {
+      console.error('Availability SWR path failed; falling back to live fetch:', err);
+    }
+  }
 
   // ── Fast path: pre-computed response from cron ──
   // Pages with `discoveryCacheEnabled === false` skip this so full + availability

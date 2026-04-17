@@ -31,7 +31,7 @@ export class BondClient {
 
   private async fetch<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
     const url = new URL(`${BASE_URL}${endpoint}`);
-    
+
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -40,33 +40,57 @@ export class BondClient {
       });
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    // Retry on 429 rate-limit responses. Without this, concurrent program/session
+    // fetches during a discovery refresh lose events (and therefore spotsLeft) for
+    // every session that gets rate-limited. Backoff follows `Retry-After` header
+    // when present, else exponential 500ms / 1s / 2s.
+    const maxAttempts = 4;
 
-    try {
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'x-api-key': this.apiKey,
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
-      });
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-      clearTimeout(timeoutId);
+      try {
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          headers: {
+            'x-api-key': this.apiKey,
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+        });
 
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        clearTimeout(timeoutId);
+
+        if (response.status === 429 && attempt < maxAttempts) {
+          const retryAfterHeader = response.headers.get('retry-after');
+          const retryAfterMs = retryAfterHeader
+            ? Number.parseFloat(retryAfterHeader) * 1000
+            : undefined;
+          const waitMs =
+            Number.isFinite(retryAfterMs) && retryAfterMs! > 0
+              ? Math.min(retryAfterMs!, 10_000)
+              : 500 * 2 ** (attempt - 1);
+          // Add up to 150ms jitter so concurrent waiters don't thunder at once.
+          await new Promise((resolve) => setTimeout(resolve, waitMs + Math.random() * 150));
+          continue;
+        }
+
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        }
+
+        return (await response.json()) as T;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error('API request timed out');
+        }
+        throw error;
       }
-
-      return response.json();
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('API request timed out');
-      }
-      throw error;
     }
+
+    throw new Error('API Error: 429 Too Many Requests (max retries exceeded)');
   }
 
   /**

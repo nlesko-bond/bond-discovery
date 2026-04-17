@@ -4,6 +4,7 @@ import { getConfigBySlug, getAllPageConfigs } from '@/lib/config';
 import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
 import { cached, programsCacheKey, cacheGet } from '@/lib/cache';
+import { getAvailabilityMap, mergeAvailabilityIntoEvents } from '@/lib/availability-cache';
 import { Program, DiscoveryConfig } from '@/types';
 import { EmbedDiscoveryPage } from './EmbedDiscoveryPage';
 
@@ -69,9 +70,20 @@ async function getPrecomputedEvents(
   try {
     const precomputed = await cacheGet<any>(`discovery:response:${slug}`);
     if (precomputed?.data && Array.isArray(precomputed.data) && precomputed.data.length > 0) {
+      // Overlay fresh availability (KV SWR, <=180s stale) so embed first paint
+      // shows correct spotsLeft. Failures fall through to precomputed values.
+      let events = precomputed.data;
+      try {
+        const availabilityById = await getAvailabilityMap(slug);
+        if (availabilityById.size > 0) {
+          events = mergeAvailabilityIntoEvents(events, availabilityById);
+        }
+      } catch (err) {
+        console.error('[embed page] availability overlay failed', { slug, err });
+      }
       return {
-        events: precomputed.data,
-        total: precomputed.meta?.totalFiltered ?? precomputed.data.length,
+        events,
+        total: precomputed.meta?.totalFiltered ?? events.length,
       };
     }
   } catch {
