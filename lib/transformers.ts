@@ -138,9 +138,15 @@ export function transformSession(raw: any): Session {
   const events = normalizeArray<any>(raw.events).map(transformEvent);
   const segments = normalizeArray<any>(raw.segments).map(transformSegment);
   
-  const capacity = raw.maxParticipants || raw.capacity || raw.max_participants;
+  const capacity =
+    raw.maxParticipants ||
+    raw.max_participants ||
+    (typeof raw.capacity === 'number' ? raw.capacity : undefined);
   const currentEnrollment = raw.current_enrollment || raw.currentEnrollment || 0;
-  const spotsRemaining = capacity ? Math.max(0, capacity - currentEnrollment) : undefined;
+  const spotsRemaining =
+    raw.spotsLeft ??
+    raw.spots_left ??
+    (typeof capacity === 'number' ? Math.max(0, capacity - currentEnrollment) : undefined);
   
   return {
     id: String(raw.id),
@@ -317,11 +323,22 @@ export function transformPrice(raw: any): Price {
  * Transform raw API event to normalized SessionEvent type
  */
 export function transformEvent(raw: any): SessionEvent {
-  const maxParticipants = raw.max_participants || raw.maxParticipants || raw.capacity;
-  // Bond API uses participantsNumber for current participants
-  const currentParticipants = raw.participantsNumber || raw.current_participants || raw.currentParticipants || raw.current_enrollment || 0;
-  // Bond API returns spotsLeft directly - use it if available, otherwise calculate
-  const spotsRemaining = raw.spotsLeft ?? (maxParticipants ? Math.max(0, maxParticipants - currentParticipants) : undefined);
+  const maxParticipants =
+    raw.max_participants ||
+    raw.maxParticipants ||
+    (typeof raw.capacity === 'number' ? raw.capacity : undefined);
+  const currentParticipants =
+    raw.participantsNumber ||
+    raw.current_participants ||
+    raw.currentParticipants ||
+    raw.current_enrollment ||
+    0;
+  const spotsRemaining =
+    raw.spotsLeft ??
+    raw.spots_left ??
+    (typeof maxParticipants === 'number'
+      ? Math.max(0, maxParticipants - currentParticipants)
+      : undefined);
   
   return {
     id: String(raw.id),

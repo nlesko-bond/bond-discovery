@@ -252,13 +252,10 @@ export function EmbedDiscoveryPage({
       .finally(() => setLoadingMore(false));
   }, [loadingMore, apiEvents.length, totalServerEvents, config.slug]);
 
-  // Same as DiscoveryPage: merge live spots/capacity from Bond over precomputed full events.
   const cacheV2Enabled = config.features.discoveryCacheEnabled !== false;
   const eventsCount = apiEvents.length;
   useEffect(() => {
-    if (!cacheV2Enabled || eventsCount === 0) {
-      return;
-    }
+    if (!cacheV2Enabled || eventsCount === 0) return;
 
     const controller = new AbortController();
     const params = new URLSearchParams();
@@ -272,22 +269,20 @@ export function EmbedDiscoveryPage({
       })
       .then((payload) => {
         if (!payload?.data || !Array.isArray(payload.data)) return;
-        const availabilityById = new Map<string, any>();
-        payload.data.forEach((item: any) => {
-          availabilityById.set(String(item.id), item);
-        });
+        const byId = new Map<string, any>();
+        payload.data.forEach((item: any) => byId.set(String(item.id), item));
 
         setApiEvents((prev) =>
           prev.map((event) => {
-            const availability = availabilityById.get(String(event.id));
-            if (!availability) return event;
+            const a = byId.get(String(event.id));
+            if (!a) return event;
             return {
               ...event,
-              spotsRemaining: availability.spotsRemaining,
-              maxParticipants: availability.maxParticipants,
-              currentParticipants: availability.currentParticipants,
-              isWaitlistEnabled: availability.isWaitlistEnabled,
-              waitlistCount: availability.waitlistCount,
+              ...(a.spotsRemaining !== undefined ? { spotsRemaining: a.spotsRemaining } : {}),
+              ...(a.maxParticipants !== undefined ? { maxParticipants: a.maxParticipants } : {}),
+              ...(a.currentParticipants !== undefined ? { currentParticipants: a.currentParticipants } : {}),
+              ...(a.isWaitlistEnabled !== undefined ? { isWaitlistEnabled: a.isWaitlistEnabled } : {}),
+              ...(a.waitlistCount !== undefined ? { waitlistCount: a.waitlistCount } : {}),
             };
           })
         );

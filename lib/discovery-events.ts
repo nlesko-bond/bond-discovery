@@ -362,12 +362,15 @@ function toAvailabilityEvent(
   const dateCheck = passesDateFilters(event, context);
   if (!dateCheck.keep) return null;
 
-  const maxParticipants = event.maxParticipants ?? event.max_participants ?? event.capacity;
+  const maxParticipants =
+    event.maxParticipants ??
+    event.max_participants ??
+    (typeof event.capacity === 'number' ? event.capacity : undefined);
   const currentParticipants = event.participantsNumber ?? event.currentParticipants ?? event.current_participants ?? 0;
   const spotsRemaining =
     event.spotsLeft ??
     event.spots_left ??
-    (maxParticipants !== undefined && maxParticipants !== null
+    (typeof maxParticipants === 'number'
       ? Math.max(0, maxParticipants - currentParticipants)
       : undefined);
 
@@ -394,12 +397,15 @@ function toFullEvent(
   const dateCheck = passesDateFilters(event, context);
   if (!dateCheck.keep) return null;
 
-  const maxParticipants = event.maxParticipants ?? event.max_participants ?? event.capacity;
+  const maxParticipants =
+    event.maxParticipants ??
+    event.max_participants ??
+    (typeof event.capacity === 'number' ? event.capacity : undefined);
   const currentParticipants = event.participantsNumber ?? event.currentParticipants ?? event.current_participants ?? 0;
   const spotsRemaining =
     event.spotsLeft ??
     event.spots_left ??
-    (maxParticipants !== undefined && maxParticipants !== null
+    (typeof maxParticipants === 'number'
       ? Math.max(0, maxParticipants - currentParticipants)
       : undefined);
 

@@ -509,9 +509,8 @@ export function DiscoveryPage({
   const [eventsFetched, setEventsFetched] = useState(initialEventsFetched);
   const [totalServerEvents, setTotalServerEvents] = useState(initialTotalServerEvents);
   const [loadingMore, setLoadingMore] = useState(false);
-  // Match server + lib/config default: cache is on unless explicitly false.
   const cacheV2Enabled = config.features.discoveryCacheEnabled !== false;
-  
+
   // Ref to track the current fetch request for cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -644,12 +643,10 @@ export function DiscoveryPage({
       .finally(() => setLoadingMore(false));
   }, [loadingMore, apiEvents.length, totalServerEvents, config.slug]);
 
-  // Merge fresh capacity from Bond (`mode=availability`) over SSR/precomputed full events.
+  // Precomputed `full` can be stale on capacity; refresh from Bond via mode=availability (no KV).
   const eventsCount = apiEvents.length;
   useEffect(() => {
-    if (!cacheV2Enabled || eventsCount === 0) {
-      return;
-    }
+    if (!cacheV2Enabled || eventsCount === 0) return;
 
     const controller = new AbortController();
     const params = new URLSearchParams();
@@ -663,22 +660,20 @@ export function DiscoveryPage({
       })
       .then((payload) => {
         if (!payload?.data || !Array.isArray(payload.data)) return;
-        const availabilityById = new Map<string, any>();
-        payload.data.forEach((item: any) => {
-          availabilityById.set(String(item.id), item);
-        });
+        const byId = new Map<string, any>();
+        payload.data.forEach((item: any) => byId.set(String(item.id), item));
 
         setApiEvents((prev) =>
           prev.map((event) => {
-            const availability = availabilityById.get(String(event.id));
-            if (!availability) return event;
+            const a = byId.get(String(event.id));
+            if (!a) return event;
             return {
               ...event,
-              spotsRemaining: availability.spotsRemaining,
-              maxParticipants: availability.maxParticipants,
-              currentParticipants: availability.currentParticipants,
-              isWaitlistEnabled: availability.isWaitlistEnabled,
-              waitlistCount: availability.waitlistCount,
+              ...(a.spotsRemaining !== undefined ? { spotsRemaining: a.spotsRemaining } : {}),
+              ...(a.maxParticipants !== undefined ? { maxParticipants: a.maxParticipants } : {}),
+              ...(a.currentParticipants !== undefined ? { currentParticipants: a.currentParticipants } : {}),
+              ...(a.isWaitlistEnabled !== undefined ? { isWaitlistEnabled: a.isWaitlistEnabled } : {}),
+              ...(a.waitlistCount !== undefined ? { waitlistCount: a.waitlistCount } : {}),
             };
           })
         );
@@ -690,7 +685,7 @@ export function DiscoveryPage({
 
     return () => controller.abort();
   }, [cacheV2Enabled, config.slug, eventsCount]);
-  
+
   // Filter events based on current filters
   const filteredEvents = useMemo(() => {
     let result = [...apiEvents];
