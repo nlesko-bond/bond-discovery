@@ -4,6 +4,7 @@ import {
   shouldRefreshDiscovery,
   markDiscoveryRefreshed,
   programsCacheKey,
+  cacheGet,
   cacheSet,
   type DiscoveryRefreshPolicy,
 } from '@/lib/cache';
@@ -131,6 +132,24 @@ export async function GET(request: NextRequest) {
                 precomputedAt: new Date().toISOString(),
               },
             };
+
+            const previous = await cacheGet<{ meta?: { totalFiltered?: number } }>(
+              `discovery:response:${config.slug}`,
+            );
+            const previousCount = previous?.meta?.totalFiltered ?? 0;
+            if (filtered.length === 0 && previousCount > 0) {
+              console.error('[warm-discovery] refusing empty write; keeping previous payload', {
+                slug: config.slug,
+                previousCount,
+              });
+              details.push({
+                slug: config.slug,
+                status: 'error',
+                durationMs: Date.now() - groupStart,
+              });
+              continue;
+            }
+
             await cacheSet(`discovery:response:${config.slug}`, precomputed, { ttl: 4 * 60 * 60 });
             await markDiscoveryRefreshed(config.slug);
 
