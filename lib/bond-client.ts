@@ -16,6 +16,34 @@ interface BondClientOptions {
   timeout?: number;
 }
 
+interface BondApiStats {
+  totalRequests: number;
+  rateLimitHits: number;
+  errors: number;
+}
+
+let bondApiStats: BondApiStats = {
+  totalRequests: 0,
+  rateLimitHits: 0,
+  errors: 0,
+};
+
+/**
+ * Reset the per-process Bond API stats counter. Call at the start of any
+ * scoped operation (e.g. a cron run) where you want a clean reading.
+ */
+export function resetBondApiStats(): void {
+  bondApiStats = { totalRequests: 0, rateLimitHits: 0, errors: 0 };
+}
+
+/**
+ * Read a snapshot of the per-process Bond API stats counter.
+ * `rateLimitHits` counts every 429 response (including ones that succeed on retry).
+ */
+export function getBondApiStats(): BondApiStats {
+  return { ...bondApiStats };
+}
+
 /**
  * Server-side Bond Sports API client
  * Use this in API routes and Server Components only
@@ -30,6 +58,7 @@ export class BondClient {
   }
 
   private async fetch<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
+    bondApiStats.totalRequests++;
     const url = new URL(`${BASE_URL}${endpoint}`);
 
     if (params) {
@@ -46,51 +75,62 @@ export class BondClient {
     // when present, else exponential 500ms / 1s / 2s.
     const maxAttempts = 4;
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    try {
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-      try {
-        const response = await fetch(url.toString(), {
-          method: 'GET',
-          headers: {
-            'x-api-key': this.apiKey,
-            'Content-Type': 'application/json',
-          },
-          signal: controller.signal,
-        });
+        try {
+          const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+              'x-api-key': this.apiKey,
+              'Content-Type': 'application/json',
+            },
+            signal: controller.signal,
+          });
 
-        clearTimeout(timeoutId);
+          clearTimeout(timeoutId);
 
-        if (response.status === 429 && attempt < maxAttempts) {
-          const retryAfterHeader = response.headers.get('retry-after');
-          const retryAfterMs = retryAfterHeader
-            ? Number.parseFloat(retryAfterHeader) * 1000
-            : undefined;
-          const waitMs =
-            Number.isFinite(retryAfterMs) && retryAfterMs! > 0
-              ? Math.min(retryAfterMs!, 10_000)
-              : 500 * 2 ** (attempt - 1);
-          // Add up to 150ms jitter so concurrent waiters don't thunder at once.
-          await new Promise((resolve) => setTimeout(resolve, waitMs + Math.random() * 150));
-          continue;
+          if (response.status === 429 && attempt < maxAttempts) {
+            bondApiStats.rateLimitHits++;
+            console.warn('[bond-client] 429 from Bond, retrying', {
+              endpoint: url.pathname,
+              attempt,
+              maxAttempts,
+            });
+            const retryAfterHeader = response.headers.get('retry-after');
+            const retryAfterMs = retryAfterHeader
+              ? Number.parseFloat(retryAfterHeader) * 1000
+              : undefined;
+            const waitMs =
+              Number.isFinite(retryAfterMs) && retryAfterMs! > 0
+                ? Math.min(retryAfterMs!, 10_000)
+                : 500 * 2 ** (attempt - 1);
+            // Add up to 150ms jitter so concurrent waiters don't thunder at once.
+            await new Promise((resolve) => setTimeout(resolve, waitMs + Math.random() * 150));
+            continue;
+          }
+
+          if (!response.ok) {
+            throw new Error(`API Error: ${response.status} ${response.statusText}`);
+          }
+
+          return (await response.json()) as T;
+        } catch (error) {
+          clearTimeout(timeoutId);
+          if (error instanceof Error && error.name === 'AbortError') {
+            throw new Error('API request timed out');
+          }
+          throw error;
         }
-
-        if (!response.ok) {
-          throw new Error(`API Error: ${response.status} ${response.statusText}`);
-        }
-
-        return (await response.json()) as T;
-      } catch (error) {
-        clearTimeout(timeoutId);
-        if (error instanceof Error && error.name === 'AbortError') {
-          throw new Error('API request timed out');
-        }
-        throw error;
       }
-    }
 
-    throw new Error('API Error: 429 Too Many Requests (max retries exceeded)');
+      throw new Error('API Error: 429 Too Many Requests (max retries exceeded)');
+    } catch (error) {
+      bondApiStats.errors++;
+      throw error;
+    }
   }
 
   /**

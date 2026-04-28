@@ -14,7 +14,12 @@ import {
   type FullDiscoveryEvent,
   type DiscoveryEventsResult,
 } from '@/lib/discovery-events';
-import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
+import {
+  createBondClient,
+  DEFAULT_API_KEY,
+  resetBondApiStats,
+  getBondApiStats,
+} from '@/lib/bond-client';
 import type { DiscoveryConfig } from '@/types';
 
 export const runtime = 'nodejs';
@@ -42,6 +47,8 @@ export async function GET(request: NextRequest) {
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  resetBondApiStats();
 
   try {
     const configs = await getAllPageConfigs();
@@ -193,6 +200,7 @@ export async function GET(request: NextRequest) {
       warmed: details.filter((d) => d.status === 'warmed' || d.status === 'shared').length,
       skipped: skipped.length,
       elapsedMs: Date.now() - start,
+      bondApi: getBondApiStats(),
       details,
     });
   } catch (error) {
