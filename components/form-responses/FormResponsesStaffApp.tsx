@@ -1,5 +1,6 @@
 'use client';
 
+import { Download, FileDown, Printer, RefreshCw } from 'lucide-react';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   clampYmdRangeToMaxSpan,
@@ -1040,6 +1041,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
               className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border border-slate-200/90 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50/90 transition-colors"
               style={!exportHref ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
             >
+              <Download size={16} aria-hidden="true" />
               Export all in range
             </a>
             <button
@@ -1051,15 +1053,17 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                   ? 'Current filtered export is available after all rows in the date range finish loading.'
                   : 'Export the current search, inquiry view, and sort order.'
               }
-              className="text-sm px-3 py-2 rounded-xl border border-slate-200/90 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50/90 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border border-slate-200/90 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50/90 transition-colors disabled:opacity-50"
             >
+              <FileDown size={16} aria-hidden="true" />
               Export current view
             </button>
             <button
               type="button"
               onClick={() => window.print()}
-              className="text-sm px-3 py-2 rounded-xl border border-slate-200/90 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50/90 transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border border-slate-200/90 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50/90 transition-colors"
             >
+              <Printer size={16} aria-hidden="true" />
               Print
             </button>
             <button
@@ -1067,8 +1071,9 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
               onClick={() => void refreshNewSubmissions()}
               disabled={rowsLoading || questionnaireId == null}
               title="Load only submissions newer than your newest loaded row. Keeps filters, search, and &quot;Load more&quot; position."
-              className="text-sm px-3 py-2 rounded-xl border border-slate-200/90 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50/90 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border border-slate-200/90 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50/90 transition-colors disabled:opacity-50"
             >
+              <RefreshCw size={16} aria-hidden="true" className={rowsLoading ? 'animate-spin' : undefined} />
               Refresh new
             </button>
           </div>
