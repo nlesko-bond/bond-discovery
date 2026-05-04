@@ -46,6 +46,10 @@ const submittedTimeFormatter = new Intl.DateTimeFormat(undefined, {
   minute: '2-digit',
   second: '2-digit',
 });
+const STRING_SORT_OPTIONS: Intl.CollatorOptions = {
+  numeric: true,
+  sensitivity: 'base',
+};
 
 function answerTextForPrint(
   cell: { display?: string; linkUrl?: string; checkmark?: boolean } | undefined
@@ -318,6 +322,43 @@ function statusSortKey(row: FormResponseRow): string {
   return i >= 0 ? String(i).padStart(2, '0') : '99';
 }
 
+function compareStrings(a: string, b: string): number {
+  const left = a.trim();
+  const right = b.trim();
+  if (!left && right) return 1;
+  if (left && !right) return -1;
+  return left.localeCompare(right, undefined, STRING_SORT_OPTIONS);
+}
+
+function compareSubmitted(a: FormResponseRow, b: FormResponseRow): number {
+  const left = new Date(a.createdAt).getTime();
+  const right = new Date(b.createdAt).getTime();
+  const normalizedLeft = Number.isNaN(left) ? 0 : left;
+  const normalizedRight = Number.isNaN(right) ? 0 : right;
+  if (normalizedLeft !== normalizedRight) return normalizedLeft - normalizedRight;
+  return a.answerTitleId - b.answerTitleId;
+}
+
+function compareRowsBySort(
+  a: FormResponseRow,
+  b: FormResponseRow,
+  sortColumn: SortColumn
+): number {
+  if (sortColumn === 'status') {
+    const statusCompare = compareStrings(statusSortKey(a), statusSortKey(b));
+    return statusCompare || compareSubmitted(a, b);
+  }
+  if (sortColumn === 'submitted') {
+    return compareSubmitted(a, b);
+  }
+  if (sortColumn === 'participant') {
+    const participantCompare = compareStrings(participantSortKey(a), participantSortKey(b));
+    return participantCompare || compareSubmitted(a, b);
+  }
+  const cellCompare = compareStrings(cellSortKey(a, sortColumn), cellSortKey(b, sortColumn));
+  return cellCompare || compareSubmitted(a, b);
+}
+
 /** Client-only filter — never sent to the API or database. */
 function rowMatchesClientSearch(
   row: FormResponseRow,
@@ -393,6 +434,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
   const [statusSaveError, setStatusSaveError] = useState<string | null>(null);
   const [columnWidthOverrides, setColumnWidthOverrides] = useState<Record<number, number>>({});
   const [resizingColumnId, setResizingColumnId] = useState<number | null>(null);
+  const [sortVersion, setSortVersion] = useState(0);
 
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const accumulatedRowsRef = useRef<FormResponseRow[]>([]);
@@ -437,44 +479,29 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     }
   }, [inquiryWorkflowEnabled, visibleColumns, sort.column]);
 
-  const sortedRows = useMemo(() => {
-    const copy = [...accumulatedRows];
-    const { column: sortColumn, dir: sortDir } = sort;
-    const mult = sortDir === 'asc' ? 1 : -1;
-    copy.sort((a, b) => {
-      if (sortColumn === 'status') {
-        return statusSortKey(a).localeCompare(statusSortKey(b)) * mult;
-      }
-      if (sortColumn === 'submitted') {
-        const ta = new Date(a.createdAt).getTime();
-        const tb = new Date(b.createdAt).getTime();
-        return (ta - tb) * mult;
-      }
-      if (sortColumn === 'participant') {
-        return participantSortKey(a).localeCompare(participantSortKey(b)) * mult;
-      }
-      return cellSortKey(a, sortColumn).localeCompare(cellSortKey(b, sortColumn)) * mult;
-    });
-    return copy;
-  }, [accumulatedRows, sort]);
-
   const statusFilteredRows = useMemo(() => {
-    if (!inquiryWorkflowEnabled) return sortedRows;
+    if (!inquiryWorkflowEnabled) return accumulatedRows;
     switch (statusViewFilter) {
       case 'all':
-        return sortedRows;
+        return accumulatedRows;
       case 'completed_only':
-        return sortedRows.filter((r) => (r.staffStatus ?? 'pending') === 'resolved');
+        return accumulatedRows.filter((r) => (r.staffStatus ?? 'pending') === 'resolved');
       case 'active':
       default:
-        return sortedRows.filter((r) => (r.staffStatus ?? 'pending') !== 'resolved');
+        return accumulatedRows.filter((r) => (r.staffStatus ?? 'pending') !== 'resolved');
     }
-  }, [inquiryWorkflowEnabled, sortedRows, statusViewFilter]);
+  }, [accumulatedRows, inquiryWorkflowEnabled, statusViewFilter]);
 
-  const displayRows = useMemo(
-    () => statusFilteredRows.filter((r) => rowMatchesClientSearch(r, search, inquiryWorkflowEnabled)),
-    [statusFilteredRows, search, inquiryWorkflowEnabled]
-  );
+  const displayRows = useMemo(() => {
+    const filtered = statusFilteredRows.filter((r) =>
+      rowMatchesClientSearch(r, search, inquiryWorkflowEnabled)
+    );
+    const sorted = [...filtered].sort((a, b) => {
+      const result = compareRowsBySort(a, b, sort.column);
+      return sort.dir === 'asc' ? result : -result;
+    });
+    return sorted;
+  }, [statusFilteredRows, search, inquiryWorkflowEnabled, sort]);
   const hasMoreRows = cursor !== null;
   const reachedAutoLoadCap = hasMoreRows && accumulatedRows.length >= AUTO_LOAD_MAX_ROWS;
   const loadedAllRows = !hasMoreRows;
@@ -488,9 +515,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
       }
       return { column: col, dir: col === 'submitted' ? 'desc' : 'asc' };
     });
-    requestAnimationFrame(() => {
-      tableScrollRef.current?.scrollTo({ top: 0 });
-    });
+    setSortVersion((version) => version + 1);
   }, []);
 
   function sortHint(col: SortColumn): string {
@@ -546,6 +571,14 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
       document.body.style.userSelect = previousUserSelect;
     };
   }, [resizingColumnId]);
+
+  useEffect(() => {
+    if (sortVersion === 0) return;
+    const frame = requestAnimationFrame(() => {
+      tableScrollRef.current?.scrollTo({ top: 0 });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [displayRows, sortVersion]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1175,6 +1208,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
           role="region"
           aria-label="Form responses table. Use arrow keys or swipe to scroll horizontally."
           className="form-responses-print-scroll rounded-xl border border-slate-200/90 bg-white shadow-md shadow-slate-200/40 overflow-x-auto max-h-[min(75vh,calc(100dvh-13rem))] overflow-y-auto print:max-h-none print:overflow-visible focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/80 focus-visible:ring-offset-2"
+          style={{ overflowAnchor: 'none' }}
         >
           <div className="hidden print:block px-3 pt-3 pb-1 print:border-b print:border-slate-300">
             <p className="text-sm font-bold text-slate-900">
