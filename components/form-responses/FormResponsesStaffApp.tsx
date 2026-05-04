@@ -25,11 +25,27 @@ const MEDIUM_TEXT_MAX_CHARS = 36;
 const WIDE_TEXT_MIN_CHARS = 80;
 const COLUMN_SAMPLE_LIMIT = 50;
 const AUTO_LOAD_MAX_ROWS = 2000;
+const NARROW_COLUMN_WIDTH_PX = 112;
+const MEDIUM_COLUMN_WIDTH_PX = 160;
+const DEFAULT_COLUMN_WIDTH_PX = 192;
+const WIDE_COLUMN_WIDTH_PX = 288;
+const MIN_RESIZABLE_COLUMN_WIDTH_PX = 96;
+const MAX_RESIZABLE_COLUMN_WIDTH_PX = 480;
 const NARROW_COLUMN_CLASSES = 'min-w-[6rem] max-w-[8rem] w-[7rem]';
 const MEDIUM_COLUMN_CLASSES = 'min-w-[8rem] max-w-[12rem] w-[10rem]';
 const DEFAULT_COLUMN_CLASSES = 'min-w-[10rem] max-w-[15rem] w-[12rem]';
 const WIDE_COLUMN_CLASSES = 'min-w-[14rem] max-w-[24rem] w-[18rem]';
 const TRUNCATED_ANSWER_CLASSES = 'block line-clamp-3 break-words';
+const submittedDateFormatter = new Intl.DateTimeFormat(undefined, {
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+});
+const submittedTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: 'numeric',
+  minute: '2-digit',
+  second: '2-digit',
+});
 
 function answerTextForPrint(
   cell: { display?: string; linkUrl?: string; checkmark?: boolean } | undefined
@@ -96,6 +112,11 @@ const STATUS_SELECT_CLASSES: Record<StaffInquiryStatus, string> = {
 };
 
 type SortColumn = 'status' | 'submitted' | 'participant' | number;
+type ColumnResizeState = {
+  columnId: number;
+  startX: number;
+  startWidth: number;
+};
 
 /** Newest submission in the loaded set (for incremental refresh watermark). */
 function computeNewestWatermark(rows: FormResponseRow[]): { createdAt: string; id: number } | null {
@@ -202,6 +223,39 @@ function getQuestionColumnClasses(column: QuestionColumnMeta, rows: FormResponse
   if (longest <= MEDIUM_TEXT_MAX_CHARS) return MEDIUM_COLUMN_CLASSES;
   if (longest >= WIDE_TEXT_MIN_CHARS) return WIDE_COLUMN_CLASSES;
   return DEFAULT_COLUMN_CLASSES;
+}
+
+function getQuestionColumnDefaultWidth(column: QuestionColumnMeta, rows: FormResponseRow[]): number {
+  if (columnLooksBooleanLike(column) || columnLooksDateLike(column)) return NARROW_COLUMN_WIDTH_PX;
+  if (columnLooksWideByType(column)) return WIDE_COLUMN_WIDTH_PX;
+
+  const headerLength = (column.question || '').trim().length;
+  let longest = headerLength;
+  const sample = rows.slice(0, COLUMN_SAMPLE_LIMIT);
+  for (const row of sample) {
+    longest = Math.max(longest, displayTextLength(row, column.id));
+  }
+
+  if (longest <= SHORT_TEXT_MAX_CHARS) return NARROW_COLUMN_WIDTH_PX;
+  if (longest <= MEDIUM_TEXT_MAX_CHARS) return MEDIUM_COLUMN_WIDTH_PX;
+  if (longest >= WIDE_TEXT_MIN_CHARS) return WIDE_COLUMN_WIDTH_PX;
+  return DEFAULT_COLUMN_WIDTH_PX;
+}
+
+function clampColumnWidth(width: number): number {
+  return Math.min(
+    Math.max(width, MIN_RESIZABLE_COLUMN_WIDTH_PX),
+    MAX_RESIZABLE_COLUMN_WIDTH_PX
+  );
+}
+
+function formatSubmittedParts(value: string): { date: string; time: string } {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return { date: value, time: '' };
+  return {
+    date: submittedDateFormatter.format(date),
+    time: submittedTimeFormatter.format(date),
+  };
 }
 
 function csvEscape(value: string): string {
@@ -337,9 +391,12 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
   const [statusViewFilter, setStatusViewFilter] = useState<StatusViewFilter>('active');
   const [savingStatusId, setSavingStatusId] = useState<number | null>(null);
   const [statusSaveError, setStatusSaveError] = useState<string | null>(null);
+  const [columnWidthOverrides, setColumnWidthOverrides] = useState<Record<number, number>>({});
+  const [resizingColumnId, setResizingColumnId] = useState<number | null>(null);
 
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const accumulatedRowsRef = useRef<FormResponseRow[]>([]);
+  const resizeStateRef = useRef<ColumnResizeState | null>(null);
   accumulatedRowsRef.current = accumulatedRows;
 
   const base = `/api/form-responses/${encodeURIComponent(slug)}`;
@@ -358,6 +415,17 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     }
     return map;
   }, [visibleColumns, accumulatedRows]);
+
+  const questionColumnWidths = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const column of visibleColumns) {
+      map.set(
+        column.id,
+        columnWidthOverrides[column.id] ?? getQuestionColumnDefaultWidth(column, accumulatedRows)
+      );
+    }
+    return map;
+  }, [visibleColumns, accumulatedRows, columnWidthOverrides]);
 
   useEffect(() => {
     if (!inquiryWorkflowEnabled && sort.column === 'status') {
@@ -420,12 +488,64 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
       }
       return { column: col, dir: col === 'submitted' ? 'desc' : 'asc' };
     });
+    requestAnimationFrame(() => {
+      tableScrollRef.current?.scrollTo({ top: 0 });
+    });
   }, []);
 
   function sortHint(col: SortColumn): string {
     if (sort.column !== col) return '';
     return sort.dir === 'asc' ? ' ↑' : ' ↓';
   }
+
+  const startQuestionColumnResize = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>, columnId: number) => {
+      event.preventDefault();
+      event.stopPropagation();
+      resizeStateRef.current = {
+        columnId,
+        startX: event.clientX,
+        startWidth: questionColumnWidths.get(columnId) ?? DEFAULT_COLUMN_WIDTH_PX,
+      };
+      setResizingColumnId(columnId);
+    },
+    [questionColumnWidths]
+  );
+
+  useEffect(() => {
+    if (resizingColumnId == null) return;
+
+    const previousCursor = document.body.style.cursor;
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    function handlePointerMove(event: MouseEvent) {
+      const resizeState = resizeStateRef.current;
+      if (!resizeState) return;
+      const nextWidth = clampColumnWidth(
+        resizeState.startWidth + event.clientX - resizeState.startX
+      );
+      setColumnWidthOverrides((prev) => ({
+        ...prev,
+        [resizeState.columnId]: nextWidth,
+      }));
+    }
+
+    function handlePointerUp() {
+      resizeStateRef.current = null;
+      setResizingColumnId(null);
+    }
+
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('mouseup', handlePointerUp);
+      document.body.style.cursor = previousCursor;
+      document.body.style.userSelect = previousUserSelect;
+    };
+  }, [resizingColumnId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -523,6 +643,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     setAccumulatedRows([]);
     setCursor(null);
     setSort(DEFAULT_SORT);
+    setColumnWidthOverrides({});
   }, [questionnaireId]);
 
   useEffect(() => {
@@ -1133,30 +1254,44 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                     </span>
                   </button>
                 </th>
-                {visibleColumns.map((c) => (
-                  <th
-                    key={c.id}
-                    scope="col"
-                    className={`text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle sticky top-0 z-20 print:static ${
-                      questionColumnClasses.get(c.id) ?? DEFAULT_COLUMN_CLASSES
-                    }`}
-                    style={{
-                      backgroundColor: stickyHeaderBg,
-                      boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => headerSort(c.id)}
-                      className="text-left w-full min-h-[2.75rem] flex items-center font-semibold text-slate-900 hover:opacity-80"
+                {visibleColumns.map((c) => {
+                  const width = questionColumnWidths.get(c.id) ?? DEFAULT_COLUMN_WIDTH_PX;
+                  return (
+                    <th
+                      key={c.id}
+                      scope="col"
+                      className={`relative text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle sticky top-0 z-20 print:static ${
+                        questionColumnClasses.get(c.id) ?? DEFAULT_COLUMN_CLASSES
+                      }`}
+                      style={{
+                        width,
+                        minWidth: width,
+                        maxWidth: width,
+                        backgroundColor: stickyHeaderBg,
+                        boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
+                      }}
                     >
-                      <span className="block leading-snug whitespace-normal break-words">
-                        {c.question?.trim() || `Q ${c.id}`}
-                        {sortHint(c.id)}
-                      </span>
-                    </button>
-                  </th>
-                ))}
+                      <button
+                        type="button"
+                        onClick={() => headerSort(c.id)}
+                        className="text-left w-full min-h-[2.75rem] pr-3 flex items-center font-semibold text-slate-900 hover:opacity-80"
+                      >
+                        <span className="block leading-snug whitespace-normal break-words">
+                          {c.question?.trim() || `Q ${c.id}`}
+                          {sortHint(c.id)}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Resize ${c.question?.trim() || `Question ${c.id}`}`}
+                        onMouseDown={(event) => startQuestionColumnResize(event, c.id)}
+                        className={`absolute right-0 top-0 h-full w-2 cursor-col-resize border-r border-transparent hover:border-slate-400 focus:border-slate-500 focus:outline-none ${
+                          resizingColumnId === c.id ? 'border-slate-500 bg-slate-400/10' : ''
+                        }`}
+                      />
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
           {rowsLoading && accumulatedRows.length === 0 ? (
@@ -1218,11 +1353,19 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                     </td>
                     ) : null}
                     <td
-                      className={`p-3 align-top text-slate-600 whitespace-nowrap text-xs sm:text-sm w-[9rem] min-w-[8rem] max-w-[9rem] box-border shrink-0 bg-white md:sticky md:z-[16] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.06)] md:group-hover:bg-slate-50/90 print:static print:bg-transparent ${
+                      className={`p-3 align-top text-slate-600 text-xs sm:text-sm w-[9rem] min-w-[8rem] max-w-[9rem] box-border shrink-0 bg-white md:sticky md:z-[16] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.06)] md:group-hover:bg-slate-50/90 print:static print:bg-transparent ${
                         inquiryWorkflowEnabled ? 'md:left-[9.5rem]' : 'md:left-0'
                       }`}
                     >
-                      {new Date(row.createdAt).toLocaleString()}
+                      {(() => {
+                        const submitted = formatSubmittedParts(row.createdAt);
+                        return (
+                          <span className="block leading-snug">
+                            <span className="block">{submitted.date}</span>
+                            {submitted.time ? <span className="block">{submitted.time}</span> : null}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td
                       className={`p-3 align-top text-slate-800 w-[11rem] min-w-[9rem] max-w-[11rem] box-border shrink-0 break-words text-sm bg-white md:sticky md:z-[17] md:border-r md:border-slate-300/90 md:shadow-[3px_0_10px_-4px_rgba(15,23,42,0.08)] md:group-hover:bg-slate-50/90 print:static print:bg-transparent ${
@@ -1242,12 +1385,14 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                     </td>
                     {visibleColumns.map((c) => {
                       const cell = row.answers[c.id];
+                      const width = questionColumnWidths.get(c.id) ?? DEFAULT_COLUMN_WIDTH_PX;
                       return (
                         <td
                           key={c.id}
                           className={`p-3 align-top text-slate-800 text-sm ${
                             questionColumnClasses.get(c.id) ?? DEFAULT_COLUMN_CLASSES
                           }`}
+                          style={{ width, minWidth: width, maxWidth: width }}
                         >
                           {cell?.checkmark ? (
                             <span className="text-lg text-emerald-700" title="Yes" aria-label="Yes">
