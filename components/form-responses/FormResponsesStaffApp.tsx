@@ -183,17 +183,16 @@ function mergeNewRowsAtTop(prev: FormResponseRow[], incoming: FormResponseRow[])
 function participantSortKey(row: FormResponseRow): string {
   const u = row.user;
   if (!u) return '\uFFFF';
-  const ln = (u.lastName || '').toLowerCase();
-  const fn = (u.firstName || '').toLowerCase();
-  const em = (u.email || '').toLowerCase();
-  return `${ln}\t${fn}\t${em}`;
+  return [u.firstName, u.lastName, u.email]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
 }
 
 function cellSortKey(row: FormResponseRow, qid: number): string {
   const cell = row.answers[qid];
   if (cell?.checkmark) return '1';
-  if (cell?.linkUrl) return cell.linkUrl.toLowerCase();
-  return (cell?.display || '').toLowerCase();
+  return (cell?.display || cell?.linkUrl || '').toLowerCase();
 }
 
 function normalizedQuestionType(column: QuestionColumnMeta): string {
