@@ -24,6 +24,7 @@ const SHORT_TEXT_MAX_CHARS = 12;
 const MEDIUM_TEXT_MAX_CHARS = 36;
 const WIDE_TEXT_MIN_CHARS = 80;
 const COLUMN_SAMPLE_LIMIT = 50;
+const AUTO_LOAD_MAX_ROWS = 2000;
 const NARROW_COLUMN_CLASSES = 'min-w-[6rem] max-w-[8rem] w-[7rem]';
 const MEDIUM_COLUMN_CLASSES = 'min-w-[8rem] max-w-[12rem] w-[10rem]';
 const DEFAULT_COLUMN_CLASSES = 'min-w-[10rem] max-w-[15rem] w-[12rem]';
@@ -203,6 +204,60 @@ function getQuestionColumnClasses(column: QuestionColumnMeta, rows: FormResponse
   return DEFAULT_COLUMN_CLASSES;
 }
 
+function csvEscape(value: string): string {
+  if (/[",\n\r]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function formResponseRowsToCsv(
+  columns: QuestionColumnMeta[],
+  rows: FormResponseRow[],
+  includeStaffStatus: boolean
+): string {
+  const headers = [
+    'Submitted',
+    ...(includeStaffStatus ? ['Status'] : []),
+    'UserId',
+    'FirstName',
+    'LastName',
+    'Email',
+    'Phone',
+    ...columns.map((c) => c.question || `Question ${c.id}`),
+  ];
+  const lines = [headers.map(csvEscape).join(',')];
+  for (const row of rows) {
+    const status = (row.staffStatus ?? 'pending') as StaffInquiryStatus;
+    const base = [
+      row.createdAt,
+      ...(includeStaffStatus ? [STAFF_INQUIRY_STATUS_LABELS[status] ?? status] : []),
+      row.user ? String(row.user.id) : '',
+      row.user?.firstName ?? '',
+      row.user?.lastName ?? '',
+      row.user?.email ?? '',
+      row.user?.phone ?? '',
+    ];
+    const cells = columns.map((column) => {
+      const answer = row.answers[column.id];
+      if (answer?.checkmark) return 'Yes';
+      return answer?.display ?? '';
+    });
+    lines.push([...base, ...cells].map(csvEscape).join(','));
+  }
+  return lines.join('\r\n');
+}
+
+function downloadCsv(filename: string, csv: string): void {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function statusSortKey(row: FormResponseRow): string {
   const s = row.staffStatus ?? 'pending';
   const i = STAFF_STATUS_ORDER.indexOf(s);
@@ -352,6 +407,11 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     () => statusFilteredRows.filter((r) => rowMatchesClientSearch(r, search, inquiryWorkflowEnabled)),
     [statusFilteredRows, search, inquiryWorkflowEnabled]
   );
+  const hasMoreRows = cursor !== null;
+  const reachedAutoLoadCap = hasMoreRows && accumulatedRows.length >= AUTO_LOAD_MAX_ROWS;
+  const loadedAllRows = !hasMoreRows;
+  const loadingRemainingRows = rowsLoading && accumulatedRows.length > 0 && hasMoreRows;
+  const filteredExportDisabled = !loadedAllRows || rowsLoading;
 
   const headerSort = useCallback((col: SortColumn) => {
     setSort((s) => {
@@ -564,6 +624,21 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     fetchRows(false, null);
   }, [authenticated, questionnaireId, from, to, fetchRows]);
 
+  useEffect(() => {
+    if (!authenticated || questionnaireId == null || !from || !to) return;
+    if (!cursor || rowsLoading || accumulatedRows.length >= AUTO_LOAD_MAX_ROWS) return;
+    void fetchRows(true, cursor);
+  }, [
+    authenticated,
+    questionnaireId,
+    from,
+    to,
+    cursor,
+    rowsLoading,
+    accumulatedRows.length,
+    fetchRows,
+  ]);
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setAuthError(null);
@@ -595,6 +670,12 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     sp.set('to', to);
     return `${base}/export?${sp}`;
   }, [base, questionnaireId, from, to]);
+
+  const exportFilteredRows = useCallback(() => {
+    if (filteredExportDisabled) return;
+    const csv = formResponseRowsToCsv(visibleColumns, displayRows, inquiryWorkflowEnabled);
+    downloadCsv(`form-responses-${slug}-filtered.csv`, csv);
+  }, [displayRows, filteredExportDisabled, inquiryWorkflowEnabled, slug, visibleColumns]);
 
   const capDays = useMemo(
     () => Math.min(Math.max(publicConfig?.max_range_days_cap ?? 90, 1), 365),
@@ -765,8 +846,21 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
               className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border border-slate-200/90 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50/90 transition-colors"
               style={!exportHref ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
             >
-              Download CSV
+              Export all in range
             </a>
+            <button
+              type="button"
+              onClick={exportFilteredRows}
+              disabled={filteredExportDisabled}
+              title={
+                filteredExportDisabled
+                  ? 'Current filtered export is available after all rows in the date range finish loading.'
+                  : 'Export the current search, inquiry view, and sort order.'
+              }
+              className="text-sm px-3 py-2 rounded-xl border border-slate-200/90 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50/90 transition-colors disabled:opacity-50"
+            >
+              Export current view
+            </button>
             <button
               type="button"
               onClick={() => window.print()}
@@ -934,6 +1028,17 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
               : ''}
             {inquiryWorkflowEnabled && statusViewFilter === 'completed_only' ? ' · completed only' : ''}
             .
+          </p>
+        ) : null}
+        {accumulatedRows.length > 0 ? (
+          <p className="text-xs text-slate-600">
+            {loadedAllRows
+              ? `Loaded all ${accumulatedRows.length} responses in this date range.`
+              : loadingRemainingRows
+                ? `Loading remaining responses… ${accumulatedRows.length} loaded so far.`
+                : reachedAutoLoadCap
+                  ? `Loaded ${accumulatedRows.length} responses. Narrow the date range to load more than ${AUTO_LOAD_MAX_ROWS}.`
+                  : `Loaded ${accumulatedRows.length} responses. More responses are queued to load.`}
           </p>
         ) : null}
       </main>
@@ -1182,19 +1287,6 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
           )}
         </table>
         </div>
-        {cursor ? (
-          <div className="form-responses-no-print mt-4 flex justify-center">
-            <button
-              type="button"
-              disabled={rowsLoading}
-              onClick={() => fetchRows(true, cursor)}
-              className="px-4 py-2 rounded-lg text-white text-sm font-medium disabled:opacity-50"
-              style={{ backgroundColor: b.primaryColor }}
-            >
-              {rowsLoading ? 'Loading…' : 'Load more'}
-            </button>
-          </div>
-        ) : null}
       </div>
     </div>
   );
