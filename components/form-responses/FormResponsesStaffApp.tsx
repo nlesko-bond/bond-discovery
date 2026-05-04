@@ -475,9 +475,12 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const accumulatedRowsRef = useRef<FormResponseRow[]>([]);
   const resizeStateRef = useRef<ColumnResizeState | null>(null);
+  const rowsRequestVersionRef = useRef(0);
+  const rowsLoadInFlightRef = useRef(false);
   accumulatedRowsRef.current = accumulatedRows;
 
   const base = `/api/form-responses/${encodeURIComponent(slug)}`;
+  const hasPublicConfig = publicConfig !== null;
   const inquiryWorkflowEnabled = publicConfig?.enable_staff_inquiry_workflow !== false;
   const staffCanSwitchForms = publicConfig?.staff_lock_to_default_questionnaire === false;
 
@@ -742,8 +745,13 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
   }, [authenticated, questionnaireId, base]);
 
   const fetchRows = useCallback(
-    async (append: boolean, nextCursor: { createdAt: string; id: number } | null) => {
-      if (questionnaireId == null || !publicConfig) return;
+    async (
+      append: boolean,
+      nextCursor: { createdAt: string; id: number } | null,
+      requestVersion = rowsRequestVersionRef.current
+    ) => {
+      if (questionnaireId == null || !hasPublicConfig || rowsLoadInFlightRef.current) return;
+      rowsLoadInFlightRef.current = true;
       setRowsLoading(true);
       try {
         const sp = new URLSearchParams();
@@ -758,22 +766,30 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
         if (!res.ok) throw new Error('Failed to load responses');
         const json = await res.json();
         const data = json.data as FormResponsesPage;
+        if (requestVersion !== rowsRequestVersionRef.current) return;
         if (append) {
-          setAccumulatedRows((r) => [...r, ...data.rows]);
+          setAccumulatedRows((currentRows) => {
+            const seen = new Set(currentRows.map((r) => r.answerTitleId));
+            const freshRows = data.rows.filter((r) => !seen.has(r.answerTitleId));
+            return [...currentRows, ...freshRows];
+          });
         } else {
           setAccumulatedRows(data.rows);
         }
         setQuestionnaireTitle(data.questionnaireTitle);
         setCursor(data.nextCursor);
       } finally {
-        setRowsLoading(false);
+        if (requestVersion === rowsRequestVersionRef.current) {
+          rowsLoadInFlightRef.current = false;
+          setRowsLoading(false);
+        }
       }
     },
-    [base, questionnaireId, from, to, publicConfig]
+    [base, questionnaireId, from, to, hasPublicConfig]
   );
 
   const refreshNewSubmissions = useCallback(async () => {
-    if (questionnaireId == null || !publicConfig || !from || !to) return;
+    if (questionnaireId == null || !hasPublicConfig || !from || !to) return;
     const prev = accumulatedRowsRef.current;
     if (prev.length === 0) {
       fetchRows(false, null);
@@ -809,18 +825,21 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     } finally {
       setRowsLoading(false);
     }
-  }, [base, questionnaireId, from, to, publicConfig, fetchRows]);
+  }, [base, questionnaireId, from, to, hasPublicConfig, fetchRows]);
 
   useEffect(() => {
     if (!authenticated || questionnaireId == null || !from || !to) return;
+    const requestVersion = rowsRequestVersionRef.current + 1;
+    rowsRequestVersionRef.current = requestVersion;
+    rowsLoadInFlightRef.current = false;
     setCursor(null);
-    fetchRows(false, null);
+    void fetchRows(false, null, requestVersion);
   }, [authenticated, questionnaireId, from, to, fetchRows]);
 
   useEffect(() => {
     if (!authenticated || questionnaireId == null || !from || !to) return;
     if (!cursor || rowsLoading || accumulatedRows.length >= AUTO_LOAD_MAX_ROWS) return;
-    void fetchRows(true, cursor);
+    void fetchRows(true, cursor, rowsRequestVersionRef.current);
   }, [
     authenticated,
     questionnaireId,
