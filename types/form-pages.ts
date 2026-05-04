@@ -20,6 +20,7 @@ export interface FormPageConfig {
   allowed_questionnaire_ids: number[] | null;
   /** When true, staff UI hides the form dropdown and always uses default_questionnaire_id */
   staff_lock_to_default_questionnaire: boolean;
+  enable_staff_inquiry_workflow: boolean;
   branding: FormPageBranding;
   staff_password_hash: string | null;
   staff_password_updated_at: string | null;

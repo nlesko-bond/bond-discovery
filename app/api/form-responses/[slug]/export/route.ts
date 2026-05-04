@@ -55,7 +55,11 @@ export async function GET(request: NextRequest, context: Ctx) {
       { questionnaireId, from, to },
       2000
     );
-    const csv = formResponsesToCsv(columns, rows);
+    const csv = formResponsesToCsv(
+      columns,
+      rows,
+      config.enable_staff_inquiry_workflow !== false
+    );
     const filename = `form-responses-${slug}-${questionnaireId}.csv`;
     return new NextResponse(csv, {
       status: 200,

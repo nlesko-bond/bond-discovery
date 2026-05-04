@@ -56,6 +56,10 @@ export async function POST(request: NextRequest) {
         body.staff_lock_to_default_questionnaire !== undefined
           ? parseStaffLockBoolean(body.staff_lock_to_default_questionnaire)
           : undefined,
+      enable_staff_inquiry_workflow:
+        body.enable_staff_inquiry_workflow !== undefined
+          ? Boolean(body.enable_staff_inquiry_workflow)
+          : undefined,
       branding: body.branding,
       staff_password,
       default_range_days: body.default_range_days != null ? Number(body.default_range_days) : undefined,

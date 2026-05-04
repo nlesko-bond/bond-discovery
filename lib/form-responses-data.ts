@@ -109,7 +109,10 @@ export async function loadFormResponsesPage(
   ]);
 
   const built = await buildRowsFromTitles(config, titlePack.titles);
-  const rows = await attachStaffStatusesToRows(config.id, built);
+  const rows =
+    config.enable_staff_inquiry_workflow === false
+      ? built
+      : await attachStaffStatusesToRows(config.id, built);
 
   return {
     questionnaireTitle,
@@ -160,11 +163,12 @@ function csvStatusLabel(r: FormResponseRow): string {
 
 export function formResponsesToCsv(
   columns: QuestionColumnMeta[],
-  rows: FormResponseRow[]
+  rows: FormResponseRow[],
+  includeStaffStatus = true
 ): string {
   const headers = [
     'Submitted',
-    'Status',
+    ...(includeStaffStatus ? ['Status'] : []),
     'UserId',
     'FirstName',
     'LastName',
@@ -176,7 +180,7 @@ export function formResponsesToCsv(
   for (const r of rows) {
     const base = [
       r.createdAt,
-      csvStatusLabel(r),
+      ...(includeStaffStatus ? [csvStatusLabel(r)] : []),
       r.user ? String(r.user.id) : '',
       r.user?.firstName ?? '',
       r.user?.lastName ?? '',

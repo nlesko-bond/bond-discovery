@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Save, ExternalLink } from 'lucide-react';
-import type { FormPageBranding, FormPageConfigAdmin } from '@/types/form-pages';
+import type { FormPageBranding, FormPageConfigAdmin, QuestionnaireListItem } from '@/types/form-pages';
 
 export default function EditFormPagePage() {
   const params = useParams();
@@ -13,7 +13,11 @@ export default function EditFormPagePage() {
 
   const [config, setConfig] = useState<FormPageConfigAdmin | null>(null);
   const [staffPassword, setStaffPassword] = useState('');
-  const [allowedIdsText, setAllowedIdsText] = useState('');
+  const [questionnaires, setQuestionnaires] = useState<QuestionnaireListItem[]>([]);
+  const [selectedQuestionnaireIds, setSelectedQuestionnaireIds] = useState<number[]>([]);
+  const [allowAllQuestionnaires, setAllowAllQuestionnaires] = useState(false);
+  const [questionnairesLoading, setQuestionnairesLoading] = useState(false);
+  const [questionnairesError, setQuestionnairesError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +31,9 @@ export default function EditFormPagePage() {
         const data = await res.json();
         const c = data.config as FormPageConfigAdmin;
         setConfig(c);
-        setAllowedIdsText(c.allowed_questionnaire_ids?.join(', ') || '');
+        setSelectedQuestionnaireIds(c.allowed_questionnaire_ids ?? []);
+        setAllowAllQuestionnaires(!c.allowed_questionnaire_ids || c.allowed_questionnaire_ids.length === 0);
+        void loadQuestionnairesForOrg(c.organization_id);
       } catch {
         setError('Failed to load config');
       } finally {
@@ -36,18 +42,35 @@ export default function EditFormPagePage() {
     })();
   }, [slug]);
 
+  async function loadQuestionnairesForOrg(organizationId: number) {
+    if (!Number.isFinite(organizationId)) {
+      setQuestionnairesError('Enter an organization ID first.');
+      return;
+    }
+    setQuestionnairesLoading(true);
+    setQuestionnairesError(null);
+    try {
+      const res = await fetch(`/api/admin/form-pages/questionnaires?organizationId=${organizationId}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load forms');
+      setQuestionnaires(data.questionnaires || []);
+    } catch (e) {
+      setQuestionnairesError(e instanceof Error ? e.message : 'Failed to load forms');
+    } finally {
+      setQuestionnairesLoading(false);
+    }
+  }
+
   async function handleSave() {
     if (!config) return;
     setSaving(true);
     setError(null);
     setSuccessMessage(null);
     try {
-      const allowed = allowedIdsText.trim()
-        ? allowedIdsText
-            .split(/[\s,]+/)
-            .map((s) => parseInt(s.trim(), 10))
-            .filter((n) => !Number.isNaN(n))
-        : null;
+      const allowed = allowAllQuestionnaires
+        ? null
+        : [...new Set([...selectedQuestionnaireIds, config.default_questionnaire_id])]
+            .filter((n) => Number.isFinite(n));
 
       const body: Record<string, unknown> = {
         name: config.name,
@@ -56,7 +79,8 @@ export default function EditFormPagePage() {
         organization_id: config.organization_id,
         default_questionnaire_id: config.default_questionnaire_id,
         allowed_questionnaire_ids: allowed,
-        staff_lock_to_default_questionnaire: true,
+        staff_lock_to_default_questionnaire: config.staff_lock_to_default_questionnaire,
+        enable_staff_inquiry_workflow: config.enable_staff_inquiry_workflow,
         branding: config.branding,
         default_range_days: config.default_range_days,
         max_range_days_cap: config.max_range_days_cap,
@@ -88,6 +112,12 @@ export default function EditFormPagePage() {
   function updateBranding(updates: Partial<FormPageBranding>) {
     if (!config) return;
     setConfig({ ...config, branding: { ...config.branding, ...updates } });
+  }
+
+  function toggleQuestionnaire(id: number) {
+    setSelectedQuestionnaireIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   }
 
   if (loading) {
@@ -164,17 +194,55 @@ export default function EditFormPagePage() {
               value={String(config.default_questionnaire_id)}
               onChange={(v) => setConfig({ ...config, default_questionnaire_id: parseInt(v, 10) || 0 })}
             />
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Allowed questionnaire IDs (comma-separated, empty = all org forms)
+            <div className="col-span-2 rounded-lg border border-gray-200 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Available forms</p>
+                  <p className="text-xs text-gray-500">Choose which organization forms staff can view on this page.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void loadQuestionnairesForOrg(config.organization_id)}
+                  disabled={questionnairesLoading}
+                  className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {questionnairesLoading ? 'Loading…' : 'Reload org forms'}
+                </button>
+              </div>
+              {questionnairesError ? <p className="mt-2 text-xs text-red-600">{questionnairesError}</p> : null}
+              <label className="mt-3 flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={allowAllQuestionnaires}
+                  onChange={(e) => setAllowAllQuestionnaires(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                Allow all organization forms on this page
               </label>
-              <input
-                type="text"
-                value={allowedIdsText}
-                onChange={(e) => setAllowedIdsText(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm"
-                placeholder="e.g. 12, 34, 56"
-              />
+              {questionnaires.length > 0 && !allowAllQuestionnaires ? (
+                <div className="mt-3 max-h-64 overflow-y-auto rounded-lg border border-gray-100 divide-y divide-gray-100">
+                  {questionnaires.map((q) => (
+                    <label key={q.id} className="flex items-center justify-between gap-3 p-3 text-sm">
+                      <span className="flex items-center gap-2 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={selectedQuestionnaireIds.includes(q.id)}
+                          onChange={() => toggleQuestionnaire(q.id)}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                        <span className="truncate">{q.title || `Form ${q.id}`}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, default_questionnaire_id: q.id })}
+                        className="shrink-0 text-xs text-blue-600 hover:underline"
+                      >
+                        Use as default
+                      </button>
+                    </label>
+                  ))}
+                </div>
+              ) : null}
             </div>
             <div className="col-span-2 flex items-center gap-3">
               <input
@@ -188,10 +256,28 @@ export default function EditFormPagePage() {
                 Page active
               </label>
             </div>
-            <p className="col-span-2 text-xs text-gray-500">
-              Staff responses view always uses the default questionnaire ID above (form picker is
-              disabled).
-            </p>
+            <label className="col-span-2 flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={!config.staff_lock_to_default_questionnaire}
+                onChange={(e) =>
+                  setConfig({ ...config, staff_lock_to_default_questionnaire: !e.target.checked })
+                }
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              Allow staff to switch between allowed forms
+            </label>
+            <label className="col-span-2 flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={config.enable_staff_inquiry_workflow}
+                onChange={(e) =>
+                  setConfig({ ...config, enable_staff_inquiry_workflow: e.target.checked })
+                }
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              Enable inquiry status workflow
+            </label>
           </div>
         </Section>
 

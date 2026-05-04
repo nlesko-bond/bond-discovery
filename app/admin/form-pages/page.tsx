@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus, ExternalLink, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
-import type { FormPageConfigAdmin } from '@/types/form-pages';
+import type { FormPageConfigAdmin, QuestionnaireListItem } from '@/types/form-pages';
 
 export default function FormPagesAdminList() {
   const [configs, setConfigs] = useState<FormPageConfigAdmin[]>([]);
@@ -15,7 +15,14 @@ export default function FormPagesAdminList() {
     organization_id: '',
     default_questionnaire_id: '',
     staff_password: '',
+    staff_can_switch_forms: true,
+    allow_all_questionnaires: false,
+    enable_staff_inquiry_workflow: true,
   });
+  const [createQuestionnaires, setCreateQuestionnaires] = useState<QuestionnaireListItem[]>([]);
+  const [createSelectedQuestionnaireIds, setCreateSelectedQuestionnaireIds] = useState<number[]>([]);
+  const [questionnairesLoading, setQuestionnairesLoading] = useState(false);
+  const [questionnairesError, setQuestionnairesError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchConfigs();
@@ -36,6 +43,11 @@ export default function FormPagesAdminList() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     try {
+      const defaultQuestionnaireId = parseInt(newForm.default_questionnaire_id, 10);
+      const allowedQuestionnaireIds = newForm.allow_all_questionnaires
+        ? null
+        : [...new Set([...createSelectedQuestionnaireIds, defaultQuestionnaireId])]
+            .filter((n) => Number.isFinite(n));
       const res = await fetch('/api/admin/form-pages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -43,9 +55,11 @@ export default function FormPagesAdminList() {
           name: newForm.name,
           slug: newForm.slug,
           organization_id: parseInt(newForm.organization_id, 10),
-          default_questionnaire_id: parseInt(newForm.default_questionnaire_id, 10),
+          default_questionnaire_id: defaultQuestionnaireId,
+          allowed_questionnaire_ids: allowedQuestionnaireIds,
           staff_password: newForm.staff_password,
-          staff_lock_to_default_questionnaire: true,
+          staff_lock_to_default_questionnaire: !newForm.staff_can_switch_forms,
+          enable_staff_inquiry_workflow: newForm.enable_staff_inquiry_workflow,
         }),
       });
       if (res.ok) {
@@ -56,7 +70,12 @@ export default function FormPagesAdminList() {
           organization_id: '',
           default_questionnaire_id: '',
           staff_password: '',
+          staff_can_switch_forms: true,
+          allow_all_questionnaires: false,
+          enable_staff_inquiry_workflow: true,
         });
+        setCreateQuestionnaires([]);
+        setCreateSelectedQuestionnaireIds([]);
         fetchConfigs();
       } else {
         const err = await res.json().catch(() => ({}));
@@ -65,6 +84,32 @@ export default function FormPagesAdminList() {
     } catch (e) {
       console.error(e);
     }
+  }
+
+  async function loadCreateQuestionnaires() {
+    const organizationId = parseInt(newForm.organization_id, 10);
+    if (!Number.isFinite(organizationId)) {
+      setQuestionnairesError('Enter an organization ID first.');
+      return;
+    }
+    setQuestionnairesLoading(true);
+    setQuestionnairesError(null);
+    try {
+      const res = await fetch(`/api/admin/form-pages/questionnaires?organizationId=${organizationId}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load forms');
+      setCreateQuestionnaires(data.questionnaires || []);
+    } catch (e) {
+      setQuestionnairesError(e instanceof Error ? e.message : 'Failed to load forms');
+    } finally {
+      setQuestionnairesLoading(false);
+    }
+  }
+
+  function toggleCreateQuestionnaire(id: number) {
+    setCreateSelectedQuestionnaireIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   }
 
   async function handleToggle(slug: string, isActive: boolean) {
@@ -143,6 +188,56 @@ export default function FormPagesAdminList() {
               onChange={(v) => setNewForm({ ...newForm, default_questionnaire_id: v })}
               required
             />
+            <div className="col-span-2 rounded-lg border border-gray-200 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Available forms</p>
+                  <p className="text-xs text-gray-500">Load forms from the org, then choose which staff can use.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={loadCreateQuestionnaires}
+                  disabled={questionnairesLoading}
+                  className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {questionnairesLoading ? 'Loading…' : 'Load org forms'}
+                </button>
+              </div>
+              {questionnairesError ? <p className="mt-2 text-xs text-red-600">{questionnairesError}</p> : null}
+              <label className="mt-3 flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={newForm.allow_all_questionnaires}
+                  onChange={(e) => setNewForm({ ...newForm, allow_all_questionnaires: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                Allow all organization forms on this page
+              </label>
+              {createQuestionnaires.length > 0 && !newForm.allow_all_questionnaires ? (
+                <div className="mt-3 max-h-56 overflow-y-auto rounded-lg border border-gray-100 divide-y divide-gray-100">
+                  {createQuestionnaires.map((q) => (
+                    <label key={q.id} className="flex items-center justify-between gap-3 p-3 text-sm">
+                      <span className="flex items-center gap-2 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={createSelectedQuestionnaireIds.includes(q.id)}
+                          onChange={() => toggleCreateQuestionnaire(q.id)}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                        <span className="truncate">{q.title || `Form ${q.id}`}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setNewForm({ ...newForm, default_questionnaire_id: String(q.id) })}
+                        className="shrink-0 text-xs text-blue-600 hover:underline"
+                      >
+                        Use as default
+                      </button>
+                    </label>
+                  ))}
+                </div>
+              ) : null}
+            </div>
             <div className="col-span-2">
               <Field
                 label="Staff password (required)"
@@ -152,10 +247,24 @@ export default function FormPagesAdminList() {
                 required
               />
             </div>
-            <p className="col-span-2 text-xs text-gray-500">
-              Staff responses view always uses the default questionnaire ID above (form picker is
-              disabled).
-            </p>
+            <label className="col-span-2 flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={newForm.staff_can_switch_forms}
+                onChange={(e) => setNewForm({ ...newForm, staff_can_switch_forms: e.target.checked })}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              Allow staff to switch between allowed forms
+            </label>
+            <label className="col-span-2 flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={newForm.enable_staff_inquiry_workflow}
+                onChange={(e) => setNewForm({ ...newForm, enable_staff_inquiry_workflow: e.target.checked })}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              Enable inquiry status workflow
+            </label>
           </div>
           <div className="flex gap-2">
             <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">

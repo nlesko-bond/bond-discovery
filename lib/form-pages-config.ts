@@ -52,6 +52,7 @@ export async function createFormPageConfig(input: {
   default_questionnaire_id: number;
   allowed_questionnaire_ids?: number[] | null;
   staff_lock_to_default_questionnaire?: boolean;
+  enable_staff_inquiry_workflow?: boolean;
   branding?: Partial<FormPageBranding>;
   staff_password?: string;
   default_range_days?: number;
@@ -77,6 +78,7 @@ export async function createFormPageConfig(input: {
       default_questionnaire_id: input.default_questionnaire_id,
       allowed_questionnaire_ids: input.allowed_questionnaire_ids ?? null,
       staff_lock_to_default_questionnaire: input.staff_lock_to_default_questionnaire ?? true,
+      enable_staff_inquiry_workflow: input.enable_staff_inquiry_workflow ?? true,
       branding: { ...DEFAULT_BRANDING, ...input.branding },
       staff_password_hash,
       staff_password_updated_at,
@@ -111,6 +113,9 @@ export async function updateFormPageConfig(
     updateData.default_questionnaire_id = updates.default_questionnaire_id;
   if (updates.allowed_questionnaire_ids !== undefined)
     updateData.allowed_questionnaire_ids = updates.allowed_questionnaire_ids;
+  if (updates.enable_staff_inquiry_workflow !== undefined) {
+    updateData.enable_staff_inquiry_workflow = updates.enable_staff_inquiry_workflow;
+  }
   if (updates.branding !== undefined) updateData.branding = updates.branding;
   if (updates.default_range_days !== undefined) updateData.default_range_days = updates.default_range_days;
   if (updates.max_range_days_cap !== undefined) updateData.max_range_days_cap = updates.max_range_days_cap;

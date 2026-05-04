@@ -58,6 +58,9 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     if (body.allowed_questionnaire_ids !== undefined) {
       updates.allowed_questionnaire_ids = parseAllowedIds(body.allowed_questionnaire_ids) ?? null;
     }
+    if (body.enable_staff_inquiry_workflow !== undefined) {
+      updates.enable_staff_inquiry_workflow = Boolean(body.enable_staff_inquiry_workflow);
+    }
     if (body.branding !== undefined) updates.branding = body.branding as FormPageBranding;
     if (body.default_range_days !== undefined) {
       updates.default_range_days = Number(body.default_range_days);

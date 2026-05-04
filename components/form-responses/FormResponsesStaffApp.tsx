@@ -14,10 +14,21 @@ import {
   type FormResponsesPage,
   type FormResponseRow,
   type QuestionColumnMeta,
+  type QuestionnaireListItem,
   type StaffInquiryStatus,
 } from '@/types/form-pages';
 
 const STAFF_STATUS_ORDER: StaffInquiryStatus[] = ['pending', 'in_progress', 'resolved'];
+const DEFAULT_SORT = { column: 'submitted' as SortColumn, dir: 'desc' as const };
+const SHORT_TEXT_MAX_CHARS = 12;
+const MEDIUM_TEXT_MAX_CHARS = 36;
+const WIDE_TEXT_MIN_CHARS = 80;
+const COLUMN_SAMPLE_LIMIT = 50;
+const NARROW_COLUMN_CLASSES = 'min-w-[6rem] max-w-[8rem] w-[7rem]';
+const MEDIUM_COLUMN_CLASSES = 'min-w-[8rem] max-w-[12rem] w-[10rem]';
+const DEFAULT_COLUMN_CLASSES = 'min-w-[10rem] max-w-[15rem] w-[12rem]';
+const WIDE_COLUMN_CLASSES = 'min-w-[14rem] max-w-[24rem] w-[18rem]';
+const TRUNCATED_ANSWER_CLASSES = 'block line-clamp-3 break-words';
 
 function answerTextForPrint(
   cell: { display?: string; linkUrl?: string; checkmark?: boolean } | undefined
@@ -31,9 +42,11 @@ function answerTextForPrint(
 function ParticipantPrintDetail({
   row,
   columns,
+  showInquiryStatus,
 }: {
   row: FormResponseRow;
   columns: QuestionColumnMeta[];
+  showInquiryStatus: boolean;
 }) {
   const u = row.user;
   const name = [u?.firstName, u?.lastName].filter(Boolean).join(' ') || '—';
@@ -46,8 +59,8 @@ function ParticipantPrintDetail({
           {[u?.email, u?.phone].filter(Boolean).join(' · ') || '—'}
         </p>
         <p className="text-xs text-slate-600">
-          Submitted {new Date(row.createdAt).toLocaleString()} · Inquiry:{' '}
-          {STAFF_INQUIRY_STATUS_LABELS[rowStatus]}
+          Submitted {new Date(row.createdAt).toLocaleString()}
+          {showInquiryStatus ? ` · Inquiry: ${STAFF_INQUIRY_STATUS_LABELS[rowStatus]}` : ''}
         </p>
       </div>
       <dl className="grid gap-3 sm:grid-cols-2 print:grid-cols-2 print:gap-2">
@@ -121,6 +134,75 @@ function cellSortKey(row: FormResponseRow, qid: number): string {
   return (cell?.display || '').toLowerCase();
 }
 
+function normalizedQuestionType(column: QuestionColumnMeta): string {
+  return (column.questionType || '').toLowerCase().replace(/[\s_-]/g, '');
+}
+
+function columnLooksDateLike(column: QuestionColumnMeta): boolean {
+  const questionType = normalizedQuestionType(column);
+  if (questionType === 'date' || questionType === 'datetime' || questionType === 'birthdate' || questionType === 'dob') {
+    return true;
+  }
+  const meta = column.metaData;
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return false;
+  const record = meta as Record<string, unknown>;
+  const customType = String(record.customType ?? record.CustomType ?? '').toLowerCase();
+  const dateType = String(record.dateType ?? record.DateType ?? '').toLowerCase();
+  return customType === 'date' || dateType === 'single' || dateType === 'range' || dateType === 'datetime';
+}
+
+function columnLooksBooleanLike(column: QuestionColumnMeta): boolean {
+  const questionType = normalizedQuestionType(column);
+  return [
+    'boolean',
+    'bool',
+    'checkbox',
+    'terms',
+    'termsandconditions',
+    'waiver',
+    'consent',
+    'agreement',
+    'acknowledgment',
+    'acknowledgement',
+  ].includes(questionType);
+}
+
+function columnLooksWideByType(column: QuestionColumnMeta): boolean {
+  const questionType = normalizedQuestionType(column);
+  return [
+    'address',
+    'textarea',
+    'longtext',
+    'paragraph',
+    'description',
+    'multiline',
+  ].includes(questionType);
+}
+
+function displayTextLength(row: FormResponseRow, questionId: number): number {
+  const cell = row.answers[questionId];
+  if (!cell) return 0;
+  if (cell.checkmark) return SHORT_TEXT_MAX_CHARS;
+  return (cell.display || cell.linkUrl || '').trim().length;
+}
+
+function getQuestionColumnClasses(column: QuestionColumnMeta, rows: FormResponseRow[]): string {
+  if (columnLooksBooleanLike(column) || columnLooksDateLike(column)) return NARROW_COLUMN_CLASSES;
+  if (columnLooksWideByType(column)) return WIDE_COLUMN_CLASSES;
+
+  const headerLength = (column.question || '').trim().length;
+  let longest = headerLength;
+  const sample = rows.slice(0, COLUMN_SAMPLE_LIMIT);
+  for (const row of sample) {
+    longest = Math.max(longest, displayTextLength(row, column.id));
+  }
+
+  if (longest <= SHORT_TEXT_MAX_CHARS) return NARROW_COLUMN_CLASSES;
+  if (longest <= MEDIUM_TEXT_MAX_CHARS) return MEDIUM_COLUMN_CLASSES;
+  if (longest >= WIDE_TEXT_MIN_CHARS) return WIDE_COLUMN_CLASSES;
+  return DEFAULT_COLUMN_CLASSES;
+}
+
 function statusSortKey(row: FormResponseRow): string {
   const s = row.staffStatus ?? 'pending';
   const i = STAFF_STATUS_ORDER.indexOf(s);
@@ -128,7 +210,11 @@ function statusSortKey(row: FormResponseRow): string {
 }
 
 /** Client-only filter — never sent to the API or database. */
-function rowMatchesClientSearch(row: FormResponseRow, query: string): boolean {
+function rowMatchesClientSearch(
+  row: FormResponseRow,
+  query: string,
+  includeStaffStatus: boolean
+): boolean {
   const n = query.trim().toLowerCase();
   if (!n) return true;
   const u = row.user;
@@ -138,9 +224,11 @@ function rowMatchesClientSearch(row: FormResponseRow, query: string): boolean {
     .toLowerCase();
   if (participant.includes(n)) return true;
   if (new Date(row.createdAt).toLocaleString().toLowerCase().includes(n)) return true;
-  const st = (row.staffStatus ?? 'pending') as StaffInquiryStatus;
-  if (STAFF_INQUIRY_STATUS_LABELS[st].toLowerCase().includes(n)) return true;
-  if (st.replace(/_/g, ' ').includes(n)) return true;
+  if (includeStaffStatus) {
+    const st = (row.staffStatus ?? 'pending') as StaffInquiryStatus;
+    if (STAFF_INQUIRY_STATUS_LABELS[st].toLowerCase().includes(n)) return true;
+    if (st.replace(/_/g, ' ').includes(n)) return true;
+  }
   for (const a of Object.values(row.answers)) {
     const hay = [
       a.checkmark ? 'yes' : '',
@@ -165,6 +253,8 @@ type PublicConfig = {
     logo: string | null;
   };
   default_questionnaire_id: number;
+  staff_lock_to_default_questionnaire: boolean;
+  enable_staff_inquiry_workflow: boolean;
   default_range_days: number;
   max_range_days_cap: number;
   requires_password: boolean;
@@ -179,6 +269,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
   const [authLoading, setAuthLoading] = useState(false);
 
   const [questionnaireId, setQuestionnaireId] = useState<number | null>(null);
+  const [questionnaires, setQuestionnaires] = useState<QuestionnaireListItem[]>([]);
   const [columns, setColumns] = useState<QuestionColumnMeta[]>([]);
   const [questionnaireTitle, setQuestionnaireTitle] = useState<string | null>(null);
   const [rowsLoading, setRowsLoading] = useState(false);
@@ -187,10 +278,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
   const [to, setTo] = useState('');
   const [cursor, setCursor] = useState<{ createdAt: string; id: number } | null>(null);
   const [accumulatedRows, setAccumulatedRows] = useState<FormResponsesPage['rows']>([]);
-  const [sort, setSort] = useState<{ column: SortColumn; dir: 'asc' | 'desc' }>({
-    column: 'submitted',
-    dir: 'desc',
-  });
+  const [sort, setSort] = useState<{ column: SortColumn; dir: 'asc' | 'desc' }>(DEFAULT_SORT);
   const [statusViewFilter, setStatusViewFilter] = useState<StatusViewFilter>('active');
   const [savingStatusId, setSavingStatusId] = useState<number | null>(null);
   const [statusSaveError, setStatusSaveError] = useState<string | null>(null);
@@ -200,17 +288,31 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
   accumulatedRowsRef.current = accumulatedRows;
 
   const base = `/api/form-responses/${encodeURIComponent(slug)}`;
+  const inquiryWorkflowEnabled = publicConfig?.enable_staff_inquiry_workflow !== false;
+  const staffCanSwitchForms = publicConfig?.staff_lock_to_default_questionnaire === false;
 
   const visibleColumns = useMemo(
     () => filterColumnsWithAnswersInRows(columns, accumulatedRows),
     [columns, accumulatedRows]
   );
 
-  useEffect(() => {
-    if (typeof sort.column === 'number' && !visibleColumns.some((c) => c.id === sort.column)) {
-      setSort({ column: 'submitted', dir: 'desc' });
+  const questionColumnClasses = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const column of visibleColumns) {
+      map.set(column.id, getQuestionColumnClasses(column, accumulatedRows));
     }
-  }, [visibleColumns, sort.column]);
+    return map;
+  }, [visibleColumns, accumulatedRows]);
+
+  useEffect(() => {
+    if (!inquiryWorkflowEnabled && sort.column === 'status') {
+      setSort(DEFAULT_SORT);
+      return;
+    }
+    if (typeof sort.column === 'number' && !visibleColumns.some((c) => c.id === sort.column)) {
+      setSort(DEFAULT_SORT);
+    }
+  }, [inquiryWorkflowEnabled, visibleColumns, sort.column]);
 
   const sortedRows = useMemo(() => {
     const copy = [...accumulatedRows];
@@ -234,6 +336,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
   }, [accumulatedRows, sort]);
 
   const statusFilteredRows = useMemo(() => {
+    if (!inquiryWorkflowEnabled) return sortedRows;
     switch (statusViewFilter) {
       case 'all':
         return sortedRows;
@@ -243,11 +346,11 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
       default:
         return sortedRows.filter((r) => (r.staffStatus ?? 'pending') !== 'resolved');
     }
-  }, [sortedRows, statusViewFilter]);
+  }, [inquiryWorkflowEnabled, sortedRows, statusViewFilter]);
 
   const displayRows = useMemo(
-    () => statusFilteredRows.filter((r) => rowMatchesClientSearch(r, search)),
-    [statusFilteredRows, search]
+    () => statusFilteredRows.filter((r) => rowMatchesClientSearch(r, search, inquiryWorkflowEnabled)),
+    [statusFilteredRows, search, inquiryWorkflowEnabled]
   );
 
   const headerSort = useCallback((col: SortColumn) => {
@@ -331,11 +434,42 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     };
   }, [base]);
 
-  /** Staff view always uses the page default questionnaire (no multi-form picker). */
   useEffect(() => {
     if (!authenticated || !publicConfig) return;
-    setQuestionnaireId(publicConfig.default_questionnaire_id);
+    if (publicConfig.staff_lock_to_default_questionnaire) {
+      setQuestionnaireId(publicConfig.default_questionnaire_id);
+      return;
+    }
+    setQuestionnaireId((current) => current ?? publicConfig.default_questionnaire_id);
   }, [authenticated, publicConfig]);
+
+  useEffect(() => {
+    if (!authenticated || !publicConfig) return;
+    let cancelled = false;
+    (async () => {
+      const res = await fetch(`${base}/questionnaires`, { credentials: 'include' });
+      if (!res.ok) return;
+      const data = (await res.json()) as { questionnaires?: QuestionnaireListItem[] };
+      if (!cancelled) setQuestionnaires(data.questionnaires || []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authenticated, publicConfig, base]);
+
+  useEffect(() => {
+    setColumns([]);
+    setQuestionnaireTitle(null);
+    setAccumulatedRows([]);
+    setCursor(null);
+    setSort(DEFAULT_SORT);
+  }, [questionnaireId]);
+
+  useEffect(() => {
+    if (!staffCanSwitchForms || questionnaires.length === 0) return;
+    if (questionnaireId != null && questionnaires.some((q) => q.id === questionnaireId)) return;
+    setQuestionnaireId(questionnaires[0].id);
+  }, [questionnaireId, questionnaires, staffCanSwitchForms]);
 
   useEffect(() => {
     if (!authenticated || questionnaireId == null) return;
@@ -499,6 +633,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
 
   const setRowStatus = useCallback(
     async (answerTitleId: number, status: StaffInquiryStatus) => {
+      if (!inquiryWorkflowEnabled) return;
       setStatusSaveError(null);
       setSavingStatusId(answerTitleId);
       try {
@@ -520,7 +655,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
         setSavingStatusId(null);
       }
     },
-    [base]
+    [base, inquiryWorkflowEnabled]
   );
 
   if (loadError && !publicConfig) {
@@ -540,6 +675,10 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
   }
 
   const b = publicConfig.branding;
+  const showFormPicker = staffCanSwitchForms && questionnaires.length > 1;
+  const selectedQuestionnaireTitle =
+    questionnaires.find((q) => q.id === questionnaireId)?.title?.trim() || questionnaireTitle?.trim();
+  const pinnedColumnCount = inquiryWorkflowEnabled ? 3 : 2;
 
   if (!publicConfig.requires_password) {
     return (
@@ -655,20 +794,38 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
             <div className="w-full sm:w-auto sm:min-w-[240px]">
-              <p className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
-                Form
-              </p>
-              <p
-                className="text-sm font-semibold text-slate-900 rounded-xl border-2 px-3 py-2.5 shadow-sm"
-                style={{
-                  borderColor: b.primaryColor,
-                  background: `linear-gradient(135deg, ${b.primaryColor}18, ${b.secondaryColor}14)`,
-                }}
+              <label
+                htmlFor="form-response-questionnaire"
+                className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5"
               >
-                {questionnaireTitle?.trim()
-                  ? questionnaireTitle
-                  : `Default form (ID ${publicConfig.default_questionnaire_id})`}
-              </p>
+                Form
+              </label>
+              {showFormPicker ? (
+                <select
+                  id="form-response-questionnaire"
+                  value={questionnaireId ?? ''}
+                  onChange={(e) => setQuestionnaireId(Number(e.target.value))}
+                  className="w-full text-sm font-semibold text-slate-900 rounded-xl border-2 px-3 py-2.5 shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-200/80"
+                  style={{ borderColor: b.primaryColor }}
+                >
+                  {questionnaires.map((q) => (
+                    <option key={q.id} value={q.id}>
+                      {q.title?.trim() || `Form ${q.id}`}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p
+                  id="form-response-questionnaire"
+                  className="text-sm font-semibold text-slate-900 rounded-xl border-2 px-3 py-2.5 shadow-sm"
+                  style={{
+                    borderColor: b.primaryColor,
+                    background: `linear-gradient(135deg, ${b.primaryColor}18, ${b.secondaryColor}14)`,
+                  }}
+                >
+                  {selectedQuestionnaireTitle || `Default form (ID ${publicConfig.default_questionnaire_id})`}
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap gap-4">
               <div>
@@ -710,6 +867,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-inner focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/80"
               />
             </div>
+            {inquiryWorkflowEnabled ? (
             <div className="w-full sm:w-auto sm:max-w-[min(100%,22rem)]">
               <p className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
                 Inquiry view
@@ -753,9 +911,10 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                 marked Done so you can fix them.
               </p>
             </div>
+            ) : null}
           </div>
         </div>
-        {statusSaveError ? (
+        {inquiryWorkflowEnabled && statusSaveError ? (
           <p className="text-sm text-red-600" role="alert">
             {statusSaveError}
           </p>
@@ -768,11 +927,12 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
             Showing <span className="font-semibold tabular-nums">{displayRows.length}</span> of{' '}
             <span className="font-semibold tabular-nums">{accumulatedRows.length}</span> loaded rows
             {search.trim() ? ' (search)' : ''}
-            {statusViewFilter === 'active' &&
+            {inquiryWorkflowEnabled &&
+            statusViewFilter === 'active' &&
             accumulatedRows.some((r) => (r.staffStatus ?? 'pending') === 'resolved')
               ? ' · Done hidden'
               : ''}
-            {statusViewFilter === 'completed_only' ? ' · completed only' : ''}
+            {inquiryWorkflowEnabled && statusViewFilter === 'completed_only' ? ' · completed only' : ''}
             .
           </p>
         ) : null}
@@ -780,8 +940,8 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
 
       <div className="max-w-[1600px] mx-auto px-4 pb-12">
         <p className="form-responses-no-print hidden md:block text-xs text-slate-500 mb-2 leading-snug">
-          Tip: On desktop, Status, Submitted, and Participant stay pinned when you scroll sideways to read
-          answers.
+          Tip: On desktop, {inquiryWorkflowEnabled ? 'Status, Submitted, and Participant' : 'Submitted and Participant'} stay pinned
+          when you scroll sideways to read answers.
         </p>
         <div
           ref={tableScrollRef}
@@ -800,17 +960,19 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                 {displayRows.length < accumulatedRows.length
                   ? ` · showing ${displayRows.length} of ${accumulatedRows.length} loaded`
                   : ''}
-                {statusViewFilter === 'active' &&
+                {inquiryWorkflowEnabled &&
+                statusViewFilter === 'active' &&
                 accumulatedRows.some((r) => (r.staffStatus ?? 'pending') === 'resolved')
                   ? ' · Done hidden'
                   : ''}
-                {statusViewFilter === 'completed_only' ? ' · completed only' : ''}
+                {inquiryWorkflowEnabled && statusViewFilter === 'completed_only' ? ' · completed only' : ''}
               </p>
             ) : null}
           </div>
           <table className="form-responses-print-table min-w-max w-full text-sm print:text-xs border-collapse isolate">
             <thead>
               <tr>
+                {inquiryWorkflowEnabled ? (
                 <th
                   scope="col"
                   className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[9.5rem] min-w-[8.5rem] box-border shrink-0 sticky top-0 z-30 print:static md:left-0 md:z-[41] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.08)]"
@@ -827,9 +989,12 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                     Status{sortHint('status')}
                   </button>
                 </th>
+                ) : null}
                 <th
                   scope="col"
-                  className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[9rem] min-w-[8rem] box-border shrink-0 sticky top-0 z-30 print:static md:left-[9.5rem] md:z-[42] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.08)]"
+                  className={`text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[9rem] min-w-[8rem] box-border shrink-0 sticky top-0 z-30 print:static md:z-[42] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.08)] ${
+                    inquiryWorkflowEnabled ? 'md:left-[9.5rem]' : 'md:left-0'
+                  }`}
                   style={{
                     backgroundColor: stickyHeaderBg,
                     boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
@@ -845,7 +1010,9 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                 </th>
                 <th
                   scope="col"
-                  className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[11rem] min-w-[9rem] max-w-[11rem] box-border shrink-0 sticky top-0 z-30 print:static md:left-[18.5rem] md:z-[43] md:border-r md:border-slate-300/90 md:shadow-[3px_0_10px_-4px_rgba(15,23,42,0.1)]"
+                  className={`text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[11rem] min-w-[9rem] max-w-[11rem] box-border shrink-0 sticky top-0 z-30 print:static md:z-[43] md:border-r md:border-slate-300/90 md:shadow-[3px_0_10px_-4px_rgba(15,23,42,0.1)] ${
+                    inquiryWorkflowEnabled ? 'md:left-[18.5rem]' : 'md:left-[9rem]'
+                  }`}
                   style={{
                     backgroundColor: stickyHeaderBg,
                     boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
@@ -865,7 +1032,9 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                   <th
                     key={c.id}
                     scope="col"
-                    className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle min-w-[8.5rem] max-w-[13rem] w-[11rem] sticky top-0 z-20 print:static"
+                    className={`text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle sticky top-0 z-20 print:static ${
+                      questionColumnClasses.get(c.id) ?? DEFAULT_COLUMN_CLASSES
+                    }`}
                     style={{
                       backgroundColor: stickyHeaderBg,
                       boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
@@ -888,7 +1057,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
           {rowsLoading && accumulatedRows.length === 0 ? (
             <tbody>
               <tr>
-                <td colSpan={3 + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
+                <td colSpan={pinnedColumnCount + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
                   Loading…
                 </td>
               </tr>
@@ -896,7 +1065,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
           ) : accumulatedRows.length === 0 ? (
             <tbody>
               <tr>
-                <td colSpan={3 + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
+                <td colSpan={pinnedColumnCount + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
                   No responses in this range.
                 </td>
               </tr>
@@ -904,19 +1073,21 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
           ) : displayRows.length === 0 ? (
             <tbody>
               <tr>
-                <td colSpan={3 + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
-                  No loaded rows match your filters. Clear search, switch Inquiry view (All / Completed
-                  only), or load more responses.
+                <td colSpan={pinnedColumnCount + Math.max(visibleColumns.length, 1)} className="p-8 text-center text-slate-500">
+                  {inquiryWorkflowEnabled
+                    ? 'No loaded rows match your filters. Clear search, switch Inquiry view (All / Completed only), or load more responses.'
+                    : 'No loaded rows match your filters. Clear search or load more responses.'}
                 </td>
               </tr>
             </tbody>
           ) : (
             displayRows.map((row) => {
               const rowStatus = (row.staffStatus ?? 'pending') as StaffInquiryStatus;
-              const colSpan = 3 + Math.max(visibleColumns.length, 1);
+              const colSpan = pinnedColumnCount + Math.max(visibleColumns.length, 1);
               return (
                 <tbody key={row.answerTitleId} className="form-responses-print-row-group">
                   <tr className="group border-t border-slate-100 hover:bg-slate-50/90">
+                    {inquiryWorkflowEnabled ? (
                     <td
                       className={`p-2 align-top text-slate-800 w-[9.5rem] min-w-[8.5rem] max-w-[9.5rem] box-border shrink-0 bg-white md:sticky md:left-0 md:z-[15] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.06)] md:group-hover:bg-slate-50/90 print:static print:bg-transparent`}
                     >
@@ -940,13 +1111,18 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                         ))}
                       </select>
                     </td>
+                    ) : null}
                     <td
-                      className="p-3 align-top text-slate-600 whitespace-nowrap text-xs sm:text-sm w-[9rem] min-w-[8rem] max-w-[9rem] box-border shrink-0 bg-white md:sticky md:left-[9.5rem] md:z-[16] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.06)] md:group-hover:bg-slate-50/90 print:static print:bg-transparent"
+                      className={`p-3 align-top text-slate-600 whitespace-nowrap text-xs sm:text-sm w-[9rem] min-w-[8rem] max-w-[9rem] box-border shrink-0 bg-white md:sticky md:z-[16] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.06)] md:group-hover:bg-slate-50/90 print:static print:bg-transparent ${
+                        inquiryWorkflowEnabled ? 'md:left-[9.5rem]' : 'md:left-0'
+                      }`}
                     >
                       {new Date(row.createdAt).toLocaleString()}
                     </td>
                     <td
-                      className="p-3 align-top text-slate-800 w-[11rem] min-w-[9rem] max-w-[11rem] box-border shrink-0 break-words text-sm bg-white md:sticky md:left-[18.5rem] md:z-[17] md:border-r md:border-slate-300/90 md:shadow-[3px_0_10px_-4px_rgba(15,23,42,0.08)] md:group-hover:bg-slate-50/90 print:static print:bg-transparent"
+                      className={`p-3 align-top text-slate-800 w-[11rem] min-w-[9rem] max-w-[11rem] box-border shrink-0 break-words text-sm bg-white md:sticky md:z-[17] md:border-r md:border-slate-300/90 md:shadow-[3px_0_10px_-4px_rgba(15,23,42,0.08)] md:group-hover:bg-slate-50/90 print:static print:bg-transparent ${
+                        inquiryWorkflowEnabled ? 'md:left-[18.5rem]' : 'md:left-[9rem]'
+                      }`}
                     >
                       {row.user ? (
                         <div>
@@ -964,7 +1140,9 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                       return (
                         <td
                           key={c.id}
-                          className="p-3 align-top text-slate-800 max-w-[13rem] w-[11rem] break-words text-sm"
+                          className={`p-3 align-top text-slate-800 text-sm ${
+                            questionColumnClasses.get(c.id) ?? DEFAULT_COLUMN_CLASSES
+                          }`}
                         >
                           {cell?.checkmark ? (
                             <span className="text-lg text-emerald-700" title="Yes" aria-label="Yes">
@@ -975,12 +1153,15 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                               href={cell.linkUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 underline"
+                              className={`text-blue-600 underline ${TRUNCATED_ANSWER_CLASSES}`}
+                              title={cell.display || cell.linkUrl}
                             >
                               {cell.display || 'Open'}
                             </a>
                           ) : (
-                            cell?.display || ''
+                            <span className={TRUNCATED_ANSWER_CLASSES} title={cell?.display || undefined}>
+                              {cell?.display || ''}
+                            </span>
                           )}
                         </td>
                       );
@@ -988,7 +1169,11 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                   </tr>
                   <tr className="form-responses-print-participant-detail" aria-hidden="true">
                     <td colSpan={colSpan} className="p-0 border-0 print:p-3 print:bg-slate-50/80">
-                      <ParticipantPrintDetail row={row} columns={visibleColumns} />
+                      <ParticipantPrintDetail
+                        row={row}
+                        columns={visibleColumns}
+                        showInquiryStatus={inquiryWorkflowEnabled}
+                      />
                     </td>
                   </tr>
                 </tbody>

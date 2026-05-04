@@ -22,6 +22,9 @@ export async function POST(request: NextRequest, context: Ctx) {
   if (!config?.is_active) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+  if (config.enable_staff_inquiry_workflow === false) {
+    return NextResponse.json({ error: 'Inquiry workflow is disabled for this page' }, { status: 403 });
+  }
 
   let body: unknown;
   try {
