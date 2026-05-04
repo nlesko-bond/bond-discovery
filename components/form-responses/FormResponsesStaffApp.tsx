@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   clampYmdRangeToMaxSpan,
   maxToYmdForFrom,
@@ -537,6 +537,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     });
     return sorted;
   }, [statusFilteredRows, search, inquiryWorkflowEnabled, sort]);
+  const sortedRowsRenderKey = `${String(sort.column)}-${sort.dir}-${displayRows.length}`;
   const hasMoreRows = cursor !== null;
   const reachedAutoLoadCap = hasMoreRows && accumulatedRows.length >= AUTO_LOAD_MAX_ROWS;
   const loadedAllRows = !hasMoreRows;
@@ -610,7 +611,9 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
   useEffect(() => {
     if (sortVersion === 0) return;
     const frame = requestAnimationFrame(() => {
-      tableScrollRef.current?.scrollTo({ top: 0 });
+      const tableScroll = tableScrollRef.current;
+      tableScroll?.scrollTo({ top: 0, left: tableScroll.scrollLeft });
+      tableScroll?.scrollIntoView({ block: 'start' });
     });
     return () => cancelAnimationFrame(frame);
   }, [displayRows, sortVersion]);
@@ -1396,12 +1399,13 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
               </tr>
             </tbody>
           ) : (
-            displayRows.map((row) => {
-              const rowStatus = (row.staffStatus ?? 'pending') as StaffInquiryStatus;
-              const colSpan = pinnedColumnCount + Math.max(visibleColumns.length, 1);
-              return (
-                <tbody key={row.answerTitleId} className="form-responses-print-row-group">
-                  <tr className="form-responses-print-summary-row group border-t border-slate-100 hover:bg-slate-50/90">
+            <tbody key={sortedRowsRenderKey}>
+              {displayRows.map((row) => {
+                const rowStatus = (row.staffStatus ?? 'pending') as StaffInquiryStatus;
+                const colSpan = pinnedColumnCount + Math.max(visibleColumns.length, 1);
+                return (
+                  <Fragment key={row.answerTitleId}>
+                    <tr className="form-responses-print-summary-row form-responses-print-row-group group border-t border-slate-100 hover:bg-slate-50/90">
                     {inquiryWorkflowEnabled ? (
                     <td
                       className={`p-2 align-top text-slate-800 w-[9.5rem] min-w-[8.5rem] max-w-[9.5rem] box-border shrink-0 bg-white md:sticky md:left-0 md:z-[15] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.06)] md:group-hover:bg-slate-50/90 print:static print:bg-transparent`}
@@ -1492,7 +1496,10 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                       );
                     })}
                   </tr>
-                  <tr className="form-responses-print-participant-detail" aria-hidden="true">
+                    <tr
+                      className="form-responses-print-participant-detail form-responses-print-row-group"
+                      aria-hidden="true"
+                    >
                     <td colSpan={colSpan} className="p-0 border-0 print:p-3 print:bg-slate-50/80">
                       <ParticipantPrintDetail
                         row={row}
@@ -1501,9 +1508,10 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                       />
                     </td>
                   </tr>
-                </tbody>
-              );
-            })
+                  </Fragment>
+                );
+              })}
+            </tbody>
           )}
         </table>
         </div>
