@@ -51,6 +51,14 @@ export function getSupabaseUrlForServer(): string {
   return DEFAULT_SUPABASE_URL;
 }
 
+function createServerSupabaseClient(url: string, key: string): SupabaseClient {
+  return createClient(url, key, {
+    global: {
+      fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),
+    },
+  });
+}
+
 function parseProjectRefFromServiceJwt(key: string | undefined): string | undefined {
   if (!key) return undefined;
   const parts = key.split('.');
@@ -78,9 +86,9 @@ export function getSupabaseAdmin(): SupabaseClient {
       console.warn(
         'SUPABASE_SERVICE_KEY / SUPABASE_SERVICE_ROLE_KEY not available, falling back to anon client'
       );
-      _supabaseAdmin = createClient(url, getSupabaseAnonKeyForServer());
+      _supabaseAdmin = createServerSupabaseClient(url, getSupabaseAnonKeyForServer());
     } else {
-      _supabaseAdmin = createClient(url, serviceKey);
+      _supabaseAdmin = createServerSupabaseClient(url, serviceKey);
     }
   }
   return _supabaseAdmin;
