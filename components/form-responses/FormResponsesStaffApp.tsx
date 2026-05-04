@@ -1252,10 +1252,6 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
       </main>
 
       <div className="max-w-[1600px] mx-auto px-4 pb-12">
-        <p className="form-responses-no-print hidden md:block text-xs text-slate-500 mb-2 leading-snug">
-          Tip: On desktop, {inquiryWorkflowEnabled ? 'Status, Submitted, and Participant' : 'Submitted and Participant'} stay pinned
-          when you scroll sideways to read answers.
-        </p>
         <div
           ref={tableScrollRef}
           tabIndex={0}
