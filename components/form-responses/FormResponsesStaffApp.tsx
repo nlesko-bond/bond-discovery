@@ -616,7 +616,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
       tableScroll?.scrollIntoView({ block: 'start' });
     });
     return () => cancelAnimationFrame(frame);
-  }, [displayRows, sortVersion]);
+  }, [sortVersion]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1089,19 +1089,33 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                 Form
               </label>
               {showFormPicker ? (
-                <select
-                  id="form-response-questionnaire"
-                  value={questionnaireId ?? ''}
-                  onChange={(e) => setQuestionnaireId(Number(e.target.value))}
-                  className="w-full text-sm font-semibold text-slate-900 rounded-xl border-2 px-3 py-2.5 shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-200/80"
-                  style={{ borderColor: b.primaryColor }}
-                >
-                  {questionnaires.map((q) => (
-                    <option key={q.id} value={q.id}>
-                      {q.title?.trim() || `Form ${q.id}`}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    id="form-response-questionnaire"
+                    value={questionnaireId ?? ''}
+                    onChange={(e) => setQuestionnaireId(Number(e.target.value))}
+                    className="w-full appearance-none text-sm font-semibold text-slate-900 rounded-2xl border-2 py-3 pl-4 pr-12 shadow-sm bg-white focus:outline-none focus:ring-4 focus:ring-slate-200/80"
+                    style={{ borderColor: b.primaryColor }}
+                  >
+                    {questionnaires.map((q) => (
+                      <option key={q.id} value={q.id}>
+                        {q.title?.trim() || `Form ${q.id}`}
+                      </option>
+                    ))}
+                  </select>
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500"
+                  >
+                    <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </span>
+                </div>
               ) : (
                 <p
                   id="form-response-questionnaire"
