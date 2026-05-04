@@ -31,6 +31,17 @@ const DEFAULT_COLUMN_WIDTH_PX = 192;
 const WIDE_COLUMN_WIDTH_PX = 288;
 const MIN_RESIZABLE_COLUMN_WIDTH_PX = 96;
 const MAX_RESIZABLE_COLUMN_WIDTH_PX = 480;
+const PRINT_GROUPED_COLUMN_THRESHOLD = 10;
+const HEX_SHORT_LENGTH = 3;
+const HEX_LONG_LENGTH = 6;
+const HEX_BYTE_LENGTH = 2;
+const HEX_RADIX = 16;
+const RGB_MAX = 255;
+const LIGHT_COLOR_LUMINANCE_THRESHOLD = 0.58;
+const RED_LUMINANCE_WEIGHT = 0.2126;
+const GREEN_LUMINANCE_WEIGHT = 0.7152;
+const BLUE_LUMINANCE_WEIGHT = 0.0722;
+const HEX_COLOR_REGEX = /^[0-9a-fA-F]{6}$/;
 const NARROW_COLUMN_CLASSES = 'min-w-[6rem] max-w-[8rem] w-[7rem]';
 const MEDIUM_COLUMN_CLASSES = 'min-w-[8rem] max-w-[12rem] w-[10rem]';
 const DEFAULT_COLUMN_CLASSES = 'min-w-[10rem] max-w-[15rem] w-[12rem]';
@@ -50,6 +61,31 @@ const STRING_SORT_OPTIONS: Intl.CollatorOptions = {
   numeric: true,
   sensitivity: 'base',
 };
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const normalized = hex.trim().replace(/^#/, '');
+  const expanded =
+    normalized.length === HEX_SHORT_LENGTH
+      ? normalized.split('').map((char) => `${char}${char}`).join('')
+      : normalized;
+  if (!HEX_COLOR_REGEX.test(expanded)) return null;
+  return {
+    r: parseInt(expanded.slice(0, HEX_BYTE_LENGTH), HEX_RADIX),
+    g: parseInt(expanded.slice(HEX_BYTE_LENGTH, HEX_BYTE_LENGTH * 2), HEX_RADIX),
+    b: parseInt(expanded.slice(HEX_BYTE_LENGTH * 2, HEX_LONG_LENGTH), HEX_RADIX),
+  };
+}
+
+function isLightHexColor(hex: string): boolean {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return false;
+  const luminance =
+    (RED_LUMINANCE_WEIGHT * rgb.r +
+      GREEN_LUMINANCE_WEIGHT * rgb.g +
+      BLUE_LUMINANCE_WEIGHT * rgb.b) /
+    RGB_MAX;
+  return luminance >= LIGHT_COLOR_LUMINANCE_THRESHOLD;
+}
 
 function answerTextForPrint(
   cell: { display?: string; linkUrl?: string; checkmark?: boolean } | undefined
@@ -914,6 +950,9 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
   const selectedQuestionnaireTitle =
     questionnaires.find((q) => q.id === questionnaireId)?.title?.trim() || questionnaireTitle?.trim();
   const pinnedColumnCount = inquiryWorkflowEnabled ? 3 : 2;
+  const tableHeaderTextColor = isLightHexColor(b.primaryColor) ? '#0f172a' : '#ffffff';
+  const usesGroupedPrintLayout =
+    pinnedColumnCount + visibleColumns.length > PRINT_GROUPED_COLUMN_THRESHOLD;
 
   if (!publicConfig.requires_password) {
     return (
@@ -971,12 +1010,11 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
     );
   }
 
-  /** Fully opaque tint (no alpha hex) so sticky headers hide scrolling rows */
-  const stickyHeaderBg = `color-mix(in srgb, ${b.primaryColor} 13%, rgb(241 245 249))`;
-
   return (
     <div
-      className="form-responses-print-root min-h-screen print:bg-white"
+      className={`form-responses-print-root min-h-screen print:bg-white ${
+        usesGroupedPrintLayout ? 'form-responses-print-mode-grouped' : 'form-responses-print-mode-table'
+      }`}
       style={{
         background: `linear-gradient(165deg, ${b.primaryColor}0d 0%, rgb(248 250 252) 22%, rgb(241 245 249) 55%, rgb(248 250 252) 100%)`,
       }}
@@ -1237,14 +1275,15 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                   scope="col"
                   className="text-left px-3 py-3 border-b border-slate-200 font-semibold align-middle w-[9.5rem] min-w-[8.5rem] box-border shrink-0 sticky top-0 z-30 print:static md:left-0 md:z-[41] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.08)]"
                   style={{
-                    backgroundColor: stickyHeaderBg,
+                    backgroundColor: b.primaryColor,
+                    color: tableHeaderTextColor,
                     boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
                   }}
                 >
                   <button
                     type="button"
                     onClick={() => headerSort('status')}
-                    className="text-left w-full min-h-[2.75rem] flex items-center font-semibold text-slate-900 hover:opacity-80 leading-snug"
+                    className="text-left w-full min-h-[2.75rem] flex items-center font-semibold hover:opacity-80 leading-snug"
                   >
                     Status{sortHint('status')}
                   </button>
@@ -1256,14 +1295,15 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                     inquiryWorkflowEnabled ? 'md:left-[9.5rem]' : 'md:left-0'
                   }`}
                   style={{
-                    backgroundColor: stickyHeaderBg,
+                    backgroundColor: b.primaryColor,
+                    color: tableHeaderTextColor,
                     boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
                   }}
                 >
                   <button
                     type="button"
                     onClick={() => headerSort('submitted')}
-                    className="text-left w-full min-h-[2.75rem] flex items-center font-semibold text-slate-900 hover:opacity-80 leading-snug"
+                    className="text-left w-full min-h-[2.75rem] flex items-center font-semibold hover:opacity-80 leading-snug"
                   >
                     Submitted{sortHint('submitted')}
                   </button>
@@ -1274,14 +1314,15 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                     inquiryWorkflowEnabled ? 'md:left-[18.5rem]' : 'md:left-[9rem]'
                   }`}
                   style={{
-                    backgroundColor: stickyHeaderBg,
+                    backgroundColor: b.primaryColor,
+                    color: tableHeaderTextColor,
                     boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
                   }}
                 >
                   <button
                     type="button"
                     onClick={() => headerSort('participant')}
-                    className="text-left w-full min-h-[2.75rem] flex items-center font-semibold text-slate-900 hover:opacity-80"
+                    className="text-left w-full min-h-[2.75rem] flex items-center font-semibold hover:opacity-80"
                   >
                     <span className="block leading-snug whitespace-normal break-words">
                       Participant{sortHint('participant')}
@@ -1301,14 +1342,15 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
                         width,
                         minWidth: width,
                         maxWidth: width,
-                        backgroundColor: stickyHeaderBg,
+                        backgroundColor: b.primaryColor,
+                        color: tableHeaderTextColor,
                         boxShadow: 'inset 0 -1px 0 0 rgb(226 232 240)',
                       }}
                     >
                       <button
                         type="button"
                         onClick={() => headerSort(c.id)}
-                        className="text-left w-full min-h-[2.75rem] pr-3 flex items-center font-semibold text-slate-900 hover:opacity-80"
+                        className="text-left w-full min-h-[2.75rem] pr-3 flex items-center font-semibold hover:opacity-80"
                       >
                         <span className="block leading-snug whitespace-normal break-words">
                           {c.question?.trim() || `Q ${c.id}`}
@@ -1360,7 +1402,7 @@ export function FormResponsesStaffApp({ slug }: { slug: string }) {
               const colSpan = pinnedColumnCount + Math.max(visibleColumns.length, 1);
               return (
                 <tbody key={row.answerTitleId} className="form-responses-print-row-group">
-                  <tr className="group border-t border-slate-100 hover:bg-slate-50/90">
+                  <tr className="form-responses-print-summary-row group border-t border-slate-100 hover:bg-slate-50/90">
                     {inquiryWorkflowEnabled ? (
                     <td
                       className={`p-2 align-top text-slate-800 w-[9.5rem] min-w-[8.5rem] max-w-[9.5rem] box-border shrink-0 bg-white md:sticky md:left-0 md:z-[15] md:border-r md:border-slate-200/90 md:shadow-[2px_0_8px_-4px_rgba(15,23,42,0.06)] md:group-hover:bg-slate-50/90 print:static print:bg-transparent`}

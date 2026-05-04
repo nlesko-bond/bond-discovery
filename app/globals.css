@@ -163,14 +163,28 @@
     print-color-adjust: exact;
   }
 
+  .form-responses-print-mode-grouped .form-responses-print-table thead {
+    display: none !important;
+  }
+
+  .form-responses-print-mode-grouped .form-responses-print-summary-row {
+    display: none !important;
+  }
+
+  .form-responses-print-mode-table .form-responses-print-participant-detail {
+    display: none !important;
+  }
+
+  .form-responses-print-mode-grouped .form-responses-print-participant-detail {
+    display: table-row !important;
+  }
+
   .form-responses-print-table thead th {
     position: static !important;
-    background: #e2e8f0 !important;
     border: 1px solid #94a3b8 !important;
     padding: 6px 8px !important;
     vertical-align: top !important;
     font-weight: 600 !important;
-    color: #0f172a !important;
   }
 
   .form-responses-print-table tbody td {
@@ -183,10 +197,6 @@
 
   .form-responses-print-table tbody tr {
     break-inside: avoid;
-  }
-
-  .form-responses-print-participant-detail {
-    display: table-row !important;
   }
 
   .form-responses-print-participant-detail > td {
