@@ -1,4 +1,5 @@
 import { format, parse } from 'date-fns';
+import { collectResourceIdToDisplayName } from '@/lib/reservation-resource-map';
 import {
   readSpaceDisplayNameFromReservationSlotRaw,
   readSpaceIdFromReservationSlotRaw,
@@ -325,11 +326,15 @@ export function buildReservationScheduleRows(
   context: IReservationScheduleContext,
 ): IReservationScheduleRow[] {
   if (!isRecord(reservation)) return [];
+  const mergedSpaceLookup: Record<number, string> = {
+    ...spaceNameBySpaceId,
+    ...collectResourceIdToDisplayName(reservation),
+  };
   const all = enrichSlotsWithSharedSpaceNames(collectSlotsDeep(reservation));
   const primary = all.filter((s) => s.slotType !== 'maintenance' && s.parentSlotId === null);
 
   if (mode === MaintenanceDisplayModeEnum.HIDE) {
-    const rows = primary.map((p) => toRow(p, spaceNameBySpaceId, '', context));
+    const rows = primary.map((p) => toRow(p, mergedSpaceLookup, '', context));
     return rows.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
   }
 
@@ -337,8 +342,8 @@ export function buildReservationScheduleRows(
     const rows = primary.map((p) =>
       toRow(
         p,
-        spaceNameBySpaceId,
-        maintenanceSummaryForParent(p.id, all, spaceNameBySpaceId),
+        mergedSpaceLookup,
+        maintenanceSummaryForParent(p.id, all, mergedSpaceLookup),
         context,
       ),
     );
@@ -347,7 +352,7 @@ export function buildReservationScheduleRows(
 
   const maintenance = all.filter((s) => s.slotType === 'maintenance');
   const combined = [...primary, ...maintenance];
-  const rows = combined.map((s) => toRow(s, spaceNameBySpaceId, '', context));
+  const rows = combined.map((s) => toRow(s, mergedSpaceLookup, '', context));
   return rows.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 }
 

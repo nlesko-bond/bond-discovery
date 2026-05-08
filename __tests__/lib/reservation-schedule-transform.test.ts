@@ -7,6 +7,35 @@ import {
 const SCHEDULE_TEST_CONTEXT = { reservationId: 1, reservationName: 'Test reservation' };
 
 describe('buildReservationScheduleRows — space names', () => {
+  it('maps slot.spaceId to series.resources[].name (full reservation GET shape)', () => {
+    const reservation = {
+      series: [
+        {
+          resources: [{ id: 7689, name: 'West Rink' }],
+          slots: [
+            {
+              id: 5068385,
+              spaceId: 7689,
+              startDate: '2026-11-13',
+              startTime: '19:00:00',
+              endTime: '21:30:00',
+              slotType: 'external',
+              approvalStatus: 'Approved',
+            },
+          ],
+        },
+      ],
+    };
+    const rows = buildReservationScheduleRows(
+      reservation,
+      { 7689: 'Space 7689' },
+      MaintenanceDisplayModeEnum.HIDE,
+      SCHEDULE_TEST_CONTEXT,
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.spaceName).toBe('West Rink');
+  });
+
   it('merges duplicate slot ids so a later copy with space.name wins over a stripped first copy', () => {
     const reservation = {
       segments: [

@@ -1,4 +1,5 @@
 import { tryFetchFacilityDisplayName, tryFetchSpaceDisplayName } from '@/lib/reservations-client';
+import { collectResourceIdToDisplayName } from '@/lib/reservation-resource-map';
 import {
   readSpaceDisplayNameFromReservationSlotRaw,
   readSpaceIdFromReservationSlotRaw,
@@ -52,7 +53,9 @@ export async function buildReservationDisplayMeta(
     }
   }
 
-  const spaceNameBySpaceId: Record<number, string> = {};
+  const spaceNameBySpaceId: Record<number, string> = {
+    ...collectResourceIdToDisplayName(reservation),
+  };
   const walkSlots = (node: unknown) => {
     if (!isRecord(node)) return;
     const sid = readSpaceIdFromNode(node);
