@@ -3,6 +3,7 @@ import { format, parse } from 'date-fns';
 export const MaintenanceDisplayModeEnum = {
   FLATTEN: 'flatten',
   BUNDLE: 'bundle',
+  HIDE: 'hide',
 } as const;
 
 export type MaintenanceDisplayMode =
@@ -24,6 +25,7 @@ function formatTimeHm(hms: string): string {
 interface ISlotCore {
   id: number;
   spaceId: number | null;
+  spaceNameDirect: string | null;
   parentSlotId: number | null;
   title: string;
   displayName: string | null;
@@ -52,9 +54,19 @@ function normalizeSlot(raw: Record<string, unknown>): ISlotCore {
   if (isRecord(product) && typeof product.name === 'string') {
     productName = product.name;
   }
+  let spaceId = readNumberOrNull(raw.spaceId);
+  const spaceObj = raw.space;
+  if (spaceId == null && isRecord(spaceObj) && typeof spaceObj.id === 'number') {
+    spaceId = spaceObj.id;
+  }
+  let spaceNameDirect: string | null = null;
+  if (isRecord(spaceObj) && typeof spaceObj.name === 'string' && spaceObj.name.trim()) {
+    spaceNameDirect = spaceObj.name.trim();
+  }
   return {
     id: typeof raw.id === 'number' ? raw.id : 0,
-    spaceId: readNumberOrNull(raw.spaceId),
+    spaceId,
+    spaceNameDirect,
     parentSlotId: readNumberOrNull(raw.parentSlotId),
     title: readString(raw.title, ''),
     displayName: typeof raw.displayName === 'string' ? raw.displayName : null,
@@ -104,6 +116,7 @@ function collectSlotsDeep(reservation: Record<string, unknown>): ISlotCore[] {
 }
 
 function spaceLabel(slot: ISlotCore, spaceNameBySpaceId: Record<number, string>): string {
+  if (slot.spaceNameDirect) return slot.spaceNameDirect;
   const named =
     slot.displayName?.trim() ||
     slot.internalName?.trim() ||
@@ -140,12 +153,20 @@ function sortKey(slot: ISlotCore): string {
   return `${slot.startDate}T${slot.startTime}:${slot.id}`;
 }
 
+export interface IReservationScheduleContext {
+  reservationId: number;
+  reservationName: string;
+}
+
 export interface IReservationScheduleRow {
   rowKey: string;
+  reservationId: number;
+  reservationName: string;
   date: string;
   dayLabel: string;
   timeLabel: string;
-  facilityName: string;
+  startTimeRaw: string;
+  endTimeRaw: string;
   spaceName: string;
   slotType: string;
   approvalStatus: string;
@@ -161,9 +182,9 @@ export interface IReservationScheduleRow {
 
 function toRow(
   slot: ISlotCore,
-  facilityName: string,
   spaceNameBySpaceId: Record<number, string>,
   maintenanceSummary: string,
+  context: IReservationScheduleContext,
 ): IReservationScheduleRow {
   let dayLabel = '';
   try {
@@ -172,12 +193,17 @@ function toRow(
     dayLabel = '';
   }
   const priceLabel = slot.totalPrice != null ? `$${slot.totalPrice}` : '';
+  const endTimeRaw =
+    typeof slot.endTime === 'string' && slot.endTime.trim() ? slot.endTime.trim() : slot.startTime;
   return {
-    rowKey: String(slot.id),
+    rowKey: `${context.reservationId}-${slot.id}`,
+    reservationId: context.reservationId,
+    reservationName: context.reservationName,
     date: slot.startDate,
     dayLabel,
     timeLabel: timeRangeLabel(slot),
-    facilityName,
+    startTimeRaw: slot.startTime,
+    endTimeRaw,
     spaceName: spaceLabel(slot, spaceNameBySpaceId),
     slotType: slot.slotType,
     approvalStatus: slot.approvalStatus,
@@ -194,21 +220,26 @@ function toRow(
 
 export function buildReservationScheduleRows(
   reservation: unknown,
-  facilityName: string,
   spaceNameBySpaceId: Record<number, string>,
   mode: MaintenanceDisplayMode,
+  context: IReservationScheduleContext,
 ): IReservationScheduleRow[] {
   if (!isRecord(reservation)) return [];
   const all = collectSlotsDeep(reservation);
   const primary = all.filter((s) => s.slotType !== 'maintenance' && s.parentSlotId === null);
 
+  if (mode === MaintenanceDisplayModeEnum.HIDE) {
+    const rows = primary.map((p) => toRow(p, spaceNameBySpaceId, '', context));
+    return rows.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+  }
+
   if (mode === MaintenanceDisplayModeEnum.BUNDLE) {
     const rows = primary.map((p) =>
       toRow(
         p,
-        facilityName,
         spaceNameBySpaceId,
         maintenanceSummaryForParent(p.id, all, spaceNameBySpaceId),
+        context,
       ),
     );
     return rows.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
@@ -216,9 +247,7 @@ export function buildReservationScheduleRows(
 
   const maintenance = all.filter((s) => s.slotType === 'maintenance');
   const combined = [...primary, ...maintenance];
-  const rows = combined.map((s) =>
-    toRow(s, facilityName, spaceNameBySpaceId, ''),
-  );
+  const rows = combined.map((s) => toRow(s, spaceNameBySpaceId, '', context));
   return rows.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 }
 
