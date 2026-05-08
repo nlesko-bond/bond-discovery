@@ -1,6 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from 'react';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import {
@@ -33,6 +41,7 @@ const RESERVATION_SEARCH_ITEMS_PER_PAGE = 25;
 const RESERVATION_LOAD_CONCURRENCY = 5;
 const RESERVATION_SCHEDULE_APPROVAL_KEY_EMPTY = '__empty__';
 const RESERVATION_SCHEDULE_APPROVAL_FILTER_DEFAULT = 'approved';
+const APPROVAL_STATUS_MULTI_SELECT_ROWS = 6;
 
 type IApprovalStatusFilter =
   | { mode: 'all' }
@@ -368,7 +377,10 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
     return baseRows.filter((row) => {
       if (startDate && row.date < startDate) return false;
       if (endDate && row.date > endDate) return false;
-      if (approvalStatusFilter.mode === 'subset') {
+      if (
+        approvalStatusFilter.mode === 'subset' &&
+        approvalStatusFilter.keys.length > 0
+      ) {
         const allowed = new Set(approvalStatusFilter.keys);
         if (!allowed.has(approvalStatusKeyFromRow(row))) {
           return false;
@@ -615,33 +627,15 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
     );
   }
 
-  function setApprovalStatusFilterAll() {
-    setApprovalStatusFilter({ mode: 'all' });
-  }
-
-  function setApprovalStatusFilterApprovedOnly() {
+  function handleApprovalMultiSelectChange(event: ChangeEvent<HTMLSelectElement>) {
+    const selected = Array.from(event.target.selectedOptions, (o) => o.value);
+    if (selected.length === 0) {
+      setApprovalStatusFilter({ mode: 'all' });
+      return;
+    }
     setApprovalStatusFilter({
       mode: 'subset',
-      keys: [RESERVATION_SCHEDULE_APPROVAL_FILTER_DEFAULT],
-    });
-  }
-
-  function toggleApprovalStatusChoiceKey(key: string) {
-    setApprovalStatusFilter((prev) => {
-      if (prev.mode === 'all') {
-        return { mode: 'subset', keys: [key].sort() };
-      }
-      const next = new Set(prev.keys);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      const keys = [...next].sort();
-      if (keys.length === 0) {
-        return { mode: 'all' };
-      }
-      return { mode: 'subset', keys };
+      keys: selected.slice().sort(),
     });
   }
 
@@ -703,12 +697,31 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
               font-family: '${branding.fontHeading}', sans-serif;
             }
             @media print {
+              @page {
+                size: landscape;
+                margin: 10mm;
+              }
               [data-reservation-schedule-page] th button {
                 border: none !important;
                 background: none !important;
                 padding: 0 !important;
                 font: inherit !important;
                 color: inherit !important;
+              }
+              [data-reservation-schedule-page] .rs-print-table-wrap {
+                overflow: visible !important;
+              }
+              [data-reservation-schedule-page] table.rs-print-table {
+                width: 100%;
+                table-layout: auto;
+                font-size: 9px;
+              }
+              [data-reservation-schedule-page] table.rs-print-table th,
+              [data-reservation-schedule-page] table.rs-print-table td {
+                white-space: normal !important;
+                word-break: break-word;
+                vertical-align: top;
+                padding: 4px 6px !important;
               }
             }
           `,
@@ -972,78 +985,27 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
                 <option value={MaintenanceDisplayModeEnum.HIDE}>Hide</option>
               </select>
             </label>
-            <div className="flex min-w-[12rem] max-w-full shrink-0 flex-col gap-1.5 text-xs font-medium text-gray-600">
-              <span>Slot approval status</span>
-              <div className="flex flex-wrap gap-1">
-                <button
-                  type="button"
-                  onClick={setApprovalStatusFilterAll}
-                  className={cn(
-                    'rounded-full border px-2.5 py-1 text-xs font-semibold',
-                    approvalStatusFilter.mode === 'all'
-                      ? 'border-transparent text-white'
-                      : 'border-gray-200 bg-white text-gray-600',
-                  )}
-                  style={
-                    approvalStatusFilter.mode === 'all'
-                      ? { background: 'var(--rs-accent)', borderColor: 'var(--rs-accent)' }
-                      : undefined
-                  }
-                >
-                  All statuses
-                </button>
-                <button
-                  type="button"
-                  onClick={setApprovalStatusFilterApprovedOnly}
-                  className={cn(
-                    'rounded-full border px-2.5 py-1 text-xs font-semibold',
-                    approvalStatusFilter.mode === 'subset' &&
-                      approvalStatusFilter.keys.length === 1 &&
-                      approvalStatusFilter.keys[0] === RESERVATION_SCHEDULE_APPROVAL_FILTER_DEFAULT
-                      ? 'border-transparent text-white'
-                      : 'border-gray-200 bg-white text-gray-600',
-                  )}
-                  style={
-                    approvalStatusFilter.mode === 'subset' &&
-                    approvalStatusFilter.keys.length === 1 &&
-                    approvalStatusFilter.keys[0] === RESERVATION_SCHEDULE_APPROVAL_FILTER_DEFAULT
-                      ? { background: 'var(--rs-accent)', borderColor: 'var(--rs-accent)' }
-                      : undefined
-                  }
-                >
-                  Approved only
-                </button>
-              </div>
-              {approvalStatusChoices.length > 0 ? (
-                <div className="flex flex-wrap gap-1">
-                  {approvalStatusChoices.map((c) => {
-                    const on =
-                      approvalStatusFilter.mode === 'subset' &&
-                      approvalStatusFilter.keys.includes(c.key);
-                    return (
-                      <button
-                        key={c.key}
-                        type="button"
-                        onClick={() => toggleApprovalStatusChoiceKey(c.key)}
-                        className={cn(
-                          'rounded-full border px-2.5 py-1 text-xs font-semibold',
-                          on
-                            ? 'border-transparent text-white'
-                            : 'border-gray-200 bg-white text-gray-500',
-                        )}
-                        style={
-                          on
-                            ? { background: 'var(--rs-accent)', borderColor: 'var(--rs-accent)' }
-                            : undefined
-                        }
-                      >
-                        {c.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </div>
+            <label className="flex min-w-[14rem] max-w-full shrink-0 flex-col gap-1 text-xs font-medium text-gray-600">
+              Slot approval status
+              <select
+                multiple
+                size={Math.min(APPROVAL_STATUS_MULTI_SELECT_ROWS, Math.max(approvalStatusChoices.length, 2))}
+                value={
+                  approvalStatusFilter.mode === 'all' ? [] : approvalStatusFilter.keys
+                }
+                onChange={handleApprovalMultiSelectChange}
+                className="min-h-[5rem] w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
+              >
+                {approvalStatusChoices.map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              <span className="font-normal text-gray-500">
+                Empty selection = all statuses. Ctrl/Cmd-click for multiple.
+              </span>
+            </label>
             <label className="flex min-w-[8.5rem] shrink-0 flex-col gap-1 text-xs font-medium text-gray-600">
               Slot type
               <select
@@ -1159,14 +1121,14 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
               )}
             </div>
           </div>
-          <div className="overflow-x-auto p-2 sm:p-4">
-            <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
+          <div className="rs-print-table-wrap overflow-x-auto p-2 sm:p-4">
+            <table className="rs-print-table min-w-full divide-y divide-gray-200 text-left text-sm">
               <thead className="bg-gray-50 print:bg-white">
                 <tr>
                   {visibleColumnDefs.map((col) => (
                     <th
                       key={col.key}
-                      className="whitespace-nowrap px-3 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600"
+                      className="whitespace-nowrap px-3 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 print:whitespace-normal print:break-words"
                     >
                       <button
                         type="button"
@@ -1193,7 +1155,10 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
                     className={row.isMaintenance ? 'bg-amber-50/70' : undefined}
                   >
                     {visibleColumnDefs.map((col) => (
-                      <td key={col.key} className="whitespace-nowrap px-3 py-2 text-gray-800">
+                      <td
+                        key={col.key}
+                        className="whitespace-nowrap px-3 py-2 text-gray-800 print:whitespace-normal print:break-words"
+                      >
                         {col.key === 'slotType' ? (
                           <span
                             className={cn(
