@@ -3,12 +3,13 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
-  type ChangeEvent,
   type FormEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import {
@@ -41,7 +42,8 @@ const RESERVATION_SEARCH_ITEMS_PER_PAGE = 25;
 const RESERVATION_LOAD_CONCURRENCY = 5;
 const RESERVATION_SCHEDULE_APPROVAL_KEY_EMPTY = '__empty__';
 const RESERVATION_SCHEDULE_APPROVAL_FILTER_DEFAULT = 'approved';
-const APPROVAL_STATUS_MULTI_SELECT_ROWS = 6;
+const APPROVAL_POPOVER_GAP_PX = 4;
+const APPROVAL_POPOVER_Z_INDEX = 100;
 
 type IApprovalStatusFilter =
   | { mode: 'all' }
@@ -309,8 +311,16 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
   const [visibleColumns, setVisibleColumns] = useState<ReservationColumnKey[]>(DEFAULT_COLUMNS);
   const [sortState, setSortState] = useState<ISortState>({ column: 'default', dir: 'asc' });
   const [printGeneratedAt, setPrintGeneratedAt] = useState<Date | null>(null);
+  const [approvalFilterOpen, setApprovalFilterOpen] = useState(false);
+  const [approvalPopoverPosition, setApprovalPopoverPosition] = useState<{
+    left: number;
+    top: number;
+    width: number;
+  } | null>(null);
 
   const selectAllSearchRef = useRef<HTMLInputElement | null>(null);
+  const approvalFilterDropdownRef = useRef<HTMLDivElement | null>(null);
+  const approvalPopoverPanelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setSortState({ column: 'default', dir: 'asc' });
@@ -329,6 +339,49 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
     window.addEventListener('beforeprint', onBeforePrint);
     return () => window.removeEventListener('beforeprint', onBeforePrint);
   }, []);
+
+  useLayoutEffect(() => {
+    if (!approvalFilterOpen) {
+      setApprovalPopoverPosition(null);
+      return;
+    }
+    const updatePopoverPosition = () => {
+      const trigger = approvalFilterDropdownRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      setApprovalPopoverPosition({
+        left: rect.left,
+        top: rect.bottom + APPROVAL_POPOVER_GAP_PX,
+        width: rect.width,
+      });
+    };
+    updatePopoverPosition();
+    window.addEventListener('scroll', updatePopoverPosition, true);
+    window.addEventListener('resize', updatePopoverPosition);
+    return () => {
+      window.removeEventListener('scroll', updatePopoverPosition, true);
+      window.removeEventListener('resize', updatePopoverPosition);
+    };
+  }, [approvalFilterOpen]);
+
+  useEffect(() => {
+    if (!approvalFilterOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (approvalFilterDropdownRef.current?.contains(target)) return;
+      if (approvalPopoverPanelRef.current?.contains(target)) return;
+      setApprovalFilterOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setApprovalFilterOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [approvalFilterOpen]);
 
   const cssVars = {
     '--rs-black': branding.primaryColor,
@@ -363,6 +416,18 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
       .map(([key, label]) => ({ key, label }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [baseRows]);
+
+  const approvalFilterSummary = useMemo(() => {
+    if (approvalStatusFilter.mode === 'all' || approvalStatusFilter.keys.length === 0) {
+      return 'All statuses';
+    }
+    const labelByKey = new Map(approvalStatusChoices.map((c) => [c.key, c.label]));
+    if (approvalStatusFilter.keys.length === 1) {
+      const only = approvalStatusFilter.keys[0];
+      return labelByKey.get(only) ?? only;
+    }
+    return `${approvalStatusFilter.keys.length} selected`;
+  }, [approvalStatusFilter, approvalStatusChoices]);
 
   const slotTypeOptions = useMemo(() => {
     const set = new Set<string>();
@@ -627,15 +692,18 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
     );
   }
 
-  function handleApprovalMultiSelectChange(event: ChangeEvent<HTMLSelectElement>) {
-    const selected = Array.from(event.target.selectedOptions, (o) => o.value);
-    if (selected.length === 0) {
-      setApprovalStatusFilter({ mode: 'all' });
-      return;
-    }
-    setApprovalStatusFilter({
-      mode: 'subset',
-      keys: selected.slice().sort(),
+  function toggleApprovalStatusChoice(key: string, checked: boolean) {
+    setApprovalStatusFilter((prev) => {
+      if (prev.mode === 'all') {
+        if (!checked) return { mode: 'all' };
+        return { mode: 'subset', keys: [key] };
+      }
+      const next = new Set(prev.keys);
+      if (checked) next.add(key);
+      else next.delete(key);
+      const keys = [...next].sort();
+      if (keys.length === 0) return { mode: 'all' };
+      return { mode: 'subset', keys };
     });
   }
 
@@ -699,7 +767,7 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
             @media print {
               @page {
                 size: landscape;
-                margin: 10mm;
+                margin: 10mm 12mm 10mm 20mm;
               }
               [data-reservation-schedule-page] th button {
                 border: none !important;
@@ -710,6 +778,8 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
               }
               [data-reservation-schedule-page] .rs-print-table-wrap {
                 overflow: visible !important;
+                padding-left: 8px !important;
+                padding-right: 8px !important;
               }
               [data-reservation-schedule-page] table.rs-print-table {
                 width: 100%;
@@ -985,27 +1055,33 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
                 <option value={MaintenanceDisplayModeEnum.HIDE}>Hide</option>
               </select>
             </label>
-            <label className="flex min-w-[14rem] max-w-full shrink-0 flex-col gap-1 text-xs font-medium text-gray-600">
-              Slot approval status
-              <select
-                multiple
-                size={Math.min(APPROVAL_STATUS_MULTI_SELECT_ROWS, Math.max(approvalStatusChoices.length, 2))}
-                value={
-                  approvalStatusFilter.mode === 'all' ? [] : approvalStatusFilter.keys
-                }
-                onChange={handleApprovalMultiSelectChange}
-                className="min-h-[5rem] w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
+            <div
+              ref={approvalFilterDropdownRef}
+              className="relative flex min-w-[14rem] max-w-[18rem] shrink-0 flex-col gap-1 text-xs font-medium text-gray-600"
+            >
+              <span>Slot approval status</span>
+              <button
+                type="button"
+                id="approval-status-trigger"
+                aria-haspopup="listbox"
+                aria-expanded={approvalFilterOpen}
+                aria-controls="approval-status-popover"
+                onClick={() => setApprovalFilterOpen((open) => !open)}
+                className="inline-flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-left text-sm font-normal text-gray-900 hover:bg-gray-50"
               >
-                {approvalStatusChoices.map((c) => (
-                  <option key={c.key} value={c.key}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+                <span className="truncate">{approvalFilterSummary}</span>
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 shrink-0 text-gray-500 transition-transform',
+                    approvalFilterOpen && 'rotate-180',
+                  )}
+                  aria-hidden
+                />
+              </button>
               <span className="font-normal text-gray-500">
-                Empty selection = all statuses. Ctrl/Cmd-click for multiple.
+                Empty selection = all statuses.
               </span>
-            </label>
+            </div>
             <label className="flex min-w-[8.5rem] shrink-0 flex-col gap-1 text-xs font-medium text-gray-600">
               Slot type
               <select
@@ -1189,6 +1265,52 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
           </div>
         </section>
       </div>
+      {approvalFilterOpen && approvalPopoverPosition && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              ref={approvalPopoverPanelRef}
+              id="approval-status-popover"
+              role="listbox"
+              aria-labelledby="approval-status-trigger"
+              aria-multiselectable="true"
+              className="max-h-64 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+              style={{
+                position: 'fixed',
+                left: approvalPopoverPosition.left,
+                top: approvalPopoverPosition.top,
+                minWidth: approvalPopoverPosition.width,
+                zIndex: APPROVAL_POPOVER_Z_INDEX,
+              }}
+            >
+              {approvalStatusChoices.length === 0 ? (
+                <p className="px-3 py-2 text-xs font-normal text-gray-500">
+                  Load a schedule to see statuses.
+                </p>
+              ) : (
+                approvalStatusChoices.map((c) => {
+                  const checked =
+                    approvalStatusFilter.mode === 'subset' &&
+                    approvalStatusFilter.keys.includes(c.key);
+                  return (
+                    <label
+                      key={c.key}
+                      className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm font-normal hover:bg-gray-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => toggleApprovalStatusChoice(c.key, e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      <span>{c.label}</span>
+                    </label>
+                  );
+                })
+              )}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
