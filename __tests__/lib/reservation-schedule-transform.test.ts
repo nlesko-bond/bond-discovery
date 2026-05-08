@@ -7,6 +7,47 @@ import {
 const SCHEDULE_TEST_CONTEXT = { reservationId: 1, reservationName: 'Test reservation' };
 
 describe('buildReservationScheduleRows — space names', () => {
+  it('merges duplicate slot ids so a later copy with space.name wins over a stripped first copy', () => {
+    const reservation = {
+      segments: [
+        {
+          slots: [
+            {
+              id: 5068385,
+              startDate: '2026-11-13T00:00:00.000Z',
+              startTime: '19:00:00',
+              endTime: '21:30:00',
+              slotType: 'external',
+              spaceId: 7689,
+            },
+          ],
+        },
+      ],
+      data: [
+        {
+          id: 5068385,
+          title: 'Jenison Varsity Hockey 26-27',
+          startDate: '2026-11-13T00:00:00.000Z',
+          endDate: '2026-11-13T00:00:00.000Z',
+          startTime: '19:00:00',
+          endTime: '21:30:00',
+          approvalStatus: 'Approved',
+          slotType: 'external',
+          space: { id: 7689, name: 'West Rink' },
+          totalPrice: 875,
+        },
+      ],
+    };
+    const rows = buildReservationScheduleRows(
+      reservation,
+      {},
+      MaintenanceDisplayModeEnum.HIDE,
+      SCHEDULE_TEST_CONTEXT,
+    );
+    expect(rows.length).toBeGreaterThanOrEqual(1);
+    expect(rows.some((r) => r.spaceName === 'West Rink')).toBe(true);
+  });
+
   it('collects slots from paginated data[] shape (slots API) and shows space.name', () => {
     const reservation = {
       meta: {

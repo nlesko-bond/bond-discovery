@@ -122,6 +122,27 @@ function normalizeSlot(raw: Record<string, unknown>): ISlotCore {
   };
 }
 
+function mergeSlotCorePreferringSpace(prev: ISlotCore, next: ISlotCore): ISlotCore {
+  const pickStr = (a: string, b: string): string => (b.trim() !== '' ? b : a);
+  return {
+    id: prev.id,
+    spaceId: next.spaceId ?? prev.spaceId,
+    spaceNameDirect: next.spaceNameDirect ?? prev.spaceNameDirect,
+    parentSlotId: next.parentSlotId ?? prev.parentSlotId,
+    title: pickStr(prev.title, next.title),
+    displayName: next.displayName ?? prev.displayName,
+    internalName: next.internalName ?? prev.internalName,
+    startDate: pickStr(prev.startDate, next.startDate),
+    startTime: pickStr(prev.startTime, next.startTime),
+    endTime: pickStr(prev.endTime, next.endTime),
+    timezone: next.timezone ?? prev.timezone,
+    slotType: pickStr(prev.slotType, next.slotType),
+    approvalStatus: pickStr(prev.approvalStatus, next.approvalStatus),
+    productName: pickStr(prev.productName, next.productName),
+    totalPrice: next.totalPrice ?? prev.totalPrice,
+  };
+}
+
 const SLOT_TRAVERSE_KEYS = ['segments', 'series', 'slots', 'maintenance', 'data'] as const;
 
 function isSlotLikeNode(node: Record<string, unknown>): boolean {
@@ -147,8 +168,14 @@ function collectSlotsDeep(reservation: Record<string, unknown>): ISlotCore[] {
     if (!isRecord(node)) return;
     if (isSlotLikeNode(node)) {
       const id = readSlotId(node);
-      if (id !== 0 && !byId.has(id)) {
-        byId.set(id, normalizeSlot(node));
+      if (id !== 0) {
+        const next = normalizeSlot(node);
+        const prev = byId.get(id);
+        if (!prev) {
+          byId.set(id, next);
+        } else {
+          byId.set(id, mergeSlotCorePreferringSpace(prev, next));
+        }
       }
     }
     for (const key of SLOT_TRAVERSE_KEYS) {
