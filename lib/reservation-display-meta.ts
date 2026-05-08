@@ -1,47 +1,19 @@
 import { tryFetchFacilityDisplayName, tryFetchSpaceDisplayName } from '@/lib/reservations-client';
+import {
+  readSpaceDisplayNameFromReservationSlotRaw,
+  readSpaceIdFromReservationSlotRaw,
+} from '@/lib/reservation-slot-space';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
 function readSpaceIdFromNode(node: Record<string, unknown>): number | null {
-  const rawSid = node.spaceId ?? node.SpaceId;
-  if (typeof rawSid === 'number') return rawSid;
-  if (typeof rawSid === 'string' && /^\d+$/.test(rawSid.trim())) {
-    return Number(rawSid.trim());
-  }
-  const so = isRecord(node.space) ? node.space : isRecord(node.Space) ? node.Space : null;
-  if (so) {
-    const sid = so.id ?? so.Id;
-    if (typeof sid === 'number') return sid;
-    if (typeof sid === 'string' && /^\d+$/.test(sid.trim())) return Number(sid.trim());
-  }
-  return null;
+  return readSpaceIdFromReservationSlotRaw(node);
 }
 
 function readSpaceNameFromSlot(slot: Record<string, unknown>): string | null {
-  const flat =
-    slot.spaceName ??
-    slot.SpaceName ??
-    slot.spaceLabel ??
-    slot.SpaceLabel ??
-    slot.locationName ??
-    slot.LocationName;
-  if (typeof flat === 'string' && flat.trim()) return flat.trim();
-  const spaceObj = isRecord(slot.space) ? slot.space : isRecord(slot.Space) ? slot.Space : null;
-  if (spaceObj) {
-    const n =
-      spaceObj.name ??
-      spaceObj.Name ??
-      spaceObj.displayName ??
-      spaceObj.DisplayName ??
-      spaceObj.internalName ??
-      spaceObj.InternalName;
-    if (typeof n === 'string' && n.trim()) return n.trim();
-  }
-  const displayName = slot.displayName ?? slot.internalName;
-  if (typeof displayName === 'string' && displayName.trim()) return displayName.trim();
-  return null;
+  return readSpaceDisplayNameFromReservationSlotRaw(slot);
 }
 
 export function collectSpaceIdsDeep(reservation: unknown): number[] {

@@ -1,4 +1,8 @@
 import { format, parse } from 'date-fns';
+import {
+  readSpaceDisplayNameFromReservationSlotRaw,
+  readSpaceIdFromReservationSlotRaw,
+} from '@/lib/reservation-slot-space';
 
 export const MaintenanceDisplayModeEnum = {
   FLATTEN: 'flatten',
@@ -78,57 +82,6 @@ function readApprovalStatus(raw: Record<string, unknown>): string {
   return typeof v === 'string' ? v : '';
 }
 
-function readSpaceNameFromSlotRaw(raw: Record<string, unknown>): string | null {
-  const flat =
-    raw.spaceName ??
-    raw.SpaceName ??
-    raw.spaceLabel ??
-    raw.SpaceLabel ??
-    raw.locationName ??
-    raw.LocationName ??
-    raw.resourceName ??
-    raw.ResourceName;
-  if (typeof flat === 'string' && flat.trim()) {
-    return flat.trim();
-  }
-  return null;
-}
-
-function readSpaceObject(raw: Record<string, unknown>): Record<string, unknown> | null {
-  const s = raw.space ?? raw.Space;
-  return isRecord(s) ? s : null;
-}
-
-function readSpaceNameFromSpaceObject(spaceObj: Record<string, unknown>): string | null {
-  const n =
-    spaceObj.name ??
-    spaceObj.Name ??
-    spaceObj.displayName ??
-    spaceObj.DisplayName ??
-    spaceObj.internalName ??
-    spaceObj.InternalName;
-  if (typeof n === 'string' && n.trim()) {
-    return n.trim();
-  }
-  return null;
-}
-
-function readSpaceIdFromRaw(raw: Record<string, unknown>, spaceObj: Record<string, unknown> | null): number | null {
-  const rawSid = raw.spaceId ?? raw.SpaceId;
-  let spaceId = readNumberOrNull(rawSid);
-  if (spaceId == null && typeof rawSid === 'string' && /^\d+$/.test(rawSid.trim())) {
-    spaceId = Number(rawSid.trim());
-  }
-  if (spaceObj) {
-    const sid = spaceObj.id ?? spaceObj.Id;
-    if (spaceId == null) {
-      if (typeof sid === 'number') spaceId = sid;
-      else if (typeof sid === 'string' && /^\d+$/.test(sid.trim())) spaceId = Number(sid.trim());
-    }
-  }
-  return spaceId;
-}
-
 function normalizeSlot(raw: Record<string, unknown>): ISlotCore {
   const product = raw.product ?? raw.Product;
   let productName = '';
@@ -137,12 +90,8 @@ function normalizeSlot(raw: Record<string, unknown>): ISlotCore {
   } else if (isRecord(product) && typeof product.Name === 'string') {
     productName = product.Name;
   }
-  const spaceObj = readSpaceObject(raw);
-  const spaceId = readSpaceIdFromRaw(raw, spaceObj);
-  let spaceNameDirect = readSpaceNameFromSlotRaw(raw);
-  if (!spaceNameDirect && spaceObj) {
-    spaceNameDirect = readSpaceNameFromSpaceObject(spaceObj);
-  }
+  const spaceId = readSpaceIdFromReservationSlotRaw(raw);
+  const spaceNameDirect = readSpaceDisplayNameFromReservationSlotRaw(raw);
   const slotId = readSlotId(raw);
   return {
     id: slotId,

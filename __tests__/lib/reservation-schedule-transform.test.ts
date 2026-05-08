@@ -7,7 +7,7 @@ import {
 const SCHEDULE_TEST_CONTEXT = { reservationId: 1, reservationName: 'Test reservation' };
 
 describe('buildReservationScheduleRows — space names', () => {
-  it('reads flat spaceName on a slot', () => {
+  it('reads name from nested space object with spaceId on slot', () => {
     const reservation = {
       segments: [
         {
@@ -15,7 +15,7 @@ describe('buildReservationScheduleRows — space names', () => {
             {
               id: 10,
               spaceId: 7689,
-              spaceName: 'West Rink',
+              space: { id: 7689, name: 'West Rink' },
               startDate: '2025-06-01',
               startTime: '10:00:00',
               endTime: '11:00:00',
@@ -45,7 +45,7 @@ describe('buildReservationScheduleRows — space names', () => {
             {
               id: '20',
               spaceId: 1,
-              spaceName: 'Court A',
+              space: { id: 1, name: 'Court A' },
               startDate: '2025-06-01',
               startTime: '09:00:00',
               endTime: '10:00:00',
@@ -66,7 +66,7 @@ describe('buildReservationScheduleRows — space names', () => {
     expect(rows.some((r) => r.spaceName === 'Court A')).toBe(true);
   });
 
-  it('enriches space label from another slot with the same spaceId', () => {
+  it('enriches space name from another slot with the same spaceId', () => {
     const reservation = {
       segments: [
         {
@@ -74,7 +74,7 @@ describe('buildReservationScheduleRows — space names', () => {
             {
               id: 1,
               spaceId: 99,
-              spaceName: 'Shared Arena',
+              space: { id: 99, name: 'Shared Arena' },
               startDate: '2025-06-01',
               startTime: '08:00:00',
               endTime: '09:00:00',
@@ -104,7 +104,7 @@ describe('buildReservationScheduleRows — space names', () => {
     expect(june2?.spaceName).toBe('Shared Arena');
   });
 
-  it('reads nested Space object with PascalCase Name', () => {
+  it('reads nested Space object with PascalCase Id and Name', () => {
     const reservation = {
       segments: [
         {
@@ -130,5 +130,32 @@ describe('buildReservationScheduleRows — space names', () => {
       SCHEDULE_TEST_CONTEXT,
     );
     expect(rows[0]?.spaceName).toBe('North Field');
+  });
+
+  it('reads space id from embedded object when spaceId is omitted on slot', () => {
+    const reservation = {
+      segments: [
+        {
+          slots: [
+            {
+              id: 40,
+              space: { id: 7689, name: 'West Rink' },
+              startDate: '2025-06-04',
+              startTime: '14:00:00',
+              endTime: '15:00:00',
+              slotType: 'external',
+              approvalStatus: 'approved',
+            },
+          ],
+        },
+      ],
+    };
+    const rows = buildReservationScheduleRows(
+      reservation,
+      { 7689: 'Space 7689' },
+      MaintenanceDisplayModeEnum.HIDE,
+      SCHEDULE_TEST_CONTEXT,
+    );
+    expect(rows[0]?.spaceName).toBe('West Rink');
   });
 });
