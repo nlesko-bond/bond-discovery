@@ -1,7 +1,13 @@
 import { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getReservationPageConfigBySlug, getActiveReservationPageConfigs } from '@/lib/reservation-pages-config';
+import {
+  reservationPageAccessCookieName,
+  verifyReservationPageAccessCookie,
+} from '@/lib/reservation-page-access-cookie';
 import { ReservationSchedulePage } from '@/components/reservations/ReservationSchedulePage';
+import { ReservationPagePasswordGate } from '@/components/reservations/ReservationPagePasswordGate';
 
 export const revalidate = 0;
 
@@ -38,6 +44,16 @@ export default async function ReservationPage({ params }: PageProps) {
   }
   if (!config.organization_ids.length) {
     notFound();
+  }
+
+  if (config.hasViewerPassword) {
+    const cookieStore = await cookies();
+    const raw = cookieStore.get(reservationPageAccessCookieName(slug))?.value;
+    const unlocked = verifyReservationPageAccessCookie(slug, raw);
+    if (!unlocked) {
+      const title = config.page_title?.trim() || config.name;
+      return <ReservationPagePasswordGate slug={slug} title={title} branding={config.branding} />;
+    }
   }
 
   return <ReservationSchedulePage config={config} />;

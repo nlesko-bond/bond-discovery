@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getReservationPageConfigBySlug } from '@/lib/reservation-pages-config';
 import { fetchOrganizationReservationsSearch } from '@/lib/reservations-client';
 import { parseReservationSearchResponse } from '@/lib/reservation-search-parse';
+import { requireReservationPageViewerAccess } from '@/lib/reservation-page-viewer-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,11 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
   const config = await getReservationPageConfigBySlug(slug);
   if (!config || !config.is_active) {
     return NextResponse.json({ error: 'Page not found' }, { status: 404 });
+  }
+
+  const authError = await requireReservationPageViewerAccess(slug, config);
+  if (authError) {
+    return authError;
   }
 
   let body: unknown;

@@ -13,3 +13,14 @@ src/**/*.js
 *.iml
 .vscode
 .next/
+
+# Playwright
+playwright-report/
+test-results/
+
+# TypeScript incremental build (local only)
+*.tsbuildinfo
+
+# Accidental duplicate manifests
+package 2.json
+package-lock 3.json

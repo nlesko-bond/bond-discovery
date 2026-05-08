@@ -3,6 +3,7 @@
  */
 
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { hashViewerPassword } from '@/lib/reservation-page-password';
 import type { IReservationPageConfig, ReservationPageBranding } from '@/types/reservation-pages';
 import type { MembershipBranding } from '@/types/membership';
 
@@ -24,6 +25,9 @@ function rowToConfig(row: Record<string, unknown>): IReservationPageConfig {
     ? rawOrgIds.map((n) => Number(n)).filter((n) => Number.isFinite(n))
     : [];
 
+  const rawHash = row.viewer_password_hash;
+  const hasViewerPassword = typeof rawHash === 'string' && rawHash.length > 0;
+
   return {
     id: String(row.id),
     slug: String(row.slug),
@@ -33,8 +37,34 @@ function rowToConfig(row: Record<string, unknown>): IReservationPageConfig {
     branding: { ...(row.branding as ReservationPageBranding) },
     page_title: row.page_title != null ? String(row.page_title) : null,
     page_subtitle: row.page_subtitle != null ? String(row.page_subtitle) : null,
+    hasViewerPassword,
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
+  };
+}
+
+export async function getReservationPageUnlockContext(slug: string): Promise<{
+  found: boolean;
+  is_active: boolean;
+  passwordHash: string | null;
+}> {
+  const db = getSupabaseAdmin();
+  const { data, error } = await db
+    .from('reservation_pages')
+    .select('viewer_password_hash, is_active')
+    .eq('slug', slug)
+    .maybeSingle();
+
+  if (error || !data) {
+    return { found: false, is_active: false, passwordHash: null };
+  }
+  const row = data as Record<string, unknown>;
+  const h = row.viewer_password_hash;
+  const passwordHash = typeof h === 'string' && h.length > 0 ? h : null;
+  return {
+    found: true,
+    is_active: Boolean(row.is_active),
+    passwordHash,
   };
 }
 
@@ -86,6 +116,7 @@ export async function createReservationPageConfig(input: {
   page_title?: string | null;
   page_subtitle?: string | null;
   is_active?: boolean;
+  viewer_password_new?: string | null;
 }): Promise<IReservationPageConfig> {
   const db = getSupabaseAdmin();
   const normalizedSlug = input.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
@@ -105,6 +136,11 @@ export async function createReservationPageConfig(input: {
     throw new Error('At least one organization ID is required');
   }
 
+  let viewer_password_hash: string | null = null;
+  if (typeof input.viewer_password_new === 'string' && input.viewer_password_new.trim()) {
+    viewer_password_hash = hashViewerPassword(input.viewer_password_new.trim());
+  }
+
   const { data, error } = await db
     .from('reservation_pages')
     .insert({
@@ -115,6 +151,7 @@ export async function createReservationPageConfig(input: {
       page_title: input.page_title ?? null,
       page_subtitle: input.page_subtitle ?? null,
       is_active: input.is_active ?? true,
+      viewer_password_hash,
     })
     .select()
     .single();
@@ -133,10 +170,24 @@ export async function updateReservationPageConfig(
     Pick<IReservationPageConfig, 'name' | 'slug' | 'is_active' | 'branding' | 'page_title' | 'page_subtitle'>
   > & {
     organization_ids?: number[] | string;
+    viewer_password_new?: string | null;
+    viewer_password_clear?: boolean;
   },
 ): Promise<IReservationPageConfig> {
   const db = getSupabaseAdmin();
   const updateData: Record<string, unknown> = {};
+
+  const passwordClear = updates.viewer_password_clear === true;
+  const passwordNew =
+    typeof updates.viewer_password_new === 'string' && updates.viewer_password_new.trim()
+      ? updates.viewer_password_new.trim()
+      : null;
+
+  if (passwordClear) {
+    updateData.viewer_password_hash = null;
+  } else if (passwordNew) {
+    updateData.viewer_password_hash = hashViewerPassword(passwordNew);
+  }
 
   if (updates.name !== undefined) updateData.name = updates.name;
   if (updates.slug !== undefined) {

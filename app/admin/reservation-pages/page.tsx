@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, ExternalLink, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Plus, ExternalLink, Pencil, Trash2, Eye, EyeOff, Lock } from 'lucide-react';
 import type { IReservationPageConfig } from '@/types/reservation-pages';
+import { MIN_VIEWER_PASSWORD_LENGTH } from '@/lib/reservation-page-password';
 
 export default function ReservationPagesAdminList() {
   const [configs, setConfigs] = useState<IReservationPageConfig[]>([]);
@@ -15,6 +16,8 @@ export default function ReservationPagesAdminList() {
     organization_ids: '',
     page_title: '',
     page_subtitle: '',
+    viewer_password: '',
+    viewer_password_confirm: '',
   });
 
   useEffect(() => {
@@ -35,21 +38,43 @@ export default function ReservationPagesAdminList() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
+    if (newForm.viewer_password.trim()) {
+      if (newForm.viewer_password !== newForm.viewer_password_confirm) {
+        alert('Passwords do not match');
+        return;
+      }
+      if (newForm.viewer_password.trim().length < MIN_VIEWER_PASSWORD_LENGTH) {
+        alert(`Password must be at least ${MIN_VIEWER_PASSWORD_LENGTH} characters`);
+        return;
+      }
+    }
     try {
+      const body: Record<string, unknown> = {
+        name: newForm.name,
+        slug: newForm.slug,
+        organization_ids: newForm.organization_ids,
+        page_title: newForm.page_title.trim() || null,
+        page_subtitle: newForm.page_subtitle.trim() || null,
+      };
+      if (newForm.viewer_password.trim()) {
+        body.viewer_password_new = newForm.viewer_password.trim();
+      }
       const res = await fetch('/api/admin/reservation-pages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newForm.name,
-          slug: newForm.slug,
-          organization_ids: newForm.organization_ids,
-          page_title: newForm.page_title.trim() || null,
-          page_subtitle: newForm.page_subtitle.trim() || null,
-        }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         setShowCreate(false);
-        setNewForm({ name: '', slug: '', organization_ids: '', page_title: '', page_subtitle: '' });
+        setNewForm({
+          name: '',
+          slug: '',
+          organization_ids: '',
+          page_title: '',
+          page_subtitle: '',
+          viewer_password: '',
+          viewer_password_confirm: '',
+        });
         void fetchConfigs();
       } else {
         const err = await res.json().catch(() => ({}));
@@ -94,8 +119,9 @@ export default function ReservationPagesAdminList() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reservation schedule pages</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Public URLs: <code className="text-xs">/reservations/your-slug</code>. Run migration{' '}
-            <code className="text-xs">011_add_reservation_pages.sql</code> first.
+            Public URLs: <code className="text-xs">/reservations/your-slug</code>. Run migrations{' '}
+            <code className="text-xs">011_add_reservation_pages.sql</code> and{' '}
+            <code className="text-xs">012_reservation_pages_viewer_password.sql</code> first.
           </p>
         </div>
         <button
@@ -133,6 +159,16 @@ export default function ReservationPagesAdminList() {
               value={newForm.page_subtitle}
               onChange={(v) => setNewForm({ ...newForm, page_subtitle: v })}
             />
+            <PasswordCreateField
+              label={`Viewer password (optional, min ${MIN_VIEWER_PASSWORD_LENGTH} chars)`}
+              value={newForm.viewer_password}
+              onChange={(v) => setNewForm({ ...newForm, viewer_password: v })}
+            />
+            <PasswordCreateField
+              label="Confirm viewer password"
+              value={newForm.viewer_password_confirm}
+              onChange={(v) => setNewForm({ ...newForm, viewer_password_confirm: v })}
+            />
           </div>
           <div className="flex gap-2">
             <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
@@ -163,6 +199,12 @@ export default function ReservationPagesAdminList() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <h3 className="truncate font-semibold text-gray-900">{config.name}</h3>
+                  {config.hasViewerPassword ? (
+                    <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                      <Lock size={12} aria-hidden />
+                      Locked
+                    </span>
+                  ) : null}
                   {!config.is_active ? (
                     <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500">Inactive</span>
                   ) : null}
@@ -235,6 +277,29 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-lg border px-3 py-2 text-sm"
         placeholder={placeholder}
+      />
+    </label>
+  );
+}
+
+function PasswordCreateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-sm font-medium text-gray-700">{label}</span>
+      <input
+        type="password"
+        autoComplete="new-password"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border px-3 py-2 text-sm"
       />
     </label>
   );

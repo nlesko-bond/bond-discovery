@@ -24,11 +24,29 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 export async function PATCH(request: NextRequest, context: RouteContext) {
   const { slug } = await context.params;
   try {
-    const body = await request.json();
-    const config = await updateReservationPageConfig(slug, body);
+    const body: unknown = await request.json();
+    if (!isRecord(body)) {
+      return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    }
+    const viewer_password_new = typeof body.viewer_password_new === 'string' ? body.viewer_password_new : undefined;
+    const viewer_password_clear = body.viewer_password_clear === true;
+    const safe = { ...body };
+    delete safe.viewer_password_new;
+    delete safe.viewer_password_clear;
+    delete safe.viewer_password_hash;
+    delete safe.hasViewerPassword;
+    const config = await updateReservationPageConfig(slug, {
+      ...(safe as Parameters<typeof updateReservationPageConfig>[1]),
+      viewer_password_new,
+      viewer_password_clear,
+    });
     return NextResponse.json({ config });
   } catch (error) {
     console.error('[Admin/ReservationPages] PATCH error:', error);

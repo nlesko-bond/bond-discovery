@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, ExternalLink } from 'lucide-react';
 import type { IReservationPageConfig, ReservationPageBranding } from '@/types/reservation-pages';
+import { MIN_VIEWER_PASSWORD_LENGTH } from '@/lib/reservation-page-password';
 
 export default function EditReservationPage() {
   const params = useParams();
@@ -17,6 +18,9 @@ export default function EditReservationPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [organizationIdsStr, setOrganizationIdsStr] = useState('');
+  const [newViewerPassword, setNewViewerPassword] = useState('');
+  const [confirmViewerPassword, setConfirmViewerPassword] = useState('');
+  const [clearViewerPassword, setClearViewerPassword] = useState(false);
 
   useEffect(() => {
     void fetchConfig();
@@ -39,23 +43,42 @@ export default function EditReservationPage() {
 
   async function handleSave() {
     if (!config) return;
+    if (!clearViewerPassword && newViewerPassword.trim()) {
+      if (newViewerPassword !== confirmViewerPassword) {
+        setError('New passwords do not match');
+        return;
+      }
+      if (newViewerPassword.trim().length < MIN_VIEWER_PASSWORD_LENGTH) {
+        setError(`Password must be at least ${MIN_VIEWER_PASSWORD_LENGTH} characters`);
+        return;
+      }
+    }
     setSaving(true);
     setError(null);
     setSuccessMessage(null);
     try {
+      const payload: Record<string, unknown> = {
+        ...config,
+        organization_ids: organizationIdsStr,
+      };
+      if (clearViewerPassword) {
+        payload.viewer_password_clear = true;
+      } else if (newViewerPassword.trim()) {
+        payload.viewer_password_new = newViewerPassword.trim();
+      }
       const res = await fetch(`/api/admin/reservation-pages/${slug}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...config,
-          organization_ids: organizationIdsStr,
-        }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('Save failed');
       const data = await res.json();
       const next = data.config as IReservationPageConfig;
       setConfig(next);
       setOrganizationIdsStr(next.organization_ids.join(', '));
+      setNewViewerPassword('');
+      setConfirmViewerPassword('');
+      setClearViewerPassword(false);
       setSuccessMessage('Saved successfully!');
       if (next.slug !== slug) {
         router.replace(`/admin/reservation-pages/${next.slug}`);
@@ -131,6 +154,15 @@ export default function EditReservationPage() {
       <div className="space-y-6">
         <Section title="General">
           <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2 flex items-center gap-2">
+              {config.hasViewerPassword ? (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                  Password protected
+                </span>
+              ) : (
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">Public</span>
+              )}
+            </div>
             <Field label="Page name" value={config.name} onChange={(v) => setConfig({ ...config, name: v })} />
             <Field label="Slug" value={config.slug} onChange={(v) => setConfig({ ...config, slug: v })} />
             <div className="col-span-2">
@@ -151,6 +183,31 @@ export default function EditReservationPage() {
               onChange={(v) => setConfig({ ...config, page_subtitle: v || null })}
             />
           </div>
+        </Section>
+
+        <Section title="Access">
+          <label className="mb-4 flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={clearViewerPassword}
+              onChange={(e) => setClearViewerPassword(e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-800">Remove password protection</span>
+          </label>
+          <div className={`grid grid-cols-2 gap-4 ${clearViewerPassword ? 'pointer-events-none opacity-50' : ''}`}>
+            <PasswordField
+              label={`New viewer password (min ${MIN_VIEWER_PASSWORD_LENGTH} chars, optional)`}
+              value={newViewerPassword}
+              onChange={setNewViewerPassword}
+            />
+            <PasswordField label="Confirm new password" value={confirmViewerPassword} onChange={setConfirmViewerPassword} />
+          </div>
+          <p className="mt-3 text-xs text-gray-500">
+            Production needs{' '}
+            <code className="rounded bg-gray-100 px-1 font-mono text-[0.7rem]">RESERVATION_PAGE_ACCESS_SECRET</code>{' '}
+            so unlock cookies can be signed.
+          </p>
         </Section>
 
         <Section title="Branding">
@@ -222,6 +279,29 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-lg border px-3 py-2 text-sm"
         placeholder={placeholder}
+      />
+    </label>
+  );
+}
+
+function PasswordField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-sm font-medium text-gray-700">{label}</span>
+      <input
+        type="password"
+        autoComplete="new-password"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border px-3 py-2 text-sm"
       />
     </label>
   );
