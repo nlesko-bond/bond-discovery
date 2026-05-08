@@ -48,6 +48,52 @@ function readNumberOrNull(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+function readSlotId(raw: Record<string, unknown>): number {
+  if (typeof raw.id === 'number' && Number.isFinite(raw.id)) {
+    return raw.id;
+  }
+  if (typeof raw.id === 'string' && /^\d+$/.test(raw.id.trim())) {
+    return Number(raw.id.trim());
+  }
+  return 0;
+}
+
+function readParentSlotId(raw: Record<string, unknown>): number | null {
+  const p = raw.parentSlotId ?? raw.ParentSlotId;
+  if (typeof p === 'number' && Number.isFinite(p)) {
+    return p;
+  }
+  if (typeof p === 'string' && /^\d+$/.test(p.trim())) {
+    return Number(p.trim());
+  }
+  return null;
+}
+
+function readApprovalStatus(raw: Record<string, unknown>): string {
+  const v =
+    raw.approvalStatus ??
+    raw.ApprovalStatus ??
+    raw.slotApprovalStatus ??
+    raw.SlotApprovalStatus;
+  return typeof v === 'string' ? v : '';
+}
+
+function readSpaceNameFromSlotRaw(raw: Record<string, unknown>): string | null {
+  const flat =
+    raw.spaceName ??
+    raw.SpaceName ??
+    raw.spaceLabel ??
+    raw.SpaceLabel ??
+    raw.locationName ??
+    raw.LocationName ??
+    raw.resourceName ??
+    raw.ResourceName;
+  if (typeof flat === 'string' && flat.trim()) {
+    return flat.trim();
+  }
+  return null;
+}
+
 function readSpaceObject(raw: Record<string, unknown>): Record<string, unknown> | null {
   const s = raw.space ?? raw.Space;
   return isRecord(s) ? s : null;
@@ -68,9 +114,10 @@ function readSpaceNameFromSpaceObject(spaceObj: Record<string, unknown>): string
 }
 
 function readSpaceIdFromRaw(raw: Record<string, unknown>, spaceObj: Record<string, unknown> | null): number | null {
-  let spaceId = readNumberOrNull(raw.spaceId);
-  if (spaceId == null && typeof raw.spaceId === 'string' && /^\d+$/.test(raw.spaceId.trim())) {
-    spaceId = Number(raw.spaceId.trim());
+  const rawSid = raw.spaceId ?? raw.SpaceId;
+  let spaceId = readNumberOrNull(rawSid);
+  if (spaceId == null && typeof rawSid === 'string' && /^\d+$/.test(rawSid.trim())) {
+    spaceId = Number(rawSid.trim());
   }
   if (spaceObj) {
     const sid = spaceObj.id ?? spaceObj.Id;
@@ -83,66 +130,87 @@ function readSpaceIdFromRaw(raw: Record<string, unknown>, spaceObj: Record<strin
 }
 
 function normalizeSlot(raw: Record<string, unknown>): ISlotCore {
-  const product = raw.product;
+  const product = raw.product ?? raw.Product;
   let productName = '';
   if (isRecord(product) && typeof product.name === 'string') {
     productName = product.name;
+  } else if (isRecord(product) && typeof product.Name === 'string') {
+    productName = product.Name;
   }
   const spaceObj = readSpaceObject(raw);
   const spaceId = readSpaceIdFromRaw(raw, spaceObj);
-  let spaceNameDirect: string | null = null;
-  if (spaceObj) {
+  let spaceNameDirect = readSpaceNameFromSlotRaw(raw);
+  if (!spaceNameDirect && spaceObj) {
     spaceNameDirect = readSpaceNameFromSpaceObject(spaceObj);
   }
+  const slotId = readSlotId(raw);
   return {
-    id: typeof raw.id === 'number' ? raw.id : 0,
+    id: slotId,
     spaceId,
     spaceNameDirect,
-    parentSlotId: readNumberOrNull(raw.parentSlotId),
-    title: readString(raw.title, ''),
-    displayName: typeof raw.displayName === 'string' ? raw.displayName : null,
-    internalName: typeof raw.internalName === 'string' ? raw.internalName : null,
-    startDate: readString(raw.startDate, ''),
-    startTime: readString(raw.startTime, ''),
-    endTime: readString(raw.endTime, ''),
+    parentSlotId: readParentSlotId(raw),
+    title: readString(raw.title ?? raw.Title, ''),
+    displayName:
+      typeof raw.displayName === 'string'
+        ? raw.displayName
+        : typeof raw.DisplayName === 'string'
+          ? raw.DisplayName
+          : null,
+    internalName:
+      typeof raw.internalName === 'string'
+        ? raw.internalName
+        : typeof raw.InternalName === 'string'
+          ? raw.InternalName
+          : null,
+    startDate: readString(raw.startDate ?? raw.StartDate, ''),
+    startTime: readString(raw.startTime ?? raw.StartTime, ''),
+    endTime: readString(raw.endTime ?? raw.EndTime, ''),
     timezone: typeof raw.timezone === 'string' ? raw.timezone : null,
-    slotType: readString(raw.slotType, ''),
-    approvalStatus: readString(raw.approvalStatus, ''),
+    slotType: readString(raw.slotType ?? raw.SlotType, ''),
+    approvalStatus: readApprovalStatus(raw),
     productName,
-    totalPrice: readNumberOrNull(raw.totalPrice),
+    totalPrice: readNumberOrNull(raw.totalPrice ?? raw.TotalPrice),
   };
+}
+
+const SLOT_TRAVERSE_KEYS = ['segments', 'series', 'slots', 'maintenance'] as const;
+
+function isSlotLikeNode(node: Record<string, unknown>): boolean {
+  const id = readSlotId(node);
+  if (id === 0) {
+    return false;
+  }
+  const slotType = node.slotType ?? node.SlotType;
+  const hasSlotType = typeof slotType === 'string' && slotType.length > 0;
+  return (
+    typeof node.startDate === 'string' ||
+    typeof node.StartDate === 'string' ||
+    typeof node.startTime === 'string' ||
+    typeof node.StartTime === 'string' ||
+    hasSlotType
+  );
 }
 
 function collectSlotsDeep(reservation: Record<string, unknown>): ISlotCore[] {
   const byId = new Map<number, ISlotCore>();
 
   const visit = (node: unknown) => {
-    if (!isRecord(node) || typeof node.id !== 'number') return;
-    if (byId.has(node.id)) return;
-    byId.set(node.id, normalizeSlot(node));
-    const maintenance = node.maintenance;
-    if (Array.isArray(maintenance)) {
-      for (const m of maintenance) visit(m);
+    if (!isRecord(node)) return;
+    if (isSlotLikeNode(node)) {
+      const id = readSlotId(node);
+      if (id !== 0 && !byId.has(id)) {
+        byId.set(id, normalizeSlot(node));
+      }
+    }
+    for (const key of SLOT_TRAVERSE_KEYS) {
+      const arr = node[key];
+      if (Array.isArray(arr)) {
+        for (const item of arr) visit(item);
+      }
     }
   };
 
-  const segments = reservation.segments;
-  if (!Array.isArray(segments)) {
-    return [...byId.values()];
-  }
-
-  for (const seg of segments) {
-    if (!isRecord(seg)) continue;
-    const series = seg.series;
-    if (!Array.isArray(series)) continue;
-    for (const ser of series) {
-      if (!isRecord(ser)) continue;
-      const slots = ser.slots;
-      if (!Array.isArray(slots)) continue;
-      for (const sl of slots) visit(sl);
-    }
-  }
-
+  visit(reservation);
   return [...byId.values()];
 }
 

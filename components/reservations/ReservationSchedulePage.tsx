@@ -31,6 +31,17 @@ const ICON_SMALL = 16;
 const ICON_MEDIUM = 18;
 const RESERVATION_SEARCH_ITEMS_PER_PAGE = 25;
 const RESERVATION_LOAD_CONCURRENCY = 5;
+const RESERVATION_SCHEDULE_APPROVAL_KEY_EMPTY = '__empty__';
+const RESERVATION_SCHEDULE_APPROVAL_FILTER_DEFAULT = 'approved';
+
+type IApprovalStatusFilter =
+  | { mode: 'all' }
+  | { mode: 'subset'; keys: string[] };
+
+function approvalStatusKeyFromRow(row: IReservationScheduleRow): string {
+  const t = row.approvalStatus.trim();
+  return t ? t.toLowerCase() : RESERVATION_SCHEDULE_APPROVAL_KEY_EMPTY;
+}
 
 const EMPTY_SEARCH_META: IReservationSearchMeta = {
   totalItems: 0,
@@ -281,7 +292,10 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
   const [textFilter, setTextFilter] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [approvalFilter, setApprovalFilter] = useState<string>('all');
+  const [approvalStatusFilter, setApprovalStatusFilter] = useState<IApprovalStatusFilter>({
+    mode: 'subset',
+    keys: [RESERVATION_SCHEDULE_APPROVAL_FILTER_DEFAULT],
+  });
   const [slotTypeFilter, setSlotTypeFilter] = useState<string>('all');
   const [visibleColumns, setVisibleColumns] = useState<ReservationColumnKey[]>(DEFAULT_COLUMNS);
   const [sortState, setSortState] = useState<ISortState>({ column: 'default', dir: 'asc' });
@@ -327,12 +341,18 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
     );
   }, [scheduleSources, maintenanceMode]);
 
-  const approvalOptions = useMemo(() => {
-    const set = new Set<string>();
+  const approvalStatusChoices = useMemo(() => {
+    const map = new Map<string, string>();
     for (const r of baseRows) {
-      if (r.approvalStatus) set.add(r.approvalStatus);
+      const key = approvalStatusKeyFromRow(r);
+      const label = r.approvalStatus.trim() || 'No status';
+      if (!map.has(key)) {
+        map.set(key, label);
+      }
     }
-    return [...set].sort();
+    return [...map.entries()]
+      .map(([key, label]) => ({ key, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [baseRows]);
 
   const slotTypeOptions = useMemo(() => {
@@ -348,7 +368,12 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
     return baseRows.filter((row) => {
       if (startDate && row.date < startDate) return false;
       if (endDate && row.date > endDate) return false;
-      if (approvalFilter !== 'all' && row.approvalStatus !== approvalFilter) return false;
+      if (approvalStatusFilter.mode === 'subset') {
+        const allowed = new Set(approvalStatusFilter.keys);
+        if (!allowed.has(approvalStatusKeyFromRow(row))) {
+          return false;
+        }
+      }
       if (slotTypeFilter !== 'all' && row.slotType !== slotTypeFilter) return false;
       if (!q) return true;
       return [
@@ -368,7 +393,7 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
         .toLowerCase()
         .includes(q);
     });
-  }, [baseRows, textFilter, startDate, endDate, approvalFilter, slotTypeFilter]);
+  }, [baseRows, textFilter, startDate, endDate, approvalStatusFilter, slotTypeFilter]);
 
   const displayedRows = useMemo(() => {
     const copy = [...filteredRows];
@@ -588,6 +613,36 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
     setVisibleColumns((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
     );
+  }
+
+  function setApprovalStatusFilterAll() {
+    setApprovalStatusFilter({ mode: 'all' });
+  }
+
+  function setApprovalStatusFilterApprovedOnly() {
+    setApprovalStatusFilter({
+      mode: 'subset',
+      keys: [RESERVATION_SCHEDULE_APPROVAL_FILTER_DEFAULT],
+    });
+  }
+
+  function toggleApprovalStatusChoiceKey(key: string) {
+    setApprovalStatusFilter((prev) => {
+      if (prev.mode === 'all') {
+        return { mode: 'subset', keys: [key].sort() };
+      }
+      const next = new Set(prev.keys);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      const keys = [...next].sort();
+      if (keys.length === 0) {
+        return { mode: 'all' };
+      }
+      return { mode: 'subset', keys };
+    });
   }
 
   function handleExportCsv() {
@@ -917,21 +972,78 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
                 <option value={MaintenanceDisplayModeEnum.HIDE}>Hide</option>
               </select>
             </label>
-            <label className="flex min-w-[8.5rem] shrink-0 flex-col gap-1 text-xs font-medium text-gray-600">
-              Approval
-              <select
-                value={approvalFilter}
-                onChange={(e) => setApprovalFilter(e.target.value)}
-                className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
-              >
-                <option value="all">All</option>
-                {approvalOptions.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="flex min-w-[12rem] max-w-full shrink-0 flex-col gap-1.5 text-xs font-medium text-gray-600">
+              <span>Slot approval status</span>
+              <div className="flex flex-wrap gap-1">
+                <button
+                  type="button"
+                  onClick={setApprovalStatusFilterAll}
+                  className={cn(
+                    'rounded-full border px-2.5 py-1 text-xs font-semibold',
+                    approvalStatusFilter.mode === 'all'
+                      ? 'border-transparent text-white'
+                      : 'border-gray-200 bg-white text-gray-600',
+                  )}
+                  style={
+                    approvalStatusFilter.mode === 'all'
+                      ? { background: 'var(--rs-accent)', borderColor: 'var(--rs-accent)' }
+                      : undefined
+                  }
+                >
+                  All statuses
+                </button>
+                <button
+                  type="button"
+                  onClick={setApprovalStatusFilterApprovedOnly}
+                  className={cn(
+                    'rounded-full border px-2.5 py-1 text-xs font-semibold',
+                    approvalStatusFilter.mode === 'subset' &&
+                      approvalStatusFilter.keys.length === 1 &&
+                      approvalStatusFilter.keys[0] === RESERVATION_SCHEDULE_APPROVAL_FILTER_DEFAULT
+                      ? 'border-transparent text-white'
+                      : 'border-gray-200 bg-white text-gray-600',
+                  )}
+                  style={
+                    approvalStatusFilter.mode === 'subset' &&
+                    approvalStatusFilter.keys.length === 1 &&
+                    approvalStatusFilter.keys[0] === RESERVATION_SCHEDULE_APPROVAL_FILTER_DEFAULT
+                      ? { background: 'var(--rs-accent)', borderColor: 'var(--rs-accent)' }
+                      : undefined
+                  }
+                >
+                  Approved only
+                </button>
+              </div>
+              {approvalStatusChoices.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {approvalStatusChoices.map((c) => {
+                    const on =
+                      approvalStatusFilter.mode === 'subset' &&
+                      approvalStatusFilter.keys.includes(c.key);
+                    return (
+                      <button
+                        key={c.key}
+                        type="button"
+                        onClick={() => toggleApprovalStatusChoiceKey(c.key)}
+                        className={cn(
+                          'rounded-full border px-2.5 py-1 text-xs font-semibold',
+                          on
+                            ? 'border-transparent text-white'
+                            : 'border-gray-200 bg-white text-gray-500',
+                        )}
+                        style={
+                          on
+                            ? { background: 'var(--rs-accent)', borderColor: 'var(--rs-accent)' }
+                            : undefined
+                        }
+                      >
+                        {c.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
             <label className="flex min-w-[8.5rem] shrink-0 flex-col gap-1 text-xs font-medium text-gray-600">
               Slot type
               <select

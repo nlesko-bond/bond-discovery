@@ -13,7 +13,7 @@ const DEFAULT_RESERVATION_QUERY: Record<string, string> = {
   includeAddons: 'true',
   includeInvoices: 'true',
   includePayments: 'true',
-  includeSeries: 'false',
+  includeSeries: 'true',
   includeAnswers: 'true',
   buildTree: 'true',
   includeFacility: 'true',
@@ -155,7 +155,13 @@ export async function tryFetchSpaceDisplayName(organizationId: number, spaceId: 
       const body: unknown = await res.json();
       if (body && typeof body === 'object') {
         const o = body as Record<string, unknown>;
-        const name = o.name ?? o.displayName ?? o.internalName;
+        const name =
+          o.name ??
+          o.Name ??
+          o.displayName ??
+          o.DisplayName ??
+          o.internalName ??
+          o.InternalName;
         if (typeof name === 'string' && name.trim()) return name.trim();
       }
     } catch {

@@ -5,9 +5,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function readSpaceIdFromNode(node: Record<string, unknown>): number | null {
-  if (typeof node.spaceId === 'number') return node.spaceId;
-  if (typeof node.spaceId === 'string' && /^\d+$/.test(node.spaceId.trim())) {
-    return Number(node.spaceId.trim());
+  const rawSid = node.spaceId ?? node.SpaceId;
+  if (typeof rawSid === 'number') return rawSid;
+  if (typeof rawSid === 'string' && /^\d+$/.test(rawSid.trim())) {
+    return Number(rawSid.trim());
   }
   const so = isRecord(node.space) ? node.space : isRecord(node.Space) ? node.Space : null;
   if (so) {
@@ -19,6 +20,14 @@ function readSpaceIdFromNode(node: Record<string, unknown>): number | null {
 }
 
 function readSpaceNameFromSlot(slot: Record<string, unknown>): string | null {
+  const flat =
+    slot.spaceName ??
+    slot.SpaceName ??
+    slot.spaceLabel ??
+    slot.SpaceLabel ??
+    slot.locationName ??
+    slot.LocationName;
+  if (typeof flat === 'string' && flat.trim()) return flat.trim();
   const spaceObj = isRecord(slot.space) ? slot.space : isRecord(slot.Space) ? slot.Space : null;
   if (spaceObj) {
     const n =
