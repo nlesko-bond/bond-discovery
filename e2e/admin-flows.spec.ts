@@ -85,6 +85,13 @@ test.describe('Authentication Flows', () => {
     expect(page.url()).toContain('login');
   });
 
+  test('reporting/erd is public', async ({ page }) => {
+    const response = await page.goto(`${BASE_URL}/reporting/erd/index.html`);
+
+    expect(response?.status()).toBe(200);
+    await expect(page).toHaveTitle('Bond Reporting ERD');
+  });
+
   test('login page shows Google SSO option', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/login`);
     
