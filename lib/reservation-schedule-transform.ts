@@ -48,20 +48,51 @@ function readNumberOrNull(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+function readSpaceObject(raw: Record<string, unknown>): Record<string, unknown> | null {
+  const s = raw.space ?? raw.Space;
+  return isRecord(s) ? s : null;
+}
+
+function readSpaceNameFromSpaceObject(spaceObj: Record<string, unknown>): string | null {
+  const n =
+    spaceObj.name ??
+    spaceObj.Name ??
+    spaceObj.displayName ??
+    spaceObj.DisplayName ??
+    spaceObj.internalName ??
+    spaceObj.InternalName;
+  if (typeof n === 'string' && n.trim()) {
+    return n.trim();
+  }
+  return null;
+}
+
+function readSpaceIdFromRaw(raw: Record<string, unknown>, spaceObj: Record<string, unknown> | null): number | null {
+  let spaceId = readNumberOrNull(raw.spaceId);
+  if (spaceId == null && typeof raw.spaceId === 'string' && /^\d+$/.test(raw.spaceId.trim())) {
+    spaceId = Number(raw.spaceId.trim());
+  }
+  if (spaceObj) {
+    const sid = spaceObj.id ?? spaceObj.Id;
+    if (spaceId == null) {
+      if (typeof sid === 'number') spaceId = sid;
+      else if (typeof sid === 'string' && /^\d+$/.test(sid.trim())) spaceId = Number(sid.trim());
+    }
+  }
+  return spaceId;
+}
+
 function normalizeSlot(raw: Record<string, unknown>): ISlotCore {
   const product = raw.product;
   let productName = '';
   if (isRecord(product) && typeof product.name === 'string') {
     productName = product.name;
   }
-  let spaceId = readNumberOrNull(raw.spaceId);
-  const spaceObj = raw.space;
-  if (spaceId == null && isRecord(spaceObj) && typeof spaceObj.id === 'number') {
-    spaceId = spaceObj.id;
-  }
+  const spaceObj = readSpaceObject(raw);
+  const spaceId = readSpaceIdFromRaw(raw, spaceObj);
   let spaceNameDirect: string | null = null;
-  if (isRecord(spaceObj) && typeof spaceObj.name === 'string' && spaceObj.name.trim()) {
-    spaceNameDirect = spaceObj.name.trim();
+  if (spaceObj) {
+    spaceNameDirect = readSpaceNameFromSpaceObject(spaceObj);
   }
   return {
     id: typeof raw.id === 'number' ? raw.id : 0,
@@ -113,6 +144,31 @@ function collectSlotsDeep(reservation: Record<string, unknown>): ISlotCore[] {
   }
 
   return [...byId.values()];
+}
+
+function enrichSlotsWithSharedSpaceNames(slots: ISlotCore[]): ISlotCore[] {
+  const idToName = new Map<number, string>();
+  for (const s of slots) {
+    if (s.spaceId != null && s.spaceNameDirect) {
+      idToName.set(s.spaceId, s.spaceNameDirect);
+    }
+  }
+  if (idToName.size === 0) {
+    return slots;
+  }
+  return slots.map((s) => {
+    if (s.spaceNameDirect) {
+      return s;
+    }
+    if (s.spaceId == null) {
+      return s;
+    }
+    const shared = idToName.get(s.spaceId);
+    if (!shared) {
+      return s;
+    }
+    return { ...s, spaceNameDirect: shared };
+  });
 }
 
 function spaceLabel(slot: ISlotCore, spaceNameBySpaceId: Record<number, string>): string {
@@ -225,7 +281,7 @@ export function buildReservationScheduleRows(
   context: IReservationScheduleContext,
 ): IReservationScheduleRow[] {
   if (!isRecord(reservation)) return [];
-  const all = collectSlotsDeep(reservation);
+  const all = enrichSlotsWithSharedSpaceNames(collectSlotsDeep(reservation));
   const primary = all.filter((s) => s.slotType !== 'maintenance' && s.parentSlotId === null);
 
   if (mode === MaintenanceDisplayModeEnum.HIDE) {

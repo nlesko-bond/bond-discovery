@@ -128,7 +128,6 @@ async function fetchReservationScheduleSource(
   organizationId: number,
   slug: string,
   reservationId: number,
-  bondQuery: Record<string, string> | undefined,
 ): Promise<IScheduleSource> {
   const res = await fetch(`/api/reservation-pages/${encodeURIComponent(slug)}/reservation`, {
     method: 'POST',
@@ -136,7 +135,6 @@ async function fetchReservationScheduleSource(
     body: JSON.stringify({
       organizationId,
       reservationId,
-      ...(bondQuery ? { bondQuery } : {}),
     }),
   });
   const json: unknown = await res.json();
@@ -273,7 +271,6 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
   const [searchError, setSearchError] = useState<string | null>(null);
   const [lastSearchQuery, setLastSearchQuery] = useState<string | null>(null);
   const [selectedHitIds, setSelectedHitIds] = useState<number[]>([]);
-  const [bondQueryJson, setBondQueryJson] = useState('');
   const [scheduleSources, setScheduleSources] = useState<IScheduleSource[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -427,30 +424,12 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
     return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }, [scheduleSources, displayedRows, visibleColumnDefs, config.name]);
 
-  const parseBondQuery = useCallback((): Record<string, string> | undefined => {
-    const raw = bondQueryJson.trim();
-    if (!raw) return undefined;
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      if (!isRecord(parsed)) return undefined;
-      const out: Record<string, string> = {};
-      for (const [k, v] of Object.entries(parsed)) {
-        if (typeof v === 'string' && v !== '') out[k] = v;
-        else if (typeof v === 'number' || typeof v === 'boolean') out[k] = String(v);
-      }
-      return Object.keys(out).length ? out : undefined;
-    } catch {
-      return undefined;
-    }
-  }, [bondQueryJson]);
-
   const loadReservationById = useCallback(
     async (rid: number) => {
       setLoadError(null);
       setLoading(true);
       try {
-        const bondQuery = parseBondQuery();
-        const src = await fetchReservationScheduleSource(organizationId, config.slug, rid, bondQuery);
+        const src = await fetchReservationScheduleSource(organizationId, config.slug, rid);
         setScheduleSources([src]);
         setReservationIdInput(String(rid));
       } catch (e) {
@@ -460,7 +439,7 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
         setLoading(false);
       }
     },
-    [organizationId, config.slug, parseBondQuery],
+    [organizationId, config.slug],
   );
 
   const loadSelectedSchedules = useCallback(async () => {
@@ -468,7 +447,6 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
     setLoadError(null);
     setLoading(true);
     try {
-      const bondQuery = parseBondQuery();
       const ordered = selectedHitIds.map((id) => {
         const hit = searchHits.find((h) => h.id === id);
         const label = hit?.name?.trim() || `Reservation ${id}`;
@@ -479,12 +457,7 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
         const chunk = ordered.slice(i, i + RESERVATION_LOAD_CONCURRENCY);
         const part = await Promise.all(
           chunk.map(async (h) => {
-            const src = await fetchReservationScheduleSource(
-              organizationId,
-              config.slug,
-              h.id,
-              bondQuery,
-            );
+            const src = await fetchReservationScheduleSource(organizationId, config.slug, h.id);
             return { ...src, reservationName: h.label };
           }),
         );
@@ -499,7 +472,7 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
     } finally {
       setLoading(false);
     }
-  }, [selectedHitIds, searchHits, organizationId, config.slug, parseBondQuery]);
+  }, [selectedHitIds, searchHits, organizationId, config.slug]);
 
   async function handleLoad(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -520,7 +493,6 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
       }
       setSearchLoading(true);
       try {
-        const bondQuery = parseBondQuery();
         const res = await fetch(
           `/api/reservation-pages/${encodeURIComponent(config.slug)}/reservations/search`,
           {
@@ -531,7 +503,6 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
               search: customerSearch.trim(),
               page,
               itemsPerPage: RESERVATION_SEARCH_ITEMS_PER_PAGE,
-              ...(bondQuery ? { bondQuery } : {}),
             }),
           },
         );
@@ -573,7 +544,7 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
         setSearchLoading(false);
       }
     },
-    [organizationId, customerSearch, config.slug, parseBondQuery],
+    [organizationId, customerSearch, config.slug],
   );
 
   async function handleSearchReservations(event: FormEvent<HTMLFormElement>) {
@@ -610,6 +581,10 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
   }
 
   function toggleColumn(key: ReservationColumnKey) {
+    const isOn = visibleColumns.includes(key);
+    if (!isOn && key === 'maintenance') {
+      setMaintenanceMode(MaintenanceDisplayModeEnum.BUNDLE);
+    }
     setVisibleColumns((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
     );
@@ -809,7 +784,7 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
                     type="button"
                     disabled={!selectedHitIds.length || loading}
                     onClick={() => void loadSelectedSchedules()}
-                    className="rounded border border-gray-800 bg-gray-900 px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
+                    className="rounded border border-emerald-700 bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-40"
                   >
                     Load selected ({selectedHitIds.length})
                   </button>
@@ -892,21 +867,6 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
             <p className="mt-3 text-sm text-red-600">{loadError}</p>
           ) : null}
 
-          <details className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
-            <summary className="cursor-pointer font-semibold text-gray-800">Advanced: Bond API query (optional JSON)</summary>
-            <p className="mt-2 text-xs text-gray-500">
-              Merged with defaults (customer, buildTree, etc.). Use for extra flags such as slot type filters on the API
-              when needed.
-            </p>
-            <textarea
-              value={bondQueryJson}
-              onChange={(e) => setBondQueryJson(e.target.value)}
-              rows={3}
-              className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs"
-              placeholder='{"slotTypes":"external,maintenance"}'
-            />
-          </details>
-
           <div className="mt-4 flex flex-nowrap items-end gap-3 overflow-x-auto border-t border-gray-100 pt-4 pb-1 print:hidden">
             <label className="flex min-w-[7.5rem] shrink-0 flex-col gap-1 text-xs font-medium text-gray-600">
               Search table
@@ -943,7 +903,13 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
               Maintenance
               <select
                 value={maintenanceMode}
-                onChange={(e) => setMaintenanceMode(e.target.value as MaintenanceDisplayMode)}
+                onChange={(e) => {
+                  const v = e.target.value as MaintenanceDisplayMode;
+                  setMaintenanceMode(v);
+                  if (v === MaintenanceDisplayModeEnum.HIDE) {
+                    setVisibleColumns((prev) => prev.filter((k) => k !== 'maintenance'));
+                  }
+                }}
                 className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
               >
                 <option value={MaintenanceDisplayModeEnum.BUNDLE}>Bundle</option>

@@ -4,10 +4,30 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+function readSpaceIdFromNode(node: Record<string, unknown>): number | null {
+  if (typeof node.spaceId === 'number') return node.spaceId;
+  if (typeof node.spaceId === 'string' && /^\d+$/.test(node.spaceId.trim())) {
+    return Number(node.spaceId.trim());
+  }
+  const so = isRecord(node.space) ? node.space : isRecord(node.Space) ? node.Space : null;
+  if (so) {
+    const sid = so.id ?? so.Id;
+    if (typeof sid === 'number') return sid;
+    if (typeof sid === 'string' && /^\d+$/.test(sid.trim())) return Number(sid.trim());
+  }
+  return null;
+}
+
 function readSpaceNameFromSlot(slot: Record<string, unknown>): string | null {
-  if (isRecord(slot.space)) {
-    const s = slot.space;
-    const n = s.name ?? s.displayName ?? s.internalName;
+  const spaceObj = isRecord(slot.space) ? slot.space : isRecord(slot.Space) ? slot.Space : null;
+  if (spaceObj) {
+    const n =
+      spaceObj.name ??
+      spaceObj.Name ??
+      spaceObj.displayName ??
+      spaceObj.DisplayName ??
+      spaceObj.internalName ??
+      spaceObj.InternalName;
     if (typeof n === 'string' && n.trim()) return n.trim();
   }
   const displayName = slot.displayName ?? slot.internalName;
@@ -20,7 +40,8 @@ export function collectSpaceIdsDeep(reservation: unknown): number[] {
 
   const visit = (node: unknown) => {
     if (!isRecord(node)) return;
-    if (typeof node.spaceId === 'number') ids.add(node.spaceId);
+    const sid = readSpaceIdFromNode(node);
+    if (sid != null) ids.add(sid);
     const nestedKeys = ['segments', 'series', 'slots', 'maintenance'] as const;
     for (const key of nestedKeys) {
       const arr = node[key];
@@ -53,9 +74,10 @@ export async function buildReservationDisplayMeta(
   const spaceNameBySpaceId: Record<number, string> = {};
   const walkSlots = (node: unknown) => {
     if (!isRecord(node)) return;
-    if (typeof node.spaceId === 'number') {
+    const sid = readSpaceIdFromNode(node);
+    if (sid != null) {
       const fromSlot = readSpaceNameFromSlot(node);
-      if (fromSlot) spaceNameBySpaceId[node.spaceId] = fromSlot;
+      if (fromSlot) spaceNameBySpaceId[sid] = fromSlot;
     }
     const nestedKeys = ['segments', 'series', 'slots', 'maintenance'] as const;
     for (const key of nestedKeys) {
