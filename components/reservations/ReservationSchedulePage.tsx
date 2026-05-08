@@ -319,7 +319,8 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
   } | null>(null);
 
   const selectAllSearchRef = useRef<HTMLInputElement | null>(null);
-  const approvalFilterDropdownRef = useRef<HTMLDivElement | null>(null);
+  const approvalFilterScopeRef = useRef<HTMLLabelElement | null>(null);
+  const approvalFilterTriggerRef = useRef<HTMLButtonElement | null>(null);
   const approvalPopoverPanelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -346,7 +347,7 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
       return;
     }
     const updatePopoverPosition = () => {
-      const trigger = approvalFilterDropdownRef.current;
+      const trigger = approvalFilterTriggerRef.current;
       if (!trigger) return;
       const rect = trigger.getBoundingClientRect();
       setApprovalPopoverPosition({
@@ -368,7 +369,7 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
     if (!approvalFilterOpen) return;
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
-      if (approvalFilterDropdownRef.current?.contains(target)) return;
+      if (approvalFilterScopeRef.current?.contains(target)) return;
       if (approvalPopoverPanelRef.current?.contains(target)) return;
       setApprovalFilterOpen(false);
     };
@@ -419,7 +420,7 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
 
   const approvalFilterSummary = useMemo(() => {
     if (approvalStatusFilter.mode === 'all' || approvalStatusFilter.keys.length === 0) {
-      return 'All statuses';
+      return 'All';
     }
     const labelByKey = new Map(approvalStatusChoices.map((c) => [c.key, c.label]));
     if (approvalStatusFilter.keys.length === 1) {
@@ -704,6 +705,17 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
       const keys = [...next].sort();
       if (keys.length === 0) return { mode: 'all' };
       return { mode: 'subset', keys };
+    });
+  }
+
+  function setApprovalFilterAll(checked: boolean) {
+    if (checked) {
+      setApprovalStatusFilter({ mode: 'all' });
+      return;
+    }
+    setApprovalStatusFilter({
+      mode: 'subset',
+      keys: [RESERVATION_SCHEDULE_APPROVAL_FILTER_DEFAULT],
     });
   }
 
@@ -1055,12 +1067,13 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
                 <option value={MaintenanceDisplayModeEnum.HIDE}>Hide</option>
               </select>
             </label>
-            <div
-              ref={approvalFilterDropdownRef}
-              className="relative flex min-w-[14rem] max-w-[18rem] shrink-0 flex-col gap-1 text-xs font-medium text-gray-600"
+            <label
+              ref={approvalFilterScopeRef}
+              className="flex min-w-[14rem] max-w-[18rem] shrink-0 flex-col gap-1 text-xs font-medium text-gray-600"
             >
-              <span>Slot approval status</span>
+              Slot approval status
               <button
+                ref={approvalFilterTriggerRef}
                 type="button"
                 id="approval-status-trigger"
                 aria-haspopup="listbox"
@@ -1078,10 +1091,7 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
                   aria-hidden
                 />
               </button>
-              <span className="font-normal text-gray-500">
-                Empty selection = all statuses.
-              </span>
-            </div>
+            </label>
             <label className="flex min-w-[8.5rem] shrink-0 flex-col gap-1 text-xs font-medium text-gray-600">
               Slot type
               <select
@@ -1282,6 +1292,15 @@ export function ReservationSchedulePage({ config }: IReservationSchedulePageProp
                 zIndex: APPROVAL_POPOVER_Z_INDEX,
               }}
             >
+              <label className="flex cursor-pointer items-center gap-2 border-b border-gray-100 px-3 py-1.5 text-sm font-normal hover:bg-gray-50">
+                <input
+                  type="checkbox"
+                  checked={approvalStatusFilter.mode === 'all'}
+                  onChange={(e) => setApprovalFilterAll(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <span>All</span>
+              </label>
               {approvalStatusChoices.length === 0 ? (
                 <p className="px-3 py-2 text-xs font-normal text-gray-500">
                   Load a schedule to see statuses.
