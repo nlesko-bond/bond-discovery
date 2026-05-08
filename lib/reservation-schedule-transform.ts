@@ -122,7 +122,7 @@ function normalizeSlot(raw: Record<string, unknown>): ISlotCore {
   };
 }
 
-const SLOT_TRAVERSE_KEYS = ['segments', 'series', 'slots', 'maintenance'] as const;
+const SLOT_TRAVERSE_KEYS = ['segments', 'series', 'slots', 'maintenance', 'data'] as const;
 
 function isSlotLikeNode(node: Record<string, unknown>): boolean {
   const id = readSlotId(node);

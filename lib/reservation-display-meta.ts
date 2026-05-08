@@ -23,7 +23,7 @@ export function collectSpaceIdsDeep(reservation: unknown): number[] {
     if (!isRecord(node)) return;
     const sid = readSpaceIdFromNode(node);
     if (sid != null) ids.add(sid);
-    const nestedKeys = ['segments', 'series', 'slots', 'maintenance'] as const;
+    const nestedKeys = ['segments', 'series', 'slots', 'maintenance', 'data'] as const;
     for (const key of nestedKeys) {
       const arr = node[key];
       if (Array.isArray(arr)) {
@@ -60,7 +60,7 @@ export async function buildReservationDisplayMeta(
       const fromSlot = readSpaceNameFromSlot(node);
       if (fromSlot) spaceNameBySpaceId[sid] = fromSlot;
     }
-    const nestedKeys = ['segments', 'series', 'slots', 'maintenance'] as const;
+    const nestedKeys = ['segments', 'series', 'slots', 'maintenance', 'data'] as const;
     for (const key of nestedKeys) {
       const arr = node[key];
       if (Array.isArray(arr)) {
