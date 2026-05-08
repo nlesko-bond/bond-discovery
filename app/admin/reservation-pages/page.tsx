@@ -115,21 +115,14 @@ export default function ReservationPagesAdminList() {
 
   return (
     <div className="max-w-4xl">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reservation schedule pages</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Public URLs: <code className="text-xs">/reservations/your-slug</code>. Run migrations{' '}
-            <code className="text-xs">011_add_reservation_pages.sql</code> and{' '}
-            <code className="text-xs">012_reservation_pages_viewer_password.sql</code> first.
-          </p>
-        </div>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="min-w-0 text-2xl font-bold text-gray-900">Reservation schedule pages</h1>
         <button
           type="button"
           onClick={() => setShowCreate(!showCreate)}
-          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 sm:w-auto"
         >
-          <Plus size={16} />
+          <Plus className="h-4 w-4 shrink-0" aria-hidden />
           New page
         </button>
       </div>
