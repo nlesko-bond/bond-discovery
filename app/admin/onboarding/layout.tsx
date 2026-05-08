@@ -2,10 +2,23 @@ import type { ReactNode } from 'react';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
+import { isAdminAuthBypassEnabled } from '@/lib/admin-auth-bypass';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { OnboardingSubNav } from './components/OnboardingSubNav';
 
 export default async function OnboardingSectionLayout({ children }: { children: ReactNode }) {
+  if (isAdminAuthBypassEnabled()) {
+    return (
+      <div>
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Onboarding: session and staff checks are skipped while admin auth bypass is enabled locally.
+        </div>
+        <OnboardingSubNav />
+        {children}
+      </div>
+    );
+  }
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     redirect('/admin/login');

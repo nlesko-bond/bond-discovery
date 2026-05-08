@@ -4,27 +4,30 @@ import { useSession } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { isAdminAuthBypassEnabled } from '@/lib/admin-auth-bypass';
 
 interface AdminAuthGuardProps {
   children: React.ReactNode;
 }
 
 export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-  
+  const bypassAuth = isAdminAuthBypassEnabled();
+
   useEffect(() => {
-    // Don't redirect if we're already on the login page
+    if (bypassAuth) return;
     if (pathname === '/admin/login') return;
-    
-    // Redirect to login if not authenticated
     if (status === 'unauthenticated') {
       router.push('/admin/login');
     }
-  }, [status, router, pathname]);
-  
-  // Show loading while checking auth
+  }, [bypassAuth, status, router, pathname]);
+
+  if (bypassAuth) {
+    return <>{children}</>;
+  }
+
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
