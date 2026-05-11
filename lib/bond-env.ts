@@ -11,27 +11,27 @@ export const BOND_ENV_OPTIONS: Array<{ id: BondEnv; label: string; baseUrl: stri
   {
     id: 'staging',
     label: 'Staging',
-    baseUrl: 'https://public.api.stage.bondsports.co',
+    baseUrl: 'https://public.api.stage.bondsports.co/v1',
   },
   {
     id: 'dev',
     label: 'Dev',
-    baseUrl: 'https://public.api.dev.bondsports.co/public-api',
+    baseUrl: 'https://public.api.dev.bondsports.co/v1',
   },
   {
     id: 'squad-a',
     label: 'Squad A',
-    baseUrl: 'https://public.api.squad-a.bondsports.co',
+    baseUrl: 'https://public.api.squad-a.bondsports.co/v1',
   },
   {
     id: 'squad-b',
     label: 'Squad B',
-    baseUrl: 'https://public.api.squad-b.bondsports.co',
+    baseUrl: 'https://public.api.squad-b.bondsports.co/v1',
   },
   {
     id: 'squad-c',
     label: 'Squad C',
-    baseUrl: 'https://public.api.squad-c.bondsports.co',
+    baseUrl: 'https://public.api.squad-c.bondsports.co/v1',
   },
 ];
 
