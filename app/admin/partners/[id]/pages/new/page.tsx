@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Plus, RefreshCw } from 'lucide-react';
+import { BOND_ENV_OPTIONS, DEFAULT_BOND_ENV, type BondEnv } from '@/lib/bond-env';
 
 interface PartnerGroup {
   id: string;
@@ -25,6 +26,7 @@ export default function NewPageForPartner({ params }: { params: { id: string } }
     slug: '',
     organizationIds: '',
     facilityIds: '',
+    bondEnv: DEFAULT_BOND_ENV as BondEnv,
   });
 
   useEffect(() => {
@@ -59,8 +61,10 @@ export default function NewPageForPartner({ params }: { params: { id: string } }
           organizationIds: newPage.organizationIds.split(',').map(s => s.trim()).filter(Boolean),
           facilityIds: newPage.facilityIds ? newPage.facilityIds.split(',').map(s => s.trim()).filter(Boolean) : [],
           partner_group_id: params.id,
-          // Inherit branding from partner
           branding: partner.branding,
+          features: {
+            bondEnv: newPage.bondEnv,
+          },
         }),
       });
       
@@ -171,6 +175,24 @@ export default function NewPageForPartner({ params }: { params: { id: string } }
             />
             <p className="text-xs text-gray-500 mt-1">
               Restrict to specific facilities (optional)
+            </p>
+          </div>
+
+          <div>
+            <label className="label">Bond Env</label>
+            <select
+              className="input"
+              value={newPage.bondEnv}
+              onChange={(e) => setNewPage({ ...newPage, bondEnv: e.target.value as BondEnv })}
+            >
+              {BOND_ENV_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Defaults to Production for all existing public pages
             </p>
           </div>
         </div>

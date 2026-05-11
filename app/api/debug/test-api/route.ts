@@ -23,7 +23,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Config not found' }, { status: 404 });
     }
     
-    const client = createBondClient(config.apiKey);
+    const client = createBondClient(config.apiKey, config.features.bondEnv);
     const orgId = config.organizationIds[0];
     const programId = config.includedProgramIds?.[0] || config.features?.includedProgramIds?.[0];
     

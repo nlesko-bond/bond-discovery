@@ -62,6 +62,7 @@ export async function GET(
         includedProgramIds: config.features.includedProgramIds || [],
         defaultView: config.features.defaultView,
         enabledTabs: config.features.enabledTabs || ['programs', 'schedule'],
+        bondEnv: config.features.bondEnv || 'production',
       },
       excludedProgramIds: config.excludedProgramIds || [],
       includedProgramIds: config.includedProgramIds || [],

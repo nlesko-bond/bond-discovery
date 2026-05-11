@@ -170,10 +170,17 @@ export async function cacheClear(): Promise<void> {
 /**
  * Generate a cache key for programs
  */
-export function programsCacheKey(orgId: string, facilityId?: string, apiKey?: string): string {
-  const keyScope = apiKey
-    ? apiKey.split('').reduce((hash, ch) => ((hash * 31) + ch.charCodeAt(0)) >>> 0, 0).toString(16)
-    : 'default';
+export function programsCacheKey(
+  orgId: string,
+  facilityId?: string,
+  apiKey?: string,
+  bondApiBaseUrl?: string
+): string {
+  const keySource = [apiKey || 'default', bondApiBaseUrl || 'production'].join(':');
+  const keyScope = keySource
+    .split('')
+    .reduce((hash, ch) => ((hash * 31) + ch.charCodeAt(0)) >>> 0, 0)
+    .toString(16);
 
   return facilityId
     ? `programs:${orgId}:${facilityId}:${keyScope}`
@@ -203,6 +210,12 @@ export function discoveryFullCacheKey(slug: string, scopeHash: string): string {
 
 export function discoveryAvailabilityCacheKey(slug: string, scopeHash: string): string {
   return `discovery:availability:${slug}:${scopeHash}`;
+}
+
+export function discoveryResponseCacheKey(slug: string, bondEnv?: string): string {
+  return bondEnv && bondEnv !== 'production'
+    ? `discovery:response:${bondEnv}:${slug}`
+    : `discovery:response:${slug}`;
 }
 
 export function discoveryLastRefreshedKey(slug: string): string {

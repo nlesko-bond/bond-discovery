@@ -5,9 +5,11 @@ import {
   type DiscoveryEventsMode,
   type FullDiscoveryEvent,
 } from '@/lib/discovery-events';
-import { cacheGet } from '@/lib/cache';
+import { cacheGet, discoveryResponseCacheKey } from '@/lib/cache';
 import { getConfigBySlug } from '@/lib/config';
 import { getAvailabilityPayload } from '@/lib/availability-cache';
+import { maybeAlertZeroDiscoveryEvents } from '@/lib/discovery-zero-events-alert';
+import { getBondApiStats } from '@/lib/bond-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,7 +60,9 @@ export async function GET(request: Request) {
       const pageConfig = await getConfigBySlug(slug);
       const allowPrecomputed = pageConfig?.features?.discoveryCacheEnabled !== false;
       if (allowPrecomputed) {
-        const precomputed = await cacheGet<any>(`discovery:response:${slug}`);
+        const precomputed = await cacheGet<any>(
+          discoveryResponseCacheKey(slug, pageConfig?.features?.bondEnv)
+        );
         if (precomputed && Array.isArray(precomputed.data) && precomputed.data.length > 0) {
           return NextResponse.json(precomputed, {
             headers: {
@@ -81,6 +85,7 @@ export async function GET(request: Request) {
   const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!, 10) : 0;
 
   try {
+    const bondStatsBefore = getBondApiStats();
     const result = await getDiscoveryEvents({
       slug: searchParams.get('slug') || undefined,
       apiKey: searchParams.get('apiKey') || undefined,
@@ -105,6 +110,28 @@ export async function GET(request: Request) {
     }
 
     const totalFiltered = data.length;
+    const bondStatsAfter = getBondApiStats();
+    const serverErrors = Math.max(
+      0,
+      bondStatsAfter.serverErrors - bondStatsBefore.serverErrors
+    );
+
+    if (
+      mode === 'full' &&
+      totalFiltered === 0 &&
+      serverErrors > 0 &&
+      result.context.slug !== 'adhoc'
+    ) {
+      await maybeAlertZeroDiscoveryEvents({
+        slug: result.context.slug,
+        bondEnv: result.context.bondEnv,
+        mode,
+        cacheStatus: result.cacheStatus,
+        cacheKey: result.cacheKey,
+        organizations: result.context.orgIds.length,
+        serverErrors,
+      });
+    }
 
     // discovery:response:{slug} is populated ONLY by the cron job, which
     // fetches with careful rate management and produces complete datasets.
@@ -126,6 +153,8 @@ export async function GET(request: Request) {
               : 's-maxage=60, stale-while-revalidate=120',
           'X-Bond-Events-Cache': result.cacheStatus,
           'X-Bond-Events-Mode': mode,
+          'X-Bond-Events-Bond-Env': result.context.bondEnv,
+          'X-Bond-Events-Bond-5xxs': String(serverErrors),
           'X-Bond-Events-Cache-Key': result.cacheKey,
         },
       }

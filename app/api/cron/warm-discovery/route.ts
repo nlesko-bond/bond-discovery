@@ -4,6 +4,7 @@ import {
   shouldRefreshDiscovery,
   markDiscoveryRefreshed,
   programsCacheKey,
+  discoveryResponseCacheKey,
   cacheGet,
   cacheSet,
   type DiscoveryRefreshPolicy,
@@ -37,7 +38,8 @@ function computeDataScope(config: DiscoveryConfig): string {
   const filterMode = config.features?.programFilterMode || 'all';
   const excluded = (config.excludedProgramIds || []).slice().sort().join(',');
   const included = (config.includedProgramIds || []).slice().sort().join(',');
-  return `${orgIds}|${apiKey}|${filterMode}|${excluded}|${included}`;
+  const bondEnv = config.features.bondEnv || 'production';
+  return `${orgIds}|${apiKey}|${bondEnv}|${filterMode}|${excluded}|${included}`;
 }
 
 export async function GET(request: NextRequest) {
@@ -97,12 +99,12 @@ export async function GET(request: NextRequest) {
       try {
         // Warm programs cache (shared across all slugs in this scope)
         const apiKey = primary.apiKey || DEFAULT_API_KEY;
-        const client = createBondClient(apiKey);
+        const client = createBondClient(apiKey, primary.features.bondEnv);
         const programsTtl = Math.max(primary.cacheTtl || 0, 4 * 60 * 60);
         await Promise.all(
           primary.organizationIds.map(async (orgId: string) => {
             try {
-              const key = programsCacheKey(orgId, undefined, apiKey);
+              const key = programsCacheKey(orgId, undefined, apiKey, primary.features.bondEnv);
               const response = await client.getPrograms(orgId);
               await cacheSet(key, response, { ttl: programsTtl });
             } catch (err) {
@@ -141,7 +143,7 @@ export async function GET(request: NextRequest) {
             };
 
             const previous = await cacheGet<{ meta?: { totalFiltered?: number } }>(
-              `discovery:response:${config.slug}`,
+              discoveryResponseCacheKey(config.slug, config.features.bondEnv),
             );
             const previousCount = previous?.meta?.totalFiltered ?? 0;
             if (filtered.length === 0 && previousCount > 0) {
@@ -157,7 +159,11 @@ export async function GET(request: NextRequest) {
               continue;
             }
 
-            await cacheSet(`discovery:response:${config.slug}`, precomputed, { ttl: 4 * 60 * 60 });
+            await cacheSet(
+              discoveryResponseCacheKey(config.slug, config.features.bondEnv),
+              precomputed,
+              { ttl: 4 * 60 * 60 }
+            );
             await markDiscoveryRefreshed(config.slug);
 
             const isPrimary = config.slug === primary.slug;

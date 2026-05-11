@@ -15,6 +15,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
+import { BOND_ENV_OPTIONS, DEFAULT_BOND_ENV, type BondEnv } from '@/lib/bond-env';
 
 interface PageConfig {
   id: string;
@@ -83,6 +84,7 @@ interface PageConfig {
     showPunchPassRedeemButton?: boolean;
     punchPassRedeemUrl?: string;
     showScheduleTableDateFilters?: boolean;
+    bondEnv?: BondEnv;
     /** Discovery only: save filter state in localStorage (default true). */
     persistFiltersInLocalStorage?: boolean;
     /** Schedule table + space filter label (default: Space) */
@@ -1316,6 +1318,27 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Each partner can have their own API key. Leave empty to use the global default.
+                </p>
+              </div>
+
+              <div>
+                <label className="label">Bond Env</label>
+                <select
+                  className="input"
+                  value={config.features.bondEnv || DEFAULT_BOND_ENV}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    features: { ...config.features, bondEnv: e.target.value as BondEnv }
+                  })}
+                >
+                  {BOND_ENV_OPTIONS.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Production is the default for existing public pages.
                 </p>
               </div>
               

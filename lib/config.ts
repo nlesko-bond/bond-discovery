@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { DiscoveryConfig, BrandingConfig, FeatureConfig, FilterType, ScheduleTableColumn } from '@/types';
 import { supabase, getSupabaseAdmin, DiscoveryPageRow } from './supabase';
+import { DEFAULT_BOND_ENV, resolveBondEnv } from './bond-env';
 
 /**
  * Convert database row to DiscoveryConfig
@@ -82,6 +83,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
       scheduleThemeStyle: features.scheduleThemeStyle || 'solid',
       mobileQuickFilterChips: features.mobileQuickFilterChips ?? true,
       eventHorizonMonths: typeof features.eventHorizonMonths === 'number' ? features.eventHorizonMonths : 3,
+      bondEnv: resolveBondEnv(features.bondEnv),
       showPunchPassRedeemButton: features.showPunchPassRedeemButton === true,
       punchPassRedeemUrl:
         typeof features.punchPassRedeemUrl === 'string' ? features.punchPassRedeemUrl : undefined,
@@ -132,6 +134,7 @@ export const defaultConfig: DiscoveryConfig = {
     scheduleThemeStyle: 'solid',
     mobileQuickFilterChips: true,
     eventHorizonMonths: 3,
+    bondEnv: DEFAULT_BOND_ENV,
     showPunchPassRedeemButton: false,
     showScheduleTableDateFilters: false,
     persistFiltersInLocalStorage: true,

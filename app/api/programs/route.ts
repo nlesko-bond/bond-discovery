@@ -13,6 +13,7 @@ export async function GET(request: Request) {
   const slug = searchParams.get('slug');
   const pageConfig = slug ? await getConfigBySlug(slug) : null;
   const apiKey = pageConfig?.apiKey || searchParams.get('apiKey') || DEFAULT_API_KEY;
+  const bondEnv = pageConfig?.features?.bondEnv;
   
   const programFilterMode = pageConfig?.features?.programFilterMode || 'all';
   const excludedProgramIds = pageConfig?.excludedProgramIds || [];
@@ -30,12 +31,12 @@ export async function GET(request: Request) {
   const today = new Date().toISOString().split('T')[0];
 
   try {
-    const client = createBondClient(apiKey);
+    const client = createBondClient(apiKey, bondEnv);
     const allPrograms: Program[] = [];
 
     const promises = orgIds.map(async (orgId) => {
       try {
-        const cacheKey = programsCacheKey(orgId, facilityId, apiKey);
+        const cacheKey = programsCacheKey(orgId, facilityId, apiKey, bondEnv);
         const response = await cached(
           cacheKey,
           () => client.getPrograms(orgId, { expand, facilityId }),

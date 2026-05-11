@@ -15,6 +15,7 @@ import {
   MoreVertical,
   RefreshCw
 } from 'lucide-react';
+import { BOND_ENV_OPTIONS, DEFAULT_BOND_ENV, type BondEnv } from '@/lib/bond-env';
 
 interface PageConfig {
   id: string;
@@ -46,6 +47,7 @@ export default function PagesPage() {
     secondaryColor: '#6366F1',
     accentColor: '#8B5CF6',
     apiKey: '',
+    bondEnv: DEFAULT_BOND_ENV as BondEnv,
   });
   const [creating, setCreating] = useState(false);
   const [duplicating, setDuplicating] = useState<string | null>(null);
@@ -90,12 +92,25 @@ export default function PagesPage() {
           },
           organizationIds: newPage.organizationIds.split(',').map(s => s.trim()).filter(Boolean),
           apiKey: newPage.apiKey || undefined,
+          features: {
+            bondEnv: newPage.bondEnv,
+          },
         }),
       });
       
       if (res.ok) {
         setShowNewForm(false);
-        setNewPage({ name: '', slug: '', companyName: '', organizationIds: '', primaryColor: '#1E2761', secondaryColor: '#6366F1', accentColor: '#8B5CF6', apiKey: '' });
+        setNewPage({
+          name: '',
+          slug: '',
+          companyName: '',
+          organizationIds: '',
+          primaryColor: '#1E2761',
+          secondaryColor: '#6366F1',
+          accentColor: '#8B5CF6',
+          apiKey: '',
+          bondEnv: DEFAULT_BOND_ENV,
+        });
         fetchPages();
       } else {
         const error = await res.json();
@@ -319,6 +334,23 @@ export default function PagesPage() {
                 onChange={(e) => setNewPage({ ...newPage, apiKey: e.target.value })}
               />
               <p className="text-xs text-gray-500 mt-1">Partner-specific API key</p>
+            </div>
+            <div>
+              <label className="label">Bond Env</label>
+              <select
+                className="input"
+                value={newPage.bondEnv}
+                onChange={(e) => setNewPage({ ...newPage, bondEnv: e.target.value as BondEnv })}
+              >
+                {BOND_ENV_OPTIONS.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Defaults to Production for all existing public pages
+              </p>
             </div>
           </div>
           

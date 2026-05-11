@@ -14,6 +14,7 @@ export async function GET(request: Request) {
   const slug = searchParams.get('slug');
   const pageConfig = slug ? await getConfigBySlug(slug) : null;
   const apiKey = pageConfig?.apiKey || searchParams.get('apiKey') || DEFAULT_API_KEY;
+  const bondEnv = pageConfig?.features?.bondEnv;
   
   const orgIdsParam = searchParams.get('orgIds');
   const orgIds = pageConfig?.organizationIds?.length
@@ -31,13 +32,13 @@ export async function GET(request: Request) {
   const endDate = format(addWeeks(today, weeks), 'yyyy-MM-dd');
 
   try {
-    const client = createBondClient(apiKey);
+    const client = createBondClient(apiKey, bondEnv);
     const allPrograms: Program[] = [];
 
     // Fetch programs from all organizations in parallel
     const promises = orgIds.map(async (orgId) => {
       try {
-        const cacheKey = programsCacheKey(orgId, facilityId, apiKey);
+        const cacheKey = programsCacheKey(orgId, facilityId, apiKey, bondEnv);
         
         const response = await cached(
           cacheKey,

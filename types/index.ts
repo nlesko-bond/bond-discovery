@@ -1,3 +1,5 @@
+import type { BondEnv } from '@/lib/bond-env';
+
 // ============================================
 // Bond Sports API Types - Enhanced
 // ============================================
@@ -409,6 +411,8 @@ export interface FeatureConfig {
   mobileQuickFilterChips?: boolean;
   // Max months of future events to return (default: 3)
   eventHorizonMonths?: number;
+  // Bond public API environment for this discovery page
+  bondEnv?: BondEnv;
   /** When true, show “Redeem pass” for events whose session has a punch-pass product */
   showPunchPassRedeemButton?: boolean;
   /** Override URL for redeem pass (default https://bondsports.co/user/passes) */

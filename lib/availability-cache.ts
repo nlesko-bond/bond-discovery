@@ -26,24 +26,26 @@ import {
   type DiscoveryEventsPayload,
 } from './discovery-events';
 import { getConfigBySlug } from './config';
+import { DEFAULT_BOND_ENV, type BondEnv } from './bond-env';
 
 const DEFAULT_AVAIL_TTL_SECONDS = 180;
 
-function availabilityCacheKey(slug: string): string {
-  return `discovery:availability-swr:${slug}`;
+function availabilityCacheKey(slug: string, bondEnv: BondEnv): string {
+  return `discovery:availability-swr:${bondEnv}:${slug}`;
 }
 
-async function resolveAvailabilityTtlSeconds(slug: string): Promise<number> {
+async function resolveAvailabilitySettings(slug: string): Promise<{ ttlSeconds: number; bondEnv: BondEnv }> {
   try {
     const config = await getConfigBySlug(slug);
     const raw = config?.features?.availabilityCacheTtl;
     if (typeof raw === 'number' && raw >= 0) {
-      return raw;
+      return { ttlSeconds: raw, bondEnv: config?.features?.bondEnv || DEFAULT_BOND_ENV };
     }
+    return { ttlSeconds: DEFAULT_AVAIL_TTL_SECONDS, bondEnv: config?.features?.bondEnv || DEFAULT_BOND_ENV };
   } catch {
     // Config fetch failures fall through to default
   }
-  return DEFAULT_AVAIL_TTL_SECONDS;
+  return { ttlSeconds: DEFAULT_AVAIL_TTL_SECONDS, bondEnv: DEFAULT_BOND_ENV };
 }
 
 /**
@@ -61,7 +63,7 @@ async function resolveAvailabilityTtlSeconds(slug: string): Promise<number> {
 export async function getAvailabilityPayload(
   slug: string,
 ): Promise<DiscoveryEventsPayload | null> {
-  const ttlSeconds = await resolveAvailabilityTtlSeconds(slug);
+  const { ttlSeconds, bondEnv } = await resolveAvailabilitySettings(slug);
 
   if (ttlSeconds === 0) {
     try {
@@ -75,7 +77,7 @@ export async function getAvailabilityPayload(
 
   try {
     return await cachedSWR<DiscoveryEventsPayload>(
-      availabilityCacheKey(slug),
+      availabilityCacheKey(slug, bondEnv),
       async () => {
         const result = await getDiscoveryEvents({ slug, mode: 'availability' });
         return result.payload;

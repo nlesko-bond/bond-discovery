@@ -5,7 +5,7 @@ import { ProgramGridSkeleton } from '@/components/ui/Skeletons';
 import { getConfigBySlug, getAllPageConfigs } from '@/lib/config';
 import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
-import { cached, programsCacheKey, cacheGet } from '@/lib/cache';
+import { cached, programsCacheKey, cacheGet, discoveryResponseCacheKey } from '@/lib/cache';
 import { getAvailabilityMap, mergeAvailabilityIntoEvents } from '@/lib/availability-cache';
 import { Program, DiscoveryConfig } from '@/types';
 
@@ -16,14 +16,15 @@ interface PageProps {
 
 async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
   const apiKey = config.apiKey || DEFAULT_API_KEY;
-  const client = createBondClient(apiKey);
+  const bondEnv = config.features.bondEnv;
+  const client = createBondClient(apiKey, bondEnv);
   const allPrograms: Program[] = [];
   const orgIds = config.organizationIds;
   const today = new Date().toISOString().split('T')[0];
   
   const promises = orgIds.map(async (orgId) => {
     try {
-      const cacheKey = programsCacheKey(orgId, undefined, apiKey);
+      const cacheKey = programsCacheKey(orgId, undefined, apiKey, config.features.bondEnv);
       
       const response = await cached(
         cacheKey,
@@ -79,7 +80,9 @@ async function getPrecomputedEvents(
     return null;
   }
   try {
-    const precomputed = await cacheGet<any>(`discovery:response:${slug}`);
+    const precomputed = await cacheGet<any>(
+      discoveryResponseCacheKey(slug, config.features.bondEnv)
+    );
     if (precomputed?.data && Array.isArray(precomputed.data) && precomputed.data.length > 0) {
       // Overlay fresh availability (KV SWR, <=180s stale) onto the precomputed
       // full payload so SSR first paint has correct spotsLeft / maxParticipants.

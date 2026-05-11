@@ -1,8 +1,9 @@
 import { createBondClient, DEFAULT_API_KEY, DEFAULT_ORG_IDS } from '@/lib/bond-client';
 import { getConfigBySlug } from '@/lib/config';
-import { transformProgram } from '@/lib/transformers';
+import { transformProgram, transformSession } from '@/lib/transformers';
 import { cacheGet, cacheSet, discoveryAvailabilityCacheKey, discoveryFullCacheKey } from '@/lib/cache';
-import type { Program, DiscoveryConfig } from '@/types';
+import type { Program, DiscoveryConfig, Session } from '@/types';
+import { DEFAULT_BOND_ENV, getBondBaseUrl, type BondEnv } from '@/lib/bond-env';
 
 export type DiscoveryEventsMode = 'full' | 'availability';
 
@@ -17,12 +18,15 @@ export interface DiscoveryEventsRequest {
   mode?: DiscoveryEventsMode;
   forceFresh?: boolean;
   config?: DiscoveryConfig | null;
+  bondEnv?: BondEnv;
 }
 
 interface DiscoveryEventsContext {
   slug: string;
   apiKey: string;
   apiKeyScope: string;
+  bondEnv: BondEnv;
+  bondApiBaseUrl: string;
   orgIds: string[];
   facilityId?: string;
   includePast: boolean;
@@ -200,6 +204,7 @@ async function runWithConcurrency<T, R>(
 async function buildContext(request: DiscoveryEventsRequest): Promise<DiscoveryEventsContext> {
   const slug = request.slug || 'adhoc';
   let apiKey = request.apiKey || DEFAULT_API_KEY;
+  let bondEnv = request.bondEnv || DEFAULT_BOND_ENV;
   let orgIds = request.orgIds && request.orgIds.length > 0 ? request.orgIds : DEFAULT_ORG_IDS;
   let programFilterMode: 'all' | 'exclude' | 'include' = 'all';
   let excludedProgramIds: string[] = [];
@@ -212,6 +217,7 @@ async function buildContext(request: DiscoveryEventsRequest): Promise<DiscoveryE
     : (request.slug ? await getConfigBySlug(request.slug) : null);
   if (config) {
     apiKey = config.apiKey || apiKey;
+    bondEnv = config.features?.bondEnv || bondEnv;
     if (config.organizationIds.length > 0) {
       orgIds = config.organizationIds;
     }
@@ -228,6 +234,8 @@ async function buildContext(request: DiscoveryEventsRequest): Promise<DiscoveryE
     slug,
     apiKey,
     apiKeyScope: hashScope(apiKey || 'default'),
+    bondEnv,
+    bondApiBaseUrl: getBondBaseUrl(bondEnv),
     orgIds,
     facilityId: request.facilityId,
     includePast: Boolean(request.includePast),
@@ -273,6 +281,8 @@ function toCacheKey(context: DiscoveryEventsContext): string {
     context.includedProgramIds.join(',') || 'none',
     context.excludedProgramIds.join(',') || 'none',
     context.apiKeyScope,
+    context.bondEnv,
+    hashScope(context.bondApiBaseUrl),
   ].join(':');
 
   if (context.mode === 'availability') {
@@ -505,11 +515,74 @@ async function fetchSessionEvents(
     .filter(Boolean) as DiscoveryEvent[];
 }
 
+function createIncludedProgramFromSessions(
+  programId: string,
+  orgId: string,
+  sessions: Session[]
+): Program {
+  const firstSession = sessions[0];
+
+  return {
+    id: programId,
+    name: firstSession?.name || `Program ${programId}`,
+    type: 'drop_in',
+    sport: firstSession?.sport || 'soccer',
+    facilityId: firstSession?.facility?.id ? String(firstSession.facility.id) : undefined,
+    facilityName: firstSession?.facility?.name,
+    organizationId: orgId,
+    linkSEO: firstSession?.linkSEO,
+    ageMin: firstSession?.ageMin ?? firstSession?.minAge,
+    ageMax: firstSession?.ageMax ?? firstSession?.maxAge,
+    gender: firstSession?.gender,
+    levels: firstSession?.levels,
+    sessions,
+  };
+}
+
+async function fetchIncludedProgramEvents(
+  client: ReturnType<typeof createBondClient>,
+  orgId: string,
+  context: DiscoveryEventsContext
+): Promise<DiscoveryEvent[]> {
+  const programResults = await runWithConcurrency(
+    context.includedProgramIds,
+    PROGRAM_CONCURRENCY,
+    async (programId) => {
+      try {
+        const sessionsResponse = await client.getSessions(orgId, programId, {
+          expand: 'products,products.prices',
+        });
+        const sessions = (sessionsResponse.data || []).map(transformSession);
+        const program = createIncludedProgramFromSessions(programId, orgId, sessions);
+        const sessionEventResults = await runWithConcurrency(sessions, SESSION_CONCURRENCY, async (session) => {
+          try {
+            return await fetchSessionEvents(client, orgId, program, session, context);
+          } catch (error) {
+            console.error(`Error fetching events for session ${session?.id}:`, error);
+            return [];
+          }
+        });
+
+        return sessionEventResults.flat();
+      } catch (error) {
+        console.error(`Error fetching sessions for included program ${programId}:`, error);
+        return [];
+      }
+    }
+  );
+
+  return programResults.flat();
+}
+
 async function fetchAndTransformEvents(context: DiscoveryEventsContext): Promise<DiscoveryEventsPayload> {
   const fetchStartedAt = Date.now();
-  const client = createBondClient(context.apiKey);
+  const client = createBondClient(context.apiKey, context.bondEnv);
   const orgResults = await runWithConcurrency(context.orgIds, PROGRAM_CONCURRENCY, async (orgId) => {
     try {
+      if (context.programFilterMode === 'include' && context.includedProgramIds.length > 0) {
+        return await fetchIncludedProgramEvents(client, orgId, context);
+      }
+
       const programsResponse = await client.getPrograms(orgId, {
         expand: 'sessions,sessions.products,sessions.products.prices',
         facilityId: context.facilityId,

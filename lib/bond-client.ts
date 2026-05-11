@@ -8,23 +8,29 @@ import {
   Facility,
   Organization
 } from '@/types';
+import { DEFAULT_BOND_ENV, getBondBaseUrl, type BondEnv } from '@/lib/bond-env';
 
-const BASE_URL = 'https://public.api.bondsports.co/v1';
+const DEFAULT_BOND_API_BASE_URL = getBondBaseUrl(DEFAULT_BOND_ENV);
 
 interface BondClientOptions {
   apiKey: string;
   timeout?: number;
+  bondEnv?: BondEnv;
 }
 
 interface BondApiStats {
   totalRequests: number;
   rateLimitHits: number;
+  serverErrors: number;
   errors: number;
 }
+
+const BOND_EVENT_PAGE_FETCH_CONCURRENCY = 3;
 
 let bondApiStats: BondApiStats = {
   totalRequests: 0,
   rateLimitHits: 0,
+  serverErrors: 0,
   errors: 0,
 };
 
@@ -33,7 +39,7 @@ let bondApiStats: BondApiStats = {
  * scoped operation (e.g. a cron run) where you want a clean reading.
  */
 export function resetBondApiStats(): void {
-  bondApiStats = { totalRequests: 0, rateLimitHits: 0, errors: 0 };
+  bondApiStats = { totalRequests: 0, rateLimitHits: 0, serverErrors: 0, errors: 0 };
 }
 
 /**
@@ -51,15 +57,17 @@ export function getBondApiStats(): BondApiStats {
 export class BondClient {
   private apiKey: string;
   private timeout: number;
+  private baseUrl: string;
 
   constructor(options: BondClientOptions) {
     this.apiKey = options.apiKey;
     this.timeout = options.timeout || 30000;
+    this.baseUrl = getBondBaseUrl(options.bondEnv || DEFAULT_BOND_ENV);
   }
 
   private async fetch<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
     bondApiStats.totalRequests++;
-    const url = new URL(`${BASE_URL}${endpoint}`);
+    const url = new URL(endpoint.replace(/^\//, ''), `${this.baseUrl.replace(/\/$/, '')}/`);
 
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -113,6 +121,9 @@ export class BondClient {
           }
 
           if (!response.ok) {
+            if (response.status >= 500) {
+              bondApiStats.serverErrors++;
+            }
             throw new Error(`API Error: ${response.status} ${response.statusText}`);
           }
 
@@ -131,6 +142,51 @@ export class BondClient {
       bondApiStats.errors++;
       throw error;
     }
+  }
+
+  private getTotalPages(response: APIResponse<unknown[]>): number {
+    if (!response.meta || typeof response.meta !== 'object') {
+      return 1;
+    }
+
+    if ('totalPages' in response.meta && typeof response.meta.totalPages === 'number') {
+      return response.meta.totalPages;
+    }
+
+    if (
+      'pagination' in response.meta &&
+      response.meta.pagination &&
+      typeof response.meta.pagination === 'object' &&
+      'lastPage' in response.meta.pagination &&
+      typeof response.meta.pagination.lastPage === 'number'
+    ) {
+      return response.meta.pagination.lastPage;
+    }
+
+    return 1;
+  }
+
+  private async fetchRemainingEventPages(
+    endpoint: string,
+    baseParams: Record<string, string>,
+    totalPages: number
+  ): Promise<APIResponse<SessionEvent[]>[]> {
+    const responses: APIResponse<SessionEvent[]>[] = [];
+
+    for (let page = 2; page <= totalPages; page += BOND_EVENT_PAGE_FETCH_CONCURRENCY) {
+      const batch = Array.from(
+        { length: Math.min(BOND_EVENT_PAGE_FETCH_CONCURRENCY, totalPages - page + 1) },
+        (_, index) =>
+          this.fetch<APIResponse<SessionEvent[]>>(endpoint, {
+            ...baseParams,
+            page: String(page + index),
+          })
+      );
+
+      responses.push(...(await Promise.all(batch)));
+    }
+
+    return responses;
   }
 
   /**
@@ -229,16 +285,10 @@ export class BondClient {
 
     const first = await this.fetch<APIResponse<SessionEvent[]>>(endpoint, { ...baseParams, page: '1' });
     const allEvents: SessionEvent[] = [...(first.data || [])];
-    const totalPages = (first.meta && typeof first.meta === 'object' && 'totalPages' in first.meta)
-      ? (first.meta as any).totalPages || 1
-      : 1;
+    const totalPages = this.getTotalPages(first);
 
     if (totalPages > 1) {
-      const remaining = await Promise.all(
-        Array.from({ length: totalPages - 1 }, (_, i) =>
-          this.fetch<APIResponse<SessionEvent[]>>(endpoint, { ...baseParams, page: String(i + 2) })
-        )
-      );
+      const remaining = await this.fetchRemainingEventPages(endpoint, baseParams, totalPages);
       for (const r of remaining) {
         if (r.data) allEvents.push(...r.data);
       }
@@ -296,16 +346,10 @@ export class BondClient {
 
     const first = await this.fetch<APIResponse<SessionEvent[]>>(endpoint, { ...baseParams, page: '1' });
     const allEvents: SessionEvent[] = [...(first.data || [])];
-    const totalPages = (first.meta && typeof first.meta === 'object' && 'totalPages' in first.meta)
-      ? (first.meta as any).totalPages || 1
-      : 1;
+    const totalPages = this.getTotalPages(first);
 
     if (totalPages > 1) {
-      const remaining = await Promise.all(
-        Array.from({ length: totalPages - 1 }, (_, i) =>
-          this.fetch<APIResponse<SessionEvent[]>>(endpoint, { ...baseParams, page: String(i + 2) })
-        )
-      );
+      const remaining = await this.fetchRemainingEventPages(endpoint, baseParams, totalPages);
       for (const r of remaining) {
         if (r.data) allEvents.push(...r.data);
       }
@@ -343,20 +387,22 @@ export class BondClient {
 /**
  * Create a Bond client with the default API key from environment
  */
-export function createBondClient(apiKey?: string): BondClient {
+export function createBondClient(apiKey?: string, bondEnv?: BondEnv): BondClient {
   const key = apiKey || process.env.BOND_API_KEY;
   
   if (!key) {
     throw new Error('BOND_API_KEY environment variable is required');
   }
 
-  return new BondClient({ apiKey: key });
+  return new BondClient({ apiKey: key, bondEnv: bondEnv || DEFAULT_BOND_ENV });
 }
 
 /**
  * Default API key for development (move to env in production)
  */
 export const DEFAULT_API_KEY = 'zhoZODDEKuaexCBkvumrU7c84TbC3zsC4hENkjlz';
+
+export { DEFAULT_BOND_API_BASE_URL };
 
 /**
  * Default organization IDs
