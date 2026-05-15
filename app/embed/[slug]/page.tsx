@@ -1,12 +1,11 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { getConfigBySlug, getAllPageConfigs } from '@/lib/config';
-import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
-import { transformProgram } from '@/lib/transformers';
-import { cached, programsCacheKey, cacheGet, discoveryResponseCacheKey } from '@/lib/cache';
+import { cacheGet, discoveryResponseCacheKey } from '@/lib/cache';
 import { getAvailabilityMap, mergeAvailabilityIntoEvents } from '@/lib/availability-cache';
 import { Program, DiscoveryConfig } from '@/types';
 import { EmbedDiscoveryPage } from './EmbedDiscoveryPage';
+import { fetchProgramsForDiscoveryPage } from '@/lib/embed-discovery-programs';
 
 interface PageProps {
   params: { slug: string };
@@ -14,43 +13,7 @@ interface PageProps {
 }
 
 async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
-  const apiKey = config.apiKey || DEFAULT_API_KEY;
-  const client = createBondClient(apiKey, config.features.bondEnv);
-  const allPrograms: Program[] = [];
-  const orgIds = config.organizationIds;
-  
-  const promises = orgIds.map(async (orgId) => {
-    try {
-      const cacheKey = programsCacheKey(orgId, undefined, apiKey, config.features.bondEnv);
-      
-      const response = await cached(
-        cacheKey,
-        () => client.getPrograms(orgId),
-        { ttl: Math.max(config.cacheTtl || 0, 4 * 60 * 60) }
-      );
-      
-      const programs = (response.data || []).map(raw => ({
-        ...transformProgram(raw),
-        organizationId: orgId,
-      }));
-      
-      return programs;
-    } catch (error) {
-      console.error(`Error fetching programs for org ${orgId}:`, error);
-      return [];
-    }
-  });
-  
-  const results = await Promise.all(promises);
-  results.forEach(programs => allPrograms.push(...programs));
-  
-  if (config.facilityIds && config.facilityIds.length > 0) {
-    return allPrograms.filter(p => 
-      p.facilityId && config.facilityIds!.includes(p.facilityId)
-    );
-  }
-  
-  return allPrograms;
+  return fetchProgramsForDiscoveryPage(config);
 }
 
 /**

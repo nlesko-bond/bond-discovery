@@ -368,6 +368,8 @@ export type LinkBehavior = 'new_tab' | 'same_window' | 'in_frame';
 export type ProgramFilterMode = 'all' | 'exclude' | 'include';
 export type EnabledTab = 'programs' | 'schedule';
 
+export type BondEmbedPortalTemplate = 'classic' | 'hero-carousel' | 'schedule-first';
+
 export interface FeatureConfig {
   showPricing: boolean;
   showAvailability: boolean;
@@ -435,6 +437,10 @@ export interface FeatureConfig {
    * (`lib/league-schedule-context.ts`). Default off — opt in per page in admin.
    */
   showLeagueScheduleTableAndExport?: boolean;
+  /** Layout for iframe-free embed kit (`/embed-kit/v1`) */
+  embedPortalTemplate?: BondEmbedPortalTemplate;
+  /** When set, browser `Origin` must match one entry for embed-kit CORS */
+  embedAllowedOrigins?: string[];
 }
 
 export type FilterType = 

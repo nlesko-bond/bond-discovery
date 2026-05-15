@@ -3,11 +3,10 @@ import { notFound } from 'next/navigation';
 import { DiscoveryPage } from '@/components/discovery/DiscoveryPage';
 import { ProgramGridSkeleton } from '@/components/ui/Skeletons';
 import { getConfigBySlug, getAllPageConfigs } from '@/lib/config';
-import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
-import { transformProgram } from '@/lib/transformers';
-import { cached, programsCacheKey, cacheGet, discoveryResponseCacheKey } from '@/lib/cache';
+import { cacheGet, discoveryResponseCacheKey } from '@/lib/cache';
 import { getAvailabilityMap, mergeAvailabilityIntoEvents } from '@/lib/availability-cache';
 import { Program, DiscoveryConfig } from '@/types';
+import { fetchProgramsForDiscoveryPage } from '@/lib/embed-discovery-programs';
 
 interface PageProps {
   params: { slug: string };
@@ -15,54 +14,7 @@ interface PageProps {
 }
 
 async function getPrograms(config: DiscoveryConfig): Promise<Program[]> {
-  const apiKey = config.apiKey || DEFAULT_API_KEY;
-  const bondEnv = config.features.bondEnv;
-  const client = createBondClient(apiKey, bondEnv);
-  const allPrograms: Program[] = [];
-  const orgIds = config.organizationIds;
-  const today = new Date().toISOString().split('T')[0];
-  
-  const promises = orgIds.map(async (orgId) => {
-    try {
-      const cacheKey = programsCacheKey(orgId, undefined, apiKey, config.features.bondEnv);
-      
-      const response = await cached(
-        cacheKey,
-        () => client.getPrograms(orgId),
-        { ttl: Math.max(config.cacheTtl || 0, 4 * 60 * 60) }
-      );
-      
-      const programs = (response.data || []).map(raw => ({
-        ...transformProgram(raw),
-        organizationId: orgId,
-      }));
-      
-      programs.forEach(program => {
-        if (program.sessions) {
-          program.sessions = program.sessions.filter(session => {
-            if (!session.endDate) return true;
-            return session.endDate >= today;
-          });
-        }
-      });
-      
-      return programs.filter(p => !p.sessions || p.sessions.length > 0);
-    } catch (error) {
-      console.error(`Error fetching programs for org ${orgId}:`, error);
-      return [];
-    }
-  });
-  
-  const results = await Promise.all(promises);
-  results.forEach(programs => allPrograms.push(...programs));
-  
-  if (config.facilityIds && config.facilityIds.length > 0) {
-    return allPrograms.filter(p => 
-      p.facilityId && config.facilityIds!.includes(p.facilityId)
-    );
-  }
-  
-  return allPrograms;
+  return fetchProgramsForDiscoveryPage(config);
 }
 
 /**

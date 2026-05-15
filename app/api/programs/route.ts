@@ -20,9 +20,12 @@ export async function GET(request: Request) {
   const includedProgramIds = pageConfig?.includedProgramIds || [];
   
   const orgIdsParam = searchParams.get('orgIds');
-  const orgIds = orgIdsParam 
-    ? orgIdsParam.split(/[_,]/).filter(Boolean)
-    : DEFAULT_ORG_IDS;
+  const orgIds =
+    orgIdsParam && orgIdsParam.length > 0
+      ? orgIdsParam.split(/[_,]/).filter(Boolean)
+      : pageConfig?.organizationIds && pageConfig.organizationIds.length > 0
+        ? pageConfig.organizationIds
+        : DEFAULT_ORG_IDS;
   
   const facilityId = searchParams.get('facilityId') || undefined;
   const expand = searchParams.get('expand') || 'sessions,sessions.products,sessions.products.prices';

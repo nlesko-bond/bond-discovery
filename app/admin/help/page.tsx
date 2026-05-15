@@ -121,13 +121,42 @@ export default function HelpPage() {
           </div>
         </div>
 
-        {/* Embedding */}
         <div id="embedding" className="bg-white rounded-xl border border-gray-200 p-6 scroll-mt-20">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Embedding in Webflow</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Embed kit (no iframe)</h2>
           <p className="text-gray-600 mb-4">
-            Use the /embed/ version for iframe embedding:
+            Prefer the iframe-free embed: add the script once (site footer), then a mount element on any page.
+            Data loads from this app; do not put API keys in Webflow.
+            Full playbook (Designer vs publish, <code className="bg-gray-100 px-1 rounded">linkBehavior</code>, CORS, rate limits):{' '}
+            <a className="text-blue-600 underline font-medium" href="/docs/webflow-embed-kit.md" target="_blank" rel="noopener noreferrer">
+              Webflow embed kit (markdown)
+            </a>
           </p>
-          
+          <ol className="list-decimal list-inside text-sm text-gray-700 space-y-2 mb-4">
+            <li>Webflow: Project Settings → Custom Code → Footer Code — paste the script tag below (replace the host with your deployed discovery URL).</li>
+            <li>Add an Embed component where the programs should appear with the mount markup below.</li>
+            <li>Optional: preview a portal without saving config — pass <code className="bg-gray-100 px-1 rounded">portal</code> on bootstrap only, e.g. <code className="bg-gray-100 px-1 rounded">/api/embed/bootstrap?slug=toca&amp;portal=hero-carousel</code> (or use <code className="bg-gray-100 px-1 rounded">data-bond-portal</code> on the mount).</li>
+            <li>Default layout for embed: set <code className="bg-gray-100 px-1 rounded">features.embedPortalTemplate</code> to <code className="bg-gray-100 px-1 rounded">classic</code>, <code className="bg-gray-100 px-1 rounded">hero-carousel</code>, or <code className="bg-gray-100 px-1 rounded">schedule-first</code> in the page JSON.</li>
+            <li>Registration targets: <code className="bg-gray-100 px-1 rounded">new_tab</code> (default), <code className="bg-gray-100 px-1 rounded">same_window</code> (<code className="bg-gray-100 px-1 rounded">_top</code>), or <code className="bg-gray-100 px-1 rounded">in_frame</code> (<code className="bg-gray-100 px-1 rounded">_self</code>) via <code className="bg-gray-100 px-1 rounded">features.linkBehavior</code>.</li>
+            <li>Optional lockdown: set <code className="bg-gray-100 px-1 rounded">features.embedAllowedOrigins</code> to an array of exact origins (e.g. your Webflow site) for CORS.</li>
+          </ol>
+          <div className="bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto mb-6">
+            <pre>{`<script src="https://YOUR-DISCOVERY-HOST/embed-kit/v1.js" defer></script>
+
+<div
+  data-bond-discovery
+  data-bond-slug="YOUR_SLUG"
+  data-bond-base="https://YOUR-DISCOVERY-HOST"
+  data-bond-portal="hero-carousel"
+  data-bond-theme='{"mode":"light","accent":"#2563eb"}'
+></div>`}</pre>
+          </div>
+          <p className="text-gray-600 mb-2 text-sm">
+            Or call <code className="bg-gray-100 px-1 rounded">BondDiscovery.init</code> manually after the script loads.
+          </p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2 mt-6">Legacy iframe embed</h3>
+          <p className="text-gray-600 mb-4 text-sm">
+            Use only if a partner blocks third-party scripts but allows iframes.
+          </p>
           <div className="bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto">
             <pre>{`<iframe 
   src="https://bond-discovery.vercel.app/embed/toca"
