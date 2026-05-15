@@ -13,6 +13,7 @@ import { getBondApiStats } from '@/lib/bond-client';
 import {
   embedKitCorsHeaders,
   isEmbedKitBrowserRequestAllowed,
+  type IEmbedKitCorsHeaderOptions,
 } from '@/lib/embed-cors';
 import type { DiscoveryConfig } from '@/types';
 
@@ -32,8 +33,9 @@ function mergeEmbedCors(
   request: Request,
   config: DiscoveryConfig | null,
   headers?: HeadersInit,
+  embedCorsOptions?: IEmbedKitCorsHeaderOptions,
 ): Record<string, string> {
-  const base = embedKitCorsHeaders(request, config);
+  const base = embedKitCorsHeaders(request, config, embedCorsOptions);
   if (!headers) {
     return base;
   }
@@ -78,7 +80,12 @@ export async function GET(request: Request) {
   ) {
     return NextResponse.json(
       { error: 'Forbidden' },
-      { status: 403, headers: mergeEmbedCors(request, embedCorsConfig) },
+      {
+        status: 403,
+        headers: mergeEmbedCors(request, embedCorsConfig, undefined, {
+          reflectRequestOriginForErrorResponse: true,
+        }),
+      },
     );
   }
 

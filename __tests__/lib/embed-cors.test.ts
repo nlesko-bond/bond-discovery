@@ -66,4 +66,24 @@ describe('embed-cors', () => {
     expect(isEmbedKitBrowserRequestAllowed(request, c)).toBe(false);
     expect(embedKitCorsHeaders(request, c)['Access-Control-Allow-Origin']).toBeUndefined();
   });
+
+  it('reflects Origin on denied responses when opted in', () => {
+    const request = new Request('https://api.example.com/x', {
+      headers: { Origin: 'https://evil.example' },
+    });
+    const c = cfg(['https://webflow.io']);
+    expect(
+      embedKitCorsHeaders(request, c, { reflectRequestOriginForErrorResponse: true })[
+        'Access-Control-Allow-Origin'
+      ],
+    ).toBe('https://evil.example');
+  });
+
+  it('trims allowlist entries and Origin when matching', () => {
+    const request = new Request('https://api.example.com/x', {
+      headers: { Origin: '  https://webflow.io  ' },
+    });
+    const c = cfg([' https://webflow.io ']);
+    expect(isEmbedKitBrowserRequestAllowed(request, c)).toBe(true);
+  });
 });

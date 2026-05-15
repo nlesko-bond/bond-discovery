@@ -95,9 +95,9 @@ Configured per discovery page in admin (`features.linkBehavior`):
 |-------|---------------------|
 | `new_tab` | `target="_blank"` + `rel="noopener noreferrer"` (default). |
 | `same_window` | `target="_top"` so Bond checkout opens in the top window (common on marketing sites). |
-| `in_frame` | `target="_self"` (stays inside the host page / shadow root navigation context). |
+| `in_frame` | Opens Bond URLs in an on-page overlay (iframe) so the Webflow page stays underneath; use **Open in new tab** if the target blocks framing. |
 
-Checkout still runs on **Bond** unless you build a deeper integration; this only controls how the browser navigates to the registration URL.
+Checkout still runs on **Bond**; `linkBehavior` only controls how the browser opens that URL from the embed.
 
 ## CORS lockdown (`features.embedAllowedOrigins`)
 
@@ -105,7 +105,28 @@ Optional JSON array of **exact** `Origin` values allowed to read embed APIs, e.g
 
 `"embedAllowedOrigins": ["https://my-site.webflow.io","https://www.my-site.com"]`
 
-If omitted, embed APIs use `Access-Control-Allow-Origin: *`.
+If omitted, embed APIs use `Access-Control-Allow-Origin: *` (any site can call them).
+
+**If you set this list, every browser origin that loads the embed must appear in it**, including:
+
+- Your **Webflow staging** site (e.g. `https://your-project.webflow.io`)
+- Your **live** custom domain (e.g. `https://www.example.com`)
+
+Origins are compared as full strings (`https://` vs `http://` and `www` matter). Extra spaces in admin are trimmed.
+
+### Test CORS from the terminal
+
+Replace `SLUG` and `ORIGIN` with your page slug and the exact Webflow origin (no trailing slash):
+
+```bash
+curl -sS -D - -o /dev/null -H "Origin: https://prod-testing.webflow.io" \
+  "https://discovery.bondsports.co/api/embed/bootstrap?slug=SLUG"
+```
+
+- Look for `access-control-allow-origin: https://prod-testing.webflow.io` (or `*`) on **200** responses.
+- If you see **403** with a JSON body, the origin is not on the allowlist: add it in **Admin → Pages → [slug] → Filters → Embed allowed origins (CORS)** or clear the list to allow all during testing.
+
+You can also open the bootstrap URL in a **new browser tab** (same-origin to discovery): that omits `Origin` and always works for a quick JSON sanity check.
 
 ## Rate limits
 

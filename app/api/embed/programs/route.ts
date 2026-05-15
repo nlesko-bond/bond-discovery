@@ -41,7 +41,12 @@ export async function GET(request: Request) {
   if (!isEmbedKitBrowserRequestAllowed(request, config)) {
     return NextResponse.json(
       { error: 'Forbidden' },
-      { status: 403, headers: embedKitCorsHeaders(request, config) },
+      {
+        status: 403,
+        headers: embedKitCorsHeaders(request, config, {
+          reflectRequestOriginForErrorResponse: true,
+        }),
+      },
     );
   }
 
@@ -52,7 +57,9 @@ export async function GET(request: Request) {
       {
         status: 429,
         headers: {
-          ...embedKitCorsHeaders(request, config),
+          ...embedKitCorsHeaders(request, config, {
+            reflectRequestOriginForErrorResponse: true,
+          }),
           'Retry-After': String(rate.retryAfterSeconds),
         },
       },

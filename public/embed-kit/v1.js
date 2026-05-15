@@ -7,12 +7,16 @@
   var HERO_SECTION_GAP_PX = 16;
   var DESCRIPTION_PREVIEW_CHARS = 180;
   var SCHEDULE_FETCH_ROWS = 120;
+  var SCHEDULE_DEEP_LINK_VIEW = 'list';
+  var MAX_DRAWER_EVENTS = 40;
   var MOBILE_STACKED_SCHEDULE_MAX_WIDTH_PX = 720;
   var OVERLAY_Z_INDEX = 2147483000;
   var EMBED_MODAL_MAX_WIDTH_REM = 56;
   var EMBED_MODAL_MAX_HEIGHT_REM = 52;
   var EMBED_MODAL_VIEWPORT_WIDTH_CAP_PCT = 96;
   var EMBED_MODAL_VIEWPORT_HEIGHT_CAP_PCT = 90;
+
+  var embedProgramsByMount = new WeakMap();
 
   var PROGRAM_TYPE_LABELS = {
     class: 'Class',
@@ -112,9 +116,18 @@
           node.textContent = props[k];
         } else if (k.slice(0, 2) === 'on' && typeof props[k] === 'function') {
           node.addEventListener(k.slice(2), props[k]);
-        } else if (k === 'href' || k === 'target' || k === 'rel' || k === 'role' || k === 'ariaSelected') {
+        } else if (
+          k === 'href' ||
+          k === 'target' ||
+          k === 'rel' ||
+          k === 'role' ||
+          k === 'ariaSelected' ||
+          k === 'ariaPressed'
+        ) {
           if (k === 'ariaSelected') {
             node.setAttribute('aria-selected', props[k] ? 'true' : 'false');
+          } else if (k === 'ariaPressed') {
+            node.setAttribute('aria-pressed', props[k] ? 'true' : 'false');
           } else {
             node.setAttribute(k, props[k]);
           }
@@ -237,6 +250,35 @@
       '.bd-overlay-close{padding:0.35rem 0.75rem;border-radius:8px;border:1px solid #cbd5e1;background:#fff;font:inherit;cursor:pointer;font-weight:600;font-size:0.8125rem}' +
       '.bd-overlay-link{font-size:0.8125rem;font-weight:600;color:var(--bd-accent)}' +
       '.bd-overlay-frame{flex:1;width:100%;border:none;min-height:0;background:#fff}' +
+      '.bd-drawer-backdrop{position:fixed;inset:0;background:rgba(15,23,42,0.45);z-index:' +
+      OVERLAY_Z_INDEX +
+      ';display:flex;align-items:flex-end;justify-content:center;padding:0}' +
+      '@media (min-width:' +
+      (MOBILE_STACKED_SCHEDULE_MAX_WIDTH_PX + 1) +
+      'px){.bd-drawer-backdrop{align-items:center;padding:1rem}}' +
+      '.bd-drawer-dialog{width:100%;max-width:40rem;max-height:92vh;background:#fff;border-radius:12px 12px 0 0;box-shadow:0 -8px 40px rgba(0,0,0,0.18);display:flex;flex-direction:column;overflow:hidden}' +
+      '@media (min-width:' +
+      (MOBILE_STACKED_SCHEDULE_MAX_WIDTH_PX + 1) +
+      'px){.bd-drawer-dialog{border-radius:12px;max-height:min(88vh,40rem)}}' +
+      '.bd-drawer-bar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.55rem 0.75rem;border-bottom:1px solid #e2e8f0;background:#f8fafc}' +
+      '.bd-drawer-title{font-size:0.95rem;font-weight:700;color:#0f172a;line-height:1.25;flex:1;min-width:0}' +
+      '.bd-drawer-body{overflow-y:auto;flex:1;padding:0.75rem 1rem 1.25rem;-webkit-overflow-scrolling:touch}' +
+      '.bd-drawer-section{margin-bottom:1.15rem}' +
+      '.bd-drawer-h{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;margin:0 0 0.4rem}' +
+      '.bd-drawer-links{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem}' +
+      '.bd-drawer-p{font-size:0.875rem;color:#475569;line-height:1.5;margin:0}' +
+      '.bd-session-card{border:1px solid #e2e8f0;border-radius:10px;padding:0.65rem 0.75rem;margin-bottom:0.5rem;background:#fafafa}' +
+      '.bd-session-card h4{margin:0 0 0.25rem;font-size:0.9rem;color:#0f172a}' +
+      '.bd-mini-row{font-size:0.78rem;color:#64748b;margin-bottom:0.35rem}' +
+      '.bd-event-mini{border-left:3px solid var(--bd-accent);padding:0.45rem 0 0.45rem 0.65rem;margin-bottom:0.45rem;background:#fff;border-radius:0 8px 8px 0}' +
+      '.bd-schedule-list{display:flex;flex-direction:column;gap:0.25rem}' +
+      '.bd-schedule-day-h{font-size:0.8rem;font-weight:800;color:#0f172a;margin:0.75rem 0 0.35rem;padding-bottom:0.25rem;border-bottom:1px solid #e2e8f0}' +
+      '.bd-schedule-day-h:first-child{margin-top:0}' +
+      '.bd-schedule-list-card{border:1px solid #e2e8f0;border-radius:10px;padding:0.65rem 0.75rem;background:#fff}' +
+      '.bd-schedule-list-card .bd-meta{font-size:0.75rem;color:#64748b}' +
+      '.bd-view-toggle{display:inline-flex;border:1px solid #e2e8f0;border-radius:999px;overflow:hidden;background:#fff;margin-right:0.5rem}' +
+      '.bd-view-toggle button{border:none;background:transparent;padding:0.45rem 0.9rem;font:inherit;cursor:pointer;font-weight:600;font-size:0.8125rem;color:#64748b}' +
+      '.bd-view-toggle button[aria-pressed="true"]{background:var(--bd-primary);color:#fff}' +
       '.bd-empty{text-align:center;padding:2.5rem 1rem;color:#64748b}' +
       '.bd-empty h3{margin:0 0 0.5rem;font-size:1.1rem;color:#0f172a}' +
       '.bd-schedule-loading{font-size:0.875rem;color:#64748b;padding:0.5rem 0}' +
@@ -337,6 +379,48 @@
         encodeURIComponent(String(program.id))
       );
     }
+  }
+
+  function buildDiscoveryDeepLink(boot, spec) {
+    var base = boot.paths && boot.paths.fullDiscoveryUrl;
+    if (!base) return '';
+    try {
+      var u = new URL(base);
+      if (spec.viewMode) u.searchParams.set('viewMode', spec.viewMode);
+      if (spec.programIds && spec.programIds.length)
+        u.searchParams.set('programIds', spec.programIds.map(String).join('_'));
+      if (spec.sessionIds && spec.sessionIds.length)
+        u.searchParams.set('sessionIds', spec.sessionIds.map(String).join('_'));
+      if (spec.scheduleView) u.searchParams.set('scheduleView', spec.scheduleView);
+      return u.toString();
+    } catch (e) {
+      return base;
+    }
+  }
+
+  function minPriceFromSession(session) {
+    var products = session.products || [];
+    var best = null;
+    products.forEach(function (p) {
+      var prices = p.prices || [];
+      prices.forEach(function (pr) {
+        var n = typeof pr.price === 'number' ? pr.price : pr.amount;
+        if (typeof n === 'number' && !Number.isNaN(n)) {
+          if (best === null || n < best) best = n;
+        }
+      });
+    });
+    return best;
+  }
+
+  function sessionRegisterHref(session, program, boot) {
+    if (boot.features.hideRegistrationLinks) return null;
+    if (boot.features.customRegistrationUrl) return boot.features.customRegistrationUrl;
+    var link = session.linkSEO || program.linkSEO;
+    if (!link) return null;
+    var st = session.registrationWindowStatus;
+    var closed = st === 'closed' || st === 'ended';
+    return buildRegistrationUrl(link, { isRegistrationOpen: !closed });
   }
 
   function applyHostFontVars(mount) {
@@ -484,12 +568,13 @@
     }
     actions.appendChild(
       el('a', {
-        className: 'bd-btn bd-btn--ghost',
+        className: 'bd-btn bd-btn--ghost bd-detail-link',
         href: buildProgramDetailUrl(boot, program),
         target: t,
         rel: 'noopener noreferrer',
         'aria-label': 'Full program details for ' + (program.name || 'program'),
         text: 'Details',
+        'data-bd-program-id': String(program.id),
       }),
     );
 
@@ -634,6 +719,89 @@
     }
   }
 
+  function eventSortKey(ev) {
+    return ev.startDate || '';
+  }
+
+  function groupScheduleRowsByDate(rows) {
+    var sorted = rows.slice().sort(function (a, b) {
+      return eventSortKey(a).localeCompare(eventSortKey(b));
+    });
+    var groups = [];
+    var byKey = {};
+    sorted.forEach(function (ev) {
+      var when = formatEventWhen(ev);
+      var key = when.date || 'Date TBD';
+      if (!byKey[key]) {
+        byKey[key] = { dateLabel: key, items: [] };
+        groups.push(byKey[key]);
+      }
+      byKey[key].items.push(ev);
+    });
+    return groups;
+  }
+
+  function renderScheduleList(rows, boot, t) {
+    var showPrice = boot.features.showPricing !== false;
+    var showSpots = boot.features.showAvailability !== false;
+    var groups = groupScheduleRowsByDate(rows);
+    var root = el('div', { className: 'bd-schedule-list' });
+    groups.forEach(function (g) {
+      root.appendChild(el('h3', { className: 'bd-schedule-day-h', text: g.dateLabel }));
+      g.items.forEach(function (ev) {
+        var when = formatEventWhen(ev);
+        var where = [ev.facilityName, ev.spaceName].filter(Boolean).join(' \u00b7 ');
+        var href = ev.linkSEO
+          ? buildRegistrationUrl(ev.linkSEO, {
+              isRegistrationOpen: ev.registrationWindowStatus === 'open',
+            })
+          : null;
+        var reg = href
+          ? el('a', {
+              className: 'bd-btn',
+              href: href,
+              target: t,
+              rel: 'noopener noreferrer',
+              'aria-label': 'Register for ' + (ev.programName || ev.title || 'event'),
+              text: 'Register',
+            })
+          : el('span', { text: '\u2014' });
+        var titleText = ev.title || ev.programName || 'Event';
+        var metaParts = [when.time, ev.programName && ev.title && ev.title !== ev.programName ? ev.title : '', where]
+          .filter(Boolean)
+          .join(' \u00b7 ');
+        var spotLine = '';
+        if (showSpots) {
+          var sr = ev.spotsRemaining;
+          var mx = ev.maxParticipants;
+          spotLine =
+            typeof sr === 'number' && typeof mx === 'number'
+              ? sr + ' / ' + mx + ' spots'
+              : typeof sr === 'number'
+                ? sr + ' spots'
+                : '';
+        }
+        var priceLine = '';
+        if (showPrice) {
+          var sp = ev.startingPrice;
+          priceLine =
+            typeof sp === 'number' && !Number.isNaN(sp) ? 'From $' + sp.toFixed(0) : '';
+        }
+        var metaTail = [spotLine, priceLine].filter(Boolean).join(' \u00b7 ');
+        var metaText = [metaParts, metaTail].filter(Boolean).join(metaParts && metaTail ? ' \u00b7 ' : '');
+        var actions = el('div', { className: 'bd-actions', style: { marginTop: '0.5rem' } }, [reg]);
+        root.appendChild(
+          el('div', { className: 'bd-schedule-list-card' }, [
+            el('div', { style: { fontWeight: '700', color: '#0f172a', marginBottom: '0.25rem' }, text: titleText }),
+            metaText ? el('div', { className: 'bd-meta', text: metaText }) : el('span'),
+            actions,
+          ]),
+        );
+      });
+    });
+    return root;
+  }
+
   function renderScheduleTable(rows, boot, t) {
     var showPrice = boot.features.showPricing !== false;
     var showSpots = boot.features.showAvailability !== false;
@@ -743,8 +911,43 @@
           );
           return;
         }
-        var state = { search: '', sport: '', programId: '', allRows: rows };
+        var state = {
+          search: '',
+          sport: '',
+          programId: '',
+          allRows: rows,
+          scheduleLayout:
+            typeof window !== 'undefined' &&
+            window.matchMedia &&
+            window.matchMedia('(max-width: ' + MOBILE_STACKED_SCHEDULE_MAX_WIDTH_PX + 'px)').matches
+              ? 'list'
+              : 'table',
+        };
         var toolbar = el('div', { className: 'bd-toolbar bd-schedule-toolbar' });
+        var layoutToggle = el('div', {
+          className: 'bd-view-toggle',
+          role: 'group',
+          'aria-label': 'Schedule layout',
+        });
+        var btnTable = el('button', { type: 'button', text: 'Table', ariaPressed: true });
+        var btnList = el('button', { type: 'button', text: 'List', ariaPressed: false });
+        layoutToggle.appendChild(btnTable);
+        layoutToggle.appendChild(btnList);
+        function syncLayoutToggle() {
+          btnTable.setAttribute('aria-pressed', state.scheduleLayout === 'table' ? 'true' : 'false');
+          btnList.setAttribute('aria-pressed', state.scheduleLayout === 'list' ? 'true' : 'false');
+        }
+        syncLayoutToggle();
+        btnTable.addEventListener('click', function () {
+          state.scheduleLayout = 'table';
+          syncLayoutToggle();
+          redraw();
+        });
+        btnList.addEventListener('click', function () {
+          state.scheduleLayout = 'list';
+          syncLayoutToggle();
+          redraw();
+        });
         var search = el('input', {
           type: 'search',
           className: 'bd-search',
@@ -786,6 +989,7 @@
           state.programId = selProg.value;
           redraw();
         });
+        toolbar.appendChild(layoutToggle);
         toolbar.appendChild(search);
         toolbar.appendChild(selSport);
         toolbar.appendChild(selProg);
@@ -810,7 +1014,11 @@
             );
             return;
           }
-          tableHost.appendChild(renderScheduleTable(slice, boot, t));
+          if (state.scheduleLayout === 'list') {
+            tableHost.appendChild(renderScheduleList(slice, boot, t));
+          } else {
+            tableHost.appendChild(renderScheduleTable(slice, boot, t));
+          }
         }
         wrap.appendChild(toolbar);
         wrap.appendChild(countEl);
@@ -824,7 +1032,7 @@
     return wrap;
   }
 
-  function mountClassicShell(shadow, programs, boot, origin) {
+  function mountClassicShell(shadow, programs, boot, origin, mount) {
     var t = linkTarget(boot.features.linkBehavior);
     var shell = el('div', { className: 'bd-shell' });
     shell.appendChild(renderSiteHeader(boot));
@@ -890,10 +1098,11 @@
     }
     shell.appendChild(footerLinks(boot));
     shadow.appendChild(shell);
+    attachProgramDetailClicks(shadow, boot, mount, origin, t);
     attachBondOverlayNavigation(shadow, boot);
   }
 
-  function mountHeroCarousel(shadow, programs, boot, origin) {
+  function mountHeroCarousel(shadow, programs, boot, origin, mount) {
     var t = linkTarget(boot.features.linkBehavior);
     var state = { sport: '', facility: '', ptype: '', search: '' };
     var carousel = el('div', { className: 'bd-carousel' });
@@ -926,10 +1135,11 @@
     );
     shell.appendChild(footerLinks(boot));
     shadow.appendChild(shell);
+    attachProgramDetailClicks(shadow, boot, mount, origin, t);
     attachBondOverlayNavigation(shadow, boot);
   }
 
-  function mountScheduleFirst(shadow, programs, boot, origin) {
+  function mountScheduleFirst(shadow, programs, boot, origin, mount) {
     var t = linkTarget(boot.features.linkBehavior);
     var shell = el('div', { className: 'bd-shell' });
     shell.appendChild(renderSiteHeader(boot));
@@ -941,6 +1151,7 @@
     shell.appendChild(block);
     shell.appendChild(footerLinks(boot));
     shadow.appendChild(shell);
+    attachProgramDetailClicks(shadow, boot, mount, origin, t);
     attachBondOverlayNavigation(shadow, boot);
   }
 
@@ -990,6 +1201,237 @@
     shadow.appendChild(backdrop);
   }
 
+  function scheduleDeepLinkForEvent(boot, ev, fallbackProgramId) {
+    var pid = ev.programId != null ? ev.programId : fallbackProgramId;
+    var spec = {
+      viewMode: 'schedule',
+      programIds: pid != null ? [pid] : [],
+      scheduleView: SCHEDULE_DEEP_LINK_VIEW,
+    };
+    if (ev.sessionId) spec.sessionIds = [ev.sessionId];
+    return buildDiscoveryDeepLink(boot, spec);
+  }
+
+  function openProgramDetailDrawer(shadow, program, boot, origin, t) {
+    var prev = shadow.querySelector('.bd-drawer-backdrop');
+    if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
+    var programDetailUrl = buildProgramDetailUrl(boot, program);
+    var scheduleForProgramUrl = buildDiscoveryDeepLink(boot, {
+      viewMode: 'schedule',
+      programIds: [program.id],
+      scheduleView: SCHEDULE_DEEP_LINK_VIEW,
+    });
+    var backdrop = el('div', { className: 'bd-drawer-backdrop' });
+    var dialog = el('div', {
+      className: 'bd-drawer-dialog',
+      role: 'dialog',
+      'aria-modal': 'true',
+      'aria-label': 'Program details for ' + (program.name || 'program'),
+    });
+    var bar = el('div', { className: 'bd-drawer-bar' });
+    var ttl = el('div', { className: 'bd-drawer-title', text: program.name || 'Program' });
+    var closeBtn = el('button', { type: 'button', className: 'bd-overlay-close', text: 'Close' });
+    function onKeyDown(ev) {
+      if (ev.key === 'Escape') close();
+    }
+    function close() {
+      document.removeEventListener('keydown', onKeyDown);
+      if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+    }
+    closeBtn.addEventListener('click', close);
+    backdrop.addEventListener('click', function (ev) {
+      if (ev.target === backdrop) close();
+    });
+    document.addEventListener('keydown', onKeyDown);
+    bar.appendChild(ttl);
+    bar.appendChild(closeBtn);
+    var body = el('div', { className: 'bd-drawer-body' });
+    var linksSection = el('div', { className: 'bd-drawer-section' });
+    linksSection.appendChild(el('div', { className: 'bd-drawer-h', text: 'Open in discovery' }));
+    linksSection.appendChild(
+      el('div', { className: 'bd-drawer-links' }, [
+        el('a', {
+          className: 'bd-btn bd-btn--ghost',
+          href: programDetailUrl,
+          target: t,
+          rel: 'noopener noreferrer',
+          text: 'Program page',
+          'data-bd-external': '1',
+        }),
+        el('a', {
+          className: 'bd-btn bd-btn--ghost',
+          href: scheduleForProgramUrl,
+          target: t,
+          rel: 'noopener noreferrer',
+          text: 'Schedule',
+          'data-bd-external': '1',
+        }),
+      ]),
+    );
+    body.appendChild(linksSection);
+    var longDesc = program.longDescription || program.description || '';
+    if (longDesc) {
+      var copySec = el('div', { className: 'bd-drawer-section' });
+      copySec.appendChild(el('div', { className: 'bd-drawer-h', text: 'About' }));
+      copySec.appendChild(el('p', { className: 'bd-drawer-p', text: longDesc }));
+      body.appendChild(copySec);
+    }
+    var sessionsSection = el('div', { className: 'bd-drawer-section' });
+    sessionsSection.appendChild(el('div', { className: 'bd-drawer-h', text: 'Sessions' }));
+    var sessList = getSessions(program);
+    if (!sessList.length) {
+      sessionsSection.appendChild(
+        el('p', {
+          className: 'bd-drawer-p',
+          text: 'No session list was included in this embed response. Use the program or schedule links above for full session and segment detail.',
+        }),
+      );
+    } else {
+      sessList.forEach(function (session) {
+        var sessionScheduleUrl = buildDiscoveryDeepLink(boot, {
+          viewMode: 'schedule',
+          programIds: [program.id],
+          sessionIds: [session.id],
+          scheduleView: SCHEDULE_DEEP_LINK_VIEW,
+        });
+        var regHref = sessionRegisterHref(session, program, boot);
+        var fac =
+          (session.facility && session.facility.name) ||
+          (typeof session.facilityName === 'string' ? session.facilityName : '') ||
+          '';
+        var card = el('div', { className: 'bd-session-card' });
+        card.appendChild(el('h4', { text: session.name || 'Session' }));
+        if (fac) {
+          card.appendChild(el('div', { className: 'bd-mini-row', text: fac }));
+        }
+        var sessPrice = boot.features.showPricing !== false ? minPriceFromSession(session) : null;
+        if (sessPrice != null) {
+          card.appendChild(
+            el('div', { className: 'bd-mini-row', text: 'From $' + sessPrice.toFixed(0) }),
+          );
+        }
+        var rowLinks = el('div', { className: 'bd-drawer-links', style: { marginTop: '0.35rem' } });
+        rowLinks.appendChild(
+          el('a', {
+            className: 'bd-btn bd-btn--ghost',
+            href: sessionScheduleUrl,
+            target: t,
+            rel: 'noopener noreferrer',
+            text: 'View on schedule',
+            'data-bd-external': '1',
+          }),
+        );
+        if (regHref) {
+          rowLinks.appendChild(
+            el('a', {
+              className: 'bd-btn',
+              href: regHref,
+              target: t,
+              rel: 'noopener noreferrer',
+              text: 'Register',
+              'data-bd-external': '1',
+            }),
+          );
+        }
+        card.appendChild(rowLinks);
+        sessionsSection.appendChild(card);
+      });
+    }
+    body.appendChild(sessionsSection);
+    var eventsSection = el('div', { className: 'bd-drawer-section' });
+    eventsSection.appendChild(el('div', { className: 'bd-drawer-h', text: 'Upcoming events' }));
+    var eventsLoading = el('p', { className: 'bd-drawer-p', text: 'Loading events\u2026' });
+    eventsSection.appendChild(eventsLoading);
+    body.appendChild(eventsSection);
+    dialog.appendChild(bar);
+    dialog.appendChild(body);
+    backdrop.appendChild(dialog);
+    shadow.appendChild(backdrop);
+    fetchScheduleRows(origin, boot.slug)
+      .then(function (allRows) {
+        if (!eventsLoading.parentNode) return;
+        eventsSection.removeChild(eventsLoading);
+        var pid = String(program.id);
+        var evs = allRows
+          .filter(function (r) {
+            return String(r.programId || '') === pid;
+          })
+          .slice(0, MAX_DRAWER_EVENTS);
+        if (!evs.length) {
+          eventsSection.appendChild(
+            el('p', {
+              className: 'bd-drawer-p',
+              text: 'No events were returned for this program in the embed preview window. Open the schedule on discovery for the full calendar.',
+            }),
+          );
+          return;
+        }
+        evs.forEach(function (ev) {
+          var when = formatEventWhen(ev);
+          var seg = ev.segmentName ? ' \u00b7 ' + ev.segmentName : '';
+          var line =
+            when.date +
+            (when.time ? ' \u00b7 ' + when.time : '') +
+            ' \u00b7 ' +
+            (ev.title || ev.programName || 'Event') +
+            seg;
+          var viewHref = scheduleDeepLinkForEvent(boot, ev, program.id);
+          eventsSection.appendChild(
+            el('div', { className: 'bd-event-mini' }, [
+              el('div', { style: { fontSize: '0.82rem', fontWeight: '600', color: '#0f172a' }, text: line }),
+              viewHref
+                ? el('div', { style: { marginTop: '0.35rem' } }, [
+                    el('a', {
+                      className: 'bd-btn bd-btn--ghost',
+                      href: viewHref,
+                      target: t,
+                      rel: 'noopener noreferrer',
+                      text: 'Open on schedule',
+                      'data-bd-external': '1',
+                    }),
+                  ])
+                : el('span'),
+            ]),
+          );
+        });
+      })
+      .catch(function () {
+        if (!eventsLoading.parentNode) return;
+        eventsSection.removeChild(eventsLoading);
+        eventsSection.appendChild(
+          el('p', {
+            className: 'bd-drawer-p',
+            text: 'Events could not be loaded. Try again from the full discovery page.',
+          }),
+        );
+      });
+  }
+
+  function attachProgramDetailClicks(shadow, boot, mount, origin, t) {
+    if (boot.features.linkBehavior !== 'in_frame') return;
+    shadow.addEventListener(
+      'click',
+      function (e) {
+        var a = e.target && e.target.closest('a.bd-detail-link');
+        if (!a || !shadow.contains(a)) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        var rawId = a.getAttribute('data-bd-program-id');
+        var programs = embedProgramsByMount.get(mount) || [];
+        var program = null;
+        for (var i = 0; i < programs.length; i++) {
+          if (String(programs[i].id) === String(rawId)) {
+            program = programs[i];
+            break;
+          }
+        }
+        if (!program) return;
+        openProgramDetailDrawer(shadow, program, boot, origin, t);
+      },
+      true,
+    );
+  }
+
   function attachBondOverlayNavigation(shadow, boot) {
     if (boot.features.linkBehavior !== 'in_frame') return;
     shadow.addEventListener(
@@ -997,6 +1439,7 @@
       function (e) {
         var a = e.target && e.target.closest('a');
         if (!a || !shadow.contains(a)) return;
+        if (a.classList.contains('bd-detail-link')) return;
         if (a.getAttribute('data-bd-external') === '1') return;
         var href = a.getAttribute('href');
         if (!href) return;
@@ -1099,6 +1542,7 @@
         if (boot.error) throw new Error(boot.error);
         if (prog.error) throw new Error(prog.error);
         var programs = prog.data || [];
+        embedProgramsByMount.set(mount, programs);
         var theme = readThemeFromMount(mount, options.theme);
         shadow.querySelector('style').textContent = baseStyles(
           boot.branding || {},
@@ -1110,11 +1554,11 @@
           boot.features.embedPortalTemplate ||
           'classic';
         if (template === 'hero-carousel') {
-          mountHeroCarousel(shadow, programs, boot, origin);
+          mountHeroCarousel(shadow, programs, boot, origin, mount);
         } else if (template === 'schedule-first') {
-          mountScheduleFirst(shadow, programs, boot, origin);
+          mountScheduleFirst(shadow, programs, boot, origin, mount);
         } else {
-          mountClassicShell(shadow, programs, boot, origin);
+          mountClassicShell(shadow, programs, boot, origin, mount);
         }
       })
       .catch(function (err) {
