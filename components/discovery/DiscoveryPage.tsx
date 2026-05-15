@@ -28,6 +28,7 @@ import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
+import { programIdsFilterMatches } from '@/lib/program-ids-filter';
 
 import { HorizontalFilterBar } from './HorizontalFilterBar';
 
@@ -406,7 +407,7 @@ export function DiscoveryPage({
 
     // Program ID filter (deep link to specific programs)
     if (filters.programIds && filters.programIds.length > 0) {
-      result = result.filter(p => filters.programIds!.includes(p.id));
+      result = result.filter((p) => programIdsFilterMatches(filters.programIds, p.id));
     }
 
     // Facility filter
@@ -691,13 +692,13 @@ export function DiscoveryPage({
     // Filter by program - match by ID first, then fallback to name+facility
     if (filters.programIds && filters.programIds.length > 0) {
       // Get selected programs with their facility info
-      const selectedPrograms = initialPrograms.filter(p => 
-        filters.programIds!.includes(p.id)
+      const selectedPrograms = initialPrograms.filter((p) =>
+        programIdsFilterMatches(filters.programIds, p.id),
       );
       
       result = result.filter(event => {
         // First try to match by program ID directly
-        if (filters.programIds!.includes(event.programId)) {
+        if (programIdsFilterMatches(filters.programIds, event.programId)) {
           return true;
         }
         

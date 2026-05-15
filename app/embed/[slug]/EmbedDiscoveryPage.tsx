@@ -14,6 +14,7 @@ import {
 } from '@/lib/schedule-event-filters';
 import { scheduleViewParamFromPageSearchParams } from '@/lib/schedule-view-resolution';
 import { isLeagueScheduleTableContext } from '@/lib/league-schedule-context';
+import { programIdsFilterMatches } from '@/lib/program-ids-filter';
 import { Calendar, Grid3X3, Filter } from 'lucide-react';
 
 const EMPTY_EVENTS: any[] = [];
@@ -85,7 +86,7 @@ export function EmbedDiscoveryPage({
     }
 
     if (filters.programIds && filters.programIds.length > 0) {
-      result = result.filter(p => filters.programIds!.includes(p.id));
+      result = result.filter((p) => programIdsFilterMatches(filters.programIds, p.id));
     }
 
     if (filters.facilityIds && filters.facilityIds.length > 0) {
@@ -305,11 +306,13 @@ export function EmbedDiscoveryPage({
   const filteredEvents = useMemo(() => {
     let result = [...apiEvents];
     if (filters.programIds && filters.programIds.length > 0) {
-      const selectedPrograms = initialPrograms.filter(p => filters.programIds!.includes(p.id));
-      result = result.filter(event => {
-        if (filters.programIds!.includes(event.programId)) return true;
+      const selectedPrograms = initialPrograms.filter((p) =>
+        programIdsFilterMatches(filters.programIds, p.id),
+      );
+      result = result.filter((event) => {
+        if (programIdsFilterMatches(filters.programIds, event.programId)) return true;
         const eventName = (event.programName || '').toLowerCase().trim();
-        return selectedPrograms.some(p => p.name.toLowerCase().trim() === eventName);
+        return selectedPrograms.some((p) => p.name.toLowerCase().trim() === eventName);
       });
     }
     if (filters.sports && filters.sports.length > 0) {

@@ -6,7 +6,13 @@
   var HERO_CARD_MIN_WIDTH_PX = 280;
   var HERO_SECTION_GAP_PX = 16;
   var DESCRIPTION_PREVIEW_CHARS = 180;
-  var SCHEDULE_FETCH_ROWS = 80;
+  var SCHEDULE_FETCH_ROWS = 120;
+  var MOBILE_STACKED_SCHEDULE_MAX_WIDTH_PX = 720;
+  var OVERLAY_Z_INDEX = 2147483000;
+  var EMBED_MODAL_MAX_WIDTH_REM = 56;
+  var EMBED_MODAL_MAX_HEIGHT_REM = 52;
+  var EMBED_MODAL_VIEWPORT_WIDTH_CAP_PCT = 96;
+  var EMBED_MODAL_VIEWPORT_HEIGHT_CAP_PCT = 90;
 
   var PROGRAM_TYPE_LABELS = {
     class: 'Class',
@@ -90,7 +96,7 @@
 
   function linkTarget(linkBehavior) {
     if (linkBehavior === 'same_window') return '_top';
-    if (linkBehavior === 'in_frame') return '_self';
+    if (linkBehavior === 'in_frame') return '_blank';
     return '_blank';
   }
 
@@ -150,20 +156,21 @@
       primary +
       ';--bd-accent:' +
       accent +
-      ';display:block;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-sizing:border-box}' +
+      ';display:block;font-family:var(--bd-host-font,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);font-size:var(--bd-host-font-size,1rem);color:var(--bd-host-color,#0f172a);box-sizing:border-box}' +
       ':host *,:host *::before,:host *::after{box-sizing:border-box}' +
-      '.bd-shell{background:#f1f5f9;color:#0f172a;line-height:1.45;min-width:0;border-radius:12px;overflow:hidden}' +
+      '.bd-shell{background:#f1f5f9;color:inherit;line-height:1.45;min-width:0;border-radius:12px;overflow:hidden}' +
       '.bd-top{border-bottom:1px solid #e2e8f0;background:#fff;padding:1rem 1.25rem;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap}' +
       '.bd-top img{max-height:40px;max-width:180px;object-fit:contain}' +
-      '.bd-top h1{margin:0;font-size:1.125rem;font-weight:700;color:#0f172a}' +
+      '.bd-top h1{margin:0;font-size:1.125rem;font-weight:700;color:inherit}' +
       '.bd-tabs{display:flex;gap:0;border-bottom:1px solid #e2e8f0;background:#fff;padding:0 0.75rem}' +
       '.bd-tab{padding:0.65rem 1rem;border:none;background:transparent;font:inherit;font-weight:600;font-size:0.9rem;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}' +
       '.bd-tab[aria-selected="true"]{color:var(--bd-primary);border-bottom-color:var(--bd-accent)}' +
       '.bd-panel{padding:1rem 1.25rem 1.5rem;display:none}' +
       '.bd-panel.bd-panel--active{display:block}' +
-      '.bd-toolbar{display:flex;flex-wrap:wrap;gap:0.65rem;align-items:center;margin-bottom:1rem}' +
-      '.bd-search{flex:1;min-width:11rem;padding:0.5rem 0.65rem;border-radius:8px;border:1px solid #e2e8f0;font:inherit}' +
-      '.bd-select{min-width:9.5rem;padding:0.5rem 0.55rem;border-radius:8px;border:1px solid #e2e8f0;font:inherit;background:#fff}' +
+      '.bd-toolbar{display:flex;flex-wrap:wrap;gap:0.55rem;align-items:center;margin-bottom:1rem;padding:0.65rem 0.75rem;background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 1px 2px rgba(15,23,42,0.04)}' +
+      '.bd-search{flex:1;min-width:min(100%,12rem);min-height:2.75rem;padding:0.5rem 0.85rem;border-radius:999px;border:1px solid #e2e8f0;font:inherit;background:#f8fafc;transition:border-color 0.15s,box-shadow 0.15s}' +
+      '.bd-search:focus{outline:none;border-color:var(--bd-accent);box-shadow:0 0 0 3px rgba(99,102,241,0.2);background:#fff}' +
+      '.bd-select{min-width:8.5rem;min-height:2.75rem;padding:0.45rem 0.85rem;border-radius:999px;border:1px solid #e2e8f0;font:inherit;background:#fff;cursor:pointer}' +
       '.bd-results{font-size:0.875rem;color:#64748b;margin:0 0 1rem}' +
       '.bd-results strong{color:#0f172a;font-weight:700}' +
       '.bd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(' +
@@ -196,16 +203,40 @@
       '.bd-hero h2{margin:0 0 0.5rem;font-size:1.35rem;font-weight:800;letter-spacing:0.02em}' +
       '.bd-accent-bar{width:3rem;height:4px;background:var(--bd-accent);margin-bottom:1rem;border-radius:2px}' +
       '.bd-filters{display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:1rem}' +
-      '.bd-filters select{min-width:10rem;padding:0.45rem 0.6rem;border-radius:6px;border:1px solid rgba(255,255,255,0.35);background:rgba(0,0,0,0.35);color:#fff}' +
+      '.bd-filters select{min-width:10rem;min-height:2.5rem;padding:0.45rem 0.75rem;border-radius:999px;border:1px solid rgba(255,255,255,0.4);background:rgba(0,0,0,0.35);color:#fff;font:inherit;cursor:pointer}' +
       '.bd-carousel{display:flex;gap:1rem;overflow-x:auto;padding-bottom:0.5rem;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}' +
       '.bd-carousel .bd-card{min-width:' +
       HERO_CARD_MIN_WIDTH_PX +
       'px;max-width:22rem;flex:0 0 auto;scroll-snap-align:start}' +
-      '.bd-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid #e2e8f0;background:#fff}' +
-      '.bd-table{width:100%;border-collapse:collapse;font-size:0.8125rem;min-width:36rem}' +
+      '.bd-schedule-wrap{overflow-x:auto;border-radius:10px;border:1px solid #e2e8f0;background:#fff}' +
+      '.bd-table{width:100%;border-collapse:collapse;font-size:0.8125rem}' +
       '.bd-table th,.bd-table td{border-bottom:1px solid #e2e8f0;padding:0.55rem 0.65rem;text-align:left;vertical-align:top}' +
       '.bd-table th{background:#f8fafc;font-weight:700;color:#475569;white-space:nowrap}' +
       '.bd-table tr:last-child td{border-bottom:none}' +
+      '@media (min-width:' +
+      (MOBILE_STACKED_SCHEDULE_MAX_WIDTH_PX + 1) +
+      'px){.bd-schedule-wrap .bd-table{min-width:36rem}}' +
+      '@media (max-width:' +
+      MOBILE_STACKED_SCHEDULE_MAX_WIDTH_PX +
+      'px){.bd-schedule-wrap .bd-table{min-width:0}.bd-schedule-wrap .bd-table thead{display:none}.bd-schedule-wrap .bd-table tbody tr{display:block;margin-bottom:0.85rem;border:1px solid #e2e8f0;border-radius:10px;padding:0.65rem 0.75rem;background:#fff}.bd-schedule-wrap .bd-table td{display:block;border:none;padding:0.25rem 0}.bd-schedule-wrap .bd-table td:last-child{padding-top:0.5rem}.bd-schedule-wrap .bd-table td[data-label]::before{content:attr(data-label);display:block;font-size:0.65rem;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:0.04em;margin-bottom:0.12rem}}' +
+      '.bd-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:' +
+      OVERLAY_Z_INDEX +
+      ';display:flex;align-items:center;justify-content:center;padding:0.75rem}' +
+      '.bd-overlay-dialog{width:min(' +
+      EMBED_MODAL_VIEWPORT_WIDTH_CAP_PCT +
+      'vw,' +
+      EMBED_MODAL_MAX_WIDTH_REM +
+      'rem);height:min(' +
+      EMBED_MODAL_VIEWPORT_HEIGHT_CAP_PCT +
+      'vh,' +
+      EMBED_MODAL_MAX_HEIGHT_REM +
+      'rem);background:#fff;border-radius:12px;box-shadow:0 24px 64px rgba(0,0,0,0.28);display:flex;flex-direction:column;overflow:hidden}' +
+      '.bd-overlay-bar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.55rem 0.75rem;border-bottom:1px solid #e2e8f0;background:#f8fafc}' +
+      '.bd-overlay-title{font-size:0.8125rem;font-weight:700;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}' +
+      '.bd-overlay-actions{display:flex;align-items:center;gap:0.5rem;flex-shrink:0}' +
+      '.bd-overlay-close{padding:0.35rem 0.75rem;border-radius:8px;border:1px solid #cbd5e1;background:#fff;font:inherit;cursor:pointer;font-weight:600;font-size:0.8125rem}' +
+      '.bd-overlay-link{font-size:0.8125rem;font-weight:600;color:var(--bd-accent)}' +
+      '.bd-overlay-frame{flex:1;width:100%;border:none;min-height:0;background:#fff}' +
       '.bd-empty{text-align:center;padding:2.5rem 1rem;color:#64748b}' +
       '.bd-empty h3{margin:0 0 0.5rem;font-size:1.1rem;color:#0f172a}' +
       '.bd-schedule-loading{font-size:0.875rem;color:#64748b;padding:0.5rem 0}' +
@@ -287,6 +318,34 @@
     if (!program.linkSEO) return null;
     var closed = allSessionsRegistrationClosed(program);
     return buildRegistrationUrl(program.linkSEO, { isRegistrationOpen: !closed });
+  }
+
+  function buildProgramDetailUrl(boot, program) {
+    var base = boot.paths && boot.paths.fullDiscoveryUrl;
+    if (!base || !program) return base || '';
+    try {
+      var u = new URL(base);
+      u.searchParams.set('viewMode', 'programs');
+      u.searchParams.set('programIds', String(program.id));
+      return u.toString();
+    } catch (e) {
+      var sep = base.indexOf('?') >= 0 ? '&' : '?';
+      return (
+        base +
+        sep +
+        'viewMode=programs&programIds=' +
+        encodeURIComponent(String(program.id))
+      );
+    }
+  }
+
+  function applyHostFontVars(mount) {
+    try {
+      var cs = getComputedStyle(mount);
+      mount.style.setProperty('--bd-host-font', cs.fontFamily);
+      mount.style.setProperty('--bd-host-font-size', cs.fontSize);
+      mount.style.setProperty('--bd-host-color', cs.color);
+    } catch (e) {}
   }
 
   function uniqueStrings(arr) {
@@ -415,6 +474,10 @@
           href: href,
           target: t,
           rel: 'noopener noreferrer',
+          'aria-label':
+            (allSessionsRegistrationClosed(program) ? 'More information' : 'Register') +
+            ' for ' +
+            (program.name || 'program'),
           text: allSessionsRegistrationClosed(program) ? 'More info' : 'Register',
         }),
       );
@@ -422,9 +485,10 @@
     actions.appendChild(
       el('a', {
         className: 'bd-btn bd-btn--ghost',
-        href: boot.paths.fullDiscoveryUrl,
-        target: '_blank',
+        href: buildProgramDetailUrl(boot, program),
+        target: t,
         rel: 'noopener noreferrer',
+        'aria-label': 'Full program details for ' + (program.name || 'program'),
         text: 'Details',
       }),
     );
@@ -540,6 +604,22 @@
     return el('div', {}, [toolbar, countEl, host]);
   }
 
+  function filterScheduleRows(rows, state) {
+    var q = (state.search || '').toLowerCase().trim();
+    var sport = state.sport || '';
+    var programId = state.programId || '';
+    return rows.filter(function (ev) {
+      if (sport && String(ev.sport || '') !== sport) return false;
+      if (programId && String(ev.programId || '') !== programId) return false;
+      if (!q) return true;
+      var hay = [ev.title, ev.programName, ev.sessionName, ev.facilityName, ev.spaceName, ev.type]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+  }
+
   function formatEventWhen(ev) {
     var iso = ev.startDate || '';
     if (!iso) return { date: '', time: '' };
@@ -564,7 +644,7 @@
     ];
     if (showSpots) headCells.push(el('th', { text: 'Spots' }));
     if (showPrice) headCells.push(el('th', { text: 'From' }));
-    headCells.push(el('th', { text: '' }));
+    headCells.push(el('th', { text: 'Action' }));
     var tbody = el('tbody', {}, []);
     var table = el(
       'table',
@@ -585,42 +665,55 @@
             href: href,
             target: t,
             rel: 'noopener noreferrer',
+            'aria-label': 'Register for ' + (ev.programName || ev.title || 'event'),
             text: 'Register',
           })
         : el('span', { text: '\u2014' });
       var cells = [
-        el('td', {}, [
-          el('div', { text: when.date, style: { fontWeight: '700', color: '#0f172a' } }),
-          el('div', { text: when.time, style: { fontSize: '0.75rem', color: '#64748b' } }),
-        ]),
-        el('td', {}, [
-          el('div', { text: ev.programName || ev.title || '', style: { fontWeight: '600' } }),
-          ev.title && ev.programName && ev.title !== ev.programName
-            ? el('div', { text: ev.title, style: { fontSize: '0.75rem', color: '#64748b' } })
-            : el('span'),
-        ]),
-        el('td', { text: where || '\u2014' }),
+        el(
+          'td',
+          { 'data-label': 'When' },
+          [
+            el('div', { text: when.date, style: { fontWeight: '700', color: '#0f172a' } }),
+            el('div', { text: when.time, style: { fontSize: '0.75rem', color: '#64748b' } }),
+          ],
+        ),
+        el(
+          'td',
+          { 'data-label': 'Program' },
+          [
+            el('div', { text: ev.programName || ev.title || '', style: { fontWeight: '600' } }),
+            ev.title && ev.programName && ev.title !== ev.programName
+              ? el('div', { text: ev.title, style: { fontSize: '0.75rem', color: '#64748b' } })
+              : el('span'),
+          ],
+        ),
+        el('td', { 'data-label': 'Where', text: where || '\u2014' }),
       ];
       if (showSpots) {
         var sr = ev.spotsRemaining;
         var mx = ev.maxParticipants;
         var spotsText =
-          typeof sr === 'number' && typeof mx === 'number' ? sr + ' / ' + mx : typeof sr === 'number' ? String(sr) : '\u2014';
-        cells.push(el('td', { text: spotsText }));
+          typeof sr === 'number' && typeof mx === 'number'
+            ? sr + ' / ' + mx
+            : typeof sr === 'number'
+              ? String(sr)
+              : '\u2014';
+        cells.push(el('td', { 'data-label': 'Spots', text: spotsText }));
       }
       if (showPrice) {
         var sp = ev.startingPrice;
         cells.push(
-          el(
-            'td',
-            { text: typeof sp === 'number' && !Number.isNaN(sp) ? '$' + sp.toFixed(0) : '\u2014' },
-          ),
+          el('td', {
+            'data-label': 'From',
+            text: typeof sp === 'number' && !Number.isNaN(sp) ? '$' + sp.toFixed(0) : '\u2014',
+          }),
         );
       }
-      cells.push(el('td', {}, [reg]));
+      cells.push(el('td', { 'data-label': 'Action' }, [reg]));
       tbody.appendChild(el('tr', {}, cells));
     });
-    return el('div', { className: 'bd-table-wrap' }, [table]);
+    return el('div', { className: 'bd-schedule-wrap' }, [table]);
   }
 
   function fetchScheduleRows(origin, slug) {
@@ -635,12 +728,12 @@
   }
 
   function renderSchedulePanel(origin, slug, boot, t) {
-    var wrap = el('div', {});
+    var wrap = el('div', { className: 'bd-schedule-root' });
     var loading = el('p', { className: 'bd-schedule-loading', text: 'Loading schedule\u2026' });
     wrap.appendChild(loading);
     fetchScheduleRows(origin, slug)
       .then(function (rows) {
-        wrap.removeChild(loading);
+        if (loading.parentNode) wrap.removeChild(loading);
         if (!rows.length) {
           wrap.appendChild(
             el('div', { className: 'bd-empty' }, [
@@ -650,8 +743,79 @@
           );
           return;
         }
-        var slice = rows.slice(0, MAX_SCHEDULE_ROWS);
-        wrap.appendChild(renderScheduleTable(slice, boot, t));
+        var state = { search: '', sport: '', programId: '', allRows: rows };
+        var toolbar = el('div', { className: 'bd-toolbar bd-schedule-toolbar' });
+        var search = el('input', {
+          type: 'search',
+          className: 'bd-search',
+          placeholder: 'Search events, locations, programs',
+          'aria-label': 'Search schedule',
+        });
+        search.addEventListener('input', function () {
+          state.search = search.value;
+          redraw();
+        });
+        var sports = uniqueStrings(rows.map(function (r) {
+          return r.sport || '';
+        }));
+        var selSport = el('select', { className: 'bd-select', 'aria-label': 'Filter by sport' });
+        selSport.appendChild(el('option', { value: '', text: 'All sports' }));
+        sports.forEach(function (s) {
+          selSport.appendChild(el('option', { value: s, text: s }));
+        });
+        selSport.addEventListener('change', function () {
+          state.sport = selSport.value;
+          redraw();
+        });
+        var progMap = {};
+        rows.forEach(function (r) {
+          if (r.programId) {
+            progMap[String(r.programId)] = r.programName || r.title || 'Program';
+          }
+        });
+        var selProg = el('select', { className: 'bd-select', 'aria-label': 'Filter by program' });
+        selProg.appendChild(el('option', { value: '', text: 'All programs' }));
+        Object.keys(progMap)
+          .sort(function (a, b) {
+            return progMap[a].localeCompare(progMap[b]);
+          })
+          .forEach(function (pid) {
+            selProg.appendChild(el('option', { value: pid, text: progMap[pid] }));
+          });
+        selProg.addEventListener('change', function () {
+          state.programId = selProg.value;
+          redraw();
+        });
+        toolbar.appendChild(search);
+        toolbar.appendChild(selSport);
+        toolbar.appendChild(selProg);
+        var countEl = el('p', { className: 'bd-results' });
+        var tableHost = el('div', {});
+        function redraw() {
+          while (tableHost.firstChild) tableHost.removeChild(tableHost.firstChild);
+          var filtered = filterScheduleRows(state.allRows, state);
+          countEl.innerHTML =
+            'Showing <strong>' +
+            filtered.length +
+            '</strong> of <strong>' +
+            state.allRows.length +
+            '</strong> events. Full date, sport, and space filters are on the discovery site.';
+          var slice = filtered.slice(0, MAX_SCHEDULE_ROWS);
+          if (!slice.length) {
+            tableHost.appendChild(
+              el('div', { className: 'bd-empty' }, [
+                el('h3', { text: 'No events match' }),
+                el('p', { text: 'Clear search or filters to see more rows.' }),
+              ]),
+            );
+            return;
+          }
+          tableHost.appendChild(renderScheduleTable(slice, boot, t));
+        }
+        wrap.appendChild(toolbar);
+        wrap.appendChild(countEl);
+        wrap.appendChild(tableHost);
+        redraw();
       })
       .catch(function () {
         if (loading.parentNode) wrap.removeChild(loading);
@@ -726,6 +890,7 @@
     }
     shell.appendChild(footerLinks(boot));
     shadow.appendChild(shell);
+    attachBondOverlayNavigation(shadow, boot);
   }
 
   function mountHeroCarousel(shadow, programs, boot, origin) {
@@ -761,6 +926,7 @@
     );
     shell.appendChild(footerLinks(boot));
     shadow.appendChild(shell);
+    attachBondOverlayNavigation(shadow, boot);
   }
 
   function mountScheduleFirst(shadow, programs, boot, origin) {
@@ -775,15 +941,97 @@
     shell.appendChild(block);
     shell.appendChild(footerLinks(boot));
     shadow.appendChild(shell);
+    attachBondOverlayNavigation(shadow, boot);
+  }
+
+  function openBondOverlay(shadow, href, title) {
+    var prev = shadow.querySelector('.bd-overlay');
+    if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
+    var backdrop = el('div', { className: 'bd-overlay' });
+    var dialog = el('div', {
+      className: 'bd-overlay-dialog',
+      role: 'dialog',
+      'aria-modal': 'true',
+      'aria-label': title,
+    });
+    var bar = el('div', { className: 'bd-overlay-bar' });
+    var ttl = el('div', { className: 'bd-overlay-title', text: title });
+    var actionWrap = el('div', { className: 'bd-overlay-actions' });
+    var openTab = el('a', {
+      className: 'bd-overlay-link',
+      href: href,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      text: 'Open in new tab',
+      'data-bd-external': '1',
+    });
+    var closeBtn = el('button', { type: 'button', className: 'bd-overlay-close', text: 'Close' });
+    var iframe = el('iframe', { className: 'bd-overlay-frame', src: href, title: title });
+    iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+    function onKeyDown(ev) {
+      if (ev.key === 'Escape') close();
+    }
+    function close() {
+      document.removeEventListener('keydown', onKeyDown);
+      if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+    }
+    closeBtn.addEventListener('click', close);
+    backdrop.addEventListener('click', function (ev) {
+      if (ev.target === backdrop) close();
+    });
+    document.addEventListener('keydown', onKeyDown);
+    actionWrap.appendChild(openTab);
+    actionWrap.appendChild(closeBtn);
+    bar.appendChild(ttl);
+    bar.appendChild(actionWrap);
+    dialog.appendChild(bar);
+    dialog.appendChild(iframe);
+    backdrop.appendChild(dialog);
+    shadow.appendChild(backdrop);
+  }
+
+  function attachBondOverlayNavigation(shadow, boot) {
+    if (boot.features.linkBehavior !== 'in_frame') return;
+    shadow.addEventListener(
+      'click',
+      function (e) {
+        var a = e.target && e.target.closest('a');
+        if (!a || !shadow.contains(a)) return;
+        if (a.getAttribute('data-bd-external') === '1') return;
+        var href = a.getAttribute('href');
+        if (!href) return;
+        if (href.indexOf('http:') !== 0 && href.indexOf('https:') !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        openBondOverlay(
+          shadow,
+          href,
+          a.getAttribute('aria-label') || a.textContent.trim() || 'Bond',
+        );
+      },
+      true,
+    );
   }
 
   function footerLinks(boot) {
     var full = boot.paths.fullDiscoveryUrl;
     return el('div', { className: 'bd-foot' }, [
       el('span', { text: 'Filters, exports, and full detail pages: ' }),
-      el('a', { href: full, target: '_blank', rel: 'noopener noreferrer', text: 'Open full discovery' }),
+      el('a', {
+        href: full,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        text: 'Open full discovery',
+        'data-bd-external': '1',
+      }),
       el('span', { text: ' \u00b7 ' }),
-      el('a', { href: boot.paths.embedIframeUrl, target: '_blank', rel: 'noopener noreferrer', text: 'Legacy iframe embed' }),
+      el('a', {
+        href: boot.paths.embedIframeUrl,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        text: 'Legacy iframe embed',
+        'data-bd-external': '1',
+      }),
     ]);
   }
 
@@ -856,6 +1104,7 @@
           boot.branding || {},
           theme,
         );
+        applyHostFontVars(mount);
         var template =
           options.portalTemplate ||
           boot.features.embedPortalTemplate ||
