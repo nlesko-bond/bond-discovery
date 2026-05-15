@@ -95,6 +95,9 @@ export async function GET(request: Request) {
       hideRegistrationLinks: config.features.hideRegistrationLinks === true,
       enabledTabs,
       customRegistrationUrl,
+      showPricing: config.features.showPricing !== false,
+      showAvailability: config.features.showAvailability !== false,
+      showAgeGender: config.features.showAgeGender !== false,
     },
     paths: {
       fullDiscoveryUrl: `${origin}/${config.slug}`,

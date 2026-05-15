@@ -16,6 +16,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import { BOND_ENV_OPTIONS, DEFAULT_BOND_ENV, type BondEnv } from '@/lib/bond-env';
+import type { BondEmbedPortalTemplate } from '@/types';
 
 interface PageConfig {
   id: string;
@@ -74,6 +75,8 @@ interface PageConfig {
     headerDisplay?: 'full' | 'minimal' | 'hidden';
     disableStickyHeader?: boolean;
     linkBehavior?: 'new_tab' | 'same_window' | 'in_frame';
+    embedPortalTemplate?: BondEmbedPortalTemplate;
+    embedAllowedOrigins?: string[];
     // Discovery cache controls
     discoveryCacheEnabled?: boolean;
     availabilityCacheTtl?: number;
@@ -125,12 +128,24 @@ const TABLE_COLUMNS = [
   { id: 'action', label: 'Action' },
 ] as const;
 
+function parseCommaSeparatedIds(value: string): string[] {
+  return value.split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+function parseOriginsList(value: string): string[] {
+  const parts = value.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
+  return [...new Set(parts)];
+}
+
 export default function EditPagePage({ params }: { params: { slug: string } }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [config, setConfig] = useState<PageConfig | null>(null);
   const [activeTab, setActiveTab] = useState<'branding' | 'filters' | 'settings'>('branding');
+  const [organizationIdsInput, setOrganizationIdsInput] = useState('');
+  const [facilityIdsInput, setFacilityIdsInput] = useState('');
+  const [embedAllowedOriginsInput, setEmbedAllowedOriginsInput] = useState('');
 
   useEffect(() => {
     fetchPage();
@@ -142,6 +157,11 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
       if (!res.ok) throw new Error('Page not found');
       const data = await res.json();
       setConfig(data.page);
+      setOrganizationIdsInput(data.page.organizationIds.join(', '));
+      setFacilityIdsInput(data.page.facilityIds?.join(', ') || '');
+      setEmbedAllowedOriginsInput(
+        (data.page.features?.embedAllowedOrigins || []).join('\n'),
+      );
     } catch (error) {
       console.error('Error fetching page:', error);
       alert('Page not found');
@@ -155,17 +175,36 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
     if (!config) return;
     setSaving(true);
     try {
+      const origins = parseOriginsList(embedAllowedOriginsInput);
+      const featuresNext: PageConfig['features'] = { ...config.features };
+      if (origins.length > 0) {
+        featuresNext.embedAllowedOrigins = origins;
+      } else {
+        delete (featuresNext as Record<string, unknown>).embedAllowedOrigins;
+      }
+
+      const sanitizedConfig = {
+        ...config,
+        organizationIds: parseCommaSeparatedIds(organizationIdsInput),
+        facilityIds: parseCommaSeparatedIds(facilityIdsInput),
+        features: featuresNext,
+      };
       const res = await fetch(`/api/pages/${params.slug}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config),
+        body: JSON.stringify(sanitizedConfig),
       });
       
       if (res.ok) {
+        setConfig(sanitizedConfig);
+        setOrganizationIdsInput(sanitizedConfig.organizationIds.join(', '));
+        setFacilityIdsInput(sanitizedConfig.facilityIds?.join(', ') || '');
+        setEmbedAllowedOriginsInput(
+          (sanitizedConfig.features.embedAllowedOrigins || []).join('\n'),
+        );
         alert('Page saved successfully!');
-        // If slug was changed, redirect to the new URL
-        if (config.slug !== params.slug) {
-          router.push(`/admin/pages/${config.slug}`);
+        if (sanitizedConfig.slug !== params.slug) {
+          router.push(`/admin/pages/${sanitizedConfig.slug}`);
         }
       } else {
         const error = await res.json();
@@ -1050,6 +1089,43 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   Controls how Register/Learn More buttons open. Use "Replace current page" for embeds where you want the registration to take over the browser.
                 </p>
               </div>
+
+              <div>
+                <label className="label">Embed portal layout</label>
+                <select
+                  className="input"
+                  value={config.features.embedPortalTemplate || 'classic'}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      features: {
+                        ...config.features,
+                        embedPortalTemplate: e.target.value as BondEmbedPortalTemplate,
+                      },
+                    })
+                  }
+                >
+                  <option value="classic">Classic grid</option>
+                  <option value="hero-carousel">Hero carousel</option>
+                  <option value="schedule-first">Schedule first</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Default layout for the script embed (data-bond-discovery). Optional query on the embed script URL is for preview only.
+                </p>
+              </div>
+
+              <div>
+                <label className="label">Embed allowed origins (CORS)</label>
+                <textarea
+                  className="input font-mono text-sm min-h-24"
+                  value={embedAllowedOriginsInput}
+                  onChange={(e) => setEmbedAllowedOriginsInput(e.target.value)}
+                  placeholder="https://www.example.webflow.io&#10;https://example.com"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Exact Origin values (scheme plus host, no path), one per line or comma-separated. Leave empty to allow any origin. Use your Webflow staging and production site origins when locking down the embed API.
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -1145,11 +1221,8 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                 <input
                   type="text"
                   className="input"
-                  value={config.organizationIds.join(', ')}
-                  onChange={(e) => setConfig({
-                    ...config,
-                    organizationIds: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
-                  })}
+                  value={organizationIdsInput}
+                  onChange={(e) => setOrganizationIdsInput(e.target.value)}
                 />
                 <p className="text-xs text-gray-500 mt-1">Comma-separated list</p>
               </div>
@@ -1160,11 +1233,8 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                   type="text"
                   className="input"
                   placeholder="Leave empty for all facilities"
-                  value={config.facilityIds?.join(', ') || ''}
-                  onChange={(e) => setConfig({
-                    ...config,
-                    facilityIds: e.target.value ? e.target.value.split(',').map(s => s.trim()).filter(Boolean) : []
-                  })}
+                  value={facilityIdsInput}
+                  onChange={(e) => setFacilityIdsInput(e.target.value)}
                 />
                 <p className="text-xs text-gray-500 mt-1">Restrict to specific facilities</p>
               </div>
