@@ -144,4 +144,34 @@ describe('embed kit v1.js smoke', () => {
     expect(mount.shadowRoot?.querySelector('.bd-carousel .bd-card')).toBeTruthy();
     expect(mount.shadowRoot?.querySelector('pre')).toBeFalsy();
   });
+
+  it('in_frame uses same-window navigation without iframe overlay', async () => {
+    global.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/embed/bootstrap')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => mockBootstrap({ linkBehavior: 'in_frame' }),
+        } as Response);
+      }
+      if (url.includes('/api/embed/programs')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ data: [mockProgram] }),
+        } as Response);
+      }
+      if (url.includes('/api/events')) {
+        return Promise.resolve({ ok: true, json: async () => ({ data: [] }) } as Response);
+      }
+      return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+    });
+
+    const BondDiscovery = loadBondDiscovery();
+    BondDiscovery.init({ mount, slug: SLUG, baseUrl: BASE_URL });
+    await flushInit();
+
+    const register = mount.shadowRoot?.querySelector('a.bd-btn:not(.bd-detail-link)');
+    expect(register?.getAttribute('target')).toBe('_self');
+    expect(mount.shadowRoot?.querySelector('.bd-overlay')).toBeFalsy();
+  });
 });

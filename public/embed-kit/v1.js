@@ -101,7 +101,7 @@
 
   function linkTarget(linkBehavior) {
     if (linkBehavior === 'same_window') return '_top';
-    if (linkBehavior === 'in_frame') return '_blank';
+    if (linkBehavior === 'in_frame') return '_self';
     return '_blank';
   }
 
@@ -1202,7 +1202,6 @@
     shell.appendChild(footerLinks(boot));
     shadow.appendChild(shell);
     attachProgramDetailClicks(shadow, boot, mount, origin, t);
-    attachBondOverlayNavigation(shadow, boot);
   }
 
   function mountHeroCarousel(shadow, programs, boot, origin, mount) {
@@ -1245,7 +1244,6 @@
     shell.appendChild(footerLinks(boot));
     shadow.appendChild(shell);
     attachProgramDetailClicks(shadow, boot, mount, origin, t);
-    attachBondOverlayNavigation(shadow, boot);
   }
 
   function mountScheduleFirst(shadow, programs, boot, origin, mount) {
@@ -1261,53 +1259,6 @@
     shell.appendChild(footerLinks(boot));
     shadow.appendChild(shell);
     attachProgramDetailClicks(shadow, boot, mount, origin, t);
-    attachBondOverlayNavigation(shadow, boot);
-  }
-
-  function openBondOverlay(shadow, href, title) {
-    var prev = shadow.querySelector('.bd-overlay');
-    if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
-    var backdrop = el('div', { className: 'bd-overlay' });
-    var dialog = el('div', {
-      className: 'bd-overlay-dialog',
-      role: 'dialog',
-      'aria-modal': 'true',
-      'aria-label': title,
-    });
-    var bar = el('div', { className: 'bd-overlay-bar' });
-    var ttl = el('div', { className: 'bd-overlay-title', text: title });
-    var actionWrap = el('div', { className: 'bd-overlay-actions' });
-    var openTab = el('a', {
-      className: 'bd-overlay-link',
-      href: href,
-      target: '_blank',
-      rel: 'noopener noreferrer',
-      text: 'Open in new tab',
-      'data-bd-external': '1',
-    });
-    var closeBtn = el('button', { type: 'button', className: 'bd-overlay-close', text: 'Close' });
-    var iframe = el('iframe', { className: 'bd-overlay-frame', src: href, title: title });
-    iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
-    function onKeyDown(ev) {
-      if (ev.key === 'Escape') close();
-    }
-    function close() {
-      document.removeEventListener('keydown', onKeyDown);
-      if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
-    }
-    closeBtn.addEventListener('click', close);
-    backdrop.addEventListener('click', function (ev) {
-      if (ev.target === backdrop) close();
-    });
-    document.addEventListener('keydown', onKeyDown);
-    actionWrap.appendChild(openTab);
-    actionWrap.appendChild(closeBtn);
-    bar.appendChild(ttl);
-    bar.appendChild(actionWrap);
-    dialog.appendChild(bar);
-    dialog.appendChild(iframe);
-    backdrop.appendChild(dialog);
-    shadow.appendChild(backdrop);
   }
 
   function scheduleDeepLinkForEvent(boot, ev, fallbackProgramId) {
@@ -1572,49 +1523,25 @@
     );
   }
 
-  function attachBondOverlayNavigation(shadow, boot) {
-    if (boot.features.linkBehavior !== 'in_frame') return;
-    shadow.addEventListener(
-      'click',
-      function (e) {
-        var a = e.target && e.target.closest('a');
-        if (!a || !shadow.contains(a)) return;
-        if (a.classList.contains('bd-detail-link')) return;
-        if (a.getAttribute('data-bd-external') === '1') return;
-        var href = a.getAttribute('href');
-        if (!href) return;
-        if (href.indexOf('http:') !== 0 && href.indexOf('https:') !== 0) return;
-        e.preventDefault();
-        e.stopPropagation();
-        openBondOverlay(
-          shadow,
-          href,
-          a.getAttribute('aria-label') || a.textContent.trim() || 'Bond',
-        );
-      },
-      true,
-    );
-  }
-
   function footerLinks(boot) {
     var full = boot.paths.fullDiscoveryUrl;
+    var t = linkTarget(boot.features.linkBehavior);
+    var rel = t === '_blank' ? 'noopener noreferrer' : undefined;
     return el('div', { className: 'bd-foot' }, [
       el('div', { className: 'bd-foot-inner' }, [
         el('span', { text: 'Need filters, exports, or calendar views?' }),
         el('a', {
           href: full,
-          target: '_blank',
-          rel: 'noopener noreferrer',
+          target: t,
+          rel: rel,
           text: 'Open full discovery',
-          'data-bd-external': '1',
         }),
         el('span', { text: '\u00b7' }),
         el('a', {
           href: boot.paths.embedIframeUrl,
-          target: '_blank',
-          rel: 'noopener noreferrer',
+          target: t,
+          rel: rel,
           text: 'Legacy iframe embed',
-          'data-bd-external': '1',
         }),
       ]),
     ]);

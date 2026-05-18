@@ -94,8 +94,8 @@ Configured per discovery page in admin (`features.linkBehavior`):
 | Value | Embed kit behavior |
 |-------|---------------------|
 | `new_tab` | `target="_blank"` + `rel="noopener noreferrer"` (default). |
-| `same_window` | `target="_top"` so Bond checkout opens in the top window (common on marketing sites). |
-| `in_frame` | Opens Bond URLs in an on-page overlay (iframe) so the Webflow page stays underneath; use **Open in new tab** if the target blocks framing. |
+| `same_window` | `target="_top"` — navigates the top browser window to Bond (checkout, full discovery). Best when the host page may be inside an iframe. |
+| `in_frame` | `target="_self"` — navigates the **current** window/tab to Bond (no iframe modal). **Details** still opens the in-page drawer; Register and other links leave the Webflow page for Bond checkout. Matches full discovery embed behavior. |
 
 Checkout still runs on **Bond**; `linkBehavior` only controls how the browser opens that URL from the embed.
 
