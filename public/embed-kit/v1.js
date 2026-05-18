@@ -607,34 +607,36 @@
     var priceVal = boot.features.showPricing !== false ? minPriceFromProgram(program) : null;
     var spots = boot.features.showAvailability !== false ? spotsSummary(program) : null;
 
-    var metaParts = [];
-    if (facility) metaParts.push(el('span', { text: facility }));
-    if (ageLine) metaParts.push(el('span', { text: ageLine }));
-
-    var metaRow =
-      metaParts.length > 0
-        ? el(
-            'div',
-            { className: 'bd-meta-row' },
-            metaParts.reduce(function (acc, n, i) {
-              if (i) acc.push(el('span', { text: '\u00b7' }));
-              acc.push(n);
-              return acc;
-            }, []),
-          )
-        : el('span');
-
-    var priceEl = null;
-    if (priceVal != null) {
-      priceEl = el('div', { className: 'bd-price', text: 'From $' + priceVal.toFixed(0) });
+    var sessionCount = upcomingSessionCount(program);
+    var chipRow = el('div', { className: 'bd-meta-chips' });
+    if (ageLine) chipRow.appendChild(el('span', { className: 'bd-meta-chip', text: ageLine }));
+    var statsRow = el('div', { className: 'bd-card-stats' });
+    if (sessionCount > 0) {
+      statsRow.appendChild(
+        el('span', { text: sessionCount + ' session' + (sessionCount === 1 ? '' : 's') }),
+      );
     }
-
-    var spotsEl = null;
     if (spots) {
       var cls = 'bd-spots';
       if (spots.left <= 0) cls += ' bd-spots--bad';
       else if (spots.left <= Math.max(3, Math.floor(spots.total * 0.08))) cls += ' bd-spots--warn';
-      spotsEl = el('div', { className: cls, text: spots.left + ' of ' + spots.total + ' spots open' });
+      statsRow.appendChild(
+        el('span', {
+          className: cls,
+          text: spots.left > 0 ? spots.left + ' spots left' : 'No spots left',
+        }),
+      );
+    }
+    var pricingBlock = el('div', { className: 'bd-card-pricing' });
+    if (priceVal != null) {
+      pricingBlock.appendChild(
+        el('div', {}, [
+          el('div', { className: 'bd-price-label', text: 'From' }),
+          el('div', { className: 'bd-price-value', text: '$' + priceVal.toFixed(0) }),
+        ]),
+      );
+    } else {
+      pricingBlock.appendChild(el('span', { className: 'bd-price-label', text: 'See pricing on register' }));
     }
 
     var actions = el('div', { className: 'bd-card-actions' });
