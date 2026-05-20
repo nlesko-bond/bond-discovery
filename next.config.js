@@ -41,7 +41,7 @@ const nextConfig = {
     return [
       // Discovery pages - cache with revalidation
       {
-        source: '/:slug((?!admin|api|embed|form-responses|reporting|reservations|_next).*)',
+        source: '/:slug((?!admin|api|embed|portal|form-responses|reporting|reservations|_next).*)',
         headers: [
           {
             key: 'Cache-Control',
@@ -54,6 +54,24 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: 'frame-ancestors *',
+          },
+        ],
+      },
+      // Portal pages - partner host shell discovery iframe (tracked GTM)
+      {
+        source: '/portal/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'ALLOWALL',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: 'frame-ancestors *',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=300, stale-while-revalidate=600',
           },
         ],
       },

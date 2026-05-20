@@ -364,7 +364,7 @@ export type ScheduleTableColumn =
   | 'spots'
   | 'action';
 
-export type LinkBehavior = 'new_tab' | 'same_window' | 'in_frame';
+export type LinkBehavior = 'new_tab' | 'same_window' | 'in_frame' | 'host_routed';
 export type ProgramFilterMode = 'all' | 'exclude' | 'include';
 export type EnabledTab = 'programs' | 'schedule';
 
@@ -391,6 +391,9 @@ export interface FeatureConfig {
   disableStickyHeader?: boolean; // Disable sticky main header (calendar headers still stick)
   // Link behavior for registration buttons
   linkBehavior?: LinkBehavior; // How registration links open (default: 'new_tab')
+  consumerOrigin?: string; // Bond consumer base URL for host shell checkout iframe
+  partnerPublicOrigin?: string; // Partner public site origin for share URLs / sitemap
+  linkSeoPathPrefix?: string; // Path prefix mirrored on partner domain (default /programs)
   // Tab visibility
   enabledTabs?: EnabledTab[]; // Which tabs to show (default: ['programs', 'schedule'])
   // Program filtering mode

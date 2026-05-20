@@ -39,6 +39,7 @@ import {
   ScheduleViewportUnresolvedPlaceholder,
 } from '@/components/ui/Skeleton';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
+import { handleRegistrationLinkClick } from '@/lib/host-shell/register-click';
 import {
   isNarrowScheduleViewport,
   readAllowTableOnMobileFromFeatures,
@@ -1315,6 +1316,11 @@ function EventCard({
                   rel="noopener noreferrer"
                   onClick={(e) => {
                     e.stopPropagation();
+                    handleRegistrationLinkClick(
+                      e,
+                      customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen }),
+                      config,
+                    );
                     if (!isRegistrationUnavailable) {
                       gtmEvent.clickRegister({
                         programId: event.programId,
@@ -1576,7 +1582,12 @@ function EventDetailModal({
                 href={customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen })}
                 target={linkTarget}
                 rel="noopener noreferrer"
-                onClick={() => {
+                onClick={(e) => {
+                  handleRegistrationLinkClick(
+                    e,
+                    customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen }),
+                    config,
+                  );
                   if (!isRegistrationUnavailable) {
                     gtmEvent.clickRegister({
                       programId: event.programId,
@@ -1937,6 +1948,11 @@ function TableView({
                                   rel="noopener noreferrer"
                                   onClick={(e) => {
                                     e.stopPropagation();
+                                    handleRegistrationLinkClick(
+                                      e,
+                                      customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen }),
+                                      config,
+                                    );
                                     if (!isRegistrationUnavailable) {
                                       gtmEvent.clickRegister({
                                         programId: event.programId,
@@ -2143,6 +2159,11 @@ function TableView({
                                   rel="noopener noreferrer"
                                   onClick={(e) => {
                                     e.stopPropagation();
+                                    handleRegistrationLinkClick(
+                                      e,
+                                      customRegistrationUrl || buildRegistrationUrl(event.linkSEO, { isRegistrationOpen }),
+                                      config,
+                                    );
                                     if (!isRegistrationUnavailable) {
                                       gtmEvent.clickRegister({
                                         programId: event.programId,
