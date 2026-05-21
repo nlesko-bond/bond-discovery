@@ -1,12 +1,11 @@
-/* Bond Host Shell v1 — partner parent page. Load once; mount discovery + checkout iframes. */
+/* Bond Host Shell v1 — d1: discovery on org domain; register opens new tab with org URL + Bond checkout iframe */
 (function (global) {
   'use strict';
 
   var MIN_IFRAME_HEIGHT_PX = 480;
-  var MSG_NAVIGATE = 'bond:navigate';
+  var MSG_OPEN_TAB = 'bond:open_tab';
   var MSG_RESIZE = 'bond:resize';
   var MSG_RESIZE_LEGACY = 'discovery-resize';
-  var MSG_POPSTATE = 'bond:popstate';
 
   function getScriptOrigin() {
     var scripts = document.getElementsByTagName('script');
@@ -24,7 +23,16 @@
     return prefix.charAt(0) === '/' ? prefix : '/' + prefix;
   }
 
-  function pathMatchesCheckout(locationPath, prefix) {
+  function isDiscoveryLandingPath(locationPath, prefix) {
+    return locationPath === prefix || locationPath === prefix + '/';
+  }
+
+  function isCheckoutPath(locationPath, prefix) {
+    if (!pathMatchesPrefix(locationPath, prefix)) return false;
+    return !isDiscoveryLandingPath(locationPath, prefix);
+  }
+
+  function pathMatchesPrefix(locationPath, prefix) {
     return locationPath === prefix || locationPath.indexOf(prefix + '/') === 0;
   }
 
@@ -33,149 +41,78 @@
     iframe.style.height = Math.max(height, MIN_IFRAME_HEIGHT_PX) + 'px';
   }
 
+  function partnerOrigin(boot) {
+    if (boot.partnerPublicOrigin) {
+      return boot.partnerPublicOrigin.replace(/\/$/, '');
+    }
+    return window.location.origin;
+  }
+
   function BondHostShell(options) {
     this.slug = options.slug;
     this.discoveryBase = (options.discoveryBase || getScriptOrigin()).replace(/\/$/, '');
     this.mount = options.mount;
-    this.discoveryPath = options.discoveryPath || '/programs';
-    this.checkoutLayerId = options.checkoutLayerId || 'bond-checkout-layer';
     this.bootstrap = null;
-    this.discoveryIframe = null;
-    this.checkoutIframe = null;
-    this.checkoutLayer = null;
-    this.mode = 'discovery';
+    this.activeIframe = null;
   }
 
   BondHostShell.prototype.fetchBootstrap = function () {
     var self = this;
     var url =
-      self.discoveryBase +
-      '/api/host/bootstrap?slug=' +
-      encodeURIComponent(self.slug);
+      self.discoveryBase + '/api/host/bootstrap?slug=' + encodeURIComponent(self.slug);
     return fetch(url).then(function (r) {
       if (!r.ok) throw new Error('Host bootstrap failed: ' + r.status);
       return r.json();
     });
   };
 
-  BondHostShell.prototype.ensureCheckoutLayer = function () {
-    if (this.checkoutLayer) return this.checkoutLayer;
-    var layer = document.getElementById(this.checkoutLayerId);
-    if (!layer) {
-      layer = document.createElement('div');
-      layer.id = this.checkoutLayerId;
-      layer.setAttribute('data-bond-checkout-layer', '1');
-      layer.style.cssText =
-        'display:none;position:fixed;inset:0;z-index:2147483000;background:rgba(15,23,42,0.45);padding:0.75rem;box-sizing:border-box';
-      var dialog = document.createElement('div');
-      dialog.style.cssText =
-        'width:100%;height:100%;max-width:72rem;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,0.25)';
-      var bar = document.createElement('div');
-      bar.style.cssText =
-        'flex-shrink:0;display:flex;justify-content:flex-end;padding:0.5rem 0.75rem;border-bottom:1px solid #e2e8f0;background:#f8fafc';
-      var closeBtn = document.createElement('button');
-      closeBtn.type = 'button';
-      closeBtn.textContent = 'Close';
-      closeBtn.style.cssText =
-        'padding:0.35rem 0.85rem;border-radius:8px;border:1px solid #cbd5e1;background:#fff;font:inherit;font-weight:600;cursor:pointer';
-      var self = this;
-      closeBtn.addEventListener('click', function () {
-        self.showDiscovery();
-      });
-      bar.appendChild(closeBtn);
-      dialog.appendChild(bar);
-      var frameWrap = document.createElement('div');
-      frameWrap.style.cssText = 'flex:1;min-height:0';
-      dialog.appendChild(frameWrap);
-      layer.appendChild(dialog);
-      layer._bondFrameWrap = frameWrap;
-      document.body.appendChild(layer);
-    }
-    this.checkoutLayer = layer;
-    return layer;
-  };
-
-  BondHostShell.prototype.showDiscovery = function () {
-    this.mode = 'discovery';
-    if (this.checkoutLayer) {
-      this.checkoutLayer.style.display = 'none';
-    }
-    if (this.checkoutIframe && this.checkoutIframe.parentNode) {
-      this.checkoutIframe.parentNode.removeChild(this.checkoutIframe);
-      this.checkoutIframe = null;
-    }
-    if (this.discoveryIframe) {
-      this.discoveryIframe.style.display = 'block';
-    }
-  };
-
-  BondHostShell.prototype.showCheckout = function (path, search) {
-    var boot = this.bootstrap;
-    if (!boot) return;
-    var src = boot.consumerOrigin.replace(/\/$/, '') + path + (search || '');
-    this.mode = 'checkout';
-    var layer = this.ensureCheckoutLayer();
-    layer.style.display = 'block';
-    if (this.discoveryIframe) {
-      this.discoveryIframe.style.display = 'none';
-    }
-    if (!this.checkoutIframe) {
-      this.checkoutIframe = document.createElement('iframe');
-      this.checkoutIframe.setAttribute('title', 'Registration');
-      this.checkoutIframe.style.cssText = 'width:100%;height:100%;border:0;display:block;min-height:60vh';
-      layer._bondFrameWrap.appendChild(this.checkoutIframe);
-    }
-    if (this.checkoutIframe.src !== src) {
-      this.checkoutIframe.src = src;
-    }
-    try {
-      history.pushState({ bondCheckout: true, path: path, search: search || '' }, '', path + (search || ''));
-    } catch (e) {}
-  };
-
-  BondHostShell.prototype.mountDiscoveryIframe = function () {
+  BondHostShell.prototype.mountDiscovery = function () {
     var boot = this.bootstrap;
     var iframe = document.createElement('iframe');
     iframe.setAttribute('title', 'Programs');
     iframe.setAttribute('data-bond-discovery-iframe', '1');
-    iframe.style.cssText = 'width:100%;border:0;display:block;min-height:' + MIN_IFRAME_HEIGHT_PX + 'px';
+    iframe.style.cssText =
+      'width:100%;border:0;display:block;min-height:' + MIN_IFRAME_HEIGHT_PX + 'px';
     iframe.src = boot.paths.portalDiscoveryUrl;
-    this.discoveryIframe = iframe;
+    this.activeIframe = iframe;
     this.mount.appendChild(iframe);
+  };
+
+  BondHostShell.prototype.mountCheckout = function (path, search) {
+    var boot = this.bootstrap;
+    var src = boot.consumerOrigin.replace(/\/$/, '') + path + (search || '');
+    var iframe = document.createElement('iframe');
+    iframe.setAttribute('title', 'Registration');
+    iframe.setAttribute('data-bond-checkout-iframe', '1');
+    iframe.style.cssText = 'width:100%;border:0;display:block;min-height:100vh;min-height:100dvh';
+    iframe.src = src;
+    this.activeIframe = iframe;
+    this.mount.textContent = '';
+    this.mount.appendChild(iframe);
+  };
+
+  BondHostShell.prototype.openRegistrationTab = function (path, search) {
+    var boot = this.bootstrap;
+    var url = partnerOrigin(boot) + path + (search || '');
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   BondHostShell.prototype.onMessage = function (event) {
     var boot = this.bootstrap;
     if (!boot || !event.data || typeof event.data !== 'object') return;
     var allowed = [boot.discoveryOrigin, boot.consumerOrigin];
-    if (allowed.indexOf(event.origin) === -1 && event.origin !== window.location.origin) {
-      return;
-    }
+    if (allowed.indexOf(event.origin) === -1) return;
+
     var data = event.data;
-    if (data.type === MSG_NAVIGATE && typeof data.path === 'string') {
-      this.showCheckout(data.path, data.search || '');
+    if (data.type === MSG_OPEN_TAB && typeof data.path === 'string') {
+      this.openRegistrationTab(data.path, data.search || '');
       return;
     }
     if (
       (data.type === MSG_RESIZE || data.type === MSG_RESIZE_LEGACY) &&
       typeof data.height === 'number'
     ) {
-      var target =
-        this.mode === 'checkout' && this.checkoutIframe
-          ? this.checkoutIframe
-          : this.discoveryIframe;
-      setIframeHeight(target, data.height);
-    }
-  };
-
-  BondHostShell.prototype.onPopState = function () {
-    var boot = this.bootstrap;
-    var prefix = normalizePrefix(boot.linkSeoPathPrefix);
-    var path = window.location.pathname;
-    if (pathMatchesCheckout(path, prefix)) {
-      this.showCheckout(path, window.location.search);
-    } else {
-      this.showDiscovery();
+      setIframeHeight(this.activeIframe, data.height);
     }
   };
 
@@ -183,9 +120,12 @@
     var boot = this.bootstrap;
     var prefix = normalizePrefix(boot.linkSeoPathPrefix);
     var path = window.location.pathname;
-    this.mountDiscoveryIframe();
-    if (pathMatchesCheckout(path, prefix)) {
-      this.showCheckout(path, window.location.search);
+    var search = window.location.search || '';
+
+    if (isCheckoutPath(path, prefix)) {
+      this.mountCheckout(path, search);
+    } else {
+      this.mountDiscovery();
     }
   };
 
@@ -201,16 +141,12 @@
       window.addEventListener('message', function (e) {
         self.onMessage(e);
       });
-      window.addEventListener('popstate', function () {
-        self.onPopState();
-      });
     });
   };
 
   function initFromMount(mountEl) {
     var slug = mountEl.getAttribute('data-bond-slug');
     var discoveryBase = mountEl.getAttribute('data-bond-discovery-base') || getScriptOrigin();
-    var discoveryPath = mountEl.getAttribute('data-bond-discovery-path') || '/programs';
     if (!slug) {
       console.error('BondHost: data-bond-slug is required on mount element');
       return;
@@ -224,7 +160,6 @@
       slug: slug,
       discoveryBase: discoveryBase,
       mount: mountEl,
-      discoveryPath: discoveryPath,
     });
     shell.init().catch(function (err) {
       console.error('BondHost init failed', err);

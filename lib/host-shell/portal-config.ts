@@ -12,7 +12,6 @@ export function toPortalDiscoveryConfig(config: DiscoveryConfig): DiscoveryConfi
     ...config,
     features: {
       ...config.features,
-      linkBehavior: 'host_routed',
       headerDisplay: minimalHeader,
     },
   };

@@ -1,86 +1,133 @@
-# Bond Host Shell — partner integration
+# Bond Host Shell — Webflow / partner setup (d1)
 
-Partners load Bond discovery and registration **inside iframes** on their domain so Bond GTM/GA4 runs correctly. The org implements **two routes** (discovery + catch-all checkout paths); Bond ships `bond-host/v1.js` and config from `/api/host/bootstrap`.
+Register opens a **new tab** on the org domain (`org.com/programs/...`) with Bond checkout **inside an iframe** so Bond GTM/GA4 still runs. The discovery tab stays open with filters intact.
+
+This uses **new routes only** (`/portal/{slug}`, `bond-host/v1.js`). Existing discovery pages (`/{slug}`, `/embed/{slug}`, embed kit) are unchanged.
+
+---
+
+## What happens (user journey)
+
+1. User visits **`https://your-site.com/programs`** (your Webflow page).
+2. **bond-host.js** loads an iframe → `https://discovery.bondsports.co/portal/YOUR_SLUG` (Bond discovery + analytics).
+3. User browses and filters in that iframe.
+4. User clicks **Register** → a **new tab** opens: **`https://your-site.com/programs/xx/session/yy?...`** (URL built automatically from Bond `linkSEO` — you do not create these pages in Webflow).
+5. The new tab shows Bond **checkout** in a full-height iframe (`bondsports.co` + same path). Analytics run in that iframe.
+6. User closes the checkout tab → returns to the **programs** tab with filters unchanged.
+
+---
 
 ## Prerequisites
 
-- Discovery page **slug** (same as `/{slug}` in Bond Discovery admin).
-- Optional in page **features** JSON:
-  - `consumerOrigin` — e.g. `https://bondsports.co`
-  - `partnerPublicOrigin` — e.g. `https://www.yourorg.com`
-  - `linkSeoPathPrefix` — default `/programs`
-- Bond consumer must allow iframe embedding on registration URLs (consumer team).
+| Item | Where |
+|------|--------|
+| Discovery **slug** | Bond Discovery admin |
+| Deployed host | e.g. `https://discovery.bondsports.co` (main branch with host shell) |
+| **`partnerPublicOrigin`** in page features JSON | e.g. `"https://www.your-site.com"` or `"https://your-project.webflow.io"` — **required** so new tabs use your domain, not `bondsports.co` |
+| Optional **`consumerOrigin`** | Default `https://bondsports.co` |
+| Optional **`linkSeoPathPrefix`** | Default `/programs` |
 
-## 1. Load the host SDK (once per site)
+Example features JSON (Bond admin → page config):
 
-```html
-<script src="https://YOUR-DISCOVERY-HOST/bond-host/v1.js" defer></script>
+```json
+{
+  "partnerPublicOrigin": "https://your-project.webflow.io",
+  "consumerOrigin": "https://bondsports.co",
+  "linkSeoPathPrefix": "/programs"
+}
 ```
 
-## 2. Discovery page (one CMS page)
+---
 
-Example path: `/programs`
+## Webflow — Step 1: Footer script (site-wide, once)
+
+**Project settings → Custom code → Footer code**
+
+```html
+<script src="https://discovery.bondsports.co/bond-host/v1.js" defer></script>
+```
+
+---
+
+## Webflow — Step 2: Discovery page (`/programs`)
+
+Create a page whose slug is **`programs`** (or match your `linkSeoPathPrefix`).
+
+Add an **Embed** element (body). Paste:
 
 ```html
 <div
   id="bond-programs"
   data-bond-host
   data-bond-slug="YOUR_SLUG"
-  data-bond-discovery-base="https://YOUR-DISCOVERY-HOST"
+  data-bond-discovery-base="https://discovery.bondsports.co"
 ></div>
 ```
 
-This mounts an iframe to `https://YOUR-DISCOVERY-HOST/portal/YOUR_SLUG` (tracked GTM).
+Replace `YOUR_SLUG` with your discovery slug.
 
-## 3. Checkout shell (catch-all — same HTML everywhere)
+---
 
-All paths under your `linkSeoPathPrefix` (default `/programs/...`) must serve the **same** page markup:
+## Webflow — Step 3: Registration URLs (catch-all)
 
-```html
-<div
-  id="bond-shell"
-  data-bond-host
-  data-bond-slug="YOUR_SLUG"
-  data-bond-discovery-base="https://YOUR-DISCOVERY-HOST"
-></div>
-<script src="https://YOUR-DISCOVERY-HOST/bond-host/v1.js" defer></script>
-```
+Every path like `/programs/anything/...` must serve the **same** embed as Step 2 so shared links and new tabs work.
 
-On load, `bond-host.js` reads `window.location.pathname` and opens the checkout iframe to `consumerOrigin + path + search`.
+Webflow **cannot** do this natively. Use one of:
 
-### WordPress
+| Approach | Who sets it up |
+|----------|----------------|
+| **Cloudflare Worker** in front of the Webflow domain | You or the org — Worker returns one HTML shell with the same `data-bond-host` markup for `/programs/*` |
+| **Reverse proxy / host rules** | IT on the org side |
 
-Use a rewrite so `/programs/*` maps to one template containing the shell above (Phase 2 plugin in `integrations/wordpress/`).
+**Without Step 3:** Register from the discovery page still opens a new tab, but that tab may **404** on Webflow until the catch-all exists. Discovery-only testing works after Step 1–2.
 
-### Webflow / static
+### Minimal Worker idea (for IT)
 
-Use Cloudflare Worker or host rewrites to return one HTML shell for `/programs/*`.
+- If path is exactly `/programs` → pass through to Webflow (discovery page).
+- If path starts with `/programs/` → return static HTML with the same `data-bond-host` div + script (checkout-only mode is automatic).
 
-## 4. Bootstrap API
+---
 
-```
-GET https://YOUR-DISCOVERY-HOST/api/host/bootstrap?slug=YOUR_SLUG
-```
+## Webflow — Step 4: Publish and test
 
-Returns `consumerOrigin`, `linkSeoPathPrefix`, `paths.portalDiscoveryUrl`, branding. CORS follows `features.embedAllowedOrigins` (empty = allow all).
+1. **Publish** the site (not Designer-only).
+2. Open `https://your-project.webflow.io/programs`.
+3. Confirm programs load in the page.
+4. Click **Register** → new tab → URL should be on **your domain** under `/programs/...`, with Bond checkout inside the page.
+5. Close tab → discovery tab still filtered.
 
-## postMessage contract
+### Troubleshooting
+
+| Symptom | Likely cause |
+|---------|----------------|
+| New tab goes to `bondsports.co` not your domain | Set `partnerPublicOrigin` in features JSON |
+| Blank checkout iframe | Consumer blocks iframe embed — consumer team must allow `frame-ancestors` |
+| New tab 404 | Step 3 catch-all not configured |
+| Nothing in Designer | Test on **published** URL only |
+| CORS error on bootstrap | Add your Webflow origin to `embedAllowedOrigins` in page config, or leave empty to allow all |
+
+---
+
+## Bond-side routes (reference)
+
+| URL | Purpose |
+|-----|---------|
+| `/portal/{slug}` | Discovery iframe content (GTM). Only used inside host shell. |
+| `/api/host/bootstrap?slug=` | Config for bond-host.js |
+| `/bond-host/v1.js` | Partner parent-page script |
+
+---
+
+## Message contract (reference)
 
 | type | From | Action |
 |------|------|--------|
-| `bond:navigate` | Discovery iframe | `{ path, search? }` — host opens checkout overlay |
-| `discovery-resize` / `bond:resize` | Bond iframe | `{ height }` — host sets iframe height |
+| `bond:open_tab` | Portal iframe → parent | Parent runs `window.open(partnerPublicOrigin + path + search)` |
+| `discovery-resize` | Bond iframe → parent | Parent sets iframe height |
 
-Register uses `bond:navigate` when discovery runs at `/portal/{slug}` (`host_routed` mode).
+---
 
-## What does not change
+## What we do not change
 
-- Existing `/{slug}` and `/embed/{slug}` pages behave as before unless you point partners at `/portal/{slug}`.
-- Embed kit (`embed-kit/v1.js`) is unchanged.
-
-## QA
-
-1. Discovery page shows programs; GTM loads inside iframe (check tag assistant on iframe document).
-2. Register updates parent URL to `/programs/...` and shows checkout iframe.
-3. Direct visit to `/programs/{session-path}` loads checkout without a separate CMS page.
-4. Back button returns from checkout to discovery.
+- `/{slug}`, `/embed/{slug}`, embed kit, and shared discovery components behave as before.
+- Portal uses a small **portal-only** click bridge (`HostShellPortalBridge`) that loads only under `/portal/*`.

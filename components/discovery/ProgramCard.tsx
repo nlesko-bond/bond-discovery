@@ -30,7 +30,6 @@ import {
 import Link from 'next/link';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
-import { handleRegistrationLinkClick } from '@/lib/host-shell/register-click';
 import { usePathname } from 'next/navigation';
 import { PricingCarousel } from './PricingCarousel';
 
@@ -300,12 +299,7 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 text-white font-semibold rounded-xl hover:opacity-90 transition-colors"
                 style={{ backgroundColor: allSessionsClosed ? '#6B7280' : primaryColor }}
-                onClick={(e) => {
-                  handleRegistrationLinkClick(
-                    e,
-                    customRegistrationUrl || buildRegistrationUrl(program.linkSEO, { isRegistrationOpen: !allSessionsClosed }),
-                    config,
-                  );
+                onClick={() => {
                   gtmEvent.clickRegister({
                     programId: program.id,
                     programName: program.name,
@@ -473,12 +467,7 @@ function SessionCard({
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-colors"
               style={{ backgroundColor: isRegistrationUnavailable ? '#9CA3AF' : secondaryColor }}
-              onClick={(e) => {
-                handleRegistrationLinkClick(
-                  e,
-                  customRegistrationUrl || registrationLink,
-                  config,
-                );
+              onClick={() => {
                 gtmEvent.clickRegister({
                   programId,
                   programName,

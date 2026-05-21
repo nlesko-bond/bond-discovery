@@ -37,14 +37,18 @@ export function resolveHostShellSettings(config: DiscoveryConfig): {
   partnerPublicOrigin: string | null;
   linkSeoPathPrefix: string;
 } {
-  const raw = config.features as Record<string, unknown>;
+  const raw = config.features as unknown as Record<string, unknown>;
   const consumerOrigin =
+    config.features.consumerOrigin ??
     readFeatureString(raw, 'consumerOrigin', 'consumer_origin') ??
     process.env.NEXT_PUBLIC_BOND_CONSUMER_ORIGIN ??
     DEFAULT_BOND_CONSUMER_ORIGIN;
   const partnerPublicOrigin =
-    readFeatureString(raw, 'partnerPublicOrigin', 'partner_public_origin') ?? null;
+    config.features.partnerPublicOrigin ??
+    readFeatureString(raw, 'partnerPublicOrigin', 'partner_public_origin') ??
+    null;
   const linkSeoPathPrefix =
+    config.features.linkSeoPathPrefix ??
     readFeatureString(raw, 'linkSeoPathPrefix', 'link_seo_path_prefix') ??
     DEFAULT_LINK_SEO_PATH_PREFIX;
 
@@ -81,7 +85,7 @@ export function buildHostBootstrapPayload(
     branding: {
       companyName: config.branding.companyName,
       primaryColor: config.branding.primaryColor,
-      accentColor: config.branding.accentColor,
+      accentColor: config.branding.accentColor ?? config.branding.secondaryColor,
     },
   };
 }

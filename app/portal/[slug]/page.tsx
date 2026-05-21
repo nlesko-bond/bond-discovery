@@ -22,14 +22,14 @@ async function getPrecomputedEvents(
   slug: string,
   config: DiscoveryConfig,
 ): Promise<{
-  events: unknown[];
+  events: any[];
   total: number;
 } | null> {
   if (config.features.discoveryCacheEnabled === false) {
     return null;
   }
   try {
-    const precomputed = await cacheGet<{ data?: unknown[]; meta?: { totalFiltered?: number } }>(
+    const precomputed = await cacheGet<any>(
       discoveryResponseCacheKey(slug, config.features.bondEnv),
     );
     if (precomputed?.data && Array.isArray(precomputed.data) && precomputed.data.length > 0) {
