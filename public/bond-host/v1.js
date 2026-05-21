@@ -37,9 +37,27 @@
     return locationPath === prefix || locationPath.indexOf(prefix + '/') === 0;
   }
 
+  function readChromeOffsetPx(mountEl) {
+    var raw = mountEl.getAttribute('data-bond-chrome-offset-px');
+    if (!raw) return 0;
+    var n = parseInt(raw, 10);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+
   function setIframeHeight(iframe, height) {
     if (!iframe) return;
     iframe.style.height = Math.max(height, MIN_IFRAME_HEIGHT_PX) + 'px';
+  }
+
+  function applyCheckoutFallbackHeight(iframe, chromeOffsetPx) {
+    if (!iframe) return;
+    if (chromeOffsetPx > 0) {
+      iframe.style.height = 'calc(100dvh - ' + chromeOffsetPx + 'px)';
+      iframe.style.minHeight = 'calc(100dvh - ' + chromeOffsetPx + 'px)';
+    } else {
+      iframe.style.height = '100dvh';
+      iframe.style.minHeight = '100dvh';
+    }
   }
 
   function partnerOrigin(boot) {
@@ -53,6 +71,7 @@
     this.slug = options.slug;
     this.discoveryBase = (options.discoveryBase || getScriptOrigin()).replace(/\/$/, '');
     this.mount = options.mount;
+    this.chromeOffsetPx = options.chromeOffsetPx || 0;
     this.bootstrap = null;
     this.activeIframe = null;
   }
@@ -85,9 +104,11 @@
     var iframe = document.createElement('iframe');
     iframe.setAttribute('title', 'Registration');
     iframe.setAttribute('data-bond-checkout-iframe', '1');
-    iframe.style.cssText = 'width:100%;border:0;display:block;min-height:100vh;min-height:100dvh';
+    iframe.style.cssText = 'width:100%;border:0;display:block';
+    applyCheckoutFallbackHeight(iframe, this.chromeOffsetPx);
     iframe.src = src;
     this.activeIframe = iframe;
+    this.mount.style.overflow = 'hidden';
     this.mount.textContent = '';
     this.mount.appendChild(iframe);
   };
@@ -135,7 +156,11 @@
       (data.type === MSG_RESIZE || data.type === MSG_RESIZE_LEGACY) &&
       typeof data.height === 'number'
     ) {
-      setIframeHeight(this.activeIframe, data.height);
+      var height = data.height;
+      if (this.activeIframe && this.activeIframe.getAttribute('data-bond-checkout-iframe') === '1') {
+        height = height + this.chromeOffsetPx;
+      }
+      setIframeHeight(this.activeIframe, height);
     }
   };
 
@@ -192,6 +217,7 @@
       slug: slug,
       discoveryBase: discoveryBase,
       mount: mountEl,
+      chromeOffsetPx: readChromeOffsetPx(mountEl),
     });
     shell.init().catch(function (err) {
       console.error('BondHost init failed', err);
