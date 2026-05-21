@@ -1,4 +1,4 @@
-import type { DiscoveryFilters, Program, Session } from '@/types';
+import type { DiscoveryFilters, Gender, Program, Session } from '@/types';
 import { programIdsFilterMatches } from '@/lib/program-ids-filter';
 
 const ALMOST_FULL_SPOTS_THRESHOLD = 5;
@@ -16,6 +16,37 @@ function getSessionsFromProgram(program: Program): Session[] {
     return nested.data ?? [];
   }
   return [];
+}
+
+function sessionMatchesAgeRange(
+  session: Session,
+  program: Program,
+  ageRange?: DiscoveryFilters['ageRange'],
+): boolean {
+  if (ageRange?.min === undefined && ageRange?.max === undefined) {
+    return true;
+  }
+  const ageMin = session.minAge ?? session.ageMin ?? program.ageMin;
+  const ageMax = session.maxAge ?? session.ageMax ?? program.ageMax;
+  if (ageRange?.min !== undefined && ageMax !== undefined && ageMax < ageRange.min) {
+    return false;
+  }
+  if (ageRange?.max !== undefined && ageMin !== undefined && ageMin > ageRange.max) {
+    return false;
+  }
+  return true;
+}
+
+function sessionMatchesGender(
+  session: Session,
+  program: Program,
+  gender: Gender,
+): boolean {
+  const sessionGender = session.gender ?? program.gender;
+  if (!sessionGender || sessionGender === 'all' || sessionGender === 'coed') {
+    return true;
+  }
+  return sessionGender === gender;
 }
 
 function programMatchesSearch(program: Program, query: string): boolean {
@@ -77,25 +108,29 @@ export function filterProgramsForPortalSessions(
   }
 
   if (filters.ageRange?.min !== undefined || filters.ageRange?.max !== undefined) {
-    result = result.filter((program) => {
-      if (filters.ageRange?.min !== undefined && program.ageMax !== undefined) {
-        if (program.ageMax < filters.ageRange.min) {
-          return false;
-        }
+    result = result.reduce<Program[]>((accumulator, program) => {
+      const sessions = getSessionsFromProgram(program).filter((session) =>
+        sessionMatchesAgeRange(session, program, filters.ageRange),
+      );
+      if (sessions.length === 0) {
+        return accumulator;
       }
-      if (filters.ageRange?.max !== undefined && program.ageMin !== undefined) {
-        if (program.ageMin > filters.ageRange.max) {
-          return false;
-        }
-      }
-      return true;
-    });
+      accumulator.push({ ...program, sessions });
+      return accumulator;
+    }, []);
   }
 
   if (filters.gender && filters.gender !== 'all') {
-    result = result.filter(
-      (program) => !program.gender || program.gender === 'all' || program.gender === filters.gender,
-    );
+    result = result.reduce<Program[]>((accumulator, program) => {
+      const sessions = getSessionsFromProgram(program).filter((session) =>
+        sessionMatchesGender(session, program, filters.gender!),
+      );
+      if (sessions.length === 0) {
+        return accumulator;
+      }
+      accumulator.push({ ...program, sessions });
+      return accumulator;
+    }, []);
   }
 
   if (filters.availability && filters.availability !== 'all') {

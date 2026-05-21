@@ -53,6 +53,36 @@ export function isSessionClosedByAvailabilityStatus(
   );
 }
 
+function getProductsFromSession(session: Session): Product[] {
+  const products = session.products;
+  if (!products) {
+    return [];
+  }
+  if (Array.isArray(products)) {
+    return products;
+  }
+  if (typeof products === 'object' && 'data' in products) {
+    const nested = products as { data?: Product[] };
+    return nested.data ?? [];
+  }
+  return [];
+}
+
+function getSegmentsFromSession(session: Session): Segment[] {
+  const segments = session.segments;
+  if (!segments) {
+    return [];
+  }
+  if (Array.isArray(segments)) {
+    return segments;
+  }
+  if (typeof segments === 'object' && 'data' in segments) {
+    const nested = segments as { data?: Segment[] };
+    return nested.data ?? [];
+  }
+  return [];
+}
+
 function getSessionsFromProgram(program: Program): Session[] {
   const sessions = program.sessions;
   if (!sessions) {
@@ -107,7 +137,8 @@ function mapProductRow(
     id: product.id,
     name: product.name,
     description: product.description,
-    priceLabel: lowest !== undefined ? formatPrice(lowest) : undefined,
+    priceLabel:
+      lowest !== undefined ? formatPrice(lowest, 'USD', { minimumFractionDigits: 2 }) : undefined,
     registrationUrl: registerDisabled ? builtUrl : registrationUrl,
     registerDisabled,
   };
@@ -155,8 +186,8 @@ export function buildHostPortalSessionCards(
         availabilityStatus,
         isClosed,
         isRegistrationOpen: !registerDisabled,
-        segments: (session.segments ?? []).map(mapSegmentRow),
-        products: (session.products ?? []).map((product) =>
+        segments: getSegmentsFromSession(session).map(mapSegmentRow),
+        products: getProductsFromSession(session).map((product) =>
           mapProductRow(product, baseLink, registerDisabled, customRegistrationUrl),
         ),
       });

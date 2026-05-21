@@ -22,9 +22,12 @@ export async function fetchProgramsForDiscoveryPage(
     try {
       const cacheKey = programsCacheKey(orgId, undefined, apiKey, config.features.bondEnv);
 
+      const programsExpand =
+        'sessions,sessions.products,sessions.products.prices,sessions.segments';
+
       const response = await cached(
         cacheKey,
-        () => client.getPrograms(orgId),
+        () => client.getPrograms(orgId, { expand: programsExpand }),
         { ttl: Math.max(config.cacheTtl || 0, 4 * 60 * 60) },
       );
 

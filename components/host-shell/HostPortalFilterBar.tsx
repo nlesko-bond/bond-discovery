@@ -1,8 +1,9 @@
 'use client';
 
-import { Search, X } from 'lucide-react';
+import { Search, SlidersHorizontal, X } from 'lucide-react';
 import type { DiscoveryConfig, DiscoveryFilters, ProgramType } from '@/types';
 import { getProgramTypeLabel, getSportLabel, cn } from '@/lib/utils';
+import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
 import type { IPortalFilterOptions } from '@/lib/host-shell/portal-filter-options';
 
 interface IHostPortalFilterBarProps {
@@ -11,9 +12,9 @@ interface IHostPortalFilterBarProps {
   options: IPortalFilterOptions;
   config: DiscoveryConfig;
   resultCount: number;
+  onOpenFiltersPanel: () => void;
+  isScheduleView: boolean;
 }
-
-const CHIP_ACTIVE_CLASS = 'ring-2 ring-offset-1';
 
 export function HostPortalFilterBar({
   filters,
@@ -21,10 +22,23 @@ export function HostPortalFilterBar({
   options,
   config,
   resultCount,
+  onOpenFiltersPanel,
+  isScheduleView,
 }: IHostPortalFilterBarProps) {
-  const enabledFilters = config.features.enableFilters || ['search', 'facility', 'programType', 'sport'];
+  const { secondaryColor, primaryColor } = resolvePortalBrandColors(config);
+  const configFilters = config.features.enableFilters || [
+    'search',
+    'facility',
+    'programType',
+    'sport',
+    'age',
+    'dateRange',
+    'program',
+  ];
+  const enabledFilters = isScheduleView
+    ? configFilters.filter((filterId) => filterId !== 'age')
+    : configFilters;
   const showSearch = config.features.showSearch !== false;
-  const brandColor = config.branding.secondaryColor || '#6366F1';
 
   const toggleListFilter = (
     key: 'facilityIds' | 'programTypes' | 'sports' | 'programIds',
@@ -59,17 +73,79 @@ export function HostPortalFilterBar({
       filters.facilityIds?.length ||
       filters.programTypes?.length ||
       filters.sports?.length ||
-      filters.programIds?.length,
+      filters.programIds?.length ||
+      filters.sessionIds?.length ||
+      (filters.gender && filters.gender !== 'all') ||
+      (filters.availability && filters.availability !== 'all') ||
+      filters.dateRange?.start ||
+      filters.dateRange?.end ||
+      filters.ageRange?.min !== undefined ||
+      filters.ageRange?.max !== undefined,
   );
 
+  const advancedFilterCount = [
+    filters.programIds?.length || 0,
+    filters.sessionIds?.length || 0,
+    filters.gender && filters.gender !== 'all' ? 1 : 0,
+    filters.availability && filters.availability !== 'all' ? 1 : 0,
+    filters.dateRange?.start || filters.dateRange?.end ? 1 : 0,
+    !isScheduleView && (filters.ageRange?.min !== undefined || filters.ageRange?.max !== undefined)
+      ? 1
+      : 0,
+  ].reduce((sum, value) => sum + value, 0);
+
+  const showFacilityChips =
+    enabledFilters.includes('facility') && options.facilities.length > 0;
+
   return (
-    <div className="bg-white border-b border-gray-200 px-3 py-3 sm:px-4">
+    <div
+      className="border-b px-3 py-3 sm:px-4"
+      style={{ backgroundColor: '#ffffff', borderColor: `${primaryColor}18` }}
+    >
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors"
+          style={{
+            borderColor: `${secondaryColor}40`,
+            color: primaryColor,
+            backgroundColor: `${secondaryColor}10`,
+          }}
+          onClick={onOpenFiltersPanel}
+        >
+          <SlidersHorizontal size={14} />
+          Filters
+          {advancedFilterCount > 0 && (
+            <span
+              className="px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white"
+              style={{ backgroundColor: secondaryColor }}
+            >
+              {advancedFilterCount}
+            </span>
+          )}
+        </button>
+        {hasActiveFilters && (
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-800"
+            onClick={clearFilters}
+          >
+            <X size={12} />
+            Clear all
+          </button>
+        )}
+        <span className="text-xs text-gray-500 ml-auto">
+          {resultCount} {isScheduleView ? 'events' : 'sessions'}
+        </span>
+      </div>
+
       {showSearch && enabledFilters.includes('search') && (
         <div className="relative mb-3">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="search"
-            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2"
+            style={{ outlineColor: secondaryColor }}
             placeholder="Search sessions..."
             value={filters.search ?? ''}
             onChange={(event) =>
@@ -81,8 +157,7 @@ export function HostPortalFilterBar({
       )}
 
       <div className="flex flex-wrap gap-2 items-center">
-        {enabledFilters.includes('facility') &&
-          options.hasMultipleFacilities &&
+        {showFacilityChips &&
           options.facilities.map((facility) => {
             const active = filters.facilityIds?.includes(facility.id);
             return (
@@ -95,7 +170,7 @@ export function HostPortalFilterBar({
                     ? 'text-white border-transparent'
                     : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300',
                 )}
-                style={active ? { backgroundColor: brandColor } : undefined}
+                style={active ? { backgroundColor: secondaryColor } : undefined}
                 onClick={() => toggleListFilter('facilityIds', facility.id)}
               >
                 {facility.name}
@@ -116,7 +191,7 @@ export function HostPortalFilterBar({
                     ? 'text-white border-transparent'
                     : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300',
                 )}
-                style={active ? { backgroundColor: brandColor } : undefined}
+                style={active ? { backgroundColor: secondaryColor } : undefined}
                 onClick={() => toggleListFilter('programTypes', typeOption.id)}
               >
                 {getProgramTypeLabel(typeOption.id)}
@@ -137,29 +212,14 @@ export function HostPortalFilterBar({
                     ? 'text-white border-transparent'
                     : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300',
                 )}
-                style={active ? { backgroundColor: brandColor } : undefined}
+                style={active ? { backgroundColor: secondaryColor } : undefined}
                 onClick={() => toggleListFilter('sports', sportOption.id)}
               >
                 {getSportLabel(sportOption.id)}
               </button>
             );
           })}
-
-        {hasActiveFilters && (
-          <button
-            type="button"
-            className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-800"
-            onClick={clearFilters}
-          >
-            <X size={12} />
-            Clear
-          </button>
-        )}
       </div>
-
-      <p className="text-xs text-gray-500 mt-2">
-        {resultCount} session{resultCount === 1 ? '' : 's'}
-      </p>
     </div>
   );
 }
