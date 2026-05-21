@@ -80,6 +80,15 @@ export type ProgramType =
 
 export type Gender = 'all' | 'male' | 'female' | 'coed';
 
+/** Bond public API `AvailabilityStatusEnum` on SessionDto */
+export enum AvailabilityStatusEnum {
+  AVAILABLE = 'available',
+  UNAVAILABLE = 'unavailable',
+  PARTIALLY_AVAILABLE = 'partially_available',
+  EXPIRED = 'expired',
+  PARTIALLY_EXPIRED = 'partially_expired',
+}
+
 // Session Types
 export interface Session {
   id: string;
@@ -112,8 +121,10 @@ export interface Session {
   lateRegistrationEndDate?: string;
   cutoffDate?: string;
   
-  // Registration status
+  // Registration status (legacy / computed in transformer; prefer availabilityStatus for SessionDto)
   registrationWindowStatus?: 'open' | 'closed' | 'not_opened_yet' | 'ended' | string;
+  /** SessionDto.availabilityStatus — source of truth for session capacity window */
+  availabilityStatus?: AvailabilityStatusEnum | string;
   
   // Capacity
   capacity?: number;
@@ -370,6 +381,11 @@ export type EnabledTab = 'programs' | 'schedule';
 
 export type BondEmbedPortalTemplate = 'classic' | 'hero-carousel' | 'schedule-first';
 
+export enum HostPortalLayoutEnum {
+  LEGACY_PROGRAMS = 'legacy_programs',
+  SESSIONS_FIRST = 'sessions_first',
+}
+
 export interface FeatureConfig {
   showPricing: boolean;
   showAvailability: boolean;
@@ -395,6 +411,8 @@ export interface FeatureConfig {
   partnerPublicOrigin?: string; // Partner public site origin (e.g. https://www.org.com)
   linkSeoPathPrefix?: string; // Discovery path on partner site (default /programs)
   checkoutLandingPath?: string; // Partner checkout shell page (default /programs/register)
+  /** Portal /portal/{slug} layout: legacy DiscoveryPage vs session-first cards */
+  hostPortalLayout?: HostPortalLayoutEnum;
   // Tab visibility
   enabledTabs?: EnabledTab[]; // Which tabs to show (default: ['programs', 'schedule'])
   // Program filtering mode

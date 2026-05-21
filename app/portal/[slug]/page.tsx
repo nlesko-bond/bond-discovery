@@ -1,11 +1,15 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { DiscoveryPage } from '@/components/discovery/DiscoveryPage';
+import { HostPortalDiscoveryPage } from '@/components/host-shell/HostPortalDiscoveryPage';
 import { ProgramGridSkeleton } from '@/components/ui/Skeletons';
 import { getConfigBySlug, getAllPageConfigs } from '@/lib/config';
 import { cacheGet, discoveryResponseCacheKey } from '@/lib/cache';
 import { getAvailabilityMap, mergeAvailabilityIntoEvents } from '@/lib/availability-cache';
-import { toPortalDiscoveryConfig } from '@/lib/host-shell/portal-config';
+import {
+  isSessionsFirstPortalLayout,
+  toPortalDiscoveryConfig,
+} from '@/lib/host-shell/portal-config';
 import { Program, DiscoveryConfig } from '@/types';
 import { fetchProgramsForDiscoveryPage } from '@/lib/embed-discovery-programs';
 
@@ -70,17 +74,31 @@ export default async function PortalDiscoverySlugPage({ params, searchParams }: 
     getPrecomputedEvents(slug, portalConfig),
   ]);
 
+  const useSessionsFirst = isSessionsFirstPortalLayout(portalConfig);
+
   return (
     <Suspense fallback={<PortalLoadingState />}>
-      <DiscoveryPage
-        initialPrograms={programs}
-        initialScheduleEvents={eventsResult?.events}
-        initialEventsFetched={!!eventsResult}
-        initialTotalServerEvents={eventsResult?.total ?? 0}
-        config={portalConfig}
-        initialViewMode={viewMode as 'programs' | 'schedule'}
-        searchParams={searchParams}
-      />
+      {useSessionsFirst ? (
+        <HostPortalDiscoveryPage
+          initialPrograms={programs}
+          initialScheduleEvents={eventsResult?.events}
+          initialEventsFetched={!!eventsResult}
+          initialTotalServerEvents={eventsResult?.total ?? 0}
+          config={portalConfig}
+          initialViewMode={viewMode as 'programs' | 'schedule'}
+          searchParams={searchParams}
+        />
+      ) : (
+        <DiscoveryPage
+          initialPrograms={programs}
+          initialScheduleEvents={eventsResult?.events}
+          initialEventsFetched={!!eventsResult}
+          initialTotalServerEvents={eventsResult?.total ?? 0}
+          config={portalConfig}
+          initialViewMode={viewMode as 'programs' | 'schedule'}
+          searchParams={searchParams}
+        />
+      )}
     </Suspense>
   );
 }

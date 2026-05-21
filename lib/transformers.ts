@@ -179,6 +179,8 @@ export function transformSession(raw: any): Session {
     lateRegistrationEndDate: raw.lateRegistrationEndDate,
     cutoffDate: raw.cutoffDate,
     
+    availabilityStatus: raw.availabilityStatus,
+
     // Registration status - calculate from dates if not provided
     registrationWindowStatus: raw.registrationWindowStatus || calculateRegistrationStatus(
       raw.registrationStartDate,
