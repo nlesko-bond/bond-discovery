@@ -34,7 +34,8 @@ interface PageConfig {
   };
   organizationIds: string[];
   facilityIds?: string[];
-  excludedProgramIds?: string[]; // Programs to exclude from this page
+  excludedProgramIds?: string[];
+  includedProgramIds?: string[];
   apiKey?: string; // Per-page API key
   gtmId?: string; // Page-level GTM ID (overrides partner group)
   features: {

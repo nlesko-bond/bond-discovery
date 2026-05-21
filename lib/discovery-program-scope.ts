@@ -26,11 +26,7 @@ export function getDiscoveryIncludedProgramIds(config: DiscoveryConfig): string[
  * Excluded program IDs from page config.
  */
 export function getDiscoveryExcludedProgramIds(config: DiscoveryConfig): string[] {
-  const root = normalizeProgramIdList(config.excludedProgramIds);
-  if (root.length > 0) {
-    return root;
-  }
-  return normalizeProgramIdList(config.features.excludedProgramIds);
+  return normalizeProgramIdList(config.excludedProgramIds);
 }
 
 /**
