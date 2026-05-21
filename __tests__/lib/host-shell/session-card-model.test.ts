@@ -66,6 +66,33 @@ describe('buildHostPortalSessionCards', () => {
     expect(cards[0].products.every((product) => product.registerDisabled)).toBe(true);
   });
 
+  it('formats prices with two decimal places', () => {
+    const product = {
+      ...mockProduct,
+      prices: [{ id: 'p1', price: 267.5, currency: 'USD' }],
+    };
+    const session: Session = {
+      ...mockSession,
+      products: [product],
+    };
+    const program = { ...mockProgram, sessions: [session] };
+    const cards = buildHostPortalSessionCards([program], mockConfig);
+    expect(cards[0].products[0].priceLabel).toBe('$267.50');
+  });
+
+  it('reads segments from paginated session payload', () => {
+    const session = {
+      ...mockSession,
+      segments: {
+        data: [{ id: 'seg-1', sessionId: mockSession.id, name: 'Week 1', startDate: '2026-06-01', endDate: '2026-06-07' }],
+      },
+    } as Session;
+    const program = { ...mockProgram, sessions: [session] };
+    const cards = buildHostPortalSessionCards([program], mockConfig);
+    expect(cards[0].segments).toHaveLength(1);
+    expect(cards[0].segments[0].name).toBe('Week 1');
+  });
+
   it('puts productId on product registration URLs when open', () => {
     const session: Session = {
       ...mockSession,

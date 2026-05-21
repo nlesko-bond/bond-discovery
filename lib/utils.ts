@@ -13,14 +13,19 @@ export function cn(...inputs: ClassValue[]) {
  * Format price in DOLLARS to currency string
  * Note: Bond API returns prices in dollars, not cents!
  */
-export function formatPrice(amountInDollars: number, currency = 'USD'): string {
+export function formatPrice(
+  amountInDollars: number,
+  currency = 'USD',
+  options?: { minimumFractionDigits?: number },
+): string {
   if (!amountInDollars || !isFinite(amountInDollars)) {
     return 'FREE';
   }
+  const minimumFractionDigits = options?.minimumFractionDigits ?? 0;
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
-    minimumFractionDigits: 0,
+    minimumFractionDigits,
     maximumFractionDigits: 2,
   }).format(amountInDollars);
 }

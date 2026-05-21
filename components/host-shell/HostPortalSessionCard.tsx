@@ -1,10 +1,13 @@
 'use client';
 
-import { Calendar, ExternalLink, ChevronDown } from 'lucide-react';
+import { Calendar, Clock, ExternalLink, ChevronDown } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import type { DiscoveryConfig } from '@/types';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
 import { HostPortalSessionIconStrip } from './HostPortalSessionIconStrip';
+import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
 import { cn } from '@/lib/utils';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
@@ -20,25 +23,34 @@ export function HostPortalSessionCard({
   config,
   hideRegistrationLinks = false,
 }: IHostPortalSessionCardProps) {
-  const [expanded, setExpanded] = useState(true);
-  const secondaryColor = config.branding.secondaryColor || '#6366F1';
+  const pathname = usePathname();
+  const hasExpandableContent = card.products.length > 0 || card.segments.length > 0;
+  const [expanded, setExpanded] = useState(false);
+  const { primaryColor, secondaryColor } = resolvePortalBrandColors(config);
   const showPricing = config.features.showPricing !== false;
   const showAgeGender = config.features.showAgeGender !== false;
+  const showScheduleTab = (config.features.enabledTabs || ['programs', 'schedule']).includes(
+    'schedule',
+  );
+  const scheduleLink = `${pathname}?viewMode=schedule&scheduleView=list&programIds=${card.programId}&sessionIds=${card.sessionId}`;
 
   return (
-    <article className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+    <article className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
       <HostPortalSessionIconStrip
+        config={config}
         sport={card.sport}
         facilityName={card.facilityName}
         ageRange={showAgeGender ? card.ageRange : undefined}
         genderLabel={showAgeGender ? card.genderLabel : undefined}
       />
 
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-1">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-bold text-gray-900 text-base leading-tight">{card.name}</h3>
+              <h3 className="font-bold text-base leading-tight" style={{ color: primaryColor }}>
+                {card.name}
+              </h3>
               {card.isClosed && (
                 <span className="px-2 py-0.5 text-xs font-bold bg-gray-100 text-gray-600 rounded-full">
                   Closed
@@ -47,7 +59,7 @@ export function HostPortalSessionCard({
             </div>
             <p className="text-xs text-gray-500 mt-0.5">{card.programName}</p>
           </div>
-          {(card.products.length > 0 || card.segments.length > 0) && (
+          {hasExpandableContent && (
             <button
               type="button"
               className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
@@ -60,15 +72,27 @@ export function HostPortalSessionCard({
           )}
         </div>
 
-        {card.dateRange && (
-          <p className="flex items-center gap-1 text-xs text-gray-500 mt-2">
-            <Calendar size={12} className="text-gray-400 shrink-0" aria-hidden />
-            {card.dateRange}
-          </p>
-        )}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-500">
+          {card.dateRange && (
+            <span className="flex items-center gap-1">
+              <Calendar size={12} className="text-gray-400 shrink-0" aria-hidden />
+              {card.dateRange}
+            </span>
+          )}
+          {showScheduleTab && (
+            <Link
+              href={scheduleLink}
+              className="inline-flex items-center gap-1 font-semibold hover:opacity-80"
+              style={{ color: secondaryColor }}
+            >
+              <Clock size={12} />
+              Schedule
+            </Link>
+          )}
+        </div>
 
         {card.description && (
-          <p className="text-sm text-gray-600 mt-3 line-clamp-4">{card.description}</p>
+          <p className="text-sm text-gray-600 mt-3 line-clamp-4 flex-1">{card.description}</p>
         )}
 
         {expanded && card.segments.length > 0 && (
@@ -101,7 +125,9 @@ export function HostPortalSessionCard({
                     <p className="text-xs text-gray-500 line-clamp-2">{product.description}</p>
                   )}
                   {product.priceLabel && (
-                    <p className="text-sm font-bold text-gray-900 mt-1">{product.priceLabel}</p>
+                    <p className="text-sm font-bold mt-1" style={{ color: primaryColor }}>
+                      {product.priceLabel}
+                    </p>
                   )}
                 </div>
                 {!hideRegistrationLinks && product.registrationUrl && (

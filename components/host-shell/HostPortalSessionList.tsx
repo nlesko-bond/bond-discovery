@@ -19,15 +19,17 @@ export function HostPortalSessionList({ cards, config }: IHostPortalSessionListP
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 max-w-4xl mx-auto py-4">
-      {cards.map((card) => (
-        <HostPortalSessionCard
-          key={card.sessionId}
-          card={card}
-          config={config}
-          hideRegistrationLinks={config.features.hideRegistrationLinks}
-        />
-      ))}
+    <div className="py-4 md:py-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+        {cards.map((card) => (
+          <HostPortalSessionCard
+            key={card.sessionId}
+            card={card}
+            config={config}
+            hideRegistrationLinks={config.features.hideRegistrationLinks}
+          />
+        ))}
+      </div>
     </div>
   );
 }
