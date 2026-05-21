@@ -6,6 +6,7 @@
   var MSG_OPEN_TAB = 'bond:open_tab';
   var MSG_RESIZE = 'bond:resize';
   var MSG_RESIZE_LEGACY = 'discovery-resize';
+  var CHECKOUT_QUERY_PARAM = 'bondPath';
 
   function getScriptOrigin() {
     var scripts = document.getElementsByTagName('script');
@@ -93,8 +94,30 @@
 
   BondHostShell.prototype.openRegistrationTab = function (path, search) {
     var boot = this.bootstrap;
-    var url = partnerOrigin(boot) + path + (search || '');
+    var landing = boot.checkoutLandingPath || '/programs/register';
+    var bondPath = path + (search || '');
+    var url =
+      partnerOrigin(boot) +
+      landing +
+      '?' +
+      CHECKOUT_QUERY_PARAM +
+      '=' +
+      encodeURIComponent(bondPath);
     window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  BondHostShell.prototype.parseBondPathQuery = function (raw) {
+    if (!raw) return null;
+    try {
+      var decoded = decodeURIComponent(raw);
+      var q = decoded.indexOf('?');
+      if (q === -1) {
+        return { path: decoded, search: '' };
+      }
+      return { path: decoded.slice(0, q), search: decoded.slice(q) };
+    } catch (e) {
+      return null;
+    }
   };
 
   BondHostShell.prototype.onMessage = function (event) {
@@ -121,12 +144,21 @@
     var prefix = normalizePrefix(boot.linkSeoPathPrefix);
     var path = window.location.pathname;
     var search = window.location.search || '';
+    var params = new URLSearchParams(search);
+    var bondPathRaw = params.get(CHECKOUT_QUERY_PARAM);
+    var parsedQuery = this.parseBondPathQuery(bondPathRaw);
+
+    if (parsedQuery) {
+      this.mountCheckout(parsedQuery.path, parsedQuery.search);
+      return;
+    }
 
     if (isCheckoutPath(path, prefix)) {
       this.mountCheckout(path, search);
-    } else {
-      this.mountDiscovery();
+      return;
     }
+
+    this.mountDiscovery();
   };
 
   BondHostShell.prototype.init = function () {

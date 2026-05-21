@@ -77,6 +77,10 @@ interface PageConfig {
     linkBehavior?: 'new_tab' | 'same_window' | 'in_frame';
     embedPortalTemplate?: BondEmbedPortalTemplate;
     embedAllowedOrigins?: string[];
+    partnerPublicOrigin?: string;
+    consumerOrigin?: string;
+    linkSeoPathPrefix?: string;
+    checkoutLandingPath?: string;
     // Discovery cache controls
     discoveryCacheEnabled?: boolean;
     availabilityCacheTtl?: number;
@@ -1125,6 +1129,101 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                 <p className="text-xs text-gray-500 mt-1">
                   Exact Origin values (scheme plus host, no path), one per line or comma-separated. Leave empty to allow any origin. Use your Webflow staging and production site origins when locking down the embed API.
                 </p>
+              </div>
+
+              <div className="border-t border-gray-200 pt-6 mt-6">
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Partner host shell (Webflow / org site)</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Used by <code className="bg-gray-100 px-1 rounded text-xs">bond-host/v1.js</code> on the org&apos;s website — not the Bond discovery URL. Save after editing.
+                </p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="label">Partner site URL</label>
+                    <input
+                      type="url"
+                      className="input"
+                      value={config.features.partnerPublicOrigin || ''}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          features: {
+                            ...config.features,
+                            partnerPublicOrigin: e.target.value.trim() || undefined,
+                          },
+                        })
+                      }
+                      placeholder="https://www.your-org.webflow.io"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      The org&apos;s public website origin (no path). Registration opens a new tab on this domain. If empty, bond-host uses whatever site the user is already on.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="label">Bond checkout domain</label>
+                    <input
+                      type="url"
+                      className="input"
+                      value={config.features.consumerOrigin || ''}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          features: {
+                            ...config.features,
+                            consumerOrigin: e.target.value.trim() || undefined,
+                          },
+                        })
+                      }
+                      placeholder="https://bondsports.co"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Where registration/checkout loads inside the iframe (usually bondsports.co).
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="label">Programs page path (org site)</label>
+                      <input
+                        type="text"
+                        className="input"
+                        value={config.features.linkSeoPathPrefix || '/programs'}
+                        onChange={(e) =>
+                          setConfig({
+                            ...config,
+                            features: {
+                              ...config.features,
+                              linkSeoPathPrefix: e.target.value.trim() || undefined,
+                            },
+                          })
+                        }
+                        placeholder="/programs"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Webflow page slug for discovery (e.g. /programs).
+                      </p>
+                    </div>
+                    <div>
+                      <label className="label">Checkout page path (org site)</label>
+                      <input
+                        type="text"
+                        className="input"
+                        value={config.features.checkoutLandingPath || '/programs/register'}
+                        onChange={(e) =>
+                          setConfig({
+                            ...config,
+                            features: {
+                              ...config.features,
+                              checkoutLandingPath: e.target.value.trim() || undefined,
+                            },
+                          })
+                        }
+                        placeholder="/programs/register"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Second Webflow page with the same embed markup (see host integration doc).
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

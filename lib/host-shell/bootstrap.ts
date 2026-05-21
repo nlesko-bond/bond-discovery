@@ -1,6 +1,7 @@
 import type { DiscoveryConfig } from '@/types';
 import {
   DEFAULT_BOND_CONSUMER_ORIGIN,
+  DEFAULT_CHECKOUT_LANDING_PATH,
   DEFAULT_LINK_SEO_PATH_PREFIX,
 } from '@/lib/host-shell/constants';
 
@@ -10,6 +11,7 @@ export interface IHostBootstrapPayload {
   consumerOrigin: string;
   partnerPublicOrigin: string | null;
   linkSeoPathPrefix: string;
+  checkoutLandingPath: string;
   paths: {
     portalDiscoveryUrl: string;
     discoveryBootstrapUrl: string;
@@ -36,6 +38,7 @@ export function resolveHostShellSettings(config: DiscoveryConfig): {
   consumerOrigin: string;
   partnerPublicOrigin: string | null;
   linkSeoPathPrefix: string;
+  checkoutLandingPath: string;
 } {
   const raw = config.features as unknown as Record<string, unknown>;
   const consumerOrigin =
@@ -51,10 +54,17 @@ export function resolveHostShellSettings(config: DiscoveryConfig): {
     config.features.linkSeoPathPrefix ??
     readFeatureString(raw, 'linkSeoPathPrefix', 'link_seo_path_prefix') ??
     DEFAULT_LINK_SEO_PATH_PREFIX;
+  const checkoutLandingPath =
+    config.features.checkoutLandingPath ??
+    readFeatureString(raw, 'checkoutLandingPath', 'checkout_landing_path') ??
+    DEFAULT_CHECKOUT_LANDING_PATH;
 
   const normalizedPrefix = linkSeoPathPrefix.startsWith('/')
     ? linkSeoPathPrefix
     : `/${linkSeoPathPrefix}`;
+  const normalizedCheckoutLanding = checkoutLandingPath.startsWith('/')
+    ? checkoutLandingPath
+    : `/${checkoutLandingPath}`;
 
   const normalizedConsumer = consumerOrigin.replace(/\/$/, '');
 
@@ -62,6 +72,7 @@ export function resolveHostShellSettings(config: DiscoveryConfig): {
     consumerOrigin: normalizedConsumer,
     partnerPublicOrigin,
     linkSeoPathPrefix: normalizedPrefix,
+    checkoutLandingPath: normalizedCheckoutLanding,
   };
 }
 
@@ -77,6 +88,7 @@ export function buildHostBootstrapPayload(
     consumerOrigin: host.consumerOrigin,
     partnerPublicOrigin: host.partnerPublicOrigin,
     linkSeoPathPrefix: host.linkSeoPathPrefix,
+    checkoutLandingPath: host.checkoutLandingPath,
     paths: {
       portalDiscoveryUrl: `${discoveryOrigin}/portal/${encodeURIComponent(config.slug)}`,
       discoveryBootstrapUrl: `${discoveryOrigin}/api/embed/bootstrap?slug=${encodeURIComponent(config.slug)}`,

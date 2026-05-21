@@ -392,8 +392,9 @@ export interface FeatureConfig {
   // Link behavior for registration buttons
   linkBehavior?: LinkBehavior; // How registration links open (default: 'new_tab')
   consumerOrigin?: string; // Bond consumer base URL for host shell checkout iframe
-  partnerPublicOrigin?: string; // Partner public site origin for share URLs / sitemap
-  linkSeoPathPrefix?: string; // Path prefix mirrored on partner domain (default /programs)
+  partnerPublicOrigin?: string; // Partner public site origin (e.g. https://www.org.com)
+  linkSeoPathPrefix?: string; // Discovery path on partner site (default /programs)
+  checkoutLandingPath?: string; // Partner checkout shell page (default /programs/register)
   // Tab visibility
   enabledTabs?: EnabledTab[]; // Which tabs to show (default: ['programs', 'schedule'])
   // Program filtering mode
