@@ -3,6 +3,10 @@
 import { useEffect } from 'react';
 import { BOND_HOST_MESSAGE_OPEN_TAB } from '@/lib/host-shell/constants';
 import { parseHostRegistrationPath } from '@/lib/host-shell/navigation';
+import {
+  getPortalPageSlugFromLocation,
+  trackHostShellRegisterClick,
+} from '@/lib/host-shell/registration-analytics';
 import { DEFAULT_BOND_CONSUMER_ORIGIN } from '@/lib/host-shell/constants';
 
 function isRegistrationAnchor(anchor: HTMLAnchorElement): boolean {
@@ -40,6 +44,7 @@ export function HostShellPortalBridge() {
       if (!href) {
         return;
       }
+      trackHostShellRegisterClick(href, getPortalPageSlugFromLocation());
       const { path, search } = parseHostRegistrationPath(href, DEFAULT_BOND_CONSUMER_ORIGIN);
       event.preventDefault();
       event.stopPropagation();

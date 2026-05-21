@@ -53,6 +53,9 @@ export default function GTMSetupPage() {
         <h1 className="text-3xl font-bold text-gray-900">Google Tag Manager Setup Guide</h1>
         <p className="text-gray-600 mt-2">
           Learn how to configure Google Tag Manager to capture events from your Discovery pages.
+          For the full event inventory (including portal host shell and known gaps), see{' '}
+          <code className="bg-gray-100 px-1 rounded text-sm">docs/analytics-discovery-and-host-shell.md</code>{' '}
+          in the repository.
         </p>
       </div>
 

@@ -1,125 +1,118 @@
-# Bond on your website (Webflow)
+# Bond on your website — integration guide
 
-Put Bond discovery and registration on the org’s domain. Bond analytics run inside iframes. **Two Webflow pages + Bond admin settings.** No Cloudflare required.
+One-time setup to show Bond **programs** and **registration** on your domain (e.g. Webflow). Bond analytics run inside Bond iframes. This guide does not change your existing `discovery.bondsports.co/{slug}` link or the embed kit.
 
----
-
-## What users see
-
-1. **`yoursite.com/discovery/programs`** — browse programs (Bond discovery iframe).
-2. Click **Register** — **new tab** opens.
-3. **`yoursite.com/discovery/register?bondPath=...`** — Bond checkout in an iframe on your domain.
-4. Close tab — back to programs with filters unchanged.
+**Also read:** [Analytics (discovery + checkout)](./analytics-discovery-and-host-shell.md) · [Portal UI roadmap](./portal-session-first-design-spec.md)
 
 ---
 
-## Step 1 — Bond Discovery admin
+## Architecture (60 seconds)
 
-1. Open **Bond Discovery admin** → **Pages** → your discovery page (e.g. `toca-evanston`).
-2. Go to the **Embed** tab.
-3. Scroll to **Partner host shell (Webflow / org site)**.
-4. Set:
+```text
+Your site                          Bond
+─────────                          ────
+/discovery/programs  ──iframe──►  discovery.bondsports.co/portal/{slug}
+       │                                    │
+       │ Register click                     │ GTM + events (inside iframe)
+       ▼                                    │
+/discovery/register?bondPath=... ──iframe──► bondsports.co/programs/...
+```
 
-| Field | Example (adjust to your site) |
-|-------|-------------------------------|
-| **Partner site URL** | `https://your-site.webflow.io` |
-| **Bond checkout domain** | `https://bondsports.co` |
-| **Programs page path** | `/programs` (Bond link path prefix; usually leave as `/programs`) |
-| **Checkout page path** | `/discovery/register` |
-
-5. **Save** the page.
+- **Programs page:** discovery iframe (auto height).  
+- **Register:** new browser tab on **your** URL; checkout loads in iframe.  
+- **Script:** `bond-host/v1.js` on your site footer (once).
 
 ---
 
-## Step 2 — Webflow site script (once)
+## Prerequisites
 
-**Project settings → Custom code → Footer code**
+- Bond Discovery admin access to your page (slug).  
+- Webflow (or any site) where you can add custom code + two pages.  
+- Bond consumer must allow iframe embed on checkout (Bond support if checkout is blank).
+
+---
+
+## Step 1 — Bond admin (5 min)
+
+**Pages → your slug → Embed → Partner host shell**
+
+| Field | Example |
+|-------|---------|
+| Partner site URL | `https://your-site.webflow.io` |
+| Bond checkout domain | `https://bondsports.co` |
+| Programs page path | `/programs` |
+| Checkout page path | `/discovery/register` |
+
+Save. Checkout path must match the register page you create in Step 3.
+
+Optional: **Analytics** on same page — add partner **GTM-XXXXXX** (events fire inside discovery iframe; see [analytics doc](./analytics-discovery-and-host-shell.md)).
+
+---
+
+## Step 2 — Site-wide script (once)
+
+**Webflow:** Project settings → Custom code → **Footer**
 
 ```html
 <script src="https://discovery.bondsports.co/bond-host/v1.js" defer></script>
 ```
 
+Use your real discovery host if different.
+
 ---
 
-## Step 3 — Webflow pages (two pages, same folder)
+## Step 3 — Two pages
 
-### Folder structure (example that works)
+### Folder (example)
 
+```text
+Discovery/
+  programs   →  /discovery/programs
+  register   →  /discovery/register
 ```
-Folder: Discovery
-├── Page: programs   →  /discovery/programs     (discovery)
-└── Page: register   →  /discovery/register    (checkout shell)
-```
 
-The folder name **Discovery** is fine. What matters is the **published URLs** above.
+### Page A — Programs (`/discovery/programs`)
 
-### Page A — Discovery (`/discovery/programs`)
-
-1. Create folder **Discovery** (or use yours).
-2. Add page **programs** inside it → URL **`/discovery/programs`**.
-3. Add an **Embed** element:
+Add **Embed** element:
 
 ```html
 <div
   data-bond-host
-  data-bond-slug="YOUR_DISCOVERY_SLUG"
+  data-bond-slug="YOUR_SLUG"
   data-bond-discovery-base="https://discovery.bondsports.co"
 ></div>
 ```
 
-Replace `YOUR_DISCOVERY_SLUG` with your Bond admin page slug.
-
-Discovery height adjusts automatically (Bond sends resize messages to `bond-host.js`).
+Replace `YOUR_SLUG` with admin page slug. No chrome offset on this page.
 
 ### Page B — Register (`/discovery/register`)
 
-1. Same folder: add page **register** → URL **`/discovery/register`**.
-2. Same embed block as Page A, plus chrome offset for your nav bar:
+Same embed, plus nav offset (measure your header height in px):
 
 ```html
 <div
   data-bond-host
-  data-bond-slug="YOUR_DISCOVERY_SLUG"
+  data-bond-slug="YOUR_SLUG"
   data-bond-discovery-base="https://discovery.bondsports.co"
   data-bond-chrome-offset-px="80"
 ></div>
 ```
 
-Change **`80`** to your site header height in pixels (measure nav + any banner above the embed).
-
-**Checkout page path** in Bond admin (Step 1) must match this URL: `/discovery/register`.
+`data-bond-chrome-offset-px` sets checkout iframe height to `calc(100dvh - 80px)` so Bond’s footer is not hidden under your nav.
 
 ---
 
-## Step 4 — Publish and test
-
-Test on the **published** site, not Designer-only.
+## Step 4 — Test (published site only)
 
 | # | Check |
 |---|--------|
-| 1 | `/discovery/programs` shows the program list |
-| 2 | Register opens a **new tab** |
-| 3 | New tab URL contains `/discovery/register?bondPath=` |
-| 4 | Checkout is visible; Bond footer not cut off (tweak `data-bond-chrome-offset-px` if needed) |
+| 1 | Programs page shows list |
+| 2 | Register opens **new tab** |
+| 3 | Tab URL is `/discovery/register?bondPath=` |
+| 4 | Checkout visible; footer not cut off (tune offset) |
 | 5 | Close tab — programs tab still filtered |
 
----
-
-## Register page height (vs older integration guide)
-
-Your older guide used fixed `calc(100svh - navbar)` CSS. That still makes sense for **checkout**, because Bond consumer may not send height messages yet.
-
-**Recommended (simplest):**
-
-- Use **`bond-host.js`** (Step 2) — it already resizes the **discovery** iframe.
-- On the **register** page only, add **`data-bond-chrome-offset-px="80"`** on the embed div (Step 3).  
-  `bond-host` sets checkout iframe height to `calc(100dvh - 80px)` so Bond’s fixed footer stays visible.
-
-**Do not use** the Wix-style script that reads inside the iframe DOM — Bond is cross-origin; that pattern will not work.
-
-**Optional:** If checkout still feels short/tall after offset is right, Bond engineering can add `postMessage` resize from consumer (then `bond-host` will use dynamic height automatically).
-
-You do **not** need a separate resize script in Webflow if you use `data-bond-chrome-offset-px`.
+Designer preview often does not run embed scripts — **Publish** first.
 
 ---
 
@@ -127,35 +120,48 @@ You do **not** need a separate resize script in Webflow if you use `data-bond-ch
 
 | Problem | Fix |
 |---------|-----|
-| Register tab 404 | Create Page B; match **Checkout page path** in admin |
-| Wrong domain in new tab | Set **Partner site URL** in admin → Save |
-| Blank checkout iframe | Consumer must allow iframe embed (Bond eng) |
-| Bond footer cut off on register | Increase `data-bond-chrome-offset-px` |
-| Double scroll on register | Keep only one embed on page; avoid extra fixed-height wrappers |
-| Works only after Publish | Designer does not run embed scripts reliably |
-| API / CORS error | Add your Webflow origin under **Embed allowed origins**, or leave empty |
+| Register tab 404 | Create register page; match **Checkout page path** in admin |
+| Wrong domain in new tab | Fix **Partner site URL**; save |
+| Blank checkout | Bond must allow iframe embed on consumer |
+| Footer cut off | Increase `data-bond-chrome-offset-px` |
+| Double scroll on register | One embed per page; avoid extra fixed-height wrappers |
+| CORS / API errors | Add Webflow origin under **Embed allowed origins** (or leave empty) |
+
+Do **not** use scripts that read inside the Bond iframe DOM (cross-origin).
 
 ---
 
-## Cloudflare
+## What stays the same
 
-**Not required** for this setup.
-
-Optional later if you want pretty URLs like `/programs/123/session/456` instead of `/discovery/register?bondPath=...`.
-
----
-
-## Unchanged
-
-- `discovery.bondsports.co/your-slug` — same as before.
-- Embed kit — unchanged.
+| Item | Unchanged |
+|------|-----------|
+| `discovery.bondsports.co/{slug}` | Direct link |
+| Embed kit `embed-kit/v1.js` | Shadow DOM / in-page kit |
+| Cloudflare pretty URLs | Optional later |
 
 ---
 
-## Bond URLs (reference)
+## Bond reference URLs
 
-| URL | Purpose |
-|-----|---------|
-| `/portal/{slug}` | Discovery inside org iframe |
-| `/bond-host/v1.js` | Script on org site |
-| `/api/host/bootstrap?slug=` | Config for the script |
+| URL | Role |
+|-----|------|
+| `/portal/{slug}` | Discovery in iframe |
+| `/bond-host/v1.js` | Parent script |
+| `/api/host/bootstrap?slug=` | Config JSON |
+
+---
+
+## Analytics quick reference
+
+- **Discovery:** GTM loads inside iframe; events like `click_register`, `filter_applied` — full list in [analytics-discovery-and-host-shell.md](./analytics-discovery-and-host-shell.md).  
+- **Verify:** GTM Preview on published programs page; click Register and filters.  
+- **Checkout tab:** Tracked in Bond consumer app, not in this repo.  
+- **Known gap:** Portal register click may not fire `click_register` until bridge tracking fix — see analytics doc.
+
+Admin GTM UI: `/admin/help/gtm-setup`
+
+---
+
+## Next product phase
+
+Session-first portal cards, portal-only filters, closed-session tagging — see [portal-session-first-design-spec.md](./portal-session-first-design-spec.md). Not required for basic host shell go-live.
