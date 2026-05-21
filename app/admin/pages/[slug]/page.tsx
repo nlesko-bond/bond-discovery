@@ -81,6 +81,7 @@ interface PageConfig {
     consumerOrigin?: string;
     linkSeoPathPrefix?: string;
     checkoutLandingPath?: string;
+    hostPortalLayout?: 'legacy_programs' | 'sessions_first';
     // Discovery cache controls
     discoveryCacheEnabled?: boolean;
     availabilityCacheTtl?: number;
@@ -1222,6 +1223,29 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                         Second Webflow page with the same embed markup (see host integration doc).
                       </p>
                     </div>
+                  </div>
+                  <div>
+                    <label className="label">Portal discovery layout</label>
+                    <select
+                      className="input"
+                      value={config.features.hostPortalLayout || 'legacy_programs'}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          features: {
+                            ...config.features,
+                            hostPortalLayout: e.target.value as 'legacy_programs' | 'sessions_first',
+                          },
+                        })
+                      }
+                    >
+                      <option value="legacy_programs">Legacy (program cards)</option>
+                      <option value="sessions_first">Sessions first (one card per session)</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Applies only to <code className="bg-gray-100 px-1 rounded text-xs">/portal/&#123;slug&#125;</code>.
+                      Public <code className="bg-gray-100 px-1 rounded text-xs">/&#123;slug&#125;</code> and embed are unchanged.
+                    </p>
                   </div>
                 </div>
               </div>

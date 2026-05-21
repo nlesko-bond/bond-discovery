@@ -1,5 +1,12 @@
 import { cache } from 'react';
-import { DiscoveryConfig, BrandingConfig, FeatureConfig, FilterType, ScheduleTableColumn } from '@/types';
+import {
+  DiscoveryConfig,
+  BrandingConfig,
+  FeatureConfig,
+  FilterType,
+  HostPortalLayoutEnum,
+  ScheduleTableColumn,
+} from '@/types';
 import { supabase, getSupabaseAdmin, DiscoveryPageRow } from './supabase';
 import { DEFAULT_BOND_ENV, resolveBondEnv } from './bond-env';
 
@@ -55,7 +62,14 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
     features.defaultScheduleView ?? features.default_schedule_view;
   const mobileDefaultScheduleView =
     features.mobileDefaultScheduleView ?? features.mobile_default_schedule_view;
-  
+
+  const hostPortalLayoutRaw =
+    features.hostPortalLayout ?? features.host_portal_layout;
+  const hostPortalLayout =
+    hostPortalLayoutRaw === HostPortalLayoutEnum.SESSIONS_FIRST
+      ? HostPortalLayoutEnum.SESSIONS_FIRST
+      : HostPortalLayoutEnum.LEGACY_PROGRAMS;
+
   return {
     id: row.id,
     name: row.name,
@@ -93,6 +107,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
         typeof features.spaceColumnLabel === 'string' && features.spaceColumnLabel.trim()
           ? features.spaceColumnLabel.trim()
           : undefined,
+      hostPortalLayout,
     },
     allowedParams: row.allowed_params || [],
     defaultParams: row.default_params || {},
