@@ -11,6 +11,7 @@ export interface IHostPortalProductRow {
   id: string;
   name: string;
   description?: string;
+  priceAmount?: number;
   priceLabel?: string;
   registrationUrl?: string;
   registerDisabled: boolean;
@@ -36,6 +37,12 @@ export interface IHostPortalSessionCardModel {
   availabilityStatus?: string;
   isClosed: boolean;
   isRegistrationOpen: boolean;
+  registerUrl?: string;
+  registerProductId?: string;
+  hasMultipleRegisterOptions: boolean;
+  startingPriceLabel?: string;
+  isSegmented: boolean;
+  organizationId?: string;
   segments: IHostPortalSegmentRow[];
   products: IHostPortalProductRow[];
 }
@@ -98,7 +105,7 @@ function getSessionsFromProgram(program: Program): Session[] {
   return [];
 }
 
-function mapSegmentRow(segment: Segment): IHostPortalSegmentRow {
+export function mapSegmentRow(segment: Segment): IHostPortalSegmentRow {
   return {
     id: segment.id,
     name: segment.name?.trim() || 'Segment',
@@ -109,6 +116,10 @@ function mapSegmentRow(segment: Segment): IHostPortalSegmentRow {
   };
 }
 
+export function mapSegmentRows(segments: Segment[]): IHostPortalSegmentRow[] {
+  return segments.map(mapSegmentRow);
+}
+
 function lowestProductPrice(product: Product): number | undefined {
   if (!product.prices?.length) {
     return undefined;
@@ -117,6 +128,59 @@ function lowestProductPrice(product: Product): number | undefined {
     const value = priceRow.price ?? priceRow.amount ?? 0;
     return value < min ? value : min;
   }, product.prices[0]?.price ?? product.prices[0]?.amount ?? 0);
+}
+
+function resolveStartingPriceLabel(products: IHostPortalProductRow[]): string | undefined {
+  const amounts = products
+    .map((product) => product.priceAmount)
+    .filter((amount): amount is number => amount !== undefined);
+  if (amounts.length === 0) {
+    return undefined;
+  }
+  const minimum = Math.min(...amounts);
+  return formatPrice(minimum, 'USD', { minimumFractionDigits: 2 });
+}
+
+function resolveSessionRegisterAction(
+  products: IHostPortalProductRow[],
+  baseLink: string | undefined,
+  registerDisabled: boolean,
+  customRegistrationUrl?: string,
+): Pick<
+  IHostPortalSessionCardModel,
+  'registerUrl' | 'registerProductId' | 'hasMultipleRegisterOptions'
+> {
+  const registrationOpen = !registerDisabled;
+  const hasMultipleRegisterOptions = products.length > 1;
+
+  if (customRegistrationUrl) {
+    return {
+      registerUrl: customRegistrationUrl,
+      registerProductId: products[0]?.id,
+      hasMultipleRegisterOptions,
+    };
+  }
+
+  if (products.length === 0) {
+    return {
+      registerUrl: buildRegistrationUrl(baseLink, { isRegistrationOpen: registrationOpen }),
+      hasMultipleRegisterOptions: false,
+    };
+  }
+
+  if (hasMultipleRegisterOptions) {
+    return {
+      registerUrl: buildRegistrationUrl(baseLink, { isRegistrationOpen: registrationOpen }),
+      hasMultipleRegisterOptions: true,
+    };
+  }
+
+  const onlyProduct = products[0];
+  return {
+    registerUrl: onlyProduct.registrationUrl,
+    registerProductId: onlyProduct.id,
+    hasMultipleRegisterOptions: false,
+  };
 }
 
 function mapProductRow(
@@ -137,6 +201,7 @@ function mapProductRow(
     id: product.id,
     name: product.name,
     description: product.description,
+    priceAmount: lowest,
     priceLabel:
       lowest !== undefined ? formatPrice(lowest, 'USD', { minimumFractionDigits: 2 }) : undefined,
     registrationUrl: registerDisabled ? builtUrl : registrationUrl,
@@ -152,6 +217,7 @@ export function buildHostPortalSessionCards(
   config: DiscoveryConfig,
 ): IHostPortalSessionCardModel[] {
   const showAgeGender = config.features.showAgeGender !== false;
+  const showPricing = config.features.showPricing !== false;
   const customRegistrationUrl = config.features.customRegistrationUrl;
   const cards: IHostPortalSessionCardModel[] = [];
 
@@ -165,6 +231,16 @@ export function buildHostPortalSessionCards(
       const ageMin = session.minAge ?? session.ageMin;
       const ageMax = session.maxAge ?? session.ageMax;
       const gender = session.gender;
+
+      const products = getProductsFromSession(session).map((product) =>
+        mapProductRow(product, baseLink, registerDisabled, customRegistrationUrl),
+      );
+      const registerAction = resolveSessionRegisterAction(
+        products,
+        baseLink,
+        registerDisabled,
+        customRegistrationUrl,
+      );
 
       cards.push({
         sessionId: session.id,
@@ -186,10 +262,12 @@ export function buildHostPortalSessionCards(
         availabilityStatus,
         isClosed,
         isRegistrationOpen: !registerDisabled,
-        segments: getSegmentsFromSession(session).map(mapSegmentRow),
-        products: getProductsFromSession(session).map((product) =>
-          mapProductRow(product, baseLink, registerDisabled, customRegistrationUrl),
-        ),
+        startingPriceLabel: showPricing ? resolveStartingPriceLabel(products) : undefined,
+        isSegmented: Boolean(session.isSegmented),
+        organizationId: program.organizationId,
+        segments: mapSegmentRows(getSegmentsFromSession(session)),
+        products,
+        ...registerAction,
       });
     }
   }

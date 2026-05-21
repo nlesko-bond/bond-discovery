@@ -1,5 +1,6 @@
 import type { DiscoveryFilters, Gender, Program, Session } from '@/types';
 import { programIdsFilterMatches } from '@/lib/program-ids-filter';
+import { getPortalAgeBucketById } from '@/lib/host-shell/portal-age-buckets';
 
 const ALMOST_FULL_SPOTS_THRESHOLD = 5;
 
@@ -107,7 +108,27 @@ export function filterProgramsForPortalSessions(
     result = result.filter((program) => program.sport && filters.sports!.includes(program.sport));
   }
 
-  if (filters.ageRange?.min !== undefined || filters.ageRange?.max !== undefined) {
+  if (filters.ageBucketIds && filters.ageBucketIds.length > 0) {
+    result = result.reduce<Program[]>((accumulator, program) => {
+      const sessions = getSessionsFromProgram(program).filter((session) =>
+        filters.ageBucketIds!.some((bucketId) => {
+          const bucket = getPortalAgeBucketById(bucketId);
+          if (!bucket) {
+            return false;
+          }
+          return sessionMatchesAgeRange(session, program, {
+            min: bucket.min,
+            max: bucket.max,
+          });
+        }),
+      );
+      if (sessions.length === 0) {
+        return accumulator;
+      }
+      accumulator.push({ ...program, sessions });
+      return accumulator;
+    }, []);
+  } else if (filters.ageRange?.min !== undefined || filters.ageRange?.max !== undefined) {
     result = result.reduce<Program[]>((accumulator, program) => {
       const sessions = getSessionsFromProgram(program).filter((session) =>
         sessionMatchesAgeRange(session, program, filters.ageRange),
@@ -120,7 +141,18 @@ export function filterProgramsForPortalSessions(
     }, []);
   }
 
-  if (filters.gender && filters.gender !== 'all') {
+  if (filters.genders && filters.genders.length > 0) {
+    result = result.reduce<Program[]>((accumulator, program) => {
+      const sessions = getSessionsFromProgram(program).filter((session) =>
+        filters.genders!.some((gender) => sessionMatchesGender(session, program, gender)),
+      );
+      if (sessions.length === 0) {
+        return accumulator;
+      }
+      accumulator.push({ ...program, sessions });
+      return accumulator;
+    }, []);
+  } else if (filters.gender && filters.gender !== 'all') {
     result = result.reduce<Program[]>((accumulator, program) => {
       const sessions = getSessionsFromProgram(program).filter((session) =>
         sessionMatchesGender(session, program, filters.gender!),
@@ -133,7 +165,25 @@ export function filterProgramsForPortalSessions(
     }, []);
   }
 
-  if (filters.availability && filters.availability !== 'all') {
+  if (filters.availabilityModes && filters.availabilityModes.length > 0) {
+    result = result.filter((program) => {
+      const sessions = getSessionsFromProgram(program);
+      return filters.availabilityModes!.some((mode) => {
+        if (mode === 'available') {
+          return sessions.some((session) => !session.isFull);
+        }
+        if (mode === 'almost_full') {
+          return sessions.some(
+            (session) =>
+              session.spotsRemaining !== undefined &&
+              session.spotsRemaining > 0 &&
+              session.spotsRemaining <= ALMOST_FULL_SPOTS_THRESHOLD,
+          );
+        }
+        return false;
+      });
+    });
+  } else if (filters.availability && filters.availability !== 'all') {
     result = result.filter((program) => {
       const sessions = getSessionsFromProgram(program);
       if (filters.availability === 'available') {

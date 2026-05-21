@@ -86,11 +86,38 @@ describe('buildHostPortalSessionCards', () => {
       segments: {
         data: [{ id: 'seg-1', sessionId: mockSession.id, name: 'Week 1', startDate: '2026-06-01', endDate: '2026-06-07' }],
       },
-    } as Session;
+    } as unknown as Session;
     const program = { ...mockProgram, sessions: [session] };
     const cards = buildHostPortalSessionCards([program], mockConfig);
     expect(cards[0].segments).toHaveLength(1);
     expect(cards[0].segments[0].name).toBe('Week 1');
+  });
+
+  it('exposes a collapsed register URL without expanding the card', () => {
+    const session: Session = {
+      ...mockSession,
+      availabilityStatus: 'available',
+      products: [mockProduct],
+    };
+    const program = { ...mockProgram, sessions: [session] };
+    const cards = buildHostPortalSessionCards([program], mockConfig);
+    expect(cards[0].registerUrl).toBeTruthy();
+    expect(cards[0].hasMultipleRegisterOptions).toBe(false);
+    expect(cards[0].registerProductId).toBe(cards[0].products[0]?.id);
+  });
+
+  it('uses session-level register URL when multiple products exist', () => {
+    const secondProduct = { ...mockProduct, id: 'product-2', name: 'Product 2' };
+    const session: Session = {
+      ...mockSession,
+      availabilityStatus: 'available',
+      products: [mockProduct, secondProduct],
+    };
+    const program = { ...mockProgram, sessions: [session] };
+    const cards = buildHostPortalSessionCards([program], mockConfig);
+    expect(cards[0].hasMultipleRegisterOptions).toBe(true);
+    expect(cards[0].registerUrl).toBeTruthy();
+    expect(cards[0].registerUrl).not.toContain('productId=');
   });
 
   it('puts productId on product registration URLs when open', () => {

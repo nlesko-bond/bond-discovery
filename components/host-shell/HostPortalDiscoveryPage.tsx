@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { LayoutGrid, Calendar } from 'lucide-react';
 import type { DiscoveryConfig, DiscoveryFilters, Program, ViewMode } from '@/types';
@@ -18,14 +17,10 @@ import {
   resolvePortalScheduleLinkTarget,
   type IDiscoveryApiEvent,
 } from '@/lib/host-shell/portal-schedule-events';
-import { HorizontalFilterBar } from '@/components/discovery/HorizontalFilterBar';
+import { HostPortalFilterBar } from './HostPortalFilterBar';
 import { HostPortalSessionList } from './HostPortalSessionList';
 import { HostPortalScheduleTab } from './HostPortalScheduleTab';
 import { BrandLogo } from '@/components/ui/BrandLogo';
-
-const MobileFilters = dynamic(
-  () => import('@/components/discovery/MobileFilters').then((module) => ({ default: module.MobileFilters })),
-);
 
 const EMPTY_EVENTS: IDiscoveryApiEvent[] = [];
 const EVENTS_PAGE_LIMIT = 200;
@@ -85,8 +80,6 @@ export function HostPortalDiscoveryPage({
   const [eventsFetched, setEventsFetched] = useState(initialEventsFetched);
   const [totalServerEvents, setTotalServerEvents] = useState(initialTotalServerEvents);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-
   const abortControllerRef = useRef<AbortController | null>(null);
   const brand = resolvePortalBrandColors(config);
   const linkTarget = resolvePortalScheduleLinkTarget(config);
@@ -145,40 +138,6 @@ export function HostPortalDiscoveryPage({
       .map(([id, count]) => ({ id, name: id, count }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [apiEvents]);
-
-  const horizontalFilterOptions = useMemo(
-    () => ({
-      facilities: filterOptions.facilities.map((facility) => ({
-        id: facility.id,
-        name: facility.name,
-        count: filteredPrograms.filter(
-          (program) =>
-            program.facilityId === facility.id ||
-            program.sessions?.some(
-              (session) => String(session.facility?.id) === facility.id,
-            ),
-        ).length,
-      })),
-      programTypes: filterOptions.programTypes.map((typeOption) => ({
-        id: typeOption.id,
-        name: typeOption.label,
-        count: filteredPrograms.filter((program) => program.type === typeOption.id).length,
-      })),
-      sports: filterOptions.sports.map((sportOption) => ({
-        id: sportOption.id,
-        name: sportOption.label,
-        count: filteredPrograms.filter((program) => program.sport === sportOption.id).length,
-      })),
-      programs: filterOptions.programs.filter((programOption) =>
-        filteredPrograms.some((program) => program.id === programOption.id),
-      ),
-      sessions: filterOptions.sessions,
-      ages: [] as { min: number; max: number }[],
-      hasMultipleFacilities: filterOptions.hasMultipleFacilities,
-      spaces: scheduleSpaceOptions,
-    }),
-    [filterOptions, filteredPrograms, scheduleSpaceOptions],
-  );
 
   useEffect(() => {
     bondAnalytics.pageView({
@@ -393,18 +352,15 @@ export function HostPortalDiscoveryPage({
         </div>
       </header>
 
-      <div className="w-full px-3 sm:px-4 lg:px-6 py-2 bg-gray-50 border-b border-gray-200">
-        <HorizontalFilterBar
-          filters={filters}
-          onFilterChange={handleFiltersChange}
-          filterOptions={horizontalFilterOptions}
-          config={config}
-          isScheduleView={viewMode === 'schedule'}
-          hideMobileFilterGroups={[]}
-          hideMobileActiveChipsFor={[]}
-          onOpenMobileFilters={() => setShowMobileFilters(true)}
-        />
-      </div>
+      <HostPortalFilterBar
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        options={filterOptions}
+        config={config}
+        resultCount={viewMode === 'schedule' ? filteredEvents.length : sessionCards.length}
+        isScheduleView={viewMode === 'schedule'}
+        scheduleSpaces={scheduleSpaceOptions}
+      />
 
       <main className="max-w-7xl mx-auto px-3 sm:px-4 pb-8">
         {viewMode === 'programs' ? (
@@ -431,20 +387,6 @@ export function HostPortalDiscoveryPage({
           />
         )}
       </main>
-
-      <MobileFilters
-        isOpen={showMobileFilters}
-        onClose={() => setShowMobileFilters(false)}
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        options={{ ...filterOptions, spaces: scheduleSpaceOptions }}
-        enabledFilters={config.features.enableFilters}
-        isScheduleView={viewMode === 'schedule'}
-        resultCount={viewMode === 'schedule' ? filteredEvents.length : sessionCards.length}
-        showSearch={config.features.showSearch !== false}
-        brandColor={brand.secondaryColor}
-        spaceFilterLabel={config.features.spaceColumnLabel?.trim() || 'Space'}
-      />
 
       <footer className="border-t border-gray-200 bg-white mt-4">
         <div className="max-w-7xl mx-auto px-3 py-3 text-xs text-gray-500 flex justify-between">

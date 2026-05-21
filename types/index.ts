@@ -502,11 +502,17 @@ export interface DiscoveryFilters {
     max?: number;
   };
   gender?: Gender | 'all';
+  /** Portal: multi-select gender filter (any selected gender matches) */
+  genders?: Array<Exclude<Gender, 'all'>>;
+  /** Portal: multi-select age bucket ids (see portal-age-buckets) */
+  ageBucketIds?: string[];
   priceRange?: {
     min?: number;
     max?: number;
   };
   availability?: 'all' | 'available' | 'almost_full' | 'has_spots';
+  /** Portal: multi-select availability (any selected mode matches) */
+  availabilityModes?: Array<'available' | 'almost_full'>;
   membershipRequired?: boolean | null;
   /** Local weekdays (0=Sun … 6=Sat) to include; empty/undefined = all */
   daysOfWeek?: number[];

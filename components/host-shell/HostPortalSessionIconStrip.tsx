@@ -1,10 +1,12 @@
 'use client';
 
-import { MapPin, Users, type LucideIcon } from 'lucide-react';
-import { getHostPortalSportIcon } from '@/lib/host-shell/session-sport-icon';
+import type { ReactNode } from 'react';
+import { MapPin, Users } from 'lucide-react';
 import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
+import { getSportVisualTheme } from '@/lib/host-shell/sport-visuals';
 import type { DiscoveryConfig } from '@/types';
 import { getSportLabel } from '@/lib/utils';
+import { HostPortalSportIcon } from './HostPortalSportIcon';
 
 interface IHostPortalSessionIconStripProps {
   config: DiscoveryConfig;
@@ -14,28 +16,35 @@ interface IHostPortalSessionIconStripProps {
   genderLabel?: string;
 }
 
-function IconStripItem({
-  icon: Icon,
-  label,
-  iconColor,
-}: {
-  icon: LucideIcon;
-  label: string;
-  iconColor: string;
-}) {
-  return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap">
-      <Icon size={16} className="shrink-0" style={{ color: iconColor }} aria-hidden />
-      <span>{label}</span>
-    </span>
-  );
-}
-
 function formatAgeGenderLine(ageRange?: string, genderLabel?: string): string | undefined {
   if (ageRange && genderLabel) {
     return `${ageRange} · ${genderLabel}`;
   }
   return ageRange ?? genderLabel;
+}
+
+function MetaChip({
+  icon,
+  label,
+  iconBackground,
+  iconColor,
+}: {
+  icon: ReactNode;
+  label: string;
+  iconBackground: string;
+  iconColor: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/95 px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm">
+      <span
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+        style={{ backgroundColor: iconBackground, color: iconColor }}
+      >
+        {icon}
+      </span>
+      <span className="max-w-[10rem] truncate sm:max-w-none">{label}</span>
+    </span>
+  );
 }
 
 export function HostPortalSessionIconStrip({
@@ -47,12 +56,10 @@ export function HostPortalSessionIconStrip({
 }: IHostPortalSessionIconStripProps) {
   const { primaryColor, secondaryColor } = resolvePortalBrandColors(config);
   const sportLabel = sport ? getSportLabel(sport) : undefined;
-  const SportIcon = sport ? getHostPortalSportIcon(sport) : null;
+  const sportTheme = getSportVisualTheme(sport);
   const ageGenderLine = formatAgeGenderLine(ageRange, genderLabel);
-  const stripTextColor = primaryColor;
-  const iconColor = secondaryColor;
 
-  const hasSport = Boolean(sportLabel && SportIcon);
+  const hasSport = Boolean(sportLabel && sport);
   const hasFacility = Boolean(facilityName?.trim());
   const hasAgeGender = Boolean(ageGenderLine);
 
@@ -62,22 +69,43 @@ export function HostPortalSessionIconStrip({
 
   return (
     <div
-      className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 border-b"
+      className="relative overflow-hidden px-4 py-3 border-b border-gray-100"
       style={{
-        backgroundColor: `${secondaryColor}22`,
-        borderColor: `${secondaryColor}45`,
-        color: stripTextColor,
+        background: `linear-gradient(135deg, ${sportTheme.gradientFrom}18 0%, ${secondaryColor}12 55%, ${primaryColor}08 100%)`,
       }}
     >
-      {hasSport && SportIcon && sportLabel && (
-        <IconStripItem icon={SportIcon} label={sportLabel} iconColor={iconColor} />
-      )}
-      {hasFacility && facilityName && (
-        <IconStripItem icon={MapPin} label={facilityName} iconColor={iconColor} />
-      )}
-      {hasAgeGender && ageGenderLine && (
-        <IconStripItem icon={Users} label={ageGenderLine} iconColor={iconColor} />
-      )}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-0.5"
+        style={{
+          background: `linear-gradient(90deg, ${sportTheme.gradientFrom}, ${sportTheme.gradientTo})`,
+        }}
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        {hasSport && sport && sportLabel && (
+          <MetaChip
+            icon={<HostPortalSportIcon sportId={sport} size={16} className="shrink-0" />}
+            label={sportLabel}
+            iconBackground={sportTheme.iconBackground}
+            iconColor={sportTheme.iconColor}
+          />
+        )}
+        {hasFacility && facilityName && (
+          <MetaChip
+            icon={<MapPin size={15} strokeWidth={2.25} aria-hidden />}
+            label={facilityName}
+            iconBackground={`${primaryColor}12`}
+            iconColor={primaryColor}
+          />
+        )}
+        {hasAgeGender && ageGenderLine && (
+          <MetaChip
+            icon={<Users size={15} strokeWidth={2.25} aria-hidden />}
+            label={ageGenderLine}
+            iconBackground={`${secondaryColor}14`}
+            iconColor={secondaryColor}
+          />
+        )}
+      </div>
     </div>
   );
 }

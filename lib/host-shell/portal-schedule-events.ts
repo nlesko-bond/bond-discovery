@@ -141,7 +141,19 @@ export function filterPortalScheduleEvents(
     result = result.filter((event) => event.sport && filters.sports!.includes(event.sport));
   }
 
-  if (filters.gender && filters.gender !== 'all') {
+  if (filters.genders && filters.genders.length > 0) {
+    const programGenderMap = new Map<string, string>();
+    programs.forEach((program) => {
+      programGenderMap.set(program.id, program.gender || 'all');
+    });
+    result = result.filter((event) => {
+      const gender = programGenderMap.get(event.programId || '') || 'all';
+      if (gender === 'all' || gender === 'coed') {
+        return true;
+      }
+      return filters.genders!.includes(gender as (typeof filters.genders)[number]);
+    });
+  } else if (filters.gender && filters.gender !== 'all') {
     const programGenderMap = new Map<string, string>();
     programs.forEach((program) => {
       programGenderMap.set(program.id, program.gender || 'all');
@@ -152,7 +164,23 @@ export function filterPortalScheduleEvents(
     });
   }
 
-  if (filters.availability && filters.availability !== 'all') {
+  if (filters.availabilityModes && filters.availabilityModes.length > 0) {
+    result = result.filter((event) =>
+      filters.availabilityModes!.some((mode) => {
+        if (mode === 'available') {
+          return event.spotsRemaining === undefined || event.spotsRemaining > 0;
+        }
+        if (mode === 'almost_full') {
+          return (
+            event.spotsRemaining !== undefined &&
+            event.spotsRemaining > 0 &&
+            event.spotsRemaining <= ALMOST_FULL_SPOTS_THRESHOLD
+          );
+        }
+        return false;
+      }),
+    );
+  } else if (filters.availability && filters.availability !== 'all') {
     if (filters.availability === 'available') {
       result = result.filter(
         (event) => event.spotsRemaining === undefined || event.spotsRemaining > 0,

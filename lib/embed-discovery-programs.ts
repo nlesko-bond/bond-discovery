@@ -20,10 +20,9 @@ export async function fetchProgramsForDiscoveryPage(
 
   const promises = orgIds.map(async (orgId) => {
     try {
-      const cacheKey = programsCacheKey(orgId, undefined, apiKey, config.features.bondEnv);
-
       const programsExpand =
         'sessions,sessions.products,sessions.products.prices,sessions.segments';
+      const cacheKey = `${programsCacheKey(orgId, undefined, apiKey, config.features.bondEnv)}:${programsExpand}`;
 
       const response = await cached(
         cacheKey,
