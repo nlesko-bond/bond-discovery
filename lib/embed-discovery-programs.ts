@@ -1,7 +1,63 @@
 import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
 import { cached, programsCacheKey } from '@/lib/cache';
+import {
+  filterProgramsByPageConfig,
+  filterProgramsWithActiveSessions,
+  PROGRAMS_DISCOVERY_EXPAND,
+} from '@/lib/discovery-program-scope';
 import type { DiscoveryConfig, Program } from '@/types';
+
+/**
+ * Same KV key as GET /api/programs (no expand suffix). A separate suffixed key was
+ * introduced in d15da33 and cold-started empty/partial while /api/programs kept
+ * serving good data — split-brain for page SSR vs the programs API.
+ */
+function programsDiscoveryCacheKey(
+  orgId: string,
+  apiKey: string,
+  bondEnv: string | undefined,
+): string {
+  return programsCacheKey(orgId, undefined, apiKey, bondEnv);
+}
+
+async function fetchProgramsForOrg(
+  client: ReturnType<typeof createBondClient>,
+  orgId: string,
+  apiKey: string,
+  bondEnv: string | undefined,
+  cacheTtlSeconds: number,
+): Promise<Program[]> {
+  const cacheKey = programsDiscoveryCacheKey(orgId, apiKey, bondEnv);
+
+  const response = await cached(
+    cacheKey,
+    async () => {
+      try {
+        return await client.getPrograms(orgId, { expand: PROGRAMS_DISCOVERY_EXPAND });
+      } catch (primaryError) {
+        console.error(
+          `[fetchProgramsForDiscoveryPage] expand failed for org ${orgId}, retrying lighter expand`,
+          primaryError,
+        );
+        return client.getPrograms(orgId, { expand: 'sessions,sessions.products' });
+      }
+    },
+    { ttl: cacheTtlSeconds },
+  );
+
+  const rawPrograms = response.data || [];
+  if (rawPrograms.length === 0) {
+    console.warn(`[fetchProgramsForDiscoveryPage] Bond returned 0 programs for org ${orgId}`);
+  }
+
+  const programs = rawPrograms.map((raw) => ({
+    ...transformProgram(raw),
+    organizationId: orgId,
+  }));
+
+  return filterProgramsWithActiveSessions(programs);
+}
 
 /**
  * Loads programs for a discovery page using the same rules as public
@@ -16,35 +72,11 @@ export async function fetchProgramsForDiscoveryPage(
   const client = createBondClient(apiKey, bondEnv);
   const allPrograms: Program[] = [];
   const orgIds = config.organizationIds;
-  const today = new Date().toISOString().split('T')[0];
+  const cacheTtlSeconds = Math.max(config.cacheTtl || 0, 4 * 60 * 60);
 
   const promises = orgIds.map(async (orgId) => {
     try {
-      const programsExpand =
-        'sessions,sessions.products,sessions.products.prices,sessions.segments';
-      const cacheKey = `${programsCacheKey(orgId, undefined, apiKey, config.features.bondEnv)}:${programsExpand}`;
-
-      const response = await cached(
-        cacheKey,
-        () => client.getPrograms(orgId, { expand: programsExpand }),
-        { ttl: Math.max(config.cacheTtl || 0, 4 * 60 * 60) },
-      );
-
-      const programs = (response.data || []).map((raw) => ({
-        ...transformProgram(raw),
-        organizationId: orgId,
-      }));
-
-      programs.forEach((program) => {
-        if (program.sessions) {
-          program.sessions = program.sessions.filter((session) => {
-            if (!session.endDate) return true;
-            return session.endDate >= today;
-          });
-        }
-      });
-
-      return programs.filter((p) => !p.sessions || p.sessions.length > 0);
+      return await fetchProgramsForOrg(client, orgId, apiKey, bondEnv, cacheTtlSeconds);
     } catch (error) {
       console.error(`Error fetching programs for org ${orgId}:`, error);
       return [];
@@ -56,18 +88,12 @@ export async function fetchProgramsForDiscoveryPage(
 
   let filtered =
     config.facilityIds && config.facilityIds.length > 0
-      ? allPrograms.filter((p) => p.facilityId && config.facilityIds!.includes(p.facilityId))
+      ? allPrograms.filter(
+          (program) => program.facilityId && config.facilityIds!.includes(program.facilityId),
+        )
       : allPrograms;
 
-  const mode = config.features.programFilterMode || 'all';
-  const excluded = config.excludedProgramIds || [];
-  const included = config.includedProgramIds || [];
-
-  if (mode === 'include' && included.length > 0) {
-    filtered = filtered.filter((p) => included.includes(p.id));
-  } else if (mode === 'exclude' && excluded.length > 0) {
-    filtered = filtered.filter((p) => !excluded.includes(p.id));
-  }
+  filtered = filterProgramsByPageConfig(filtered, config);
 
   return filtered;
 }

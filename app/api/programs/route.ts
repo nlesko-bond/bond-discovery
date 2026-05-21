@@ -4,6 +4,10 @@ import { transformProgram } from '@/lib/transformers';
 import { getConfigBySlug } from '@/lib/config';
 import { cached, programsCacheKey } from '@/lib/cache';
 import { Program } from '@/types';
+import {
+  filterProgramsByPageConfig,
+  filterProgramsWithActiveSessions,
+} from '@/lib/discovery-program-scope';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,10 +18,6 @@ export async function GET(request: Request) {
   const pageConfig = slug ? await getConfigBySlug(slug) : null;
   const apiKey = pageConfig?.apiKey || searchParams.get('apiKey') || DEFAULT_API_KEY;
   const bondEnv = pageConfig?.features?.bondEnv;
-  
-  const programFilterMode = pageConfig?.features?.programFilterMode || 'all';
-  const excludedProgramIds = pageConfig?.excludedProgramIds || [];
-  const includedProgramIds = pageConfig?.includedProgramIds || [];
   
   const orgIdsParam = searchParams.get('orgIds');
   const orgIds =
@@ -52,16 +52,7 @@ export async function GET(request: Request) {
         }));
 
         if (!includePast) {
-          programs.forEach(program => {
-            if (program.sessions) {
-              program.sessions = program.sessions.filter(session => {
-                if (!session.endDate) return true;
-                return session.endDate >= today;
-              });
-            }
-          });
-          
-          return programs.filter(p => !p.sessions || p.sessions.length > 0);
+          return filterProgramsWithActiveSessions(programs, today);
         }
 
         return programs;
@@ -74,17 +65,10 @@ export async function GET(request: Request) {
     const results = await Promise.all(promises);
     results.forEach(programs => allPrograms.push(...programs));
 
-    // Filter programs based on mode
-    let filteredPrograms = allPrograms;
-    
-    if (programFilterMode === 'include' && includedProgramIds.length > 0) {
-      // Include mode: only show specified programs
-      filteredPrograms = allPrograms.filter(p => includedProgramIds.includes(p.id));
-    } else if (programFilterMode === 'exclude' && excludedProgramIds.length > 0) {
-      // Exclude mode: hide specified programs
-      filteredPrograms = allPrograms.filter(p => !excludedProgramIds.includes(p.id));
-    }
-    // 'all' mode: no filtering needed
+    const filteredPrograms = pageConfig
+      ? filterProgramsByPageConfig(allPrograms, pageConfig)
+      : allPrograms;
+    const programFilterMode = pageConfig?.features?.programFilterMode || 'all';
 
     return NextResponse.json({
       data: filteredPrograms,
@@ -92,8 +76,14 @@ export async function GET(request: Request) {
         totalOrganizations: orgIds.length,
         totalPrograms: filteredPrograms.length,
         programFilterMode,
-        excludedPrograms: programFilterMode === 'exclude' ? excludedProgramIds.length : 0,
-        includedPrograms: programFilterMode === 'include' ? includedProgramIds.length : 0,
+        excludedPrograms:
+          programFilterMode === 'exclude'
+            ? (pageConfig?.excludedProgramIds?.length ?? 0)
+            : 0,
+        includedPrograms:
+          programFilterMode === 'include'
+            ? (pageConfig?.includedProgramIds?.length ?? 0)
+            : 0,
         cachedAt: new Date().toISOString(),
       }
     }, {

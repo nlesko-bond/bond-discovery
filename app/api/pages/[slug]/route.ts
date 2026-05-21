@@ -43,8 +43,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     // Invalidate ISR for the discovery page so admin changes show immediately (page uses revalidate = 300).
     revalidatePath(`/${updatedConfig.slug}`);
+    revalidatePath(`/portal/${updatedConfig.slug}`);
     if (body.slug && typeof body.slug === 'string' && body.slug !== params.slug) {
       revalidatePath(`/${params.slug}`);
+      revalidatePath(`/portal/${params.slug}`);
     }
 
     return NextResponse.json({ page: updatedConfig });

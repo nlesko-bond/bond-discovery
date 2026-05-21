@@ -1458,6 +1458,7 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                             const ids = e.target.value ? e.target.value.split(',').map(s => s.trim()).filter(Boolean) : undefined;
                             setConfig({
                               ...config,
+                              includedProgramIds: ids,
                               features: {
                                 ...config.features,
                                 includedProgramIds: ids,
