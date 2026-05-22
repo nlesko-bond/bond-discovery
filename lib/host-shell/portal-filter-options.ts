@@ -50,6 +50,28 @@ function getSessions(program: Program): Session[] {
   return [];
 }
 
+function resolveSessionFacility(
+  session: Session,
+  program: Program,
+): { id: string; name: string } | null {
+  if (session.facility?.id) {
+    return {
+      id: String(session.facility.id),
+      name: session.facility.name || String(session.facility.id),
+    };
+  }
+  if (program.facilityId) {
+    return {
+      id: program.facilityId,
+      name: program.facilityName || program.facilityId,
+    };
+  }
+  return null;
+}
+
+/**
+ * Builds filter option counts from sessions (session.facility, session.sport), not program-level only.
+ */
 export function buildPortalFilterOptions(programs: Program[]): IPortalFilterOptions {
   const facilities = new Map<string, IPortalFilterFacility>();
   const sports = new Map<string, number>();
@@ -58,23 +80,14 @@ export function buildPortalFilterOptions(programs: Program[]): IPortalFilterOpti
   const sessionList: IPortalSessionFilterOption[] = [];
 
   programs.forEach((program) => {
-    let facilityId = program.facilityId;
-    let facilityName = program.facilityName;
     const sessions = getSessions(program);
-
-    if ((!facilityId || !facilityName) && sessions.length > 0) {
-      const sessionWithFacility = sessions.find((session) => session.facility);
-      if (sessionWithFacility?.facility) {
-        facilityId = facilityId || String(sessionWithFacility.facility.id);
-        facilityName = facilityName || sessionWithFacility.facility.name;
-      }
-    }
+    const firstFacility = sessions.map((s) => resolveSessionFacility(s, program)).find(Boolean);
 
     programList.push({
       id: program.id,
       name: program.name,
-      facilityId,
-      facilityName,
+      facilityId: firstFacility?.id,
+      facilityName: firstFacility?.name,
     });
 
     sessions.forEach((session) => {
@@ -83,26 +96,29 @@ export function buildPortalFilterOptions(programs: Program[]): IPortalFilterOpti
         name: session.name || `Session ${session.id}`,
         programId: program.id,
       });
+
+      const facility = resolveSessionFacility(session, program);
+      if (facility) {
+        const existing = facilities.get(facility.id);
+        if (existing) {
+          existing.count += 1;
+        } else {
+          facilities.set(facility.id, {
+            id: facility.id,
+            name: facility.name,
+            count: 1,
+          });
+        }
+      }
+
+      const sportKey = session.sport ?? program.sport;
+      if (sportKey) {
+        sports.set(sportKey, (sports.get(sportKey) || 0) + 1);
+      }
     });
 
-    if (facilityId) {
-      const existing = facilities.get(facilityId);
-      if (existing) {
-        existing.count += 1;
-      } else {
-        facilities.set(facilityId, {
-          id: facilityId,
-          name: facilityName || facilityId,
-          count: 1,
-        });
-      }
-    }
-
-    if (program.sport) {
-      sports.set(program.sport, (sports.get(program.sport) || 0) + 1);
-    }
     if (program.type) {
-      programTypes.set(program.type, (programTypes.get(program.type) || 0) + 1);
+      programTypes.set(program.type, (programTypes.get(program.type) || 0) + sessions.length);
     }
   });
 

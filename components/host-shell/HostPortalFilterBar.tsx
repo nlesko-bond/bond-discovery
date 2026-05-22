@@ -163,8 +163,16 @@ export function HostPortalFilterBar({
 
   const hasDateFilter = Boolean(filters.dateRange?.start || filters.dateRange?.end);
 
+  const openExclusiveDropdown = (id: string | null) => {
+    setDatePanelOpen(false);
+    setOpenDropdownId(id);
+  };
+
   return (
-    <div ref={barRef} className="border-b border-gray-200/80 bg-white/90 backdrop-blur-sm">
+    <div
+      ref={barRef}
+      className="relative z-40 border-b border-gray-200/80 bg-white/95 shadow-sm backdrop-blur-md"
+    >
       <div className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4">
         {showSearch && enabledFilters.includes('search') && (
           <div className="relative mb-3">
@@ -178,7 +186,7 @@ export function HostPortalFilterBar({
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder={isScheduleView ? 'Search events...' : 'Search sessions...'}
               aria-label="Search"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50/80 py-2.5 pl-10 pr-10 text-sm text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 focus:border-transparent focus:bg-white focus:outline-none focus:ring-2"
+              className="w-full rounded-full border border-gray-200 bg-gray-50/90 py-2.5 pl-10 pr-10 text-sm text-gray-900 shadow-inner transition-colors placeholder:text-gray-400 focus:border-transparent focus:bg-white focus:outline-none focus:ring-2"
               style={{ ['--tw-ring-color' as string]: `${secondaryColor}55` }}
             />
             {searchQuery && (
@@ -212,7 +220,7 @@ export function HostPortalFilterBar({
                 })
               }
               isOpen={openDropdownId === 'facility'}
-              onOpenChange={(open) => setOpenDropdownId(open ? 'facility' : null)}
+              onOpenChange={(open) => openExclusiveDropdown(open ? 'facility' : null)}
               brandColor={secondaryColor}
               className="min-w-[9.5rem] sm:min-w-[11rem]"
             />
@@ -235,7 +243,7 @@ export function HostPortalFilterBar({
                 })
               }
               isOpen={openDropdownId === 'age'}
-              onOpenChange={(open) => setOpenDropdownId(open ? 'age' : null)}
+              onOpenChange={(open) => openExclusiveDropdown(open ? 'age' : null)}
               brandColor={secondaryColor}
               className="min-w-[9.5rem] sm:min-w-[10rem]"
             />
@@ -261,7 +269,7 @@ export function HostPortalFilterBar({
                 })
               }
               isOpen={openDropdownId === 'gender'}
-              onOpenChange={(open) => setOpenDropdownId(open ? 'gender' : null)}
+              onOpenChange={(open) => openExclusiveDropdown(open ? 'gender' : null)}
               brandColor={secondaryColor}
               className="min-w-[9.5rem] sm:min-w-[10rem]"
             />
@@ -284,7 +292,7 @@ export function HostPortalFilterBar({
                 })
               }
               isOpen={openDropdownId === 'sport'}
-              onOpenChange={(open) => setOpenDropdownId(open ? 'sport' : null)}
+              onOpenChange={(open) => openExclusiveDropdown(open ? 'sport' : null)}
               brandColor={secondaryColor}
               className="min-w-[9.5rem] sm:min-w-[11rem]"
             />
@@ -310,7 +318,7 @@ export function HostPortalFilterBar({
                 })
               }
               isOpen={openDropdownId === 'programType'}
-              onOpenChange={(open) => setOpenDropdownId(open ? 'programType' : null)}
+              onOpenChange={(open) => openExclusiveDropdown(open ? 'programType' : null)}
               brandColor={secondaryColor}
               className="min-w-[9.5rem] sm:min-w-[10rem]"
             />
@@ -336,7 +344,7 @@ export function HostPortalFilterBar({
                 onFiltersChange(next);
               }}
               isOpen={openDropdownId === 'program'}
-              onOpenChange={(open) => setOpenDropdownId(open ? 'program' : null)}
+              onOpenChange={(open) => openExclusiveDropdown(open ? 'program' : null)}
               brandColor={secondaryColor}
               className="min-w-[9.5rem] sm:min-w-[11rem]"
             />
@@ -361,7 +369,7 @@ export function HostPortalFilterBar({
                   })
                 }
                 isOpen={openDropdownId === 'session'}
-                onOpenChange={(open) => setOpenDropdownId(open ? 'session' : null)}
+                onOpenChange={(open) => openExclusiveDropdown(open ? 'session' : null)}
                 brandColor={secondaryColor}
                 className="min-w-[9.5rem] sm:min-w-[11rem]"
               />
@@ -386,7 +394,7 @@ export function HostPortalFilterBar({
                   })
                 }
                 isOpen={openDropdownId === 'space'}
-                onOpenChange={(open) => setOpenDropdownId(open ? 'space' : null)}
+                onOpenChange={(open) => openExclusiveDropdown(open ? 'space' : null)}
                 brandColor={secondaryColor}
                 className="min-w-[9.5rem] sm:min-w-[11rem]"
               />
@@ -412,19 +420,19 @@ export function HostPortalFilterBar({
                 })
               }
               isOpen={openDropdownId === 'availability'}
-              onOpenChange={(open) => setOpenDropdownId(open ? 'availability' : null)}
+              onOpenChange={(open) => openExclusiveDropdown(open ? 'availability' : null)}
               brandColor={secondaryColor}
               className="min-w-[9.5rem] sm:min-w-[12rem]"
             />
           )}
 
           {enabledFilters.includes('dateRange') && (
-            <div ref={dateRef} className="relative min-w-[9.5rem] sm:min-w-[11rem]">
+            <div ref={dateRef} className="relative z-[200] min-w-[9.5rem] sm:min-w-[11rem]">
               <button
                 type="button"
                 className={cn(
-                  'inline-flex min-h-[40px] w-full items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm font-medium shadow-sm transition-all',
-                  'hover:border-gray-300 hover:shadow',
+                  'inline-flex min-h-[42px] w-full items-center gap-2 rounded-full border bg-white/95 px-3.5 py-2 text-sm font-medium shadow-sm backdrop-blur-sm transition-all',
+                  'hover:border-gray-300 hover:shadow-md',
                   hasDateFilter ? 'text-gray-900' : 'text-gray-600',
                 )}
                 style={
@@ -437,7 +445,7 @@ export function HostPortalFilterBar({
                 }
                 aria-expanded={datePanelOpen}
                 onClick={() => {
-                  setOpenDropdownId(null);
+                  openExclusiveDropdown(null);
                   setDatePanelOpen((value) => !value);
                 }}
               >
@@ -454,7 +462,7 @@ export function HostPortalFilterBar({
                 />
               </button>
               {datePanelOpen && (
-                <div className="absolute left-0 z-50 mt-1.5 w-64 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
+                <div className="absolute left-0 z-[200] mt-2 w-72 rounded-2xl border border-gray-200/90 bg-white p-4 shadow-2xl ring-1 ring-black/5">
                   <div className="space-y-3">
                     <div>
                       <label className="mb-1 block text-xs font-medium text-gray-500">From</label>

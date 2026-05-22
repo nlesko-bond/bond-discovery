@@ -1,15 +1,17 @@
 # Portal sport icons
 
-Drop one SVG per sport here. The portal session card loads:
+Drop Bond sport SVGs in this folder. The portal loads:
 
-`/icons/sports/{sport_key}.svg`
+`/icons/sports/icn-sport-{sport-key}.svg`
 
-`{sport_key}` is the normalized `SessionDto.sport` value (lowercase, spaces/hyphens → underscores), e.g.:
+`{sport-key}` is normalized from `SessionDto.sport`: lowercase, underscores become hyphens.
 
-- `soccer.svg`
-- `basketball.svg`
-- `ice_hockey.svg`
+Examples:
 
-If a file is missing, the app uses built-in sport silhouettes until your assets are added.
+- `icn-sport-soccer.svg` for `soccer`
+- `icn-sport-basketball.svg` for `basketball`
+- `icn-sport-ice-hockey.svg` for `ice_hockey` or `ice hockey`
 
-Recommended: 24×24 or 32×32 viewBox, single-color SVG (currentColor) for tinting on branded chips.
+If a file is missing, built-in silhouettes are used as fallback.
+
+Recommended: 24×24 or 32×32 viewBox, single-color SVG (`currentColor`) for tinting on branded chips.

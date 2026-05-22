@@ -131,6 +131,14 @@ export function normalizeSportKey(sportId: string): string {
 }
 
 /**
+ * Bond sport icon filenames in public/icons/sports/ (e.g. icn-sport-soccer.svg).
+ */
+export function getSportIconAssetFileName(sportId: string): string {
+  const slug = normalizeSportKey(sportId).replace(/_/g, '-');
+  return `icn-sport-${slug}.svg`;
+}
+
+/**
  * Theme colors for sport accent chips and icon badges on portal session cards.
  */
 export function getSportVisualTheme(sportId: string | undefined): ISportVisualTheme {
@@ -148,8 +156,8 @@ export function getSportVisualTheme(sportId: string | undefined): ISportVisualTh
 }
 
 /**
- * Public path for partner-provided sport SVGs (drop files in public/icons/sports/).
+ * Public path for partner-provided sport SVGs (public/icons/sports/icn-sport-*.svg).
  */
 export function getSportIconAssetPath(sportId: string): string {
-  return `/icons/sports/${normalizeSportKey(sportId)}.svg`;
+  return `/icons/sports/${getSportIconAssetFileName(sportId)}`;
 }

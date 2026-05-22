@@ -87,15 +87,19 @@ export function filterProgramsForPortalSessions(
   }
 
   if (filters.facilityIds && filters.facilityIds.length > 0) {
-    result = result.filter((program) => {
-      if (program.facilityId && filters.facilityIds!.includes(program.facilityId)) {
-        return true;
+    result = result.reduce<Program[]>((accumulator, program) => {
+      const sessions = getSessionsFromProgram(program).filter((session) => {
+        const sessionFacilityId = session.facility?.id
+          ? String(session.facility.id)
+          : program.facilityId;
+        return sessionFacilityId && filters.facilityIds!.includes(sessionFacilityId);
+      });
+      if (sessions.length === 0) {
+        return accumulator;
       }
-      return getSessionsFromProgram(program).some(
-        (session) =>
-          session.facility && filters.facilityIds!.includes(String(session.facility.id)),
-      );
-    });
+      accumulator.push({ ...program, sessions });
+      return accumulator;
+    }, []);
   }
 
   if (filters.programTypes && filters.programTypes.length > 0) {
@@ -105,7 +109,17 @@ export function filterProgramsForPortalSessions(
   }
 
   if (filters.sports && filters.sports.length > 0) {
-    result = result.filter((program) => program.sport && filters.sports!.includes(program.sport));
+    result = result.reduce<Program[]>((accumulator, program) => {
+      const sessions = getSessionsFromProgram(program).filter((session) => {
+        const sportKey = session.sport ?? program.sport;
+        return sportKey && filters.sports!.includes(sportKey);
+      });
+      if (sessions.length === 0) {
+        return accumulator;
+      }
+      accumulator.push({ ...program, sessions });
+      return accumulator;
+    }, []);
   }
 
   if (filters.ageBucketIds && filters.ageBucketIds.length > 0) {

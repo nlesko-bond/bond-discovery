@@ -9,9 +9,14 @@ import { cn } from '@/lib/utils';
 interface IHostPortalSessionListProps {
   cards: IHostPortalSessionCardModel[];
   config: DiscoveryConfig;
+  onOpenSchedule?: (programId: string, sessionId: string) => void;
 }
 
-export function HostPortalSessionList({ cards, config }: IHostPortalSessionListProps) {
+export function HostPortalSessionList({
+  cards,
+  config,
+  onOpenSchedule,
+}: IHostPortalSessionListProps) {
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
 
   if (cards.length === 0) {
@@ -23,7 +28,7 @@ export function HostPortalSessionList({ cards, config }: IHostPortalSessionListP
   }
 
   return (
-    <div className="py-4 md:py-6">
+    <div className="relative z-0 py-4 md:py-6">
       <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
         {cards.map((card) => {
           const isExpanded = expandedSessionId === card.sessionId;
@@ -40,6 +45,7 @@ export function HostPortalSessionList({ cards, config }: IHostPortalSessionListP
                 onExpandedChange={(nextExpanded) =>
                   setExpandedSessionId(nextExpanded ? card.sessionId : null)
                 }
+                onOpenSchedule={onOpenSchedule}
               />
             </div>
           );

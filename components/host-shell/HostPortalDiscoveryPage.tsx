@@ -267,6 +267,43 @@ export function HostPortalDiscoveryPage({
     setFilters(next);
   }, []);
 
+  useEffect(() => {
+    const modeParam = urlSearchParams.get('viewMode');
+    if (modeParam === 'schedule' || modeParam === 'programs') {
+      setViewMode(modeParam);
+    }
+
+    const programIdsParam = urlSearchParams.get('programIds');
+    const sessionIdsParam = urlSearchParams.get('sessionIds');
+    if (programIdsParam || sessionIdsParam) {
+      setFilters((previous) => ({
+        ...previous,
+        programIds: programIdsParam ? programIdsParam.split('_').filter(Boolean) : [],
+        sessionIds: sessionIdsParam ? sessionIdsParam.split('_').filter(Boolean) : [],
+      }));
+    }
+  }, [urlSearchParams]);
+
+  const openScheduleForSession = useCallback(
+    (programId: string, sessionId: string) => {
+      const nextFilters: DiscoveryFilters = {
+        ...filters,
+        programIds: [programId],
+        sessionIds: [sessionId],
+      };
+      setFilters(nextFilters);
+      setViewMode('schedule');
+
+      const params = new URLSearchParams(urlSearchParams.toString());
+      params.set('viewMode', 'schedule');
+      params.set('scheduleView', 'list');
+      params.set('programIds', programId);
+      params.set('sessionIds', sessionId);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [filters, pathname, router, urlSearchParams],
+  );
+
   return (
     <div
       className="min-h-screen bg-gray-50"
@@ -364,7 +401,11 @@ export function HostPortalDiscoveryPage({
 
       <main className="max-w-7xl mx-auto px-3 sm:px-4 pb-8">
         {viewMode === 'programs' ? (
-          <HostPortalSessionList cards={sessionCards} config={config} />
+          <HostPortalSessionList
+            cards={sessionCards}
+            config={config}
+            onOpenSchedule={openScheduleForSession}
+          />
         ) : (
           <HostPortalScheduleTab
             schedule={scheduleData}

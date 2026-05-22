@@ -1,8 +1,6 @@
 'use client';
 
 import { Calendar, Clock, ExternalLink, ChevronDown } from 'lucide-react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { DiscoveryConfig } from '@/types';
 import type {
@@ -22,6 +20,7 @@ interface IHostPortalSessionCardProps {
   hideRegistrationLinks?: boolean;
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
+  onOpenSchedule?: (programId: string, sessionId: string) => void;
 }
 
 export function HostPortalSessionCard({
@@ -30,8 +29,8 @@ export function HostPortalSessionCard({
   hideRegistrationLinks = false,
   expanded,
   onExpandedChange,
+  onOpenSchedule,
 }: IHostPortalSessionCardProps) {
-  const pathname = usePathname();
   const { primaryColor, secondaryColor } = resolvePortalBrandColors(config);
   const sportTheme = getSportVisualTheme(card.sport);
   const showPricing = config.features.showPricing !== false;
@@ -39,7 +38,6 @@ export function HostPortalSessionCard({
   const showScheduleTab = (config.features.enabledTabs || ['programs', 'schedule']).includes(
     'schedule',
   );
-  const scheduleLink = `${pathname}?viewMode=schedule&scheduleView=list&programIds=${card.programId}&sessionIds=${card.sessionId}`;
 
   const [loadedSegments, setLoadedSegments] = useState<IHostPortalSegmentRow[]>(card.segments);
   const [segmentsLoading, setSegmentsLoading] = useState(false);
@@ -51,7 +49,8 @@ export function HostPortalSessionCard({
 
   const displaySegments = loadedSegments;
   const showPricingInExpand = showPricing && card.hasMultipleRegisterOptions && card.products.length > 0;
-  const showExpandControl = card.isSegmented || card.segments.length > 0 || showPricingInExpand;
+  const showSegmentsControl =
+    card.isSegmented || card.segments.length > 0 || segmentsLoading || Boolean(segmentsError);
 
   useEffect(() => {
     if (!expanded || displaySegments.length > 0 || !card.organizationId) {
@@ -120,13 +119,59 @@ export function HostPortalSessionCard({
     });
   };
 
+  const handleViewSchedule = () => {
+    if (!showScheduleTab || !onOpenSchedule) {
+      return;
+    }
+    onOpenSchedule(card.programId, card.sessionId);
+  };
+
+  const registerFooter = !hideRegistrationLinks && card.registerUrl && (
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
+      <div className="min-w-0">
+        {collapsedPriceLabel && (
+          <p className="text-base font-bold tabular-nums" style={{ color: primaryColor }}>
+            {collapsedPriceLabel}
+          </p>
+        )}
+        {card.hasMultipleRegisterOptions && !expanded && (
+          <button
+            type="button"
+            className="mt-1 text-xs font-semibold hover:opacity-80"
+            style={{ color: secondaryColor }}
+            onClick={() => onExpandedChange(true)}
+          >
+            View all pricing options
+          </button>
+        )}
+      </div>
+      <a
+        href={card.registerUrl}
+        className={cn(
+          'inline-flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90',
+          card.isClosed && 'pointer-events-none cursor-not-allowed opacity-60',
+        )}
+        style={{
+          background: card.isClosed
+            ? '#9CA3AF'
+            : `linear-gradient(135deg, ${sportTheme.gradientFrom}, ${sportTheme.gradientTo})`,
+        }}
+        aria-disabled={card.isClosed}
+        onClick={() => trackRegisterClick(card.registerProductId)}
+      >
+        {card.isClosed ? 'Closed' : 'Register'}
+        <ExternalLink size={14} />
+      </a>
+    </div>
+  );
+
   return (
     <article
       className={cn(
-        'group relative flex flex-col overflow-hidden rounded-2xl',
+        'group relative isolate flex flex-col overflow-hidden rounded-2xl',
         'bg-white ring-1 ring-gray-200/90 shadow-sm',
-        'transition-all duration-300 hover:shadow-lg hover:ring-gray-300/90',
-        expanded ? 'shadow-lg ring-gray-300/90' : 'hover:-translate-y-0.5',
+        'transition-shadow duration-300 hover:shadow-lg hover:ring-gray-300/90',
+        expanded && 'shadow-lg ring-gray-300/90',
       )}
     >
       <HostPortalSessionIconStrip
@@ -138,39 +183,23 @@ export function HostPortalSessionCard({
       />
 
       <div className="flex flex-col p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <p
-              className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 truncate"
-              title={card.programName}
-            >
-              {card.programName}
-            </p>
-            <div className="mt-1 flex flex-wrap items-start gap-2">
-              <h3 className="text-base sm:text-lg font-semibold leading-snug text-gray-900 text-balance">
-                {card.name}
-              </h3>
-              {card.isClosed && (
-                <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-600">
-                  Closed
-                </span>
-              )}
-            </div>
+        <div className="min-w-0">
+          <p
+            className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 truncate"
+            title={card.programName}
+          >
+            {card.programName}
+          </p>
+          <div className="mt-1 flex flex-wrap items-start gap-2">
+            <h3 className="text-base sm:text-lg font-semibold leading-snug text-gray-900 text-balance">
+              {card.name}
+            </h3>
+            {card.isClosed && (
+              <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-600">
+                Closed
+              </span>
+            )}
           </div>
-          {showExpandControl && (
-            <button
-              type="button"
-              className="shrink-0 rounded-lg border border-gray-200 bg-gray-50 p-2 text-gray-600 transition-colors hover:bg-white hover:text-gray-900"
-              onClick={() => onExpandedChange(!expanded)}
-              aria-expanded={expanded}
-              aria-label={expanded ? 'Collapse session details' : 'Expand session details'}
-            >
-              <ChevronDown
-                size={18}
-                className={cn('transition-transform duration-200', expanded && 'rotate-180')}
-              />
-            </button>
-          )}
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -180,9 +209,10 @@ export function HostPortalSessionCard({
               {card.dateRange}
             </span>
           )}
-          {showScheduleTab && (
-            <Link
-              href={scheduleLink}
+          {showScheduleTab && onOpenSchedule && (
+            <button
+              type="button"
+              onClick={handleViewSchedule}
               className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors hover:opacity-90"
               style={{
                 borderColor: `${secondaryColor}35`,
@@ -192,7 +222,7 @@ export function HostPortalSessionCard({
             >
               <Clock size={13} aria-hidden />
               View schedule
-            </Link>
+            </button>
           )}
         </div>
 
@@ -202,43 +232,18 @@ export function HostPortalSessionCard({
           </p>
         )}
 
-        {!expanded && !hideRegistrationLinks && card.registerUrl && (
-          <div className="mt-4 flex items-center justify-between gap-3 border-t border-gray-100 pt-4">
-            <div className="min-w-0">
-              {collapsedPriceLabel && (
-                <p className="text-base font-bold tabular-nums" style={{ color: primaryColor }}>
-                  {collapsedPriceLabel}
-                </p>
-              )}
-              {card.hasMultipleRegisterOptions && (
-                <button
-                  type="button"
-                  className="mt-1 text-xs font-semibold hover:opacity-80"
-                  style={{ color: secondaryColor }}
-                  onClick={() => onExpandedChange(true)}
-                >
-                  View all pricing options
-                </button>
-              )}
-            </div>
-            <a
-              href={card.registerUrl}
-              className={cn(
-                'inline-flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90',
-                card.isClosed && 'pointer-events-none cursor-not-allowed opacity-60',
-              )}
-              style={{
-                background: card.isClosed
-                  ? '#9CA3AF'
-                  : `linear-gradient(135deg, ${sportTheme.gradientFrom}, ${sportTheme.gradientTo})`,
-              }}
-              aria-disabled={card.isClosed}
-              onClick={() => trackRegisterClick(card.registerProductId)}
-            >
-              {card.isClosed ? 'Closed' : 'Register'}
-              <ExternalLink size={14} />
-            </a>
-          </div>
+        {!expanded && registerFooter}
+
+        {!expanded && showSegmentsControl && (
+          <button
+            type="button"
+            className="mt-3 flex w-full items-center justify-between gap-2 rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 text-left text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100"
+            onClick={() => onExpandedChange(true)}
+            aria-expanded={expanded}
+          >
+            <span>View segments</span>
+            <ChevronDown size={16} className="shrink-0 text-gray-500" />
+          </button>
         )}
 
         {expanded && (
@@ -277,7 +282,7 @@ export function HostPortalSessionCard({
               </div>
             )}
 
-            {expanded && card.description && (
+            {card.description && (
               <p className="mt-4 text-sm leading-relaxed text-gray-600">{card.description}</p>
             )}
 
@@ -334,32 +339,19 @@ export function HostPortalSessionCard({
               </div>
             )}
 
-            {!hideRegistrationLinks && card.registerUrl && (
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
-                {collapsedPriceLabel && (
-                  <p className="text-base font-bold tabular-nums" style={{ color: primaryColor }}>
-                    {collapsedPriceLabel}
-                  </p>
-                )}
-                <a
-                  href={card.registerUrl}
-                  className={cn(
-                    'inline-flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90',
-                    card.isClosed && 'pointer-events-none cursor-not-allowed opacity-60',
-                  )}
-                  style={{
-                    background: card.isClosed
-                      ? '#9CA3AF'
-                      : `linear-gradient(135deg, ${sportTheme.gradientFrom}, ${sportTheme.gradientTo})`,
-                  }}
-                  aria-disabled={card.isClosed}
-                  onClick={() => trackRegisterClick(card.registerProductId)}
-                >
-                  {card.isClosed ? 'Closed' : 'Register'}
-                  <ExternalLink size={14} />
-                </a>
-              </div>
+            {showSegmentsControl && (
+              <button
+                type="button"
+                className="mt-4 flex w-full items-center justify-between gap-2 rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 text-left text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100"
+                onClick={() => onExpandedChange(false)}
+                aria-expanded={expanded}
+              >
+                <span>Hide segments</span>
+                <ChevronDown size={16} className="shrink-0 rotate-180 text-gray-500" />
+              </button>
             )}
+
+            {registerFooter}
           </div>
         )}
       </div>

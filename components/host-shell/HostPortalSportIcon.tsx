@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { getSportIconAssetPath, normalizeSportKey } from '@/lib/host-shell/sport-visuals';
+import { cn } from '@/lib/utils';
 import { SportIconSvg } from './sport-icons/SportIconSvg';
 
 interface IHostPortalSportIconProps {
@@ -25,7 +26,7 @@ export function HostPortalSportIcon({ sportId, size = 20, className }: IHostPort
         alt=""
         width={size}
         height={size}
-        className={className}
+        className={cn('opacity-95', className)}
         style={{ width: size, height: size, objectFit: 'contain' }}
         onError={() => setAssetMissing(true)}
       />
