@@ -9,6 +9,9 @@ interface IHostPortalAgeRangeSliderProps {
   className?: string;
 }
 
+const TRACK_HEIGHT_PX = 4;
+const THUMB_SIZE_PX = 16;
+
 export function HostPortalAgeRangeSlider({
   min,
   max,
@@ -22,11 +25,27 @@ export function HostPortalAgeRangeSlider({
   const maxPercent = span > 0 ? ((valueMax - min) / span) * 100 : 100;
 
   return (
-    <div className={className ?? 'relative h-6 w-full'}>
-      <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-gray-200" />
+    <div
+      className={className ?? 'relative w-full'}
+      style={{ height: `${THUMB_SIZE_PX}px` }}
+    >
       <div
-        className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-emerald-700"
-        style={{ left: `${minPercent}%`, width: `${Math.max(0, maxPercent - minPercent)}%` }}
+        className="absolute left-0 right-0 rounded-full bg-gray-200"
+        style={{
+          top: '50%',
+          height: `${TRACK_HEIGHT_PX}px`,
+          transform: 'translateY(-50%)',
+        }}
+      />
+      <div
+        className="absolute rounded-full bg-emerald-700"
+        style={{
+          top: '50%',
+          height: `${TRACK_HEIGHT_PX}px`,
+          transform: 'translateY(-50%)',
+          left: `${minPercent}%`,
+          width: `${Math.max(0, maxPercent - minPercent)}%`,
+        }}
       />
       <input
         type="range"

@@ -96,7 +96,7 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
               valueMin={props.selectedAgeMin}
               valueMax={props.selectedAgeMax}
               onChange={props.onAgeRangeChange}
-              className="relative h-6 min-w-0 flex-1"
+              className="relative min-w-0 flex-1"
             />
             <span className="shrink-0 text-sm font-semibold tabular-nums text-gray-800">
               {atFullAgeRange
