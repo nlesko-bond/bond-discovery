@@ -30,7 +30,7 @@ interface IHostPortalListFilterBarProps {
 }
 
 export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
-  const { primaryColor, secondaryColor } = resolvePortalUiColors(props.config);
+  const { secondaryColor } = resolvePortalUiColors(props.config);
   const [facilityOpen, setFacilityOpen] = useState(false);
   const atFullAgeRange =
     props.selectedAgeMin === props.ageBounds.min &&
@@ -97,7 +97,6 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
               valueMax={props.selectedAgeMax}
               onChange={props.onAgeRangeChange}
               className="relative min-w-0 flex-1"
-              accentColor={primaryColor}
             />
             <span className="shrink-0 text-sm font-semibold tabular-nums text-gray-800">
               {atFullAgeRange
