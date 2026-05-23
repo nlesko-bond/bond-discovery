@@ -1,13 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowUpDown, MapPin } from 'lucide-react';
+import { ArrowLeft, ArrowUpDown, MapPin } from 'lucide-react';
 import type { DiscoveryConfig, DiscoveryFilters } from '@/types';
 import { PortalSessionSortEnum } from '@/types';
 import type { IPortalFilterOptions } from '@/lib/host-shell/portal-filter-options';
 import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
 import { HostPortalMultiSelectDropdown } from '../HostPortalMultiSelectDropdown';
 import { HostPortalAgeRangeSlider } from './HostPortalAgeRangeSlider';
+import { cn } from '@/lib/utils';
+
+const LIST_FILTER_CONTROL_CLASS =
+  'flex min-h-[42px] w-full items-center rounded-lg border border-gray-200 bg-white px-3 shadow-sm';
 
 interface IHostPortalListFilterBarProps {
   filters: DiscoveryFilters;
@@ -20,15 +24,38 @@ interface IHostPortalListFilterBarProps {
   selectedAgeMin: number;
   selectedAgeMax: number;
   onAgeRangeChange: (min: number, max: number) => void;
+  scheduleMode?: boolean;
+  scheduleSessionLabel?: string;
+  onBackToSessions?: () => void;
 }
 
 export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
   const { secondaryColor } = resolvePortalBrandColors(props.config);
   const [facilityOpen, setFacilityOpen] = useState(false);
+  const atFullAgeRange =
+    props.selectedAgeMin === props.ageBounds.min &&
+    props.selectedAgeMax === props.ageBounds.max;
 
   return (
-    <div className="relative z-40 border-b border-gray-200 bg-white">
-      <div className="mx-auto grid max-w-7xl gap-4 px-4 py-4 sm:px-6 md:grid-cols-3">
+    <div className={cn('relative z-40 border-b border-gray-200 bg-white', props.scheduleMode && 'sticky top-0')}>
+      {props.scheduleMode && props.onBackToSessions && (
+        <div className="border-b border-gray-100 bg-gray-50/80">
+          <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2.5 sm:px-6">
+            <button
+              type="button"
+              onClick={props.onBackToSessions}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+            >
+              <ArrowLeft size={15} aria-hidden />
+              All sessions
+            </button>
+            {props.scheduleSessionLabel && (
+              <span className="truncate text-sm text-gray-500">{props.scheduleSessionLabel}</span>
+            )}
+          </div>
+        </div>
+      )}
+      <div className="mx-auto grid max-w-7xl items-end gap-4 px-4 py-4 sm:px-6 md:grid-cols-3">
         {props.options.facilities.length > 0 && (
           <div>
             <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
@@ -52,6 +79,8 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
               isOpen={facilityOpen}
               onOpenChange={setFacilityOpen}
               brandColor={secondaryColor}
+              triggerClassName={LIST_FILTER_CONTROL_CLASS}
+              menuClassName="rounded-lg"
             />
           </div>
         )}
@@ -60,20 +89,21 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
             Age range
           </p>
-          <div className="rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-3">
-            <p className="mb-2 text-sm font-medium text-gray-800">
-              {props.selectedAgeMin === props.ageBounds.min &&
-              props.selectedAgeMax === props.ageBounds.max
-                ? `All ages (${props.ageBounds.min}–${props.ageBounds.max})`
-                : `Ages ${props.selectedAgeMin}–${props.selectedAgeMax}`}
-            </p>
+          <div className={cn(LIST_FILTER_CONTROL_CLASS, 'gap-3 py-2')}>
             <HostPortalAgeRangeSlider
               min={props.ageBounds.min}
               max={props.ageBounds.max}
               valueMin={props.selectedAgeMin}
               valueMax={props.selectedAgeMax}
               onChange={props.onAgeRangeChange}
+              className="relative h-6 min-w-0 flex-1"
             />
+            <span className="shrink-0 text-sm font-semibold tabular-nums text-gray-800">
+              {atFullAgeRange
+                ? `${props.ageBounds.min}–${props.ageBounds.max} yrs`
+                : `${props.selectedAgeMin}–${props.selectedAgeMax} yrs`}
+            </span>
+            <span className="shrink-0 text-xs text-gray-400">{props.ageBounds.max}+</span>
           </div>
         </div>
 
@@ -81,7 +111,7 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
             Sort
           </p>
-          <div className="relative">
+          <div className={cn(LIST_FILTER_CONTROL_CLASS, 'relative py-0')}>
             <ArrowUpDown
               size={16}
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -91,7 +121,7 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
               onChange={(event) =>
                 props.onSortChange(event.target.value as PortalSessionSortEnum)
               }
-              className="w-full appearance-none rounded-full border border-gray-200 bg-white py-2.5 pl-9 pr-8 text-sm font-medium text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+              className="w-full appearance-none bg-transparent py-2.5 pl-9 pr-8 text-sm font-medium text-gray-800 focus:outline-none"
             >
               <option value={PortalSessionSortEnum.START_DATE}>Start date</option>
               <option value={PortalSessionSortEnum.NAME}>Name</option>

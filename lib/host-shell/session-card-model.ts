@@ -22,6 +22,8 @@ export interface IHostPortalSegmentRow {
   id: string;
   name: string;
   dateRange?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface IHostPortalSessionCardModel {
@@ -113,6 +115,8 @@ export function mapSegmentRow(segment: Segment): IHostPortalSegmentRow {
   return {
     id: segment.id,
     name: segment.name?.trim() || 'Segment',
+    startDate: segment.startDate,
+    endDate: segment.endDate,
     dateRange:
       segment.startDate || segment.endDate
         ? formatDateRange(segment.startDate ?? '', segment.endDate ?? '')

@@ -6,6 +6,7 @@ interface IHostPortalAgeRangeSliderProps {
   valueMin: number;
   valueMax: number;
   onChange: (min: number, max: number) => void;
+  className?: string;
 }
 
 export function HostPortalAgeRangeSlider({
@@ -14,16 +15,17 @@ export function HostPortalAgeRangeSlider({
   valueMin,
   valueMax,
   onChange,
+  className,
 }: IHostPortalAgeRangeSliderProps) {
   const span = max - min;
   const minPercent = span > 0 ? ((valueMin - min) / span) * 100 : 0;
   const maxPercent = span > 0 ? ((valueMax - min) / span) * 100 : 100;
 
   return (
-    <div className="relative mx-1 h-10 pt-1">
-      <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-gray-200" />
+    <div className={className ?? 'relative h-6 w-full'}>
+      <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-gray-200" />
       <div
-        className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-emerald-700"
+        className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-emerald-700"
         style={{ left: `${minPercent}%`, width: `${Math.max(0, maxPercent - minPercent)}%` }}
       />
       <input

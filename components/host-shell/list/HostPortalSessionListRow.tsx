@@ -21,6 +21,37 @@ interface IHostPortalSessionListRowProps {
   onOpenSchedule?: (programId: string, sessionId: string) => void;
 }
 
+function formatSegmentChipDate(isoDate: string): string {
+  try {
+    return new Date(isoDate).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+  } catch {
+    return '';
+  }
+}
+
+function buildSegmentDateChips(segment: IHostPortalSegmentRow): string[] {
+  const chips: string[] = [];
+  if (segment.startDate) {
+    const start = formatSegmentChipDate(segment.startDate);
+    if (start) {
+      chips.push(start);
+    }
+  }
+  if (segment.endDate) {
+    const end = formatSegmentChipDate(segment.endDate);
+    if (end && end !== chips[chips.length - 1]) {
+      chips.push(end);
+    }
+  }
+  if (chips.length === 0 && segment.dateRange) {
+    chips.push(segment.dateRange);
+  }
+  return chips;
+}
+
 function schedulePanelLabel(
   timeChips: IHostPortalSessionTimeChip[],
   card: IHostPortalSessionCardModel,
@@ -29,7 +60,7 @@ function schedulePanelLabel(
     return summarizeSessionTimeChips(timeChips);
   }
   if (card.isSegmented || card.segments.length > 0) {
-    return 'View segments';
+    return 'View dates & pricing';
   }
   return 'View schedule';
 }
@@ -108,53 +139,53 @@ export function HostPortalSessionListRow({
   const hasPanelContent = timeChips.length > 0 || showSegments || (showScheduleTab && onOpenSchedule);
 
   return (
-    <article className="flex flex-col rounded-2xl border border-gray-200 bg-white shadow-sm sm:flex-row">
-      <div
-        className="flex w-full shrink-0 flex-col items-center justify-center gap-3 overflow-hidden rounded-t-2xl px-4 py-6 sm:w-36 sm:rounded-l-2xl sm:rounded-tr-none"
-        style={{
-          background: `linear-gradient(160deg, ${sportTheme.gradientFrom}, ${sportTheme.gradientTo})`,
-        }}
-      >
-        {card.ageRange && (
-          <span className="rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-gray-800">
-            {card.ageRange}
-          </span>
-        )}
-        {card.sport && (
-          <HostPortalSportIcon sportId={card.sport} size={40} className="brightness-0 invert" />
-        )}
-      </div>
+    <article className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="flex flex-col sm:flex-row">
+        <div
+          className="flex w-full shrink-0 flex-col items-center justify-center gap-3 px-4 py-6 sm:w-36"
+          style={{
+            background: `linear-gradient(160deg, ${sportTheme.gradientFrom}, ${sportTheme.gradientTo})`,
+          }}
+        >
+          {card.ageRange && (
+            <span className="rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-gray-800">
+              {card.ageRange}
+            </span>
+          )}
+          {card.sport && (
+            <HostPortalSportIcon sportId={card.sport} size={40} className="brightness-0 invert" />
+          )}
+        </div>
 
-      <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 p-4 sm:flex-row sm:items-start sm:p-5">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-gray-500">{card.programName}</p>
-          <h3 className="mt-1 text-xl font-semibold text-gray-900">{card.name}</h3>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
-            {card.facilityName && (
-              <span className="inline-flex items-center gap-1">
-                <MapPin size={14} className="text-gray-400" aria-hidden />
-                {card.facilityName}
-              </span>
-            )}
-            {card.dateRange && (
-              <span className="inline-flex items-center gap-1">
-                <Calendar size={14} className="text-gray-400" aria-hidden />
-                {card.dateRange}
-              </span>
-            )}
-            {card.weekCountLabel && (
-              <span className="inline-flex items-center gap-1">
-                <Clock size={14} className="text-gray-400" aria-hidden />
-                {card.weekCountLabel}
-              </span>
-            )}
-          </div>
+        <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-gray-500">{card.programName}</p>
+            <h3 className="mt-1 text-xl font-semibold text-gray-900">{card.name}</h3>
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
+              {card.facilityName && (
+                <span className="inline-flex items-center gap-1">
+                  <MapPin size={14} className="text-gray-400" aria-hidden />
+                  {card.facilityName}
+                </span>
+              )}
+              {card.dateRange && (
+                <span className="inline-flex items-center gap-1">
+                  <Calendar size={14} className="text-gray-400" aria-hidden />
+                  {card.dateRange}
+                </span>
+              )}
+              {card.weekCountLabel && (
+                <span className="inline-flex items-center gap-1">
+                  <Clock size={14} className="text-gray-400" aria-hidden />
+                  {card.weekCountLabel}
+                </span>
+              )}
+            </div>
 
-          {hasPanelContent && (
-            <div className="mt-3 max-w-xl">
+            {hasPanelContent && (
               <button
                 type="button"
-                className="flex w-full items-center justify-between gap-2 rounded-lg border border-sky-200 bg-sky-50/80 px-3 py-2 text-left text-sm font-medium text-sky-900"
+                className="mt-3 flex w-full max-w-xl items-center justify-between gap-2 rounded-lg border border-sky-200 bg-sky-50/80 px-3 py-2 text-left text-sm font-medium text-sky-900"
                 onClick={() => setPanelOpen((value) => !value)}
                 aria-expanded={panelOpen}
               >
@@ -164,114 +195,124 @@ export function HostPortalSessionListRow({
                   className={cn('shrink-0 transition-transform', panelOpen && 'rotate-180')}
                 />
               </button>
+            )}
+          </div>
 
-              {panelOpen && (
-                <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50/80 p-3">
-                  {timeChips.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {timeChips.map((chip) => (
-                        <span
-                          key={chip.eventId}
-                          className={cn(
-                            'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium',
-                            chip.isFull
-                              ? 'border-gray-200 bg-gray-50 text-gray-400'
-                              : 'border-gray-200 bg-white text-gray-800',
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'h-2 w-2 rounded-full',
-                              chip.isFull ? 'bg-gray-300' : 'bg-emerald-500',
-                            )}
-                          />
-                          {chip.dayLabel} · {chip.timeLabel} · {chip.spotsLabel}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {showSegments && (
-                    <div className={cn(timeChips.length > 0 && 'mt-3 border-t border-gray-200 pt-3')}>
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                        Segments
-                      </p>
-                      {segmentsLoading && (
-                        <p className="text-sm text-gray-500">Loading segments…</p>
-                      )}
-                      {!segmentsLoading && segmentsError && (
-                        <p className="text-sm text-red-600">{segmentsError}</p>
-                      )}
-                      {!segmentsLoading && !segmentsError && loadedSegments.length > 0 && (
-                        <ul className="grid gap-2 sm:grid-cols-2">
-                          {loadedSegments.map((segment) => (
-                            <li
-                              key={segment.id}
-                              className="rounded-lg border border-white bg-white px-3 py-2 text-sm text-gray-800 shadow-sm"
-                            >
-                              <span className="font-medium">{segment.name}</span>
-                              {segment.dateRange && (
-                                <span className="mt-0.5 block text-xs text-gray-500">
-                                  {segment.dateRange}
-                                </span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      {!segmentsLoading && !segmentsError && loadedSegments.length === 0 && (
-                        <p className="text-sm text-gray-500">No segments listed for this session.</p>
-                      )}
-                    </div>
-                  )}
-
-                  {timeChips.length === 0 && showScheduleTab && onOpenSchedule && (
-                    <button
-                      type="button"
-                      className={cn(
-                        'text-sm font-semibold text-sky-800 hover:underline',
-                        showSegments && 'mt-3',
-                      )}
-                      onClick={() => onOpenSchedule(card.programId, card.sessionId)}
-                    >
-                      Open full schedule
-                    </button>
-                  )}
-                </div>
+          {!hideRegistrationLinks && card.registerUrl && (
+            <div className="flex shrink-0 flex-col items-end gap-2 sm:min-w-[9rem]">
+              {priceLabel && (
+                <p className="text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  From{' '}
+                  <span className="text-lg tabular-nums text-gray-900" style={{ color: primaryColor }}>
+                    {card.startingPriceLabel}
+                  </span>
+                </p>
               )}
+              <a
+                href={card.registerUrl}
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-sm',
+                  card.isClosed && 'pointer-events-none opacity-60',
+                )}
+                style={{
+                  background: card.isClosed
+                    ? '#9CA3AF'
+                    : `linear-gradient(135deg, ${sportTheme.gradientFrom}, ${sportTheme.gradientTo})`,
+                }}
+                aria-disabled={card.isClosed}
+              >
+                {card.isClosed ? 'Closed' : 'Register'}
+                <ArrowRight size={16} />
+              </a>
             </div>
           )}
         </div>
-
-        {!hideRegistrationLinks && card.registerUrl && (
-          <div className="flex shrink-0 flex-col items-end gap-2 sm:min-w-[9rem]">
-            {priceLabel && (
-              <p className="text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
-                From{' '}
-                <span className="text-lg tabular-nums text-gray-900" style={{ color: primaryColor }}>
-                  {card.startingPriceLabel}
-                </span>
-              </p>
-            )}
-            <a
-              href={card.registerUrl}
-              className={cn(
-                'inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-sm',
-                card.isClosed && 'pointer-events-none opacity-60',
-              )}
-              style={{
-                background: card.isClosed
-                  ? '#9CA3AF'
-                  : `linear-gradient(135deg, ${sportTheme.gradientFrom}, ${sportTheme.gradientTo})`,
-              }}
-              aria-disabled={card.isClosed}
-            >
-              {card.isClosed ? 'Closed' : 'Register'}
-              <ArrowRight size={16} />
-            </a>
-          </div>
-        )}
       </div>
+
+      {panelOpen && (
+        <div className="w-full border-t border-gray-100 bg-gray-50/60 px-4 py-3 sm:px-5">
+          {timeChips.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {timeChips.map((chip) => (
+                <span
+                  key={chip.eventId}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium',
+                    chip.isFull
+                      ? 'border-gray-200 bg-gray-100 text-gray-400'
+                      : 'border-gray-200 bg-white text-gray-800',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'h-2 w-2 rounded-full',
+                      chip.isFull ? 'bg-gray-300' : 'bg-emerald-500',
+                    )}
+                  />
+                  {chip.dayLabel} · {chip.timeLabel} · {chip.spotsLabel}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {showSegments && (
+            <ul className={cn('flex flex-col gap-2', timeChips.length > 0 && 'mt-3')}>
+              {segmentsLoading && (
+                <li className="text-sm text-gray-500">Loading dates…</li>
+              )}
+              {!segmentsLoading && segmentsError && (
+                <li className="text-sm text-red-600">{segmentsError}</li>
+              )}
+              {!segmentsLoading &&
+                !segmentsError &&
+                loadedSegments.map((segment) => {
+                  const dateChips = buildSegmentDateChips(segment);
+                  return (
+                    <li
+                      key={segment.id}
+                      className="flex w-full items-center justify-between gap-4 rounded-lg border border-gray-200 bg-white px-3 py-2.5"
+                    >
+                      <div className="flex min-w-0 flex-wrap gap-2">
+                        {dateChips.map((chip) => (
+                          <span
+                            key={`${segment.id}-${chip}`}
+                            className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700"
+                          >
+                            {chip}
+                          </span>
+                        ))}
+                      </div>
+                      {priceLabel && (
+                        <span
+                          className="shrink-0 text-sm font-semibold tabular-nums text-gray-900"
+                          style={{ color: primaryColor }}
+                        >
+                          {priceLabel}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              {!segmentsLoading && !segmentsError && loadedSegments.length === 0 && (
+                <li className="text-sm text-gray-500">No dates listed for this session.</li>
+              )}
+            </ul>
+          )}
+
+          {timeChips.length === 0 &&
+            !showSegments &&
+            showScheduleTab &&
+            onOpenSchedule && (
+              <button
+                type="button"
+                className="text-sm font-semibold text-sky-800 hover:underline"
+                onClick={() => onOpenSchedule(card.programId, card.sessionId)}
+              >
+                Open full schedule
+              </button>
+            )}
+        </div>
+      )}
     </article>
   );
 }

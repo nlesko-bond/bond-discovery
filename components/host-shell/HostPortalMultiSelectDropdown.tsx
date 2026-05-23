@@ -21,6 +21,8 @@ interface IHostPortalMultiSelectDropdownProps {
   brandColor: string;
   emptyLabel?: string;
   className?: string;
+  triggerClassName?: string;
+  menuClassName?: string;
 }
 
 function formatTriggerLabel(
@@ -49,6 +51,8 @@ export function HostPortalMultiSelectDropdown({
   brandColor,
   emptyLabel = 'No options',
   className,
+  triggerClassName,
+  menuClassName,
 }: IHostPortalMultiSelectDropdownProps) {
   const listboxId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -81,9 +85,10 @@ export function HostPortalMultiSelectDropdown({
       <button
         type="button"
         className={cn(
-          'inline-flex min-h-[42px] w-full items-center gap-2 rounded-full border bg-white/95 px-3.5 py-2 text-sm font-medium shadow-sm backdrop-blur-sm transition-all',
-          'hover:border-gray-300 hover:shadow-md',
+          'inline-flex min-h-[42px] w-full items-center gap-2 rounded-lg border bg-white px-3.5 py-2 text-sm font-medium shadow-sm transition-colors',
+          'hover:border-gray-300',
           hasSelection ? 'text-gray-900' : 'text-gray-600',
+          triggerClassName,
         )}
         style={
           hasSelection
@@ -116,7 +121,10 @@ export function HostPortalMultiSelectDropdown({
           role="listbox"
           aria-multiselectable="true"
           aria-label={label}
-          className="absolute left-0 z-[200] mt-2 min-w-full max-w-[min(100vw-2rem,22rem)] overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-2xl ring-1 ring-black/5"
+          className={cn(
+            'absolute left-0 z-[200] mt-1.5 min-w-full max-w-[min(100vw-2rem,22rem)] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg',
+            menuClassName,
+          )}
         >
           <div className="max-h-60 overflow-y-auto py-1">
             {options.length === 0 ? (

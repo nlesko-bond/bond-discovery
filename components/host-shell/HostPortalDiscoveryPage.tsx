@@ -308,9 +308,31 @@ export function HostPortalDiscoveryPage({
       params.set('programIds', programId);
       params.set('sessionIds', sessionId);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      }
     },
     [filters, pathname, router, urlSearchParams],
   );
+
+  const backToSessionsList = useCallback(() => {
+    const nextFilters: DiscoveryFilters = {
+      ...filters,
+      programIds: [],
+      sessionIds: [],
+    };
+    setFilters(nextFilters);
+    setViewMode('programs');
+
+    const params = new URLSearchParams(urlSearchParams.toString());
+    params.set('viewMode', 'programs');
+    params.delete('programIds');
+    params.delete('sessionIds');
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [filters, pathname, router, urlSearchParams]);
 
   return (
     <div
@@ -412,25 +434,46 @@ export function HostPortalDiscoveryPage({
       )}
 
       <main className={useListLayout ? 'pb-8' : 'max-w-7xl mx-auto px-3 sm:px-4 pb-8'}>
-        {viewMode === 'programs' ? (
-          useListLayout ? (
-            <HostPortalSessionsListView
-              cards={sessionCards}
-              config={config}
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-              filterOptions={filterOptions}
-              apiEvents={apiEvents}
-              eventsFetched={eventsFetched}
-              onOpenSchedule={openScheduleForSession}
-            />
-          ) : (
+        {useListLayout ? (
+          <HostPortalSessionsListView
+            cards={sessionCards}
+            config={config}
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            filterOptions={filterOptions}
+            apiEvents={apiEvents}
+            eventsFetched={eventsFetched}
+            viewMode={viewMode}
+            onOpenSchedule={openScheduleForSession}
+            onBackToSessions={backToSessionsList}
+            scheduleContent={
+              <HostPortalScheduleTab
+                schedule={scheduleData}
+                config={config}
+                scheduleThemeStyle={scheduleThemeStyle}
+                isLoading={eventsLoading}
+                error={eventsError}
+                totalEvents={filteredEvents.length}
+                totalServerEvents={totalServerEvents}
+                onLoadMore={loadMoreEvents}
+                loadingMore={loadingMore}
+                hasMultipleFacilities={filterOptions.hasMultipleFacilities}
+                filters={config.features.showScheduleTableDateFilters ? filters : undefined}
+                onScheduleFiltersChange={
+                  config.features.showScheduleTableDateFilters ? handleFiltersChange : undefined
+                }
+                searchParams={searchParams}
+                programs={initialPrograms}
+                linkTarget={linkTarget}
+              />
+            }
+          />
+        ) : viewMode === 'programs' ? (
           <HostPortalSessionList
             cards={sessionCards}
             config={config}
             onOpenSchedule={openScheduleForSession}
           />
-          )
         ) : (
           <HostPortalScheduleTab
             schedule={scheduleData}

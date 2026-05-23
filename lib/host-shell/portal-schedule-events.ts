@@ -87,8 +87,9 @@ export function filterPortalScheduleEvents(
   }
 
   if (filters.sessionIds && filters.sessionIds.length > 0) {
+    const sessionIdSet = new Set(filters.sessionIds.map(String));
     result = result.filter(
-      (event) => event.sessionId && filters.sessionIds!.includes(event.sessionId),
+      (event) => event.sessionId && sessionIdSet.has(String(event.sessionId)),
     );
   }
 

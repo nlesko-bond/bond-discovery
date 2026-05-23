@@ -254,7 +254,7 @@
 @layer components {
   .portal-age-dual-range {
     @apply pointer-events-none appearance-none bg-transparent;
-    height: 2.5rem;
+    height: 1.5rem;
   }
 
   .portal-age-dual-range::-webkit-slider-runnable-track {

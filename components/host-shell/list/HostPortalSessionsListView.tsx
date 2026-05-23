@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import type { DiscoveryConfig, DiscoveryFilters } from '@/types';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { DiscoveryConfig, DiscoveryFilters, ViewMode } from '@/types';
 import { PortalSessionSortEnum } from '@/types';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
 import type { IPortalFilterOptions } from '@/lib/host-shell/portal-filter-options';
@@ -25,7 +25,10 @@ interface IHostPortalSessionsListViewProps {
   filterOptions: IPortalFilterOptions;
   apiEvents: IDiscoveryApiEvent[];
   eventsFetched: boolean;
+  viewMode: ViewMode;
   onOpenSchedule?: (programId: string, sessionId: string) => void;
+  onBackToSessions?: () => void;
+  scheduleContent?: ReactNode;
 }
 
 export function HostPortalSessionsListView({
@@ -36,7 +39,10 @@ export function HostPortalSessionsListView({
   filterOptions,
   apiEvents,
   eventsFetched,
+  viewMode,
   onOpenSchedule,
+  onBackToSessions,
+  scheduleContent,
 }: IHostPortalSessionsListViewProps) {
   const [sort, setSort] = useState(PortalSessionSortEnum.START_DATE);
   const ageBounds = useMemo(() => derivePortalAgeBounds(cards), [cards]);
@@ -66,7 +72,11 @@ export function HostPortalSessionsListView({
   );
   const heroSport = sortedCards.find((card) => card.sport)?.sport;
   const heroMetadata = buildPortalHeroMetadata(config, sortedCards);
-  const showHero = isPortalHeroEnabled(config);
+  const showHero = isPortalHeroEnabled(config) && viewMode === 'programs';
+  const scheduleSessionLabel =
+    filters.sessionIds?.length === 1
+      ? sortedCards.find((card) => card.sessionId === filters.sessionIds?.[0])?.name
+      : undefined;
 
   return (
     <div className="relative z-0">
@@ -82,29 +92,36 @@ export function HostPortalSessionsListView({
         selectedAgeMin={selectedAgeMin}
         selectedAgeMax={selectedAgeMax}
         onAgeRangeChange={handleAgeRangeChange}
+        scheduleMode={viewMode === 'schedule'}
+        scheduleSessionLabel={scheduleSessionLabel}
+        onBackToSessions={onBackToSessions}
       />
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">All programs</h2>
-        {!eventsFetched && (
-          <p className="mb-4 text-sm text-gray-500">Loading class times…</p>
-        )}
-        {sortedCards.length === 0 ? (
-          <p className="py-12 text-center text-sm text-gray-500">No sessions match your filters.</p>
-        ) : (
-          <ul className="space-y-4">
-            {sortedCards.map((card) => (
-              <li key={card.sessionId}>
-                <HostPortalSessionListRow
-                  card={card}
-                  config={config}
-                  timeChips={timeChipsBySession.get(card.sessionId) ?? []}
-                  onOpenSchedule={onOpenSchedule}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {viewMode === 'programs' ? (
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">All programs</h2>
+          {!eventsFetched && (
+            <p className="mb-4 text-sm text-gray-500">Loading class times…</p>
+          )}
+          {sortedCards.length === 0 ? (
+            <p className="py-12 text-center text-sm text-gray-500">No sessions match your filters.</p>
+          ) : (
+            <ul className="space-y-4">
+              {sortedCards.map((card) => (
+                <li key={card.sessionId}>
+                  <HostPortalSessionListRow
+                    card={card}
+                    config={config}
+                    timeChips={timeChipsBySession.get(card.sessionId) ?? []}
+                    onOpenSchedule={onOpenSchedule}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : (
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">{scheduleContent}</div>
+      )}
     </div>
   );
 }
