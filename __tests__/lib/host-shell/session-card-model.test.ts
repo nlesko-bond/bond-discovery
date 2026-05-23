@@ -51,6 +51,7 @@ describe('buildHostPortalSessionCards', () => {
     const first = cards.find((card) => card.sessionId === mockSession.id);
     expect(first?.name).toBe(mockSession.name);
     expect(first?.description).toBe(mockSession.description);
+    expect(first?.longDescription).toBe(mockSession.longDescription);
     expect(first?.sport).toBe('soccer');
     expect(first?.products.length).toBeGreaterThan(0);
   });

@@ -67,8 +67,11 @@ export function HostPortalSessionsListView({
 
   const sortedCards = useMemo(() => sortPortalSessionCards(cards, sort), [cards, sort]);
   const timeChipsBySession = useMemo(
-    () => buildSessionTimeChipsBySessionId(apiEvents),
-    [apiEvents],
+    () =>
+      buildSessionTimeChipsBySessionId(apiEvents, {
+        customRegistrationUrl: config.features.customRegistrationUrl,
+      }),
+    [apiEvents, config.features.customRegistrationUrl],
   );
   const heroSport = sortedCards.find((card) => card.sport)?.sport;
   const heroMetadata = buildPortalHeroMetadata(config, sortedCards);
@@ -80,7 +83,7 @@ export function HostPortalSessionsListView({
 
   return (
     <div className="relative z-0">
-      {showHero && <HostPortalHeroBanner metadata={heroMetadata} sport={heroSport} />}
+      {showHero && <HostPortalHeroBanner metadata={heroMetadata} config={config} sport={heroSport} />}
       <HostPortalListFilterBar
         filters={filters}
         onFiltersChange={onFiltersChange}
@@ -98,7 +101,6 @@ export function HostPortalSessionsListView({
       />
       {viewMode === 'programs' ? (
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">All programs</h2>
           {!eventsFetched && (
             <p className="mb-4 text-sm text-gray-500">Loading class times…</p>
           )}

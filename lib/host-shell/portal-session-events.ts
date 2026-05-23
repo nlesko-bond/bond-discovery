@@ -1,13 +1,21 @@
 import type { IDiscoveryApiEvent } from '@/lib/host-shell/portal-schedule-events';
+import { buildRegistrationUrl } from '@/lib/utils';
 
 const FULL_LABEL = 'Full';
 
 export interface IHostPortalSessionTimeChip {
   eventId: string;
+  segmentId?: string;
   dayLabel: string;
   timeLabel: string;
+  endTimeLabel?: string;
   spotsLabel: string;
   isFull: boolean;
+  registrationUrl?: string;
+}
+
+export interface IBuildSessionTimeChipsOptions {
+  customRegistrationUrl?: string;
 }
 
 function formatEventDay(isoDate: string, timezone?: string): string {
@@ -50,7 +58,23 @@ function formatSpotsLabel(event: IDiscoveryApiEvent): { label: string; isFull: b
   return { label: 'Open', isFull: false };
 }
 
-function eventToChip(event: IDiscoveryApiEvent): IHostPortalSessionTimeChip | null {
+function resolveChipRegistrationUrl(
+  event: IDiscoveryApiEvent,
+  isFull: boolean,
+  customRegistrationUrl?: string,
+): string | undefined {
+  if (customRegistrationUrl) {
+    return customRegistrationUrl;
+  }
+  const isRegistrationOpen =
+    event.registrationWindowStatus !== 'closed' && !isFull;
+  return buildRegistrationUrl(event.linkSEO, { isRegistrationOpen });
+}
+
+function eventToChip(
+  event: IDiscoveryApiEvent,
+  options?: IBuildSessionTimeChipsOptions,
+): IHostPortalSessionTimeChip | null {
   if (!event.startDate) {
     return null;
   }
@@ -59,14 +83,27 @@ function eventToChip(event: IDiscoveryApiEvent): IHostPortalSessionTimeChip | nu
   if (!dayLabel || !timeLabel) {
     return null;
   }
+  const endTimeLabel = event.endDate
+    ? formatEventTime(event.endDate, event.timezone)
+    : undefined;
   const spots = formatSpotsLabel(event);
   return {
     eventId: event.id,
+    segmentId: event.segmentId,
     dayLabel,
     timeLabel,
+    endTimeLabel: endTimeLabel && endTimeLabel !== timeLabel ? endTimeLabel : undefined,
     spotsLabel: spots.label,
     isFull: spots.isFull,
+    registrationUrl: resolveChipRegistrationUrl(event, spots.isFull, options?.customRegistrationUrl),
   };
+}
+
+export function formatSessionTimeChipLabel(chip: IHostPortalSessionTimeChip): string {
+  const timeRange = chip.endTimeLabel
+    ? `${chip.timeLabel} - ${chip.endTimeLabel}`
+    : chip.timeLabel;
+  return `${chip.dayLabel} · ${timeRange} · ${chip.spotsLabel}`;
 }
 
 /**
@@ -74,6 +111,7 @@ function eventToChip(event: IDiscoveryApiEvent): IHostPortalSessionTimeChip | nu
  */
 export function buildSessionTimeChipsBySessionId(
   events: IDiscoveryApiEvent[],
+  options?: IBuildSessionTimeChipsOptions,
 ): Map<string, IHostPortalSessionTimeChip[]> {
   const bySession = new Map<string, IHostPortalSessionTimeChip[]>();
 
@@ -81,7 +119,7 @@ export function buildSessionTimeChipsBySessionId(
     if (!event.sessionId) {
       return;
     }
-    const chip = eventToChip(event);
+    const chip = eventToChip(event, options);
     if (!chip) {
       return;
     }
@@ -91,7 +129,9 @@ export function buildSessionTimeChipsBySessionId(
       (row) =>
         row.dayLabel === chip.dayLabel &&
         row.timeLabel === chip.timeLabel &&
-        row.spotsLabel === chip.spotsLabel,
+        row.endTimeLabel === chip.endTimeLabel &&
+        row.spotsLabel === chip.spotsLabel &&
+        row.segmentId === chip.segmentId,
     );
     if (!duplicate) {
       existing.push(chip);

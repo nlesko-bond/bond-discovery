@@ -7,10 +7,13 @@ interface IHostPortalAgeRangeSliderProps {
   valueMax: number;
   onChange: (min: number, max: number) => void;
   className?: string;
+  accentColor?: string;
 }
 
 const TRACK_HEIGHT_PX = 4;
 const THUMB_SIZE_PX = 16;
+
+const DEFAULT_AGE_SLIDER_ACCENT = '#047857';
 
 export function HostPortalAgeRangeSlider({
   min,
@@ -19,6 +22,7 @@ export function HostPortalAgeRangeSlider({
   valueMax,
   onChange,
   className,
+  accentColor = DEFAULT_AGE_SLIDER_ACCENT,
 }: IHostPortalAgeRangeSliderProps) {
   const span = max - min;
   const minPercent = span > 0 ? ((valueMin - min) / span) * 100 : 0;
@@ -38,13 +42,14 @@ export function HostPortalAgeRangeSlider({
         }}
       />
       <div
-        className="absolute rounded-full bg-emerald-700"
+        className="absolute rounded-full"
         style={{
           top: '50%',
           height: `${TRACK_HEIGHT_PX}px`,
           transform: 'translateY(-50%)',
           left: `${minPercent}%`,
           width: `${Math.max(0, maxPercent - minPercent)}%`,
+          backgroundColor: accentColor,
         }}
       />
       <input

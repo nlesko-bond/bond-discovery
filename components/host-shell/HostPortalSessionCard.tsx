@@ -8,8 +8,7 @@ import type {
   IHostPortalSessionCardModel,
 } from '@/lib/host-shell/session-card-model';
 import { HostPortalSessionIconStrip } from './HostPortalSessionIconStrip';
-import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
-import { getSportVisualTheme } from '@/lib/host-shell/sport-visuals';
+import { resolvePortalUiColors } from '@/lib/host-shell/portal-accent-theme';
 import { cn } from '@/lib/utils';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
@@ -31,8 +30,7 @@ export function HostPortalSessionCard({
   onExpandedChange,
   onOpenSchedule,
 }: IHostPortalSessionCardProps) {
-  const { primaryColor, secondaryColor } = resolvePortalBrandColors(config);
-  const sportTheme = getSportVisualTheme(card.sport);
+  const { primaryColor, secondaryColor, visualTheme } = resolvePortalUiColors(config, card.sport);
   const showPricing = config.features.showPricing !== false;
   const showAgeGender = config.features.showAgeGender !== false;
   const showScheduleTab = (config.features.enabledTabs || ['programs', 'schedule']).includes(
@@ -154,7 +152,7 @@ export function HostPortalSessionCard({
         style={{
           background: card.isClosed
             ? '#9CA3AF'
-            : `linear-gradient(135deg, ${sportTheme.gradientFrom}, ${sportTheme.gradientTo})`,
+            : `linear-gradient(135deg, ${visualTheme.gradientFrom}, ${visualTheme.gradientTo})`,
         }}
         aria-disabled={card.isClosed}
         onClick={() => trackRegisterClick(card.registerProductId)}
@@ -319,7 +317,7 @@ export function HostPortalSessionCard({
                           style={{
                             background: product.registerDisabled
                               ? '#9CA3AF'
-                              : `linear-gradient(135deg, ${sportTheme.gradientFrom}, ${sportTheme.gradientTo})`,
+                              : `linear-gradient(135deg, ${visualTheme.gradientFrom}, ${visualTheme.gradientTo})`,
                           }}
                           aria-disabled={product.registerDisabled}
                           onClick={() => {
