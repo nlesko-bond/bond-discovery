@@ -271,7 +271,7 @@ export function HostPortalSessionListRow({
           }}
         >
           {card.ageRange && (
-            <span className="rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-gray-800">
+            <span className="whitespace-nowrap rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-gray-800">
               {card.ageRange}
             </span>
           )}

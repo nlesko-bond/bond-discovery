@@ -123,7 +123,7 @@ describe('formatAgeRange', () => {
   });
 
   it('formats fractional min as months', () => {
-    expect(formatAgeRange(1.5, 2)).toBe('18 months - 2 yrs');
+    expect(formatAgeRange(1.5, 2)).toBe('18 mo - 2 yrs');
   });
 
   it('formats min only (no max)', () => {
