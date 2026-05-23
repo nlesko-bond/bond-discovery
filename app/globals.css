@@ -250,3 +250,27 @@
     print-color-adjust: exact;
   }
 }
+
+@layer components {
+  .portal-age-dual-range {
+    @apply pointer-events-none appearance-none bg-transparent;
+    height: 2.5rem;
+  }
+
+  .portal-age-dual-range::-webkit-slider-runnable-track {
+    @apply bg-transparent;
+  }
+
+  .portal-age-dual-range::-moz-range-track {
+    @apply bg-transparent;
+  }
+
+  .portal-age-dual-range::-webkit-slider-thumb {
+    @apply pointer-events-auto h-4 w-4 cursor-pointer appearance-none rounded-full border-2 border-white bg-emerald-700 shadow;
+    margin-top: -0.375rem;
+  }
+
+  .portal-age-dual-range::-moz-range-thumb {
+    @apply pointer-events-auto h-4 w-4 cursor-pointer rounded-full border-2 border-white bg-emerald-700 shadow;
+  }
+}

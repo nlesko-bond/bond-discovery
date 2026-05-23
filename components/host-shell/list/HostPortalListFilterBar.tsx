@@ -7,6 +7,7 @@ import { PortalSessionSortEnum } from '@/types';
 import type { IPortalFilterOptions } from '@/lib/host-shell/portal-filter-options';
 import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
 import { HostPortalMultiSelectDropdown } from '../HostPortalMultiSelectDropdown';
+import { HostPortalAgeRangeSlider } from './HostPortalAgeRangeSlider';
 
 interface IHostPortalListFilterBarProps {
   filters: DiscoveryFilters;
@@ -66,38 +67,13 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
                 ? `All ages (${props.ageBounds.min}–${props.ageBounds.max})`
                 : `Ages ${props.selectedAgeMin}–${props.selectedAgeMax}`}
             </p>
-            <div className="space-y-2">
-              <input
-                type="range"
-                min={props.ageBounds.min}
-                max={props.ageBounds.max}
-                value={props.selectedAgeMin}
-                onChange={(event) => {
-                  const nextMin = Number(event.target.value);
-                  props.onAgeRangeChange(
-                    Math.min(nextMin, props.selectedAgeMax),
-                    props.selectedAgeMax,
-                  );
-                }}
-                className="w-full accent-emerald-700"
-                aria-label="Minimum age"
-              />
-              <input
-                type="range"
-                min={props.ageBounds.min}
-                max={props.ageBounds.max}
-                value={props.selectedAgeMax}
-                onChange={(event) => {
-                  const nextMax = Number(event.target.value);
-                  props.onAgeRangeChange(
-                    props.selectedAgeMin,
-                    Math.max(nextMax, props.selectedAgeMin),
-                  );
-                }}
-                className="w-full accent-emerald-700"
-                aria-label="Maximum age"
-              />
-            </div>
+            <HostPortalAgeRangeSlider
+              min={props.ageBounds.min}
+              max={props.ageBounds.max}
+              valueMin={props.selectedAgeMin}
+              valueMax={props.selectedAgeMax}
+              onChange={props.onAgeRangeChange}
+            />
           </div>
         </div>
 
