@@ -112,74 +112,55 @@ interface ISessionSlotExpandPanelProps {
   chip: IHostPortalSessionTimeChip;
   segment?: IHostPortalSegmentRow;
   sessionDateRange?: string;
-  priceLabel?: string;
   hideRegistrationLinks: boolean;
   linkTarget: '_blank' | '_top' | '_self';
   fallbackRegistrationUrl?: string;
-  primaryColor: string;
-  visualThemeFrom: string;
-  visualThemeTo: string;
+  accentColor: string;
 }
 
 function SessionSlotExpandPanel({
   chip,
   segment,
   sessionDateRange,
-  priceLabel,
   hideRegistrationLinks,
   linkTarget,
   fallbackRegistrationUrl,
-  primaryColor,
-  visualThemeFrom,
-  visualThemeTo,
+  accentColor,
 }: ISessionSlotExpandPanelProps) {
   const dateChips = segment ? buildSegmentDateChips(segment) : sessionDateRange ? [sessionDateRange] : [];
   const registrationUrl = chip.registrationUrl ?? fallbackRegistrationUrl;
   const canRegister =
     !hideRegistrationLinks && !chip.isFull && Boolean(registrationUrl);
+  const slotLabel = formatSessionTimeChipLabel(chip);
 
   return (
-    <div className="mt-3 flex flex-col gap-3 border-t border-gray-100 pt-3 sm:flex-row sm:flex-wrap sm:items-center">
-      {dateChips.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {dateChips.map((dateChip) => (
-            <span
-              key={`${chip.eventId}-${dateChip}`}
-              className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700"
-            >
-              {dateChip}
-            </span>
-          ))}
-        </div>
-      )}
+    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
+      {dateChips.map((dateChip) => (
+        <span
+          key={`${chip.eventId}-${dateChip}`}
+          className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700"
+        >
+          {dateChip}
+        </span>
+      ))}
       {segment?.name && dateChips.length === 0 && (
         <span className="text-xs text-gray-500">{segment.name}</span>
       )}
-      <div className="flex flex-wrap items-center gap-3 sm:ml-auto">
-        {priceLabel && (
-          <span className="text-sm font-semibold tabular-nums text-gray-900" style={{ color: primaryColor }}>
-            {priceLabel}
-          </span>
-        )}
-        {canRegister && registrationUrl && (
-          <a
-            href={registrationUrl}
-            target={linkTarget}
-            rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
-            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm"
-            style={{
-              background: `linear-gradient(135deg, ${visualThemeFrom}, ${visualThemeTo})`,
-            }}
-          >
-            <ShoppingCart size={14} aria-hidden />
-            Register
-            <ArrowRight size={14} aria-hidden />
-          </a>
-        )}
-        {chip.isFull && (
-          <span className="text-sm font-medium text-gray-400">Full</span>
-        )}
-      </div>
+      {canRegister && registrationUrl && (
+        <a
+          href={registrationUrl}
+          target={linkTarget}
+          rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
+          className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50"
+          style={{ color: accentColor }}
+          aria-label={`Register for ${slotLabel}`}
+        >
+          <ShoppingCart size={15} aria-hidden />
+        </a>
+      )}
+      {chip.isFull && (
+        <span className="ml-auto text-xs font-medium text-gray-400">Full</span>
+      )}
     </div>
   );
 }
@@ -364,13 +345,10 @@ export function HostPortalSessionListRow({
                     chip={expandedChip}
                     segment={resolveSegmentForChip(expandedChip, loadedSegments)}
                     sessionDateRange={card.dateRange}
-                    priceLabel={priceLabel}
                     hideRegistrationLinks={hideRegistrationLinks}
                     linkTarget={linkTarget}
                     fallbackRegistrationUrl={card.registerUrl}
-                    primaryColor={primaryColor}
-                    visualThemeFrom={visualTheme.gradientFrom}
-                    visualThemeTo={visualTheme.gradientTo}
+                    accentColor={uiColors.secondaryColor}
                   />
                 )}
               </div>
