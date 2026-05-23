@@ -271,12 +271,12 @@
   }
 
   .portal-age-dual-range::-webkit-slider-thumb {
-    @apply pointer-events-auto box-border h-4 w-4 cursor-pointer appearance-none rounded-full border-2 border-white bg-emerald-700 shadow;
+    @apply pointer-events-auto box-border h-4 w-4 cursor-pointer appearance-none rounded-full border-2 border-white bg-slate-500 shadow;
     margin-top: -6px;
   }
 
   .portal-age-dual-range::-moz-range-thumb {
-    @apply pointer-events-auto box-border h-4 w-4 cursor-pointer rounded-full border-2 border-white bg-emerald-700 shadow;
+    @apply pointer-events-auto box-border h-4 w-4 cursor-pointer rounded-full border-2 border-white bg-slate-500 shadow;
     border: 2px solid #ffffff;
   }
 }
