@@ -86,6 +86,7 @@ interface PageConfig {
     portalHeroEnabled?: boolean;
     portalHeroTitle?: string;
     portalHeroSubtitle?: string;
+    portalAccentSource?: 'sport' | 'branding';
     // Discovery cache controls
     discoveryCacheEnabled?: boolean;
     availabilityCacheTtl?: number;
@@ -1318,6 +1319,28 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                         />
                         <p className="text-xs text-gray-500 mt-1">
                           Default: auto-generated from company name and sport.
+                        </p>
+                      </div>
+                      <div>
+                        <label className="label">Session card & hero accents</label>
+                        <select
+                          className="input"
+                          value={config.features.portalAccentSource || 'sport'}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              features: {
+                                ...config.features,
+                                portalAccentSource: e.target.value as 'sport' | 'branding',
+                              },
+                            })
+                          }
+                        >
+                          <option value="sport">Sport defaults (per sport colors)</option>
+                          <option value="branding">Organization branding (primary / secondary / header)</option>
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Controls hero banner, session strip, and register button gradients. Filters and prices always use brand colors from the Branding tab.
                         </p>
                       </div>
                     </div>

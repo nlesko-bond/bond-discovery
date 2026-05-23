@@ -32,6 +32,7 @@ export interface IHostPortalSessionCardModel {
   programName: string;
   name: string;
   description?: string;
+  longDescription?: string;
   sport?: string;
   facilityName?: string;
   ageRange?: string;
@@ -258,6 +259,7 @@ export function buildHostPortalSessionCards(
         programName: program.name,
         name: session.name ?? '',
         description: session.description,
+        longDescription: session.longDescription,
         sport: session.sport,
         facilityName: session.facility?.name,
         ageRange: showAgeGender ? formatAgeRange(ageMin, ageMax) : undefined,

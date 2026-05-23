@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowUpDown, MapPin } from 'lucide-react';
 import type { DiscoveryConfig, DiscoveryFilters } from '@/types';
 import { PortalSessionSortEnum } from '@/types';
 import type { IPortalFilterOptions } from '@/lib/host-shell/portal-filter-options';
-import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
+import { resolvePortalUiColors } from '@/lib/host-shell/portal-accent-theme';
 import { HostPortalMultiSelectDropdown } from '../HostPortalMultiSelectDropdown';
 import { HostPortalAgeRangeSlider } from './HostPortalAgeRangeSlider';
 import { cn } from '@/lib/utils';
@@ -30,7 +30,7 @@ interface IHostPortalListFilterBarProps {
 }
 
 export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
-  const { secondaryColor } = resolvePortalBrandColors(props.config);
+  const { primaryColor, secondaryColor } = resolvePortalUiColors(props.config);
   const [facilityOpen, setFacilityOpen] = useState(false);
   const atFullAgeRange =
     props.selectedAgeMin === props.ageBounds.min &&
@@ -97,13 +97,13 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
               valueMax={props.selectedAgeMax}
               onChange={props.onAgeRangeChange}
               className="relative min-w-0 flex-1"
+              accentColor={primaryColor}
             />
             <span className="shrink-0 text-sm font-semibold tabular-nums text-gray-800">
               {atFullAgeRange
                 ? `${props.ageBounds.min}–${props.ageBounds.max} yrs`
                 : `${props.selectedAgeMin}–${props.selectedAgeMax} yrs`}
             </span>
-            <span className="shrink-0 text-xs text-gray-400">{props.ageBounds.max}+</span>
           </div>
         </div>
 

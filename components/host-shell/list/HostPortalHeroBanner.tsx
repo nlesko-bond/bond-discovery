@@ -1,22 +1,24 @@
 'use client';
 
 import type { IPortalHeroMetadata } from '@/lib/host-shell/portal-list-layout';
-import { getSportVisualTheme } from '@/lib/host-shell/sport-visuals';
+import type { DiscoveryConfig } from '@/types';
+import { resolvePortalUiColors } from '@/lib/host-shell/portal-accent-theme';
 import { HostPortalSportIcon } from '../HostPortalSportIcon';
 
 interface IHostPortalHeroBannerProps {
   metadata: IPortalHeroMetadata;
+  config: DiscoveryConfig;
   sport?: string;
 }
 
-export function HostPortalHeroBanner({ metadata, sport }: IHostPortalHeroBannerProps) {
-  const sportTheme = getSportVisualTheme(sport);
+export function HostPortalHeroBanner({ metadata, config, sport }: IHostPortalHeroBannerProps) {
+  const { visualTheme } = resolvePortalUiColors(config, sport);
 
   return (
     <section
       className="relative overflow-hidden px-4 py-10 sm:px-6 sm:py-12"
       style={{
-        background: `linear-gradient(135deg, ${sportTheme.gradientFrom} 0%, ${sportTheme.gradientTo} 100%)`,
+        background: `linear-gradient(135deg, ${visualTheme.gradientFrom} 0%, ${visualTheme.gradientTo} 100%)`,
       }}
     >
       <div

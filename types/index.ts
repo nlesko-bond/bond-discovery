@@ -393,6 +393,11 @@ export enum PortalSessionSortEnum {
   PRICE = 'price',
 }
 
+export enum PortalAccentSourceEnum {
+  SPORT = 'sport',
+  BRANDING = 'branding',
+}
+
 export interface FeatureConfig {
   showPricing: boolean;
   showAvailability: boolean;
@@ -426,6 +431,8 @@ export interface FeatureConfig {
   portalHeroTitle?: string;
   /** Hero subcopy override (default: generated from program filter context) */
   portalHeroSubtitle?: string;
+  /** Hero / session strip accents: sport palette vs organization brand colors */
+  portalAccentSource?: PortalAccentSourceEnum;
   // Tab visibility
   enabledTabs?: EnabledTab[]; // Which tabs to show (default: ['programs', 'schedule'])
   // Program filtering mode
