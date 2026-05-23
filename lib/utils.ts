@@ -159,7 +159,7 @@ const OPEN_ENDED_MAX_AGE_THRESHOLD = 100;
 function formatAgeBoundary(age: number): string {
   if (!Number.isInteger(age)) {
     const months = Math.round(age * MONTHS_PER_YEAR);
-    return months === 1 ? '1 month' : `${months} months`;
+    return months === 1 ? '1 mo' : `${months} mo`;
   }
   return age === 1 ? '1 yr' : `${age} yrs`;
 }
