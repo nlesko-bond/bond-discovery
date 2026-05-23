@@ -222,8 +222,12 @@ export function HostPortalSessionListRow({
 
   useEffect(() => {
     setLoadedSegments(card.segments);
-    setExpandedSlotKey(null);
-  }, [card.sessionId, card.segments]);
+    if (timeChips.length === 1) {
+      setExpandedSlotKey(buildSlotBubbleKey(timeChips[0]));
+    } else {
+      setExpandedSlotKey(null);
+    }
+  }, [card.sessionId, card.segments, timeChips]);
 
   useEffect(() => {
     if (!needsSegmentFetch || loadedSegments.length > 0 || !card.organizationId) {
@@ -274,7 +278,7 @@ export function HostPortalSessionListRow({
     card.description,
     card.longDescription,
   );
-  const showSessionRegister = !hideRegistrationLinks && card.registerUrl && visibleTimeChips.length === 0;
+  const showSessionRegister = !hideRegistrationLinks && Boolean(card.registerUrl);
 
   return (
     <article className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -372,20 +376,21 @@ export function HostPortalSessionListRow({
               </div>
             )}
 
-            {visibleTimeChips.length === 0 && showScheduleTab && onOpenSchedule && (
+            {showScheduleTab && onOpenSchedule && (
               <button
                 type="button"
-                className="mt-3 text-sm font-semibold text-sky-700 hover:underline"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100"
                 onClick={() => onOpenSchedule(card.programId, card.sessionId)}
               >
-                Open full schedule
+                <Clock size={13} className="text-gray-400" aria-hidden />
+                View schedule
               </button>
             )}
           </div>
 
-          {(showSessionRegister || (priceLabel && visibleTimeChips.length === 0)) && (
+          {(showSessionRegister || priceLabel) && (
             <div className="flex shrink-0 flex-col items-end gap-2 sm:min-w-[9rem]">
-              {priceLabel && visibleTimeChips.length === 0 && (
+              {priceLabel && (
                 <p className="text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
                   From{' '}
                   <span className="text-lg tabular-nums text-gray-900" style={{ color: primaryColor }}>

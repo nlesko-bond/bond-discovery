@@ -153,16 +153,34 @@ export function formatDateRange(startDate: string, endDate: string): string {
   }
 }
 
+const MONTHS_PER_YEAR = 12;
+const OPEN_ENDED_MAX_AGE_THRESHOLD = 100;
+
+function formatAgeBoundary(age: number): string {
+  if (!Number.isInteger(age)) {
+    const months = Math.round(age * MONTHS_PER_YEAR);
+    return months === 1 ? '1 month' : `${months} months`;
+  }
+  return age === 1 ? '1 yr' : `${age} yrs`;
+}
+
 /**
- * Format age range
+ * Format age range for display (supports fractional years as months).
  */
 export function formatAgeRange(min?: number, max?: number): string {
-  if (!min && !max) return '';
-  // Treat unreasonably high max ages (100+) as "no max"
-  const effectiveMax = max && max < 100 ? max : undefined;
-  if (min && effectiveMax) return `Ages ${min}-${effectiveMax}`;
-  if (min) return `Ages ${min}+`;
-  if (effectiveMax) return `Ages up to ${effectiveMax}`;
+  if (min === undefined && max === undefined) {
+    return '';
+  }
+  const effectiveMax = max !== undefined && max < OPEN_ENDED_MAX_AGE_THRESHOLD ? max : undefined;
+  if (min !== undefined && effectiveMax !== undefined) {
+    return `${formatAgeBoundary(min)} - ${formatAgeBoundary(effectiveMax)}`;
+  }
+  if (min !== undefined) {
+    return `${formatAgeBoundary(min)}+`;
+  }
+  if (effectiveMax !== undefined) {
+    return `up to ${formatAgeBoundary(effectiveMax)}`;
+  }
   return '';
 }
 
