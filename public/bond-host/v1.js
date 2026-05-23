@@ -6,6 +6,9 @@
   var MSG_OPEN_TAB = 'bond:open_tab';
   var MSG_RESIZE = 'bond:resize';
   var MSG_RESIZE_LEGACY = 'discovery-resize';
+  var MSG_CHROME_OFFSET = 'bond:chrome-offset';
+  var MSG_REQUEST_CHROME_OFFSET = 'bond:request-chrome-offset';
+  var EMBED_CHROME_QUERY_PARAM = 'embedChromePx';
   var CHECKOUT_QUERY_PARAM = 'bondPath';
 
   function getScriptOrigin() {
@@ -88,12 +91,27 @@
 
   BondHostShell.prototype.mountDiscovery = function () {
     var boot = this.bootstrap;
+    var self = this;
+    var discoveryUrl = boot.paths.portalDiscoveryUrl;
+    if (this.chromeOffsetPx > 0) {
+      var parsed = new URL(discoveryUrl);
+      parsed.searchParams.set(EMBED_CHROME_QUERY_PARAM, String(this.chromeOffsetPx));
+      discoveryUrl = parsed.toString();
+    }
     var iframe = document.createElement('iframe');
     iframe.setAttribute('title', 'Programs');
     iframe.setAttribute('data-bond-discovery-iframe', '1');
     iframe.style.cssText =
       'width:100%;border:0;display:block;min-height:' + MIN_IFRAME_HEIGHT_PX + 'px';
-    iframe.src = boot.paths.portalDiscoveryUrl;
+    iframe.src = discoveryUrl;
+    iframe.addEventListener('load', function () {
+      if (self.chromeOffsetPx > 0 && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(
+          { type: MSG_CHROME_OFFSET, px: self.chromeOffsetPx },
+          boot.discoveryOrigin,
+        );
+      }
+    });
     this.activeIframe = iframe;
     this.mount.appendChild(iframe);
   };
@@ -150,6 +168,13 @@
     var data = event.data;
     if (data.type === MSG_OPEN_TAB && typeof data.path === 'string') {
       this.openRegistrationTab(data.path, data.search || '');
+      return;
+    }
+    if (data.type === MSG_REQUEST_CHROME_OFFSET && event.source) {
+      event.source.postMessage(
+        { type: MSG_CHROME_OFFSET, px: this.chromeOffsetPx || 0 },
+        event.origin,
+      );
       return;
     }
     if (

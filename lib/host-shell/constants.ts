@@ -7,3 +7,8 @@ export const HOST_SHELL_MIN_IFRAME_HEIGHT_PX = 480;
 export const BOND_HOST_MESSAGE_OPEN_TAB = 'bond:open_tab';
 export const BOND_HOST_MESSAGE_RESIZE = 'bond:resize';
 export const BOND_HOST_MESSAGE_RESIZE_LEGACY = 'discovery-resize';
+export {
+  BOND_HOST_MESSAGE_CHROME_OFFSET,
+  BOND_HOST_MESSAGE_REQUEST_CHROME_OFFSET,
+  EMBED_CHROME_QUERY_PARAM,
+} from '@/lib/host-shell/embed-chrome';

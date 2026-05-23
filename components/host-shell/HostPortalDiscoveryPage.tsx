@@ -26,6 +26,11 @@ import { HostPortalFilterBar } from './HostPortalFilterBar';
 import { HostPortalSessionList } from './HostPortalSessionList';
 import { HostPortalScheduleTab } from './HostPortalScheduleTab';
 import { BrandLogo } from '@/components/ui/BrandLogo';
+import {
+  BOND_HOST_MESSAGE_REQUEST_CHROME_OFFSET,
+  isBondHostChromeOffsetMessage,
+  parseEmbedChromePx,
+} from '@/lib/host-shell/embed-chrome';
 
 const EMPTY_EVENTS: IDiscoveryApiEvent[] = [];
 const EVENTS_PAGE_LIMIT = 200;
@@ -89,6 +94,8 @@ export function HostPortalDiscoveryPage({
   const useListLayout = isSessionsListPortalLayout(config);
   const brand = resolvePortalBrandColors(config);
   const linkTarget = resolvePortalScheduleLinkTarget(config);
+  const initialEmbedChromePx = parseEmbedChromePx(searchParams.embedChromePx);
+  const [embedChromePx, setEmbedChromePx] = useState(initialEmbedChromePx);
 
   const enabledTabs = config.features.enabledTabs || ['programs', 'schedule'];
   const showSessionsTab = enabledTabs.includes('programs');
@@ -151,6 +158,24 @@ export function HostPortalDiscoveryPage({
       viewMode,
     });
   }, [config.slug]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.self === window.top) {
+      return;
+    }
+
+    const onMessage = (event: MessageEvent) => {
+      if (!isBondHostChromeOffsetMessage(event.data)) {
+        return;
+      }
+      setEmbedChromePx(Math.round(event.data.px));
+    };
+
+    window.addEventListener('message', onMessage);
+    window.parent.postMessage({ type: BOND_HOST_MESSAGE_REQUEST_CHROME_OFFSET }, '*');
+
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined' || window.self === window.top) {
@@ -311,15 +336,26 @@ export function HostPortalDiscoveryPage({
       params.set('scheduleView', 'list');
       params.set('programIds', programId);
       params.set('sessionIds', sessionId);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      const nextUrl = `${pathname}?${params.toString()}`;
+      if (viewMode === 'programs') {
+        router.push(nextUrl, { scroll: false });
+      } else {
+        router.replace(nextUrl, { scroll: false });
+      }
       if (typeof window !== 'undefined') {
         window.scrollTo({ top: 0, behavior: 'instant' });
       }
     },
-    [filters, pathname, router, urlSearchParams],
+    [filters, pathname, router, urlSearchParams, viewMode],
   );
 
   const backToSessionsList = useCallback(() => {
+    if (typeof window !== 'undefined' && window.self !== window.top && window.history.length > 1) {
+      router.back();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      return;
+    }
+
     const nextFilters: DiscoveryFilters = {
       ...filters,
       programIds: [],
@@ -333,15 +369,17 @@ export function HostPortalDiscoveryPage({
     params.delete('programIds');
     params.delete('sessionIds');
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [filters, pathname, router, urlSearchParams]);
 
   return (
     <div
       className="min-h-screen bg-gray-50"
-      style={{ fontFamily: config.branding.fontFamily || 'inherit' }}
+      style={{
+        fontFamily: config.branding.fontFamily || 'inherit',
+        paddingTop: embedChromePx > 0 ? embedChromePx : undefined,
+        ['--bond-embed-chrome-px' as string]: `${embedChromePx}px`,
+      }}
     >
       {config.gtmId && <GoogleTagManager gtmId={config.gtmId} pageSlug={config.slug} />}
 

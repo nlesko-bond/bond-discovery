@@ -18,6 +18,10 @@ import { cn } from '@/lib/utils';
 
 const CLOSED_REGISTER_BACKGROUND = '#9CA3AF';
 const AVAILABILITY_OPEN_DOT = '#22c55e';
+const MAX_SLOT_BUBBLE_ROWS_DESKTOP = 2;
+const ESTIMATED_SLOT_BUBBLES_PER_ROW_DESKTOP = 4;
+const MAX_COLLAPSED_SLOT_BUBBLES_DESKTOP =
+  MAX_SLOT_BUBBLE_ROWS_DESKTOP * ESTIMATED_SLOT_BUBBLES_PER_ROW_DESKTOP;
 
 interface IHostPortalSessionListRowProps {
   card: IHostPortalSessionCardModel;
@@ -91,7 +95,7 @@ function SessionSlotBubble({ chip, isExpanded, onToggle }: ISessionSlotBubblePro
       onClick={onToggle}
       aria-expanded={isExpanded}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+        'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
         chip.isFull
           ? 'border-gray-200 bg-gray-50 text-gray-400'
           : isExpanded
@@ -103,7 +107,7 @@ function SessionSlotBubble({ chip, isExpanded, onToggle }: ISessionSlotBubblePro
         className={cn('h-2 w-2 shrink-0 rounded-full', chip.isFull && 'bg-gray-300')}
         style={chip.isFull ? undefined : { backgroundColor: AVAILABILITY_OPEN_DOT }}
       />
-      <span>{label}</span>
+      <span className="whitespace-nowrap">{label}</span>
     </button>
   );
 }
@@ -175,6 +179,7 @@ export function HostPortalSessionListRow({
   const { visualTheme, primaryColor } = uiColors;
   const linkTarget = resolvePortalScheduleLinkTarget(config);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [showAllSlotBubbles, setShowAllSlotBubbles] = useState(false);
   const [expandedSlotKey, setExpandedSlotKey] = useState<string | null>(null);
   const [loadedSegments, setLoadedSegments] = useState<IHostPortalSegmentRow[]>(card.segments);
   const [segmentsLoading, setSegmentsLoading] = useState(false);
@@ -193,6 +198,13 @@ export function HostPortalSessionListRow({
     : undefined;
 
   const visibleTimeChips = useMemo(() => timeChips, [timeChips]);
+  const shouldCollapseSlotBubbles =
+    visibleTimeChips.length > MAX_COLLAPSED_SLOT_BUBBLES_DESKTOP;
+  const displayedTimeChips =
+    showAllSlotBubbles || !shouldCollapseSlotBubbles
+      ? visibleTimeChips
+      : visibleTimeChips.slice(0, MAX_COLLAPSED_SLOT_BUBBLES_DESKTOP);
+  const hiddenSlotBubbleCount = visibleTimeChips.length - displayedTimeChips.length;
 
   const expandedChip = useMemo(() => {
     if (!expandedSlotKey) {
@@ -203,6 +215,7 @@ export function HostPortalSessionListRow({
 
   useEffect(() => {
     setLoadedSegments(card.segments);
+    setShowAllSlotBubbles(false);
     if (timeChips.length === 1) {
       setExpandedSlotKey(buildSlotBubbleKey(timeChips[0]));
     } else {
@@ -280,9 +293,10 @@ export function HostPortalSessionListRow({
           )}
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 p-4 sm:flex-row sm:items-start sm:p-5">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-gray-500">{card.programName}</p>
+        <div className="flex min-w-0 flex-1 flex-col gap-4 p-4 sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-gray-500">{card.programName}</p>
             <div className="mt-1 flex items-start gap-2">
               <h3 className="min-w-0 flex-1 text-xl font-semibold text-gray-900">{card.name}</h3>
               {hasDescription && (
@@ -317,84 +331,92 @@ export function HostPortalSessionListRow({
                 </span>
               )}
             </div>
+            </div>
 
-            {segmentsLoading && visibleTimeChips.length > 0 && (
-              <p className="mt-3 text-xs text-gray-500">Loading dates…</p>
-            )}
-            {segmentsError && (
-              <p className="mt-3 text-xs text-red-600">{segmentsError}</p>
-            )}
-
-            {visibleTimeChips.length > 0 && (
-              <div className="mt-3">
-                <div className="flex flex-wrap gap-2">
-                  {visibleTimeChips.map((chip) => {
-                    const slotKey = buildSlotBubbleKey(chip);
-                    return (
-                      <SessionSlotBubble
-                        key={slotKey}
-                        chip={chip}
-                        isExpanded={expandedSlotKey === slotKey}
-                        onToggle={() => toggleSlot(chip)}
-                      />
-                    );
-                  })}
-                </div>
-                {expandedChip && (
-                  <SessionSlotExpandPanel
-                    chip={expandedChip}
-                    segment={resolveSegmentForChip(expandedChip, loadedSegments)}
-                    sessionDateRange={card.dateRange}
-                    hideRegistrationLinks={hideRegistrationLinks}
-                    linkTarget={linkTarget}
-                    fallbackRegistrationUrl={card.registerUrl}
-                    accentColor={uiColors.secondaryColor}
-                  />
+            {(showSessionRegister || priceLabel) && (
+              <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end sm:min-w-[9rem]">
+                {priceLabel && (
+                  <p className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 sm:text-right">
+                    From{' '}
+                    <span className="text-lg tabular-nums text-gray-900" style={{ color: primaryColor }}>
+                      {card.startingPriceLabel}
+                    </span>
+                  </p>
+                )}
+                {showSessionRegister && (
+                  <a
+                    href={card.registerUrl}
+                    className={cn(
+                      'inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-sm',
+                      card.isClosed && 'pointer-events-none opacity-60',
+                    )}
+                    style={{
+                      background: card.isClosed
+                        ? CLOSED_REGISTER_BACKGROUND
+                        : `linear-gradient(135deg, ${visualTheme.gradientFrom}, ${visualTheme.gradientTo})`,
+                    }}
+                    aria-disabled={card.isClosed}
+                  >
+                    {card.isClosed ? 'Closed' : 'Register'}
+                    <ArrowRight size={16} />
+                  </a>
                 )}
               </div>
             )}
-
-            {showScheduleTab && onOpenSchedule && (
-              <button
-                type="button"
-                className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100"
-                onClick={() => onOpenSchedule(card.programId, card.sessionId)}
-              >
-                <Clock size={13} className="text-gray-400" aria-hidden />
-                View schedule
-              </button>
-            )}
           </div>
 
-          {(showSessionRegister || priceLabel) && (
-            <div className="flex shrink-0 flex-col items-end gap-2 sm:min-w-[9rem]">
-              {priceLabel && (
-                <p className="text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  From{' '}
-                  <span className="text-lg tabular-nums text-gray-900" style={{ color: primaryColor }}>
-                    {card.startingPriceLabel}
-                  </span>
-                </p>
-              )}
-              {showSessionRegister && (
-                <a
-                  href={card.registerUrl}
-                  className={cn(
-                    'inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-sm',
-                    card.isClosed && 'pointer-events-none opacity-60',
-                  )}
-                  style={{
-                    background: card.isClosed
-                      ? CLOSED_REGISTER_BACKGROUND
-                      : `linear-gradient(135deg, ${visualTheme.gradientFrom}, ${visualTheme.gradientTo})`,
-                  }}
-                  aria-disabled={card.isClosed}
-                >
-                  {card.isClosed ? 'Closed' : 'Register'}
-                  <ArrowRight size={16} />
-                </a>
+          {segmentsLoading && visibleTimeChips.length > 0 && (
+            <p className="text-xs text-gray-500">Loading dates…</p>
+          )}
+          {segmentsError && <p className="text-xs text-red-600">{segmentsError}</p>}
+
+          {visibleTimeChips.length > 0 && (
+            <div>
+              <div className="flex flex-row flex-wrap items-start gap-2">
+                {displayedTimeChips.map((chip) => {
+                  const slotKey = buildSlotBubbleKey(chip);
+                  return (
+                    <SessionSlotBubble
+                      key={slotKey}
+                      chip={chip}
+                      isExpanded={expandedSlotKey === slotKey}
+                      onToggle={() => toggleSlot(chip)}
+                    />
+                  );
+                })}
+                {hiddenSlotBubbleCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllSlotBubbles(true)}
+                    className="inline-flex shrink-0 items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-100"
+                  >
+                    +{hiddenSlotBubbleCount} more
+                  </button>
+                )}
+              </div>
+              {expandedChip && (
+                <SessionSlotExpandPanel
+                  chip={expandedChip}
+                  segment={resolveSegmentForChip(expandedChip, loadedSegments)}
+                  sessionDateRange={card.dateRange}
+                  hideRegistrationLinks={hideRegistrationLinks}
+                  linkTarget={linkTarget}
+                  fallbackRegistrationUrl={card.registerUrl}
+                  accentColor={uiColors.secondaryColor}
+                />
               )}
             </div>
+          )}
+
+          {showScheduleTab && onOpenSchedule && (
+            <button
+              type="button"
+              className="inline-flex w-fit items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100"
+              onClick={() => onOpenSchedule(card.programId, card.sessionId)}
+            >
+              <Clock size={13} className="text-gray-400" aria-hidden />
+              View schedule
+            </button>
           )}
         </div>
       </div>
