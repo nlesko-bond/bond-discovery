@@ -95,6 +95,10 @@ export async function GET(request: Request) {
     searchParams.get('forceFresh') === 'true' ||
     searchParams.get('forceFresh') === '1' ||
     searchParams.get('refresh') === 'true';
+  const horizonMonthsOverrideRaw = searchParams.get('horizonMonths');
+  const horizonMonthsOverride = horizonMonthsOverrideRaw
+    ? parseInt(horizonMonthsOverrideRaw, 10)
+    : undefined;
 
   // ── Fast path: availability SWR cache ──
   // Sub-100ms responses; background refresh keeps data <=TTL seconds stale
@@ -121,7 +125,7 @@ export async function GET(request: Request) {
   // ── Fast path: pre-computed response from cron ──
   // Pages with `discoveryCacheEnabled === false` skip this so full + availability
   // both hit Bond (KV bypass in getDiscoveryEvents); cron does not warm those slugs.
-  if (slug && mode === 'full' && !forceFresh) {
+  if (slug && mode === 'full' && !forceFresh && !horizonMonthsOverride) {
     try {
       const pageConfig = await getConfigBySlug(slug);
       const allowPrecomputed = pageConfig?.features?.discoveryCacheEnabled !== false;
@@ -167,7 +171,11 @@ export async function GET(request: Request) {
     let data = result.payload.data;
 
     if (mode === 'full') {
-      const horizonMonths = result.context?.config?.features?.eventHorizonMonths ?? 3;
+      const configuredHorizon = result.context?.config?.features?.eventHorizonMonths ?? 3;
+      const horizonMonths =
+        horizonMonthsOverride && horizonMonthsOverride > 0
+          ? horizonMonthsOverride
+          : configuredHorizon;
       data = filterEventsForResponse(
         data as FullDiscoveryEvent[],
         horizonMonths,

@@ -5,6 +5,9 @@ import { PortalSessionSortEnum } from '@/types';
 import { getSportLabel } from '@/lib/utils';
 
 const MILLISECONDS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+const MIN_PORTAL_EVENT_HORIZON_MONTHS = 3;
+const MAX_PORTAL_EVENT_HORIZON_MONTHS = 18;
+const PORTAL_EVENT_HORIZON_BUFFER_MONTHS = 1;
 
 export interface IPortalHeroMetadata {
   eyebrow: string;
@@ -53,6 +56,38 @@ export function derivePortalAgeBounds(cards: IHostPortalSessionCardModel[]): {
     return { min: 0, max: 18 };
   }
   return { min: Math.floor(min), max: Math.ceil(max) };
+}
+
+/**
+ * Extends the events API horizon so portal list rows include class times for
+ * sessions that start beyond the default 3-month discovery window.
+ */
+export function derivePortalEventHorizonMonths(
+  cards: IHostPortalSessionCardModel[],
+): number {
+  const now = new Date();
+  let latestEndMs = now.getTime();
+
+  cards.forEach((card) => {
+    if (!card.endDate) {
+      return;
+    }
+    const endMs = new Date(card.endDate).getTime();
+    if (!Number.isNaN(endMs) && endMs > latestEndMs) {
+      latestEndMs = endMs;
+    }
+  });
+
+  const latestEnd = new Date(latestEndMs);
+  const monthSpan =
+    (latestEnd.getFullYear() - now.getFullYear()) * 12 +
+    (latestEnd.getMonth() - now.getMonth()) +
+    PORTAL_EVENT_HORIZON_BUFFER_MONTHS;
+
+  return Math.min(
+    MAX_PORTAL_EVENT_HORIZON_MONTHS,
+    Math.max(MIN_PORTAL_EVENT_HORIZON_MONTHS, monthSpan),
+  );
 }
 
 function formatHeroMonthRange(cards: IHostPortalSessionCardModel[]): string | undefined {

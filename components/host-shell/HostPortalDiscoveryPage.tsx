@@ -9,6 +9,7 @@ import { bondAnalytics } from '@/lib/analytics';
 import {
   isSessionsListPortalLayout,
 } from '@/lib/host-shell/portal-config';
+import { derivePortalEventHorizonMonths } from '@/lib/host-shell/portal-list-layout';
 import { HostPortalSessionsListView } from './list/HostPortalSessionsListView';
 import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
 import { cn } from '@/lib/utils';
@@ -203,6 +204,9 @@ export function HostPortalDiscoveryPage({
 
     const params = new URLSearchParams();
     params.set('slug', config.slug);
+    if (useListLayout && sessionCards.length > 0) {
+      params.set('horizonMonths', String(derivePortalEventHorizonMonths(sessionCards)));
+    }
 
     fetch(`/api/events?${params.toString()}`, { signal: abortController.signal })
       .then((response) => {
@@ -238,7 +242,7 @@ export function HostPortalDiscoveryPage({
       });
 
     return () => abortController.abort();
-  }, [viewMode, eventsFetched, config.slug, useListLayout]);
+  }, [viewMode, eventsFetched, config.slug, useListLayout, sessionCards]);
 
   const loadMoreEvents = useCallback(() => {
     if (loadingMore || apiEvents.length >= totalServerEvents) {
