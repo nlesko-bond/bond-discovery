@@ -82,7 +82,10 @@ interface PageConfig {
     consumerOrigin?: string;
     linkSeoPathPrefix?: string;
     checkoutLandingPath?: string;
-    hostPortalLayout?: 'legacy_programs' | 'sessions_first';
+    hostPortalLayout?: 'legacy_programs' | 'sessions_first' | 'sessions_list';
+    portalHeroEnabled?: boolean;
+    portalHeroTitle?: string;
+    portalHeroSubtitle?: string;
     // Discovery cache controls
     discoveryCacheEnabled?: boolean;
     availabilityCacheTtl?: number;
@@ -1235,19 +1238,90 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                           ...config,
                           features: {
                             ...config.features,
-                            hostPortalLayout: e.target.value as 'legacy_programs' | 'sessions_first',
+                            hostPortalLayout: e.target.value as
+                              | 'legacy_programs'
+                              | 'sessions_first'
+                              | 'sessions_list',
                           },
                         })
                       }
                     >
                       <option value="legacy_programs">Legacy (program cards)</option>
-                      <option value="sessions_first">Sessions first (one card per session)</option>
+                      <option value="sessions_first">Sessions first (grid cards)</option>
+                      <option value="sessions_list">Sessions list (hero + rows)</option>
                     </select>
                     <p className="text-xs text-gray-500 mt-1">
                       Applies only to <code className="bg-gray-100 px-1 rounded text-xs">/portal/&#123;slug&#125;</code>.
                       Public <code className="bg-gray-100 px-1 rounded text-xs">/&#123;slug&#125;</code> and embed are unchanged.
                     </p>
                   </div>
+                  {(config.features.hostPortalLayout === 'sessions_list' ||
+                    config.features.hostPortalLayout === 'sessions_first') && (
+                    <div className="md:col-span-2 space-y-4 rounded-lg border border-gray-200 p-4">
+                      <h3 className="text-sm font-semibold text-gray-900">Portal hero banner</h3>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={
+                            config.features.hostPortalLayout === 'sessions_list'
+                              ? config.features.portalHeroEnabled !== false
+                              : config.features.portalHeroEnabled === true
+                          }
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              features: {
+                                ...config.features,
+                                portalHeroEnabled: e.target.checked,
+                              },
+                            })
+                          }
+                        />
+                        Show hero banner above filters
+                      </label>
+                      <div>
+                        <label className="label">Hero title (optional)</label>
+                        <input
+                          type="text"
+                          className="input"
+                          placeholder="Soccer."
+                          value={config.features.portalHeroTitle || ''}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              features: {
+                                ...config.features,
+                                portalHeroTitle: e.target.value || undefined,
+                              },
+                            })
+                          }
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Default: sport label from API (e.g. Soccer.) or page name.
+                        </p>
+                      </div>
+                      <div>
+                        <label className="label">Hero subtitle (optional)</label>
+                        <textarea
+                          className="input min-h-[4rem]"
+                          placeholder="All soccer programs at Coppermine. Filter by facility or age…"
+                          value={config.features.portalHeroSubtitle || ''}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              features: {
+                                ...config.features,
+                                portalHeroSubtitle: e.target.value || undefined,
+                              },
+                            })
+                          }
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Default: auto-generated from company name and sport.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

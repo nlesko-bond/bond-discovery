@@ -8,6 +8,7 @@ import { cacheGet, discoveryResponseCacheKey } from '@/lib/cache';
 import { getAvailabilityMap, mergeAvailabilityIntoEvents } from '@/lib/availability-cache';
 import {
   isSessionsFirstPortalLayout,
+  isSessionsListPortalLayout,
   toPortalDiscoveryConfig,
 } from '@/lib/host-shell/portal-config';
 import { Program, DiscoveryConfig } from '@/types';
@@ -74,11 +75,12 @@ export default async function PortalDiscoverySlugPage({ params, searchParams }: 
     getPrecomputedEvents(slug, portalConfig),
   ]);
 
-  const useSessionsFirst = isSessionsFirstPortalLayout(portalConfig);
+  const useHostPortalSessionLayout =
+    isSessionsFirstPortalLayout(portalConfig) || isSessionsListPortalLayout(portalConfig);
 
   return (
     <Suspense fallback={<PortalLoadingState />}>
-      {useSessionsFirst ? (
+      {useHostPortalSessionLayout ? (
         <HostPortalDiscoveryPage
           initialPrograms={programs}
           initialScheduleEvents={eventsResult?.events}

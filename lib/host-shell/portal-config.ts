@@ -2,13 +2,30 @@ import type { DiscoveryConfig } from '@/types';
 import { HostPortalLayoutEnum } from '@/types';
 
 export function resolveHostPortalLayout(config: DiscoveryConfig): HostPortalLayoutEnum {
-  return config.features.hostPortalLayout === HostPortalLayoutEnum.SESSIONS_FIRST
-    ? HostPortalLayoutEnum.SESSIONS_FIRST
-    : HostPortalLayoutEnum.LEGACY_PROGRAMS;
+  const layout = config.features.hostPortalLayout;
+  if (layout === HostPortalLayoutEnum.SESSIONS_FIRST) {
+    return HostPortalLayoutEnum.SESSIONS_FIRST;
+  }
+  if (layout === HostPortalLayoutEnum.SESSIONS_LIST) {
+    return HostPortalLayoutEnum.SESSIONS_LIST;
+  }
+  return HostPortalLayoutEnum.LEGACY_PROGRAMS;
 }
 
 export function isSessionsFirstPortalLayout(config: DiscoveryConfig): boolean {
   return resolveHostPortalLayout(config) === HostPortalLayoutEnum.SESSIONS_FIRST;
+}
+
+export function isSessionsListPortalLayout(config: DiscoveryConfig): boolean {
+  return resolveHostPortalLayout(config) === HostPortalLayoutEnum.SESSIONS_LIST;
+}
+
+export function isHostPortalSessionLayout(config: DiscoveryConfig): boolean {
+  const layout = resolveHostPortalLayout(config);
+  return (
+    layout === HostPortalLayoutEnum.SESSIONS_FIRST ||
+    layout === HostPortalLayoutEnum.SESSIONS_LIST
+  );
 }
 
 /**

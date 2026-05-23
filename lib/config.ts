@@ -68,7 +68,9 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
   const hostPortalLayout =
     hostPortalLayoutRaw === HostPortalLayoutEnum.SESSIONS_FIRST
       ? HostPortalLayoutEnum.SESSIONS_FIRST
-      : HostPortalLayoutEnum.LEGACY_PROGRAMS;
+      : hostPortalLayoutRaw === HostPortalLayoutEnum.SESSIONS_LIST
+        ? HostPortalLayoutEnum.SESSIONS_LIST
+        : HostPortalLayoutEnum.LEGACY_PROGRAMS;
 
   return {
     id: row.id,

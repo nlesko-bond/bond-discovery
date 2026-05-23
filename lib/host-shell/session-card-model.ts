@@ -6,6 +6,7 @@ import {
   formatPrice,
   getGenderLabel,
 } from '@/lib/utils';
+import { computeSessionWeekCount } from '@/lib/host-shell/portal-list-layout';
 
 export interface IHostPortalProductRow {
   id: string;
@@ -43,6 +44,9 @@ export interface IHostPortalSessionCardModel {
   startingPriceLabel?: string;
   isSegmented: boolean;
   organizationId?: string;
+  startDate?: string;
+  endDate?: string;
+  weekCountLabel?: string;
   segments: IHostPortalSegmentRow[];
   products: IHostPortalProductRow[];
 }
@@ -242,6 +246,8 @@ export function buildHostPortalSessionCards(
         customRegistrationUrl,
       );
 
+      const weekCount = computeSessionWeekCount(session.startDate, session.endDate);
+
       cards.push({
         sessionId: session.id,
         programId: program.id,
@@ -259,6 +265,9 @@ export function buildHostPortalSessionCards(
           session.startDate || session.endDate
             ? formatDateRange(session.startDate ?? '', session.endDate ?? '')
             : undefined,
+        startDate: session.startDate,
+        endDate: session.endDate,
+        weekCountLabel: weekCount ? `${weekCount} weeks` : undefined,
         availabilityStatus,
         isClosed,
         isRegistrationOpen: !registerDisabled,

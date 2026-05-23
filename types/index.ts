@@ -384,6 +384,13 @@ export type BondEmbedPortalTemplate = 'classic' | 'hero-carousel' | 'schedule-fi
 export enum HostPortalLayoutEnum {
   LEGACY_PROGRAMS = 'legacy_programs',
   SESSIONS_FIRST = 'sessions_first',
+  SESSIONS_LIST = 'sessions_list',
+}
+
+export enum PortalSessionSortEnum {
+  START_DATE = 'start_date',
+  NAME = 'name',
+  PRICE = 'price',
 }
 
 export interface FeatureConfig {
@@ -413,6 +420,12 @@ export interface FeatureConfig {
   checkoutLandingPath?: string; // Partner checkout shell page (default /programs/register)
   /** Portal /portal/{slug} layout: legacy DiscoveryPage vs session-first cards */
   hostPortalLayout?: HostPortalLayoutEnum;
+  /** Optional hero banner on sessions_list layout (and sessions_first if enabled) */
+  portalHeroEnabled?: boolean;
+  /** Hero headline override (default: sport label or page name) */
+  portalHeroTitle?: string;
+  /** Hero subcopy override (default: generated from program filter context) */
+  portalHeroSubtitle?: string;
   // Tab visibility
   enabledTabs?: EnabledTab[]; // Which tabs to show (default: ['programs', 'schedule'])
   // Program filtering mode

@@ -6,6 +6,10 @@ import { LayoutGrid, Calendar } from 'lucide-react';
 import type { DiscoveryConfig, DiscoveryFilters, Program, ViewMode } from '@/types';
 import { GoogleTagManager } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
+import {
+  isSessionsListPortalLayout,
+} from '@/lib/host-shell/portal-config';
+import { HostPortalSessionsListView } from './list/HostPortalSessionsListView';
 import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
 import { cn } from '@/lib/utils';
 import { buildHostPortalSessionCards } from '@/lib/host-shell/session-card-model';
@@ -81,6 +85,7 @@ export function HostPortalDiscoveryPage({
   const [totalServerEvents, setTotalServerEvents] = useState(initialTotalServerEvents);
   const [loadingMore, setLoadingMore] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const useListLayout = isSessionsListPortalLayout(config);
   const brand = resolvePortalBrandColors(config);
   const linkTarget = resolvePortalScheduleLinkTarget(config);
 
@@ -180,7 +185,10 @@ export function HostPortalDiscoveryPage({
   }, [config.slug]);
 
   useEffect(() => {
-    if (viewMode !== 'schedule' || eventsFetched) {
+    if (eventsFetched) {
+      return;
+    }
+    if (viewMode !== 'schedule' && !useListLayout) {
       return;
     }
 
@@ -230,7 +238,7 @@ export function HostPortalDiscoveryPage({
       });
 
     return () => abortController.abort();
-  }, [viewMode, eventsFetched, config.slug]);
+  }, [viewMode, eventsFetched, config.slug, useListLayout]);
 
   const loadMoreEvents = useCallback(() => {
     if (loadingMore || apiEvents.length >= totalServerEvents) {
@@ -311,6 +319,7 @@ export function HostPortalDiscoveryPage({
     >
       {config.gtmId && <GoogleTagManager gtmId={config.gtmId} pageSlug={config.slug} />}
 
+      {!useListLayout && (
       <header
         className="border-b px-3 py-3 sm:px-4"
         style={{
@@ -388,7 +397,9 @@ export function HostPortalDiscoveryPage({
           )}
         </div>
       </header>
+      )}
 
+      {!useListLayout && (
       <HostPortalFilterBar
         filters={filters}
         onFiltersChange={handleFiltersChange}
@@ -398,14 +409,28 @@ export function HostPortalDiscoveryPage({
         isScheduleView={viewMode === 'schedule'}
         scheduleSpaces={scheduleSpaceOptions}
       />
+      )}
 
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 pb-8">
+      <main className={useListLayout ? 'pb-8' : 'max-w-7xl mx-auto px-3 sm:px-4 pb-8'}>
         {viewMode === 'programs' ? (
+          useListLayout ? (
+            <HostPortalSessionsListView
+              cards={sessionCards}
+              config={config}
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              filterOptions={filterOptions}
+              apiEvents={apiEvents}
+              eventsFetched={eventsFetched}
+              onOpenSchedule={openScheduleForSession}
+            />
+          ) : (
           <HostPortalSessionList
             cards={sessionCards}
             config={config}
             onOpenSchedule={openScheduleForSession}
           />
+          )
         ) : (
           <HostPortalScheduleTab
             schedule={scheduleData}
