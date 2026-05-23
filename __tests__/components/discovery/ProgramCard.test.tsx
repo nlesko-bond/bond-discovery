@@ -91,7 +91,7 @@ describe('ProgramCard', () => {
   describe('Age/Gender Display', () => {
     it('shows age range when showAgeGender is enabled', () => {
       render(<ProgramCard program={mockProgram} config={mockConfig} />);
-      expect(screen.getByText(/Ages 5-12/)).toBeInTheDocument();
+      expect(screen.getByText(/5 yrs - 12 yrs/)).toBeInTheDocument();
     });
 
     it('shows gender label for male-only programs', () => {
@@ -101,7 +101,7 @@ describe('ProgramCard', () => {
 
     it('hides age/gender when disabled in config', () => {
       render(<ProgramCard program={mockProgram} config={mockConfigMinimal} />);
-      expect(screen.queryByText(/Ages 5-12/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/5 yrs - 12 yrs/)).not.toBeInTheDocument();
     });
   });
 

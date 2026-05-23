@@ -119,15 +119,19 @@ describe('formatDateRange', () => {
 
 describe('formatAgeRange', () => {
   it('formats min and max', () => {
-    expect(formatAgeRange(5, 12)).toBe('Ages 5-12');
+    expect(formatAgeRange(5, 12)).toBe('5 yrs - 12 yrs');
+  });
+
+  it('formats fractional min as months', () => {
+    expect(formatAgeRange(1.5, 2)).toBe('18 months - 2 yrs');
   });
 
   it('formats min only (no max)', () => {
-    expect(formatAgeRange(18, undefined)).toBe('Ages 18+');
+    expect(formatAgeRange(18, undefined)).toBe('18 yrs+');
   });
 
   it('formats max only (no min)', () => {
-    expect(formatAgeRange(undefined, 17)).toBe('Ages up to 17');
+    expect(formatAgeRange(undefined, 17)).toBe('up to 17 yrs');
   });
 
   it('returns empty string for no range', () => {
@@ -135,8 +139,8 @@ describe('formatAgeRange', () => {
   });
 
   it('treats high max ages as unlimited', () => {
-    expect(formatAgeRange(5, 100)).toBe('Ages 5+');
-    expect(formatAgeRange(5, 999)).toBe('Ages 5+');
+    expect(formatAgeRange(5, 100)).toBe('5 yrs+');
+    expect(formatAgeRange(5, 999)).toBe('5 yrs+');
   });
 });
 
