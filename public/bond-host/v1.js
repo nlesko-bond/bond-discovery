@@ -8,6 +8,7 @@
   'use strict';
 
   var MIN_IFRAME_HEIGHT_PX = 480;
+  var MOBILE_CHROME_MAX_WIDTH_PX = 767;
   var MSG_OPEN_TAB = 'bond:open_tab';
   var MSG_RESIZE = 'bond:resize';
   var MSG_RESIZE_LEGACY = 'discovery-resize';
@@ -47,7 +48,13 @@
   }
 
   function readChromeOffsetPx(mountEl) {
-    var raw = mountEl.getAttribute('data-bond-chrome-offset-px');
+    var mobileRaw = mountEl.getAttribute('data-bond-chrome-offset-px-mobile');
+    var desktopRaw = mountEl.getAttribute('data-bond-chrome-offset-px');
+    var useMobile =
+      mobileRaw &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(max-width: ' + MOBILE_CHROME_MAX_WIDTH_PX + 'px)').matches;
+    var raw = useMobile ? mobileRaw : desktopRaw;
     if (!raw) return 0;
     var n = parseInt(raw, 10);
     return Number.isFinite(n) && n > 0 ? n : 0;
@@ -104,6 +111,18 @@
   BondHostShell.prototype.applyDiscoveryIframeChrome = function (iframe) {
     if (this.chromeOffsetPx > 0) {
       iframe.style.marginTop = this.chromeOffsetPx + 'px';
+    } else {
+      iframe.style.marginTop = '';
+    }
+  };
+
+  BondHostShell.prototype.syncChromeOffsetFromMount = function () {
+    if (!this.mount) return;
+    var next = readChromeOffsetPx(this.mount);
+    if (next === this.chromeOffsetPx) return;
+    this.chromeOffsetPx = next;
+    if (this.activeIframe) {
+      this.applyDiscoveryIframeChrome(this.activeIframe);
     }
   };
 
@@ -125,6 +144,7 @@
   BondHostShell.prototype.bindParentResize = function () {
     var self = this;
     window.addEventListener('resize', function () {
+      self.syncChromeOffsetFromMount();
       self.requestDiscoveryResize();
     });
   };

@@ -276,15 +276,16 @@ function PortalSessionsBrandingControls({
           </span>
           <span className="mt-1 block text-xs text-gray-500">
             Hero gradient, session strip, and register buttons use primary, secondary, and header
-            colors{onOpenBrandingTab ? ' on the Branding tab' : ' above'} (and logo when set). When
-            off, sport-specific colors and icons are used.
+            colors{onOpenBrandingTab ? ' on the Branding tab' : ' above'} (and logo on the hero when set).
+            Session rows keep sport icons; org branding changes their accent colors. When off,
+            sport-specific colors and icons are used.
           </span>
         </span>
       </label>
       {!config.branding.logo && (
         <p className="text-xs text-amber-700">
           Add a logo URL{onOpenBrandingTab ? ' on the Branding tab' : ''} to show your mark on the
-          hero and session rows when org branding is enabled.
+          hero when org branding is enabled.
         </p>
       )}
       {onOpenBrandingTab && (

@@ -35,24 +35,28 @@ export function HostPortalHeroBanner({ metadata, config, sport }: IHostPortalHer
           backgroundSize: '32px 32px',
         }}
       />
-      {showOrgLogo && logoUrl && (
-        <HeroOrgLogo logoUrl={logoUrl} companyName={config.branding.companyName} />
-      )}
       {showSportWatermark && sport && (
         <HeroWatermark sport={sport} />
       )}
       <div className="relative mx-auto max-w-7xl">
-        {metadata.eyebrow && (
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
-            {metadata.eyebrow}
-          </p>
-        )}
-        <h2 className="mt-2 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-          {metadata.title}
-        </h2>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/85 sm:text-base">
-          {metadata.subtitle}
-        </p>
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between md:gap-10">
+          <div className="min-w-0 flex-1">
+            {metadata.eyebrow && (
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
+                {metadata.eyebrow}
+              </p>
+            )}
+            <h2 className="mt-2 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+              {metadata.title}
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/85 sm:text-base">
+              {metadata.subtitle}
+            </p>
+          </div>
+          {showOrgLogo && logoUrl && (
+            <HeroOrgLogo logoUrl={logoUrl} companyName={config.branding.companyName} />
+          )}
+        </div>
       </div>
     </section>
   );
@@ -60,12 +64,12 @@ export function HostPortalHeroBanner({ metadata, config, sport }: IHostPortalHer
 
 function HeroOrgLogo({ logoUrl, companyName }: { logoUrl: string; companyName: string }) {
   return (
-    <div className="pointer-events-none absolute -right-4 top-1/2 hidden -translate-y-1/2 sm:block md:-right-6">
+    <div className="hidden shrink-0 md:flex md:max-w-[11rem] md:items-center md:justify-end lg:max-w-[13rem]">
       <img
         src={logoUrl}
         alt=""
         aria-hidden
-        className="h-24 w-auto max-w-[12rem] object-contain opacity-90 brightness-0 invert md:h-32 md:max-w-[14rem]"
+        className="h-20 w-auto max-w-full object-contain opacity-90 brightness-0 invert lg:h-24"
       />
       <span className="sr-only">{companyName}</span>
     </div>

@@ -73,17 +73,31 @@ Discovery/
 
 ### Page A — Programs (`/discovery/programs`)
 
-Add **Embed** element:
+Add **Embed** element. If your site has a **fixed header** on this page, set nav offset (measure header height in px):
 
 ```html
 <div
   data-bond-host
   data-bond-slug="YOUR_SLUG"
   data-bond-discovery-base="https://discovery.bondsports.co"
+  data-bond-chrome-offset-px="80"
+  data-bond-chrome-offset-px-mobile="64"
 ></div>
 ```
 
-Replace `YOUR_SLUG` with admin page slug. No chrome offset on this page.
+| Attribute | Purpose |
+|-----------|---------|
+| `data-bond-chrome-offset-px` | Desktop: `margin-top` on iframe so content clears fixed nav |
+| `data-bond-chrome-offset-px-mobile` | Optional mobile override (≤767px). Use when mobile nav height differs. |
+
+**Webflow layout rules (programs page):**
+
+1. Put the embed at the **top of the page body** — no extra section padding-top for the nav (the kit applies offset via iframe `margin-top`).
+2. Do **not** wrap the embed in a fixed-height div or `overflow: hidden` section.
+3. Desktop gap too large → lower `data-bond-chrome-offset-px` or remove duplicate Webflow spacer above the embed.
+4. Mobile cut off at bottom → publish site, hard refresh, confirm `bond-host/v1.js` loads; check parent section is not clipping; tune mobile offset separately from desktop.
+
+Replace `YOUR_SLUG` with admin page slug.
 
 ### Page B — Register (`/discovery/register`)
 
@@ -123,7 +137,9 @@ Designer preview often does not run embed scripts — **Publish** first.
 | Register tab 404 | Create register page; match **Checkout page path** in admin |
 | Wrong domain in new tab | Fix **Partner site URL**; save |
 | Blank checkout | Bond must allow iframe embed on consumer |
-| Footer cut off | Increase `data-bond-chrome-offset-px` |
+| Checkout footer cut off | Increase `data-bond-chrome-offset-px` on register page |
+| Programs iframe too low / white gap above | Lower or remove `data-bond-chrome-offset-px`; remove Webflow section padding-top |
+| Programs iframe cut off on mobile | Remove fixed-height wrapper; add `data-bond-chrome-offset-px-mobile`; republish Webflow |
 | Double scroll on register | One embed per page; avoid extra fixed-height wrappers |
 | CORS / API errors | Add Webflow origin under **Embed allowed origins** (or leave empty) |
 

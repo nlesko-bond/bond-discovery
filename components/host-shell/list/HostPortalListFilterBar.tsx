@@ -13,6 +13,65 @@ import { cn } from '@/lib/utils';
 const LIST_FILTER_CONTROL_CLASS =
   'flex min-h-[40px] w-full items-center rounded-lg border border-gray-200 bg-white px-3 shadow-sm sm:min-h-[42px]';
 
+const COMPACT_SORT_CONTROL_SIZE_PX = 40;
+
+interface IHostPortalListSortControlProps {
+  sort: PortalSessionSortEnum;
+  onSortChange: (sort: PortalSessionSortEnum) => void;
+  compact?: boolean;
+}
+
+function HostPortalListSortControl({
+  sort,
+  onSortChange,
+  compact = false,
+}: IHostPortalListSortControlProps) {
+  if (compact) {
+    return (
+      <div className="relative shrink-0" style={{ width: COMPACT_SORT_CONTROL_SIZE_PX }}>
+        <label className="sr-only" htmlFor="portal-session-sort-mobile">
+          Sort sessions
+        </label>
+        <div
+          className="relative flex items-center justify-center rounded-lg border border-gray-200 bg-white shadow-sm"
+          style={{ width: COMPACT_SORT_CONTROL_SIZE_PX, height: COMPACT_SORT_CONTROL_SIZE_PX }}
+        >
+          <ArrowUpDown size={18} className="pointer-events-none text-gray-500" aria-hidden />
+          <select
+            id="portal-session-sort-mobile"
+            value={sort}
+            onChange={(event) => onSortChange(event.target.value as PortalSessionSortEnum)}
+            className="absolute inset-0 cursor-pointer appearance-none opacity-0"
+            aria-label="Sort sessions"
+          >
+            <option value={PortalSessionSortEnum.START_DATE}>Start date</option>
+            <option value={PortalSessionSortEnum.NAME}>Name</option>
+            <option value={PortalSessionSortEnum.PRICE}>Price</option>
+          </select>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn(LIST_FILTER_CONTROL_CLASS, 'relative py-0')}>
+      <ArrowUpDown
+        size={16}
+        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+      />
+      <select
+        value={sort}
+        onChange={(event) => onSortChange(event.target.value as PortalSessionSortEnum)}
+        className="w-full appearance-none bg-transparent py-2 pl-9 pr-8 text-sm font-medium text-gray-800 focus:outline-none sm:py-2.5"
+      >
+        <option value={PortalSessionSortEnum.START_DATE}>Start date</option>
+        <option value={PortalSessionSortEnum.NAME}>Name</option>
+        <option value={PortalSessionSortEnum.PRICE}>Price</option>
+      </select>
+    </div>
+  );
+}
+
 interface IHostPortalListFilterBarProps {
   filters: DiscoveryFilters;
   onFiltersChange: (filters: DiscoveryFilters) => void;
@@ -37,6 +96,48 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
     props.selectedAgeMax === props.ageBounds.max;
   const hasFacilities = props.options.facilities.length > 0;
 
+  const facilityControl = hasFacilities ? (
+    <HostPortalMultiSelectDropdown
+      label="All facilities"
+      icon={<MapPin size={16} />}
+      options={props.options.facilities.map((facility) => ({
+        id: facility.id,
+        label: facility.name,
+        count: facility.count,
+      }))}
+      selectedIds={props.filters.facilityIds ?? []}
+      onChange={(facilityIds) =>
+        props.onFiltersChange({
+          ...props.filters,
+          facilityIds: facilityIds.length > 0 ? facilityIds : undefined,
+        })
+      }
+      isOpen={facilityOpen}
+      onOpenChange={setFacilityOpen}
+      brandColor={secondaryColor}
+      triggerClassName={LIST_FILTER_CONTROL_CLASS}
+      menuClassName="rounded-lg"
+    />
+  ) : null;
+
+  const ageControl = (
+    <div className={cn(LIST_FILTER_CONTROL_CLASS, 'gap-2 py-2 sm:gap-3')}>
+      <HostPortalAgeRangeSlider
+        min={props.ageBounds.min}
+        max={props.ageBounds.max}
+        valueMin={props.selectedAgeMin}
+        valueMax={props.selectedAgeMax}
+        onChange={props.onAgeRangeChange}
+        className="relative min-w-0 flex-1"
+      />
+      <span className="shrink-0 text-xs font-semibold tabular-nums text-gray-800 sm:text-sm">
+        {atFullAgeRange
+          ? `${props.ageBounds.min}–${props.ageBounds.max} yrs`
+          : `${props.selectedAgeMin}–${props.selectedAgeMax} yrs`}
+      </span>
+    </div>
+  );
+
   return (
     <div className={cn('relative z-40 border-b border-gray-200 bg-white', props.scheduleMode && 'sticky top-0')}>
       {props.scheduleMode && props.onBackToSessions && (
@@ -56,90 +157,65 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
           </div>
         </div>
       )}
+
+      <div className="mx-auto max-w-7xl px-3 py-3 sm:px-6 sm:py-4 md:hidden">
+        <div className="flex items-end gap-2">
+          {hasFacilities && (
+            <div className="min-w-0 flex-1">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                Facility
+              </p>
+              {facilityControl}
+            </div>
+          )}
+          <div className={cn(!hasFacilities && 'ml-auto')}>
+            {!hasFacilities && (
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                Sort
+              </p>
+            )}
+            <HostPortalListSortControl
+              sort={props.sort}
+              onSortChange={props.onSortChange}
+              compact
+            />
+          </div>
+        </div>
+        <div className="mt-2.5">
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+            Age
+          </p>
+          {ageControl}
+        </div>
+      </div>
+
       <div
         className={cn(
-          'mx-auto grid max-w-7xl gap-3 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4',
-          hasFacilities
-            ? 'grid-cols-2 md:grid-cols-3 md:items-end'
-            : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 md:items-end',
+          'mx-auto hidden max-w-7xl gap-4 px-6 py-4 md:grid md:items-end',
+          hasFacilities ? 'grid-cols-3' : 'grid-cols-2',
         )}
       >
         {hasFacilities && (
           <div className="min-w-0">
-            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:mb-1.5 sm:text-[11px]">
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
               Facility
             </p>
-            <HostPortalMultiSelectDropdown
-              label="All facilities"
-              icon={<MapPin size={16} />}
-              options={props.options.facilities.map((facility) => ({
-                id: facility.id,
-                label: facility.name,
-                count: facility.count,
-              }))}
-              selectedIds={props.filters.facilityIds ?? []}
-              onChange={(facilityIds) =>
-                props.onFiltersChange({
-                  ...props.filters,
-                  facilityIds: facilityIds.length > 0 ? facilityIds : undefined,
-                })
-              }
-              isOpen={facilityOpen}
-              onOpenChange={setFacilityOpen}
-              brandColor={secondaryColor}
-              triggerClassName={LIST_FILTER_CONTROL_CLASS}
-              menuClassName="rounded-lg"
-            />
+            {facilityControl}
           </div>
         )}
 
-        <div
-          className={cn(
-            'min-w-0',
-            hasFacilities ? 'col-span-2 md:col-span-1' : 'col-span-1 sm:col-span-2 md:col-span-1',
-          )}
-        >
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:mb-1.5 sm:text-[11px]">
+        <div className="min-w-0">
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
             Age
           </p>
-          <div className={cn(LIST_FILTER_CONTROL_CLASS, 'gap-2 py-2 sm:gap-3')}>
-            <HostPortalAgeRangeSlider
-              min={props.ageBounds.min}
-              max={props.ageBounds.max}
-              valueMin={props.selectedAgeMin}
-              valueMax={props.selectedAgeMax}
-              onChange={props.onAgeRangeChange}
-              className="relative min-w-0 flex-1"
-            />
-            <span className="shrink-0 text-xs font-semibold tabular-nums text-gray-800 sm:text-sm">
-              {atFullAgeRange
-                ? `${props.ageBounds.min}–${props.ageBounds.max} yrs`
-                : `${props.selectedAgeMin}–${props.selectedAgeMax} yrs`}
-            </span>
-          </div>
+          {ageControl}
         </div>
 
-        <div className={cn('min-w-0', hasFacilities && 'col-span-1')}>
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:mb-1.5 sm:text-[11px]">
+        <div className={cn('min-w-0', !hasFacilities && 'md:max-w-[14rem] md:justify-self-end')}>
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
             Sort
           </p>
-          <div className={cn(LIST_FILTER_CONTROL_CLASS, 'relative py-0')}>
-            <ArrowUpDown
-              size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <select
-              value={props.sort}
-              onChange={(event) =>
-                props.onSortChange(event.target.value as PortalSessionSortEnum)
-              }
-              className="w-full appearance-none bg-transparent py-2 pl-9 pr-8 text-sm font-medium text-gray-800 focus:outline-none sm:py-2.5"
-            >
-              <option value={PortalSessionSortEnum.START_DATE}>Start date</option>
-              <option value={PortalSessionSortEnum.NAME}>Name</option>
-              <option value={PortalSessionSortEnum.PRICE}>Price</option>
-            </select>
-          </div>
+          <HostPortalListSortControl sort={props.sort} onSortChange={props.onSortChange} />
         </div>
       </div>
     </div>
