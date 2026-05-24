@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Calendar, Clock, MapPin, ArrowRight, ShoppingCart, Info } from 'lucide-react';
 import type { DiscoveryConfig } from '@/types';
 import type {
@@ -18,10 +18,13 @@ import { cn } from '@/lib/utils';
 
 const CLOSED_REGISTER_BACKGROUND = '#9CA3AF';
 const AVAILABILITY_OPEN_DOT = '#22c55e';
-const MAX_SLOT_BUBBLE_ROWS_DESKTOP = 2;
-const ESTIMATED_SLOT_BUBBLES_PER_ROW_DESKTOP = 4;
-const MAX_COLLAPSED_SLOT_BUBBLES_DESKTOP =
-  MAX_SLOT_BUBBLE_ROWS_DESKTOP * ESTIMATED_SLOT_BUBBLES_PER_ROW_DESKTOP;
+const MAX_SLOT_BUBBLE_VISIBLE_ROWS = 2;
+const SLOT_BUBBLE_ROW_HEIGHT_PX = 32;
+const SLOT_BUBBLE_ROW_GAP_PX = 8;
+const SLOT_BUBBLE_GRID_MAX_HEIGHT_PX =
+  MAX_SLOT_BUBBLE_VISIBLE_ROWS * SLOT_BUBBLE_ROW_HEIGHT_PX +
+  (MAX_SLOT_BUBBLE_VISIBLE_ROWS - 1) * SLOT_BUBBLE_ROW_GAP_PX;
+const SLOT_BUBBLE_OVERFLOW_FADE_WIDTH_PX = 48;
 
 interface IHostPortalSessionListRowProps {
   card: IHostPortalSessionCardModel;
@@ -112,6 +115,78 @@ function SessionSlotBubble({ chip, isExpanded, onToggle }: ISessionSlotBubblePro
   );
 }
 
+interface ISessionSlotBubbleGridProps {
+  chips: IHostPortalSessionTimeChip[];
+  expandedSlotKey: string | null;
+  onToggle: (chip: IHostPortalSessionTimeChip) => void;
+}
+
+function SessionSlotBubbleGrid({ chips, expandedSlotKey, onToggle }: ISessionSlotBubbleGridProps) {
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const [showAllRows, setShowAllRows] = useState(false);
+
+  useEffect(() => {
+    setShowAllRows(false);
+  }, [chips]);
+
+  useEffect(() => {
+    const node = gridRef.current;
+    if (!node || showAllRows) {
+      setHasOverflow(false);
+      return;
+    }
+
+    const measureOverflow = () => {
+      setHasOverflow(node.scrollHeight > node.clientHeight + 1);
+    };
+
+    measureOverflow();
+    const observer = new ResizeObserver(measureOverflow);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [chips, showAllRows]);
+
+  return (
+    <div className="relative w-full min-w-0">
+      <div
+        ref={gridRef}
+        className="flex w-full min-w-0 flex-row flex-wrap content-start gap-2 overflow-hidden"
+        style={showAllRows ? undefined : { maxHeight: SLOT_BUBBLE_GRID_MAX_HEIGHT_PX }}
+      >
+        {chips.map((chip) => {
+          const slotKey = buildSlotBubbleKey(chip);
+          return (
+            <SessionSlotBubble
+              key={slotKey}
+              chip={chip}
+              isExpanded={expandedSlotKey === slotKey}
+              onToggle={() => onToggle(chip)}
+            />
+          );
+        })}
+      </div>
+      {hasOverflow && !showAllRows && (
+        <>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute bottom-0 right-0 h-8 bg-gradient-to-l from-white via-white/95 to-transparent"
+            style={{ width: SLOT_BUBBLE_OVERFLOW_FADE_WIDTH_PX }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowAllRows(true)}
+            className="absolute bottom-0 right-0 inline-flex h-8 min-w-8 items-center justify-center rounded-full border border-gray-200 bg-white px-2.5 text-base font-medium leading-none text-gray-500 shadow-sm transition-colors hover:border-gray-300 hover:bg-gray-50"
+            aria-label="Show all time slots"
+          >
+            …
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 interface ISessionSlotExpandPanelProps {
   chip: IHostPortalSessionTimeChip;
   segment?: IHostPortalSegmentRow;
@@ -179,7 +254,6 @@ export function HostPortalSessionListRow({
   const { visualTheme, primaryColor } = uiColors;
   const linkTarget = resolvePortalScheduleLinkTarget(config);
   const [infoOpen, setInfoOpen] = useState(false);
-  const [showAllSlotBubbles, setShowAllSlotBubbles] = useState(false);
   const [expandedSlotKey, setExpandedSlotKey] = useState<string | null>(null);
   const [loadedSegments, setLoadedSegments] = useState<IHostPortalSegmentRow[]>(card.segments);
   const [segmentsLoading, setSegmentsLoading] = useState(false);
@@ -198,13 +272,6 @@ export function HostPortalSessionListRow({
     : undefined;
 
   const visibleTimeChips = useMemo(() => timeChips, [timeChips]);
-  const shouldCollapseSlotBubbles =
-    visibleTimeChips.length > MAX_COLLAPSED_SLOT_BUBBLES_DESKTOP;
-  const displayedTimeChips =
-    showAllSlotBubbles || !shouldCollapseSlotBubbles
-      ? visibleTimeChips
-      : visibleTimeChips.slice(0, MAX_COLLAPSED_SLOT_BUBBLES_DESKTOP);
-  const hiddenSlotBubbleCount = visibleTimeChips.length - displayedTimeChips.length;
 
   const expandedChip = useMemo(() => {
     if (!expandedSlotKey) {
@@ -215,12 +282,7 @@ export function HostPortalSessionListRow({
 
   useEffect(() => {
     setLoadedSegments(card.segments);
-    setShowAllSlotBubbles(false);
-    if (timeChips.length === 1) {
-      setExpandedSlotKey(buildSlotBubbleKey(timeChips[0]));
-    } else {
-      setExpandedSlotKey(null);
-    }
+    setExpandedSlotKey(null);
   }, [card.sessionId, card.segments, timeChips]);
 
   useEffect(() => {
@@ -371,29 +433,12 @@ export function HostPortalSessionListRow({
           {segmentsError && <p className="text-xs text-red-600">{segmentsError}</p>}
 
           {visibleTimeChips.length > 0 && (
-            <div>
-              <div className="flex flex-row flex-wrap items-start gap-2">
-                {displayedTimeChips.map((chip) => {
-                  const slotKey = buildSlotBubbleKey(chip);
-                  return (
-                    <SessionSlotBubble
-                      key={slotKey}
-                      chip={chip}
-                      isExpanded={expandedSlotKey === slotKey}
-                      onToggle={() => toggleSlot(chip)}
-                    />
-                  );
-                })}
-                {hiddenSlotBubbleCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setShowAllSlotBubbles(true)}
-                    className="inline-flex shrink-0 items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-100"
-                  >
-                    +{hiddenSlotBubbleCount} more
-                  </button>
-                )}
-              </div>
+            <div className="w-full min-w-0">
+              <SessionSlotBubbleGrid
+                chips={visibleTimeChips}
+                expandedSlotKey={expandedSlotKey}
+                onToggle={toggleSlot}
+              />
               {expandedChip && (
                 <SessionSlotExpandPanel
                   chip={expandedChip}

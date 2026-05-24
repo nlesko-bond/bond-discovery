@@ -26,14 +26,11 @@ import { HostPortalFilterBar } from './HostPortalFilterBar';
 import { HostPortalSessionList } from './HostPortalSessionList';
 import { HostPortalScheduleTab } from './HostPortalScheduleTab';
 import { BrandLogo } from '@/components/ui/BrandLogo';
-import {
-  BOND_HOST_MESSAGE_REQUEST_CHROME_OFFSET,
-  isBondHostChromeOffsetMessage,
-  parseEmbedChromePx,
-} from '@/lib/host-shell/embed-chrome';
 
 const EMPTY_EVENTS: IDiscoveryApiEvent[] = [];
 const EVENTS_PAGE_LIMIT = 200;
+const IFRAME_RESIZE_DEBOUNCE_MS = 100;
+const IFRAME_INITIAL_RESIZE_DELAY_MS = 500;
 
 interface IHostPortalDiscoveryPageProps {
   initialPrograms: Program[];
@@ -94,8 +91,6 @@ export function HostPortalDiscoveryPage({
   const useListLayout = isSessionsListPortalLayout(config);
   const brand = resolvePortalBrandColors(config);
   const linkTarget = resolvePortalScheduleLinkTarget(config);
-  const initialEmbedChromePx = parseEmbedChromePx(searchParams.embedChromePx);
-  const [embedChromePx, setEmbedChromePx] = useState(initialEmbedChromePx);
 
   const enabledTabs = config.features.enabledTabs || ['programs', 'schedule'];
   const showSessionsTab = enabledTabs.includes('programs');
@@ -164,51 +159,41 @@ export function HostPortalDiscoveryPage({
       return;
     }
 
-    const onMessage = (event: MessageEvent) => {
-      if (!isBondHostChromeOffsetMessage(event.data)) {
-        return;
-      }
-      setEmbedChromePx(Math.round(event.data.px));
-    };
-
-    window.addEventListener('message', onMessage);
-    window.parent.postMessage({ type: BOND_HOST_MESSAGE_REQUEST_CHROME_OFFSET }, '*');
-
-    return () => window.removeEventListener('message', onMessage);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || window.self === window.top) {
-      return;
-    }
-
     let resizeTimeout: ReturnType<typeof setTimeout>;
+
+    const measureEmbedHeight = (): number =>
+      Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+
     const sendHeight = () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
-        const height = document.documentElement.scrollHeight;
         window.parent.postMessage(
           {
             type: 'discovery-resize',
-            height,
+            height: measureEmbedHeight(),
             slug: config.slug,
           },
           '*',
         );
-      }, 100);
+      }, IFRAME_RESIZE_DEBOUNCE_MS);
     };
 
-    setTimeout(sendHeight, 500);
+    window.scrollTo(0, 0);
+    sendHeight();
+    const initialResizeTimer = setTimeout(sendHeight, IFRAME_INITIAL_RESIZE_DELAY_MS);
+
     const resizeObserver = new ResizeObserver(sendHeight);
     resizeObserver.observe(document.body);
+    resizeObserver.observe(document.documentElement);
     window.addEventListener('resize', sendHeight);
 
     return () => {
       clearTimeout(resizeTimeout);
+      clearTimeout(initialResizeTimer);
       resizeObserver.disconnect();
       window.removeEventListener('resize', sendHeight);
     };
-  }, [config.slug]);
+  }, [config.slug, viewMode, eventsFetched, sessionCards.length, useListLayout]);
 
   useEffect(() => {
     if (eventsFetched) {
@@ -375,11 +360,7 @@ export function HostPortalDiscoveryPage({
   return (
     <div
       className="min-h-screen bg-gray-50"
-      style={{
-        fontFamily: config.branding.fontFamily || 'inherit',
-        paddingTop: embedChromePx > 0 ? embedChromePx : undefined,
-        ['--bond-embed-chrome-px' as string]: `${embedChromePx}px`,
-      }}
+      style={{ fontFamily: config.branding.fontFamily || 'inherit' }}
     >
       {config.gtmId && <GoogleTagManager gtmId={config.gtmId} pageSlug={config.slug} />}
 
