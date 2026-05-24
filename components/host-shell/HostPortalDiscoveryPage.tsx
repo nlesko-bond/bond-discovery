@@ -299,12 +299,6 @@ export function HostPortalDiscoveryPage({
   );
 
   const backToSessionsList = useCallback(() => {
-    if (typeof window !== 'undefined' && window.self !== window.top && window.history.length > 1) {
-      router.back();
-      window.scrollTo({ top: 0, behavior: 'instant' });
-      return;
-    }
-
     const nextFilters: DiscoveryFilters = {
       ...filters,
       programIds: [],
@@ -317,8 +311,11 @@ export function HostPortalDiscoveryPage({
     params.set('viewMode', 'programs');
     params.delete('programIds');
     params.delete('sessionIds');
+    params.delete('scheduleView');
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
   }, [filters, pathname, router, urlSearchParams]);
 
   return (
