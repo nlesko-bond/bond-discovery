@@ -100,7 +100,7 @@ export function HostPortalSessionsListView({
         onBackToSessions={onBackToSessions}
       />
       {viewMode === 'programs' ? (
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+        <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6">
           {!eventsFetched && (
             <p className="mb-4 text-sm text-gray-500">Loading class times…</p>
           )}

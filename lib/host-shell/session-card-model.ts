@@ -35,6 +35,8 @@ export interface IHostPortalSessionCardModel {
   longDescription?: string;
   sport?: string;
   facilityName?: string;
+  ageMin?: number;
+  ageMax?: number;
   ageRange?: string;
   genderLabel?: string;
   dateRange?: string;
@@ -237,8 +239,8 @@ export function buildHostPortalSessionCards(
       const isClosed = isSessionClosedByAvailabilityStatus(availabilityStatus);
       const registerDisabled = isClosed;
       const baseLink = session.linkSEO;
-      const ageMin = session.minAge ?? session.ageMin;
-      const ageMax = session.maxAge ?? session.ageMax;
+      const ageMin = session.minAge ?? session.ageMin ?? program.ageMin;
+      const ageMax = session.maxAge ?? session.ageMax ?? program.ageMax;
       const gender = session.gender;
 
       const products = getProductsFromSession(session).map((product) =>
@@ -262,6 +264,8 @@ export function buildHostPortalSessionCards(
         longDescription: session.longDescription,
         sport: session.sport,
         facilityName: session.facility?.name,
+        ageMin,
+        ageMax,
         ageRange: showAgeGender ? formatAgeRange(ageMin, ageMax) : undefined,
         genderLabel:
           showAgeGender && gender && gender !== 'all' && gender !== 'coed'

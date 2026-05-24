@@ -1,4 +1,9 @@
-/* Bond Host Shell v1 — d1: discovery on org domain; register opens new tab with org URL + Bond checkout iframe */
+/* Bond Host Shell v1 — partner-page script that owns discovery iframe sizing.
+ *
+ * Programs load in an iframe (/portal/{slug}); the kit sets height from discovery-resize
+ * postMessages, re-measures on parent viewport changes, and applies margin-top for fixed nav
+ * (data-bond-chrome-offset-px) so content aligns with the partner layout without raw iframe embeds.
+ */
 (function (global) {
   'use strict';
 
@@ -8,6 +13,7 @@
   var MSG_RESIZE_LEGACY = 'discovery-resize';
   var MSG_CHROME_OFFSET = 'bond:chrome-offset';
   var MSG_REQUEST_CHROME_OFFSET = 'bond:request-chrome-offset';
+  var MSG_REQUEST_RESIZE = 'bond:request-resize';
   var EMBED_CHROME_QUERY_PARAM = 'embedChromePx';
   var CHECKOUT_QUERY_PARAM = 'bondPath';
 
@@ -49,7 +55,9 @@
 
   function setIframeHeight(iframe, height) {
     if (!iframe) return;
-    iframe.style.height = Math.max(height, MIN_IFRAME_HEIGHT_PX) + 'px';
+    var resolvedHeight = Math.max(height, MIN_IFRAME_HEIGHT_PX);
+    iframe.style.height = resolvedHeight + 'px';
+    iframe.style.minHeight = resolvedHeight + 'px';
   }
 
   function applyCheckoutFallbackHeight(iframe, chromeOffsetPx) {
@@ -70,6 +78,10 @@
     return window.location.origin;
   }
 
+  /**
+   * Host shell on the partner page: mounts discovery/checkout iframes and keeps discovery
+   * iframe height in sync with content and partner chrome (nav offset, viewport resize).
+   */
   function BondHostShell(options) {
     this.slug = options.slug;
     this.discoveryBase = (options.discoveryBase || getScriptOrigin()).replace(/\/$/, '');
@@ -89,22 +101,43 @@
     });
   };
 
-  BondHostShell.prototype.applyDiscoveryMountChrome = function () {
+  BondHostShell.prototype.applyDiscoveryIframeChrome = function (iframe) {
     if (this.chromeOffsetPx > 0) {
-      this.mount.style.paddingTop = this.chromeOffsetPx + 'px';
-      this.mount.style.boxSizing = 'border-box';
+      iframe.style.marginTop = this.chromeOffsetPx + 'px';
     }
+  };
+
+  BondHostShell.prototype.requestDiscoveryResize = function () {
+    if (
+      !this.activeIframe ||
+      this.activeIframe.getAttribute('data-bond-discovery-iframe') !== '1' ||
+      !this.activeIframe.contentWindow
+    ) {
+      return;
+    }
+    try {
+      this.activeIframe.contentWindow.postMessage({ type: MSG_REQUEST_RESIZE }, '*');
+    } catch (e) {
+      /* cross-origin guard */
+    }
+  };
+
+  BondHostShell.prototype.bindParentResize = function () {
+    var self = this;
+    window.addEventListener('resize', function () {
+      self.requestDiscoveryResize();
+    });
   };
 
   BondHostShell.prototype.mountDiscovery = function () {
     var boot = this.bootstrap;
     var self = this;
-    this.applyDiscoveryMountChrome();
     var iframe = document.createElement('iframe');
     iframe.setAttribute('title', 'Programs');
     iframe.setAttribute('data-bond-discovery-iframe', '1');
     iframe.style.cssText =
       'width:100%;border:0;display:block;min-height:' + MIN_IFRAME_HEIGHT_PX + 'px';
+    this.applyDiscoveryIframeChrome(iframe);
     iframe.src = boot.paths.portalDiscoveryUrl;
     iframe.addEventListener('load', function () {
       if (iframe.contentWindow) {
@@ -114,6 +147,7 @@
           /* cross-origin guard */
         }
       }
+      self.requestDiscoveryResize();
     });
     this.activeIframe = iframe;
     this.mount.appendChild(iframe);
@@ -223,6 +257,7 @@
     return self.fetchBootstrap().then(function (boot) {
       self.bootstrap = boot;
       self.routeInitial();
+      self.bindParentResize();
       window.addEventListener('message', function (e) {
         self.onMessage(e);
       });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { derivePortalEventHorizonMonths } from '@/lib/host-shell/portal-list-layout';
+import { derivePortalEventHorizonMonths, derivePortalAgeBounds } from '@/lib/host-shell/portal-list-layout';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
 
 function makeCard(endDate: string): IHostPortalSessionCardModel {
@@ -28,5 +28,26 @@ describe('derivePortalEventHorizonMonths', () => {
 
   it('falls back to the minimum horizon when cards have no end dates', () => {
     expect(derivePortalEventHorizonMonths([makeCard('')])).toBe(3);
+  });
+});
+
+describe('derivePortalAgeBounds', () => {
+  it('uses slider min 0 and numeric ageMax from cards', () => {
+    const bounds = derivePortalAgeBounds([
+      {
+        ...makeCard('2026-11-07T00:00:00.000Z'),
+        ageMin: 1.5,
+        ageMax: 16,
+        ageRange: '18 mo - 16 yrs',
+      },
+    ]);
+    expect(bounds).toEqual({ min: 0, max: 16 });
+  });
+
+  it('defaults to 0–18 when cards have no age data', () => {
+    expect(derivePortalAgeBounds([makeCard('2026-11-07T00:00:00.000Z')])).toEqual({
+      min: 0,
+      max: 18,
+    });
   });
 });

@@ -11,7 +11,7 @@ import { HostPortalAgeRangeSlider } from './HostPortalAgeRangeSlider';
 import { cn } from '@/lib/utils';
 
 const LIST_FILTER_CONTROL_CLASS =
-  'flex min-h-[42px] w-full items-center rounded-lg border border-gray-200 bg-white px-3 shadow-sm';
+  'flex min-h-[40px] w-full items-center rounded-lg border border-gray-200 bg-white px-3 shadow-sm sm:min-h-[42px]';
 
 interface IHostPortalListFilterBarProps {
   filters: DiscoveryFilters;
@@ -35,12 +35,13 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
   const atFullAgeRange =
     props.selectedAgeMin === props.ageBounds.min &&
     props.selectedAgeMax === props.ageBounds.max;
+  const hasFacilities = props.options.facilities.length > 0;
 
   return (
     <div className={cn('relative z-40 border-b border-gray-200 bg-white', props.scheduleMode && 'sticky top-0')}>
       {props.scheduleMode && props.onBackToSessions && (
         <div className="border-b border-gray-100 bg-gray-50/80">
-          <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2.5 sm:px-6">
+          <div className="mx-auto flex max-w-7xl items-center gap-3 px-3 py-2 sm:px-6">
             <button
               type="button"
               onClick={props.onBackToSessions}
@@ -55,10 +56,17 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
           </div>
         </div>
       )}
-      <div className="mx-auto grid max-w-7xl items-end gap-4 px-4 py-4 sm:px-6 md:grid-cols-3">
-        {props.options.facilities.length > 0 && (
-          <div>
-            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+      <div
+        className={cn(
+          'mx-auto grid max-w-7xl gap-3 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4',
+          hasFacilities
+            ? 'grid-cols-2 md:grid-cols-3 md:items-end'
+            : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 md:items-end',
+        )}
+      >
+        {hasFacilities && (
+          <div className="min-w-0">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:mb-1.5 sm:text-[11px]">
               Facility
             </p>
             <HostPortalMultiSelectDropdown
@@ -85,11 +93,16 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
           </div>
         )}
 
-        <div>
-          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-            Age range
+        <div
+          className={cn(
+            'min-w-0',
+            hasFacilities ? 'col-span-2 md:col-span-1' : 'col-span-1 sm:col-span-2 md:col-span-1',
+          )}
+        >
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:mb-1.5 sm:text-[11px]">
+            Age
           </p>
-          <div className={cn(LIST_FILTER_CONTROL_CLASS, 'gap-3 py-2')}>
+          <div className={cn(LIST_FILTER_CONTROL_CLASS, 'gap-2 py-2 sm:gap-3')}>
             <HostPortalAgeRangeSlider
               min={props.ageBounds.min}
               max={props.ageBounds.max}
@@ -98,7 +111,7 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
               onChange={props.onAgeRangeChange}
               className="relative min-w-0 flex-1"
             />
-            <span className="shrink-0 text-sm font-semibold tabular-nums text-gray-800">
+            <span className="shrink-0 text-xs font-semibold tabular-nums text-gray-800 sm:text-sm">
               {atFullAgeRange
                 ? `${props.ageBounds.min}–${props.ageBounds.max} yrs`
                 : `${props.selectedAgeMin}–${props.selectedAgeMax} yrs`}
@@ -106,8 +119,8 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
           </div>
         </div>
 
-        <div>
-          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+        <div className={cn('min-w-0', hasFacilities && 'col-span-1')}>
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:mb-1.5 sm:text-[11px]">
             Sort
           </p>
           <div className={cn(LIST_FILTER_CONTROL_CLASS, 'relative py-0')}>
@@ -120,7 +133,7 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
               onChange={(event) =>
                 props.onSortChange(event.target.value as PortalSessionSortEnum)
               }
-              className="w-full appearance-none bg-transparent py-2.5 pl-9 pr-8 text-sm font-medium text-gray-800 focus:outline-none"
+              className="w-full appearance-none bg-transparent py-2 pl-9 pr-8 text-sm font-medium text-gray-800 focus:outline-none sm:py-2.5"
             >
               <option value={PortalSessionSortEnum.START_DATE}>Start date</option>
               <option value={PortalSessionSortEnum.NAME}>Name</option>

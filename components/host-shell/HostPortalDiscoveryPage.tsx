@@ -26,11 +26,10 @@ import { HostPortalFilterBar } from './HostPortalFilterBar';
 import { HostPortalSessionList } from './HostPortalSessionList';
 import { HostPortalScheduleTab } from './HostPortalScheduleTab';
 import { BrandLogo } from '@/components/ui/BrandLogo';
+import { useHostPortalEmbedResize } from './useHostPortalEmbedResize';
 
 const EMPTY_EVENTS: IDiscoveryApiEvent[] = [];
 const EVENTS_PAGE_LIMIT = 200;
-const IFRAME_RESIZE_DEBOUNCE_MS = 100;
-const IFRAME_INITIAL_RESIZE_DELAY_MS = 500;
 
 interface IHostPortalDiscoveryPageProps {
   initialPrograms: Program[];
@@ -88,6 +87,7 @@ export function HostPortalDiscoveryPage({
   const [totalServerEvents, setTotalServerEvents] = useState(initialTotalServerEvents);
   const [loadingMore, setLoadingMore] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const embedRootRef = useRef<HTMLDivElement>(null);
   const useListLayout = isSessionsListPortalLayout(config);
   const brand = resolvePortalBrandColors(config);
   const linkTarget = resolvePortalScheduleLinkTarget(config);
@@ -154,46 +154,10 @@ export function HostPortalDiscoveryPage({
     });
   }, [config.slug]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || window.self === window.top) {
-      return;
-    }
-
-    let resizeTimeout: ReturnType<typeof setTimeout>;
-
-    const measureEmbedHeight = (): number =>
-      Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
-
-    const sendHeight = () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        window.parent.postMessage(
-          {
-            type: 'discovery-resize',
-            height: measureEmbedHeight(),
-            slug: config.slug,
-          },
-          '*',
-        );
-      }, IFRAME_RESIZE_DEBOUNCE_MS);
-    };
-
-    window.scrollTo(0, 0);
-    sendHeight();
-    const initialResizeTimer = setTimeout(sendHeight, IFRAME_INITIAL_RESIZE_DELAY_MS);
-
-    const resizeObserver = new ResizeObserver(sendHeight);
-    resizeObserver.observe(document.body);
-    resizeObserver.observe(document.documentElement);
-    window.addEventListener('resize', sendHeight);
-
-    return () => {
-      clearTimeout(resizeTimeout);
-      clearTimeout(initialResizeTimer);
-      resizeObserver.disconnect();
-      window.removeEventListener('resize', sendHeight);
-    };
-  }, [config.slug, viewMode, eventsFetched, sessionCards.length, useListLayout]);
+  const isEmbedded = useHostPortalEmbedResize(embedRootRef, {
+    slug: config.slug,
+    remeasureKeys: [viewMode, eventsFetched, sessionCards.length, filters, useListLayout],
+  });
 
   useEffect(() => {
     if (eventsFetched) {
@@ -359,7 +323,8 @@ export function HostPortalDiscoveryPage({
 
   return (
     <div
-      className="min-h-screen bg-gray-50"
+      ref={embedRootRef}
+      className={cn('bg-gray-50', !isEmbedded && 'min-h-screen')}
       style={{ fontFamily: config.branding.fontFamily || 'inherit' }}
     >
       {config.gtmId && <GoogleTagManager gtmId={config.gtmId} pageSlug={config.slug} />}
@@ -520,12 +485,14 @@ export function HostPortalDiscoveryPage({
         )}
       </main>
 
+      {!isEmbedded && (
       <footer className="border-t border-gray-200 bg-white mt-4">
         <div className="max-w-7xl mx-auto px-3 py-3 text-xs text-gray-500 flex justify-between">
           <span style={{ color: brand.primaryColor }}>{config.branding.companyName}</span>
           <span>Powered by Bond Sports</span>
         </div>
       </footer>
+      )}
     </div>
   );
 }

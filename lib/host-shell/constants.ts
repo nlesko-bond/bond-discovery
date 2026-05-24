@@ -12,3 +12,4 @@ export {
   BOND_HOST_MESSAGE_REQUEST_CHROME_OFFSET,
   EMBED_CHROME_QUERY_PARAM,
 } from '@/lib/host-shell/embed-chrome';
+export { BOND_HOST_MESSAGE_REQUEST_RESIZE } from '@/lib/host-shell/embed-resize';

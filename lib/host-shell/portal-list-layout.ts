@@ -8,6 +8,8 @@ const MILLISECONDS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 const MIN_PORTAL_EVENT_HORIZON_MONTHS = 3;
 const MAX_PORTAL_EVENT_HORIZON_MONTHS = 18;
 const PORTAL_EVENT_HORIZON_BUFFER_MONTHS = 1;
+const PORTAL_AGE_SLIDER_MIN = 0;
+const PORTAL_AGE_SLIDER_DEFAULT_MAX = 18;
 
 export interface IPortalHeroMetadata {
   eyebrow: string;
@@ -34,28 +36,22 @@ export function derivePortalAgeBounds(cards: IHostPortalSessionCardModel[]): {
   min: number;
   max: number;
 } {
-  let min = Number.POSITIVE_INFINITY;
-  let max = Number.NEGATIVE_INFINITY;
+  let dataMax = Number.NEGATIVE_INFINITY;
 
   cards.forEach((card) => {
-    const ageMatch = card.ageRange?.match(/([\d.]+)\s*[-–]\s*([\d.]+)/);
-    if (ageMatch) {
-      min = Math.min(min, parseFloat(ageMatch[1]));
-      max = Math.max(max, parseFloat(ageMatch[2]));
-      return;
-    }
-    const singleMatch = card.ageRange?.match(/([\d.]+)/);
-    if (singleMatch) {
-      const value = parseFloat(singleMatch[1]);
-      min = Math.min(min, value);
-      max = Math.max(max, value);
+    if (card.ageMax !== undefined) {
+      dataMax = Math.max(dataMax, card.ageMax);
     }
   });
 
-  if (!Number.isFinite(min) || !Number.isFinite(max)) {
-    return { min: 0, max: 18 };
+  if (!Number.isFinite(dataMax)) {
+    return { min: PORTAL_AGE_SLIDER_MIN, max: PORTAL_AGE_SLIDER_DEFAULT_MAX };
   }
-  return { min: Math.floor(min), max: Math.ceil(max) };
+
+  return {
+    min: PORTAL_AGE_SLIDER_MIN,
+    max: Math.ceil(dataMax),
+  };
 }
 
 /**
