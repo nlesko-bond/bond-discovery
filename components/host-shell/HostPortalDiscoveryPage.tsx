@@ -7,9 +7,16 @@ import type { DiscoveryConfig, DiscoveryFilters, Program, ViewMode } from '@/typ
 import { GoogleTagManager } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
 import {
-  isSessionsListPortalLayout,
+  isHostPortalSessionLayout,
 } from '@/lib/host-shell/portal-config';
 import { derivePortalEventHorizonMonths } from '@/lib/host-shell/portal-list-layout';
+import {
+  isPortalSessionLayoutToggleAllowed,
+  PORTAL_SESSION_LAYOUT_QUERY_KEY,
+  resolvePortalSessionLayout,
+  resolvePortalSessionLayoutDefault,
+} from '@/lib/host-shell/portal-session-layout';
+import { PortalSessionLayoutEnum } from '@/types';
 import { HostPortalSessionsListView } from './list/HostPortalSessionsListView';
 import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
 import { cn } from '@/lib/utils';
@@ -88,7 +95,12 @@ export function HostPortalDiscoveryPage({
   const [loadingMore, setLoadingMore] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const embedRootRef = useRef<HTMLDivElement>(null);
-  const useListLayout = isSessionsListPortalLayout(config);
+  const useSessionPortalShell = isHostPortalSessionLayout(config);
+  const sessionLayout = resolvePortalSessionLayout(
+    config,
+    urlSearchParams.get(PORTAL_SESSION_LAYOUT_QUERY_KEY),
+  );
+  const showSessionLayoutToggle = isPortalSessionLayoutToggleAllowed(config);
   const brand = resolvePortalBrandColors(config);
   const linkTarget = resolvePortalScheduleLinkTarget(config);
 
@@ -156,14 +168,21 @@ export function HostPortalDiscoveryPage({
 
   const isEmbedded = useHostPortalEmbedResize(embedRootRef, {
     slug: config.slug,
-    remeasureKeys: [viewMode, eventsFetched, sessionCards.length, filters, useListLayout],
+    remeasureKeys: [
+      viewMode,
+      eventsFetched,
+      sessionCards.length,
+      filters,
+      useSessionPortalShell,
+      sessionLayout,
+    ],
   });
 
   useEffect(() => {
     if (eventsFetched) {
       return;
     }
-    if (viewMode !== 'schedule' && !useListLayout) {
+    if (viewMode !== 'schedule' && !(useSessionPortalShell && sessionLayout === PortalSessionLayoutEnum.LIST)) {
       return;
     }
 
@@ -178,7 +197,7 @@ export function HostPortalDiscoveryPage({
 
     const params = new URLSearchParams();
     params.set('slug', config.slug);
-    if (useListLayout && sessionCards.length > 0) {
+    if (useSessionPortalShell && sessionLayout === PortalSessionLayoutEnum.LIST && sessionCards.length > 0) {
       params.set('horizonMonths', String(derivePortalEventHorizonMonths(sessionCards)));
     }
 
@@ -216,7 +235,7 @@ export function HostPortalDiscoveryPage({
       });
 
     return () => abortController.abort();
-  }, [viewMode, eventsFetched, config.slug, useListLayout, sessionCards]);
+  }, [viewMode, eventsFetched, config.slug, useSessionPortalShell, sessionLayout, sessionCards]);
 
   const loadMoreEvents = useCallback(() => {
     if (loadingMore || apiEvents.length >= totalServerEvents) {
@@ -298,6 +317,20 @@ export function HostPortalDiscoveryPage({
     [filters, pathname, router, urlSearchParams, viewMode],
   );
 
+  const setSessionLayout = useCallback(
+    (layout: PortalSessionLayoutEnum) => {
+      const params = new URLSearchParams(urlSearchParams.toString());
+      const defaultLayout = resolvePortalSessionLayoutDefault(config);
+      if (layout === defaultLayout) {
+        params.delete(PORTAL_SESSION_LAYOUT_QUERY_KEY);
+      } else {
+        params.set(PORTAL_SESSION_LAYOUT_QUERY_KEY, layout);
+      }
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [config, pathname, router, urlSearchParams],
+  );
+
   const backToSessionsList = useCallback(() => {
     const nextFilters: DiscoveryFilters = {
       ...filters,
@@ -326,7 +359,7 @@ export function HostPortalDiscoveryPage({
     >
       {config.gtmId && <GoogleTagManager gtmId={config.gtmId} pageSlug={config.slug} />}
 
-      {!useListLayout && (
+      {!useSessionPortalShell && (
       <header
         className="border-b px-3 py-3 sm:px-4"
         style={{
@@ -406,7 +439,7 @@ export function HostPortalDiscoveryPage({
       </header>
       )}
 
-      {!useListLayout && (
+      {!useSessionPortalShell && (
       <HostPortalFilterBar
         filters={filters}
         onFiltersChange={handleFiltersChange}
@@ -418,8 +451,8 @@ export function HostPortalDiscoveryPage({
       />
       )}
 
-      <main className={useListLayout ? 'pb-8' : 'max-w-7xl mx-auto px-3 sm:px-4 pb-8'}>
-        {useListLayout ? (
+      <main className={useSessionPortalShell ? 'pb-8' : 'max-w-7xl mx-auto px-3 sm:px-4 pb-8'}>
+        {useSessionPortalShell ? (
           <HostPortalSessionsListView
             cards={sessionCards}
             config={config}
@@ -429,6 +462,9 @@ export function HostPortalDiscoveryPage({
             apiEvents={apiEvents}
             eventsFetched={eventsFetched}
             viewMode={viewMode}
+            sessionLayout={sessionLayout}
+            onSessionLayoutChange={setSessionLayout}
+            showSessionLayoutToggle={showSessionLayoutToggle}
             onOpenSchedule={openScheduleForSession}
             onBackToSessions={backToSessionsList}
             scheduleContent={

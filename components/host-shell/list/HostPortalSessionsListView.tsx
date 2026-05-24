@@ -2,17 +2,18 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { DiscoveryConfig, DiscoveryFilters, ViewMode } from '@/types';
-import { PortalSessionSortEnum } from '@/types';
+import { PortalSessionLayoutEnum, PortalSessionSortEnum } from '@/types';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
 import type { IPortalFilterOptions } from '@/lib/host-shell/portal-filter-options';
 import type { IDiscoveryApiEvent } from '@/lib/host-shell/portal-schedule-events';
 import {
   buildPortalHeroMetadata,
   derivePortalAgeBounds,
-  isPortalHeroEnabled,
   sortPortalSessionCards,
 } from '@/lib/host-shell/portal-list-layout';
+import { shouldShowPortalSessionHero } from '@/lib/host-shell/portal-session-layout';
 import { buildSessionTimeChipsBySessionId } from '@/lib/host-shell/portal-session-events';
+import { HostPortalSessionList } from '../HostPortalSessionList';
 import { HostPortalHeroBanner } from './HostPortalHeroBanner';
 import { HostPortalListFilterBar } from './HostPortalListFilterBar';
 import { HostPortalSessionListRow } from './HostPortalSessionListRow';
@@ -26,6 +27,9 @@ interface IHostPortalSessionsListViewProps {
   apiEvents: IDiscoveryApiEvent[];
   eventsFetched: boolean;
   viewMode: ViewMode;
+  sessionLayout: PortalSessionLayoutEnum;
+  onSessionLayoutChange?: (layout: PortalSessionLayoutEnum) => void;
+  showSessionLayoutToggle?: boolean;
   onOpenSchedule?: (programId: string, sessionId: string) => void;
   onBackToSessions?: () => void;
   scheduleContent?: ReactNode;
@@ -40,6 +44,9 @@ export function HostPortalSessionsListView({
   apiEvents,
   eventsFetched,
   viewMode,
+  sessionLayout,
+  onSessionLayoutChange,
+  showSessionLayoutToggle = false,
   onOpenSchedule,
   onBackToSessions,
   scheduleContent,
@@ -48,6 +55,7 @@ export function HostPortalSessionsListView({
   const ageBounds = useMemo(() => derivePortalAgeBounds(cards), [cards]);
   const [selectedAgeMin, setSelectedAgeMin] = useState(ageBounds.min);
   const [selectedAgeMax, setSelectedAgeMax] = useState(ageBounds.max);
+  const isListLayout = sessionLayout === PortalSessionLayoutEnum.LIST;
 
   useEffect(() => {
     setSelectedAgeMin(ageBounds.min);
@@ -75,7 +83,7 @@ export function HostPortalSessionsListView({
   );
   const heroSport = sortedCards.find((card) => card.sport)?.sport;
   const heroMetadata = buildPortalHeroMetadata(config, sortedCards);
-  const showHero = isPortalHeroEnabled(config) && viewMode === 'programs';
+  const showHero = shouldShowPortalSessionHero(config, sessionLayout) && viewMode === 'programs';
   const scheduleSessionLabel =
     filters.sessionIds?.length === 1
       ? sortedCards.find((card) => card.sessionId === filters.sessionIds?.[0])?.name
@@ -98,29 +106,42 @@ export function HostPortalSessionsListView({
         scheduleMode={viewMode === 'schedule'}
         scheduleSessionLabel={scheduleSessionLabel}
         onBackToSessions={onBackToSessions}
+        sessionLayout={sessionLayout}
+        onSessionLayoutChange={onSessionLayoutChange}
+        showSessionLayoutToggle={showSessionLayoutToggle && viewMode === 'programs'}
       />
       {viewMode === 'programs' ? (
-        <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6">
-          {!eventsFetched && (
-            <p className="mb-4 text-sm text-gray-500">Loading class times…</p>
-          )}
-          {sortedCards.length === 0 ? (
-            <p className="py-12 text-center text-sm text-gray-500">No sessions match your filters.</p>
-          ) : (
-            <ul className="space-y-4">
-              {sortedCards.map((card) => (
-                <li key={card.sessionId}>
-                  <HostPortalSessionListRow
-                    card={card}
-                    config={config}
-                    timeChips={timeChipsBySession.get(card.sessionId) ?? []}
-                    onOpenSchedule={onOpenSchedule}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        isListLayout ? (
+          <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6">
+            {!eventsFetched && (
+              <p className="mb-4 text-sm text-gray-500">Loading class times…</p>
+            )}
+            {sortedCards.length === 0 ? (
+              <p className="py-12 text-center text-sm text-gray-500">No sessions match your filters.</p>
+            ) : (
+              <ul className="space-y-4">
+                {sortedCards.map((card) => (
+                  <li key={card.sessionId}>
+                    <HostPortalSessionListRow
+                      card={card}
+                      config={config}
+                      timeChips={timeChipsBySession.get(card.sessionId) ?? []}
+                      onOpenSchedule={onOpenSchedule}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <div className="mx-auto max-w-7xl px-3 sm:px-6">
+            <HostPortalSessionList
+              cards={sortedCards}
+              config={config}
+              onOpenSchedule={onOpenSchedule}
+            />
+          </div>
+        )
       ) : (
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">{scheduleContent}</div>
       )}

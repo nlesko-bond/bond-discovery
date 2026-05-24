@@ -1,6 +1,7 @@
 import {
   HostPortalLayoutEnum,
   PortalAccentSourceEnum,
+  PortalSessionLayoutEnum,
   type FeatureConfig,
 } from '@/types';
 
@@ -29,6 +30,20 @@ function resolvePortalAccentSource(
   }
   if (raw === PortalAccentSourceEnum.SPORT || raw === 'sport') {
     return PortalAccentSourceEnum.SPORT;
+  }
+  return undefined;
+}
+
+function resolvePortalSessionLayoutDefault(
+  features: Record<string, unknown>,
+): PortalSessionLayoutEnum | undefined {
+  const raw =
+    features.portalSessionLayoutDefault ?? features.portal_session_layout_default;
+  if (raw === PortalSessionLayoutEnum.LIST || raw === 'list') {
+    return PortalSessionLayoutEnum.LIST;
+  }
+  if (raw === PortalSessionLayoutEnum.GRID || raw === 'grid') {
+    return PortalSessionLayoutEnum.GRID;
   }
   return undefined;
 }
@@ -70,9 +85,17 @@ export function normalizePortalFeatureFields(
   | 'portalHeroTitle'
   | 'portalHeroSubtitle'
   | 'portalAccentSource'
+  | 'portalSessionLayoutDefault'
+  | 'allowPortalSessionLayoutToggle'
 > {
   const hostPortalLayout = resolveHostPortalLayout(features);
   const portalAccentSource = resolvePortalAccentSource(features);
+  const portalSessionLayoutDefault = resolvePortalSessionLayoutDefault(features);
+  const allowPortalSessionLayoutToggle = resolveOptionalBoolean(
+    features,
+    'allowPortalSessionLayoutToggle',
+    'allow_portal_session_layout_toggle',
+  );
   const portalHeroEnabled = resolveOptionalBoolean(
     features,
     'portalHeroEnabled',
@@ -92,6 +115,8 @@ export function normalizePortalFeatureFields(
   return {
     ...(hostPortalLayout !== undefined && { hostPortalLayout }),
     ...(portalAccentSource !== undefined && { portalAccentSource }),
+    ...(portalSessionLayoutDefault !== undefined && { portalSessionLayoutDefault }),
+    ...(allowPortalSessionLayoutToggle !== undefined && { allowPortalSessionLayoutToggle }),
     ...(portalHeroEnabled !== undefined && { portalHeroEnabled }),
     ...(portalHeroTitle !== undefined && { portalHeroTitle }),
     ...(portalHeroSubtitle !== undefined && { portalHeroSubtitle }),

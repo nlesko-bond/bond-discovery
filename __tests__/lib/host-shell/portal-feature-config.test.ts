@@ -3,7 +3,7 @@ import {
   isHostPortalSessionLayoutValue,
   normalizePortalFeatureFields,
 } from '@/lib/host-shell/portal-feature-config';
-import { HostPortalLayoutEnum, PortalAccentSourceEnum } from '@/types';
+import { HostPortalLayoutEnum, PortalAccentSourceEnum, PortalSessionLayoutEnum } from '@/types';
 
 describe('normalizePortalFeatureFields', () => {
   it('reads snake_case portal feature keys', () => {
@@ -21,6 +21,20 @@ describe('normalizePortalFeatureFields', () => {
       portalHeroEnabled: false,
       portalHeroTitle: 'Soccer.',
       portalHeroSubtitle: 'Subcopy',
+    });
+  });
+
+  it('reads session layout toggle fields', () => {
+    expect(
+      normalizePortalFeatureFields({
+        host_portal_layout: 'sessions_first',
+        portal_session_layout_default: 'grid',
+        allow_portal_session_layout_toggle: true,
+      }),
+    ).toEqual({
+      hostPortalLayout: HostPortalLayoutEnum.SESSIONS_FIRST,
+      portalSessionLayoutDefault: PortalSessionLayoutEnum.GRID,
+      allowPortalSessionLayoutToggle: true,
     });
   });
 

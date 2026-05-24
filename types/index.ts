@@ -398,6 +398,11 @@ export enum PortalAccentSourceEnum {
   BRANDING = 'branding',
 }
 
+export enum PortalSessionLayoutEnum {
+  LIST = 'list',
+  GRID = 'grid',
+}
+
 export interface FeatureConfig {
   showPricing: boolean;
   showAvailability: boolean;
@@ -433,6 +438,10 @@ export interface FeatureConfig {
   portalHeroSubtitle?: string;
   /** Hero / session strip accents: sport palette vs organization brand colors */
   portalAccentSource?: PortalAccentSourceEnum;
+  /** Default session presentation on portal: list rows vs grid cards */
+  portalSessionLayoutDefault?: PortalSessionLayoutEnum;
+  /** When true, users can switch list/grid via icon toggle (URL: sessionLayout=) */
+  allowPortalSessionLayoutToggle?: boolean;
   // Tab visibility
   enabledTabs?: EnabledTab[]; // Which tabs to show (default: ['programs', 'schedule'])
   // Program filtering mode

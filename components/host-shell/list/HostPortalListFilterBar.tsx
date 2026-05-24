@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, ArrowUpDown, MapPin } from 'lucide-react';
+import { ArrowLeft, ArrowUpDown, LayoutGrid, LayoutList, MapPin } from 'lucide-react';
 import type { DiscoveryConfig, DiscoveryFilters } from '@/types';
-import { PortalSessionSortEnum } from '@/types';
+import { PortalSessionLayoutEnum, PortalSessionSortEnum } from '@/types';
 import type { IPortalFilterOptions } from '@/lib/host-shell/portal-filter-options';
 import { resolvePortalUiColors } from '@/lib/host-shell/portal-accent-theme';
 import { HostPortalMultiSelectDropdown } from '../HostPortalMultiSelectDropdown';
@@ -14,6 +14,63 @@ const LIST_FILTER_CONTROL_CLASS =
   'flex min-h-[40px] w-full items-center rounded-lg border border-gray-200 bg-white px-3 shadow-sm sm:min-h-[42px]';
 
 const COMPACT_SORT_CONTROL_SIZE_PX = 40;
+const COMPACT_LAYOUT_TOGGLE_SIZE_PX = 40;
+
+interface IHostPortalSessionLayoutToggleProps {
+  layout: PortalSessionLayoutEnum;
+  onLayoutChange: (layout: PortalSessionLayoutEnum) => void;
+  accentColor: string;
+}
+
+function HostPortalSessionLayoutToggle({
+  layout,
+  onLayoutChange,
+  accentColor,
+}: IHostPortalSessionLayoutToggleProps) {
+  return (
+    <div
+      className="flex shrink-0 rounded-lg border border-gray-200 bg-white p-0.5 shadow-sm"
+      style={{ height: COMPACT_LAYOUT_TOGGLE_SIZE_PX }}
+      role="group"
+      aria-label="Session layout"
+    >
+      <button
+        type="button"
+        aria-pressed={layout === PortalSessionLayoutEnum.LIST}
+        aria-label="List view"
+        onClick={() => onLayoutChange(PortalSessionLayoutEnum.LIST)}
+        className={cn(
+          'flex h-full items-center justify-center rounded-md px-2 transition-colors',
+          layout === PortalSessionLayoutEnum.LIST ? 'text-white' : 'text-gray-500 hover:bg-gray-50',
+        )}
+        style={
+          layout === PortalSessionLayoutEnum.LIST
+            ? { backgroundColor: accentColor }
+            : undefined
+        }
+      >
+        <LayoutList size={18} aria-hidden />
+      </button>
+      <button
+        type="button"
+        aria-pressed={layout === PortalSessionLayoutEnum.GRID}
+        aria-label="Grid view"
+        onClick={() => onLayoutChange(PortalSessionLayoutEnum.GRID)}
+        className={cn(
+          'flex h-full items-center justify-center rounded-md px-2 transition-colors',
+          layout === PortalSessionLayoutEnum.GRID ? 'text-white' : 'text-gray-500 hover:bg-gray-50',
+        )}
+        style={
+          layout === PortalSessionLayoutEnum.GRID
+            ? { backgroundColor: accentColor }
+            : undefined
+        }
+      >
+        <LayoutGrid size={18} aria-hidden />
+      </button>
+    </div>
+  );
+}
 
 interface IHostPortalListSortControlProps {
   sort: PortalSessionSortEnum;
@@ -86,6 +143,9 @@ interface IHostPortalListFilterBarProps {
   scheduleMode?: boolean;
   scheduleSessionLabel?: string;
   onBackToSessions?: () => void;
+  sessionLayout?: PortalSessionLayoutEnum;
+  onSessionLayoutChange?: (layout: PortalSessionLayoutEnum) => void;
+  showSessionLayoutToggle?: boolean;
 }
 
 export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
@@ -95,6 +155,10 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
     props.selectedAgeMin === props.ageBounds.min &&
     props.selectedAgeMax === props.ageBounds.max;
   const hasFacilities = props.options.facilities.length > 0;
+  const showLayoutToggle =
+    props.showSessionLayoutToggle &&
+    props.sessionLayout !== undefined &&
+    props.onSessionLayoutChange !== undefined;
 
   const facilityControl = hasFacilities ? (
     <HostPortalMultiSelectDropdown
@@ -138,6 +202,14 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
     </div>
   );
 
+  const layoutToggleControl = showLayoutToggle ? (
+    <HostPortalSessionLayoutToggle
+      layout={props.sessionLayout!}
+      onLayoutChange={props.onSessionLayoutChange!}
+      accentColor={secondaryColor}
+    />
+  ) : null;
+
   return (
     <div className={cn('relative z-40 border-b border-gray-200 bg-white', props.scheduleMode && 'sticky top-0')}>
       {props.scheduleMode && props.onBackToSessions && (
@@ -158,66 +230,77 @@ export function HostPortalListFilterBar(props: IHostPortalListFilterBarProps) {
         </div>
       )}
 
-      <div className="mx-auto max-w-7xl px-3 py-3 sm:px-6 sm:py-4 md:hidden">
-        <div className="flex items-end gap-2">
-          {hasFacilities && (
-            <div className="min-w-0 flex-1">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                Facility
-              </p>
-              {facilityControl}
+      {!props.scheduleMode && (
+        <>
+          <div className="mx-auto max-w-7xl px-3 py-3 sm:px-6 sm:py-4 md:hidden">
+            <div className="flex items-end gap-2">
+              {hasFacilities && (
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                    Facility
+                  </p>
+                  {facilityControl}
+                </div>
+              )}
+              <div className={cn('flex shrink-0 items-end gap-2', !hasFacilities && 'ml-auto')}>
+                {layoutToggleControl}
+                <div>
+                  {!hasFacilities && (
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      Sort
+                    </p>
+                  )}
+                  <HostPortalListSortControl
+                    sort={props.sort}
+                    onSortChange={props.onSortChange}
+                    compact
+                  />
+                </div>
+              </div>
             </div>
-          )}
-          <div className={cn(!hasFacilities && 'ml-auto')}>
-            {!hasFacilities && (
+            <div className="mt-2.5">
               <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                Age
+              </p>
+              {ageControl}
+            </div>
+          </div>
+
+          <div className="mx-auto hidden max-w-7xl items-end gap-4 px-6 py-4 md:flex">
+            {hasFacilities && (
+              <div className="min-w-0 flex-1">
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  Facility
+                </p>
+                {facilityControl}
+              </div>
+            )}
+
+            <div className="min-w-0 flex-[1.4]">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                Age
+              </p>
+              {ageControl}
+            </div>
+
+            <div className="min-w-0 w-full max-w-[11rem] shrink-0">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                 Sort
               </p>
+              <HostPortalListSortControl sort={props.sort} onSortChange={props.onSortChange} />
+            </div>
+
+            {layoutToggleControl && (
+              <div className="shrink-0 self-end pb-0.5">
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  View
+                </p>
+                {layoutToggleControl}
+              </div>
             )}
-            <HostPortalListSortControl
-              sort={props.sort}
-              onSortChange={props.onSortChange}
-              compact
-            />
           </div>
-        </div>
-        <div className="mt-2.5">
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-            Age
-          </p>
-          {ageControl}
-        </div>
-      </div>
-
-      <div
-        className={cn(
-          'mx-auto hidden max-w-7xl gap-4 px-6 py-4 md:grid md:items-end',
-          hasFacilities ? 'grid-cols-3' : 'grid-cols-2',
-        )}
-      >
-        {hasFacilities && (
-          <div className="min-w-0">
-            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-              Facility
-            </p>
-            {facilityControl}
-          </div>
-        )}
-
-        <div className="min-w-0">
-          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-            Age
-          </p>
-          {ageControl}
-        </div>
-
-        <div className={cn('min-w-0', !hasFacilities && 'md:max-w-[14rem] md:justify-self-end')}>
-          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-            Sort
-          </p>
-          <HostPortalListSortControl sort={props.sort} onSortChange={props.onSortChange} />
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }

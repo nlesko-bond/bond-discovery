@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { BOND_ENV_OPTIONS, DEFAULT_BOND_ENV, type BondEnv } from '@/lib/bond-env';
 import type { BondEmbedPortalTemplate } from '@/types';
-import { PortalAccentSourceEnum } from '@/types';
+import { PortalAccentSourceEnum, PortalSessionLayoutEnum } from '@/types';
 
 interface PageConfig {
   id: string;
@@ -88,6 +88,8 @@ interface PageConfig {
     portalHeroTitle?: string;
     portalHeroSubtitle?: string;
     portalAccentSource?: 'sport' | 'branding';
+    portalSessionLayoutDefault?: 'list' | 'grid';
+    allowPortalSessionLayoutToggle?: boolean;
     // Discovery cache controls
     discoveryCacheEnabled?: boolean;
     availabilityCacheTtl?: number;
@@ -1412,6 +1414,64 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                       Public <code className="bg-gray-100 px-1 rounded text-xs">/&#123;slug&#125;</code> and embed are unchanged.
                     </p>
                   </div>
+                  {(config.features.hostPortalLayout === 'sessions_list' ||
+                    config.features.hostPortalLayout === 'sessions_first') && (
+                    <div className="md:col-span-2 space-y-4 rounded-lg border border-gray-200 p-4">
+                      <h3 className="text-sm font-semibold text-gray-900">Session list vs grid</h3>
+                      <p className="text-xs text-gray-500">
+                        Default presentation on the portal sessions shell. When the visitor toggle is
+                        enabled, list/grid icons appear in the filter bar (
+                        <code className="rounded bg-gray-100 px-1">?sessionLayout=list|grid</code>).
+                      </p>
+                      <div>
+                        <label className="label">Default session view</label>
+                        <select
+                          className="input"
+                          value={
+                            config.features.portalSessionLayoutDefault ||
+                            (config.features.hostPortalLayout === 'sessions_first' ? 'grid' : 'list')
+                          }
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              features: {
+                                ...config.features,
+                                portalSessionLayoutDefault: e.target.value as 'list' | 'grid',
+                              },
+                            })
+                          }
+                        >
+                          <option value={PortalSessionLayoutEnum.LIST}>List rows (hero-friendly)</option>
+                          <option value={PortalSessionLayoutEnum.GRID}>Grid cards</option>
+                        </select>
+                      </div>
+                      <label className="flex items-start gap-3 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          className="mt-0.5 rounded border-gray-300"
+                          checked={config.features.allowPortalSessionLayoutToggle === true}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              features: {
+                                ...config.features,
+                                allowPortalSessionLayoutToggle: e.target.checked,
+                              },
+                            })
+                          }
+                        />
+                        <span>
+                          <span className="font-medium text-gray-900">
+                            Allow visitors to switch list / grid
+                          </span>
+                          <span className="mt-1 block text-xs text-gray-500">
+                            Shows list and grid icons in the filter bar. Hero banner appears only in
+                            list view.
+                          </span>
+                        </span>
+                      </label>
+                    </div>
+                  )}
                   <div className="md:col-span-2">
                     <PortalSessionsBrandingControls
                       config={config}
