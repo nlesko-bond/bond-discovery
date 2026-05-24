@@ -9,6 +9,7 @@ import {
 } from '@/types';
 import { supabase, getSupabaseAdmin, DiscoveryPageRow } from './supabase';
 import { DEFAULT_BOND_ENV, resolveBondEnv } from './bond-env';
+import { normalizePortalFeatureFields } from './host-shell/portal-feature-config';
 
 /**
  * Convert database row to DiscoveryConfig
@@ -63,14 +64,9 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
   const mobileDefaultScheduleView =
     features.mobileDefaultScheduleView ?? features.mobile_default_schedule_view;
 
-  const hostPortalLayoutRaw =
-    features.hostPortalLayout ?? features.host_portal_layout;
+  const portalFeatureFields = normalizePortalFeatureFields(features);
   const hostPortalLayout =
-    hostPortalLayoutRaw === HostPortalLayoutEnum.SESSIONS_FIRST
-      ? HostPortalLayoutEnum.SESSIONS_FIRST
-      : hostPortalLayoutRaw === HostPortalLayoutEnum.SESSIONS_LIST
-        ? HostPortalLayoutEnum.SESSIONS_LIST
-        : HostPortalLayoutEnum.LEGACY_PROGRAMS;
+    portalFeatureFields.hostPortalLayout ?? HostPortalLayoutEnum.LEGACY_PROGRAMS;
 
   return {
     id: row.id,
@@ -110,6 +106,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
           ? features.spaceColumnLabel.trim()
           : undefined,
       hostPortalLayout,
+      ...portalFeatureFields,
     },
     allowedParams: row.allowed_params || [],
     defaultParams: row.default_params || {},

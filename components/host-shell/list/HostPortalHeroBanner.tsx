@@ -2,7 +2,9 @@
 
 import type { IPortalHeroMetadata } from '@/lib/host-shell/portal-list-layout';
 import type { DiscoveryConfig } from '@/types';
+import { PortalAccentSourceEnum } from '@/types';
 import { resolvePortalUiColors } from '@/lib/host-shell/portal-accent-theme';
+import { resolvePortalBrandingLogoUrl } from '@/lib/host-shell/portal-branding';
 import { HostPortalSportIcon } from '../HostPortalSportIcon';
 
 interface IHostPortalHeroBannerProps {
@@ -12,7 +14,11 @@ interface IHostPortalHeroBannerProps {
 }
 
 export function HostPortalHeroBanner({ metadata, config, sport }: IHostPortalHeroBannerProps) {
-  const { visualTheme } = resolvePortalUiColors(config, sport);
+  const { visualTheme, accentSource } = resolvePortalUiColors(config, sport);
+  const logoUrl = resolvePortalBrandingLogoUrl(config);
+  const useOrgBranding = accentSource === PortalAccentSourceEnum.BRANDING;
+  const showSportWatermark = !useOrgBranding && Boolean(sport);
+  const showOrgLogo = useOrgBranding && Boolean(logoUrl);
 
   return (
     <section
@@ -29,7 +35,10 @@ export function HostPortalHeroBanner({ metadata, config, sport }: IHostPortalHer
           backgroundSize: '32px 32px',
         }}
       />
-      {sport && (
+      {showOrgLogo && logoUrl && (
+        <HeroOrgLogo logoUrl={logoUrl} companyName={config.branding.companyName} />
+      )}
+      {showSportWatermark && sport && (
         <HeroWatermark sport={sport} />
       )}
       <div className="relative mx-auto max-w-7xl">
@@ -46,6 +55,20 @@ export function HostPortalHeroBanner({ metadata, config, sport }: IHostPortalHer
         </p>
       </div>
     </section>
+  );
+}
+
+function HeroOrgLogo({ logoUrl, companyName }: { logoUrl: string; companyName: string }) {
+  return (
+    <div className="pointer-events-none absolute -right-4 top-1/2 hidden -translate-y-1/2 sm:block md:-right-6">
+      <img
+        src={logoUrl}
+        alt=""
+        aria-hidden
+        className="h-24 w-auto max-w-[12rem] object-contain opacity-90 brightness-0 invert md:h-32 md:max-w-[14rem]"
+      />
+      <span className="sr-only">{companyName}</span>
+    </div>
   );
 }
 

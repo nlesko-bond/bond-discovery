@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { BOND_ENV_OPTIONS, DEFAULT_BOND_ENV, type BondEnv } from '@/lib/bond-env';
 import type { BondEmbedPortalTemplate } from '@/types';
+import { PortalAccentSourceEnum } from '@/types';
 
 interface PageConfig {
   id: string;
@@ -145,6 +146,158 @@ function parseCommaSeparatedIds(value: string): string[] {
 function parseOriginsList(value: string): string[] {
   const parts = value.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
   return [...new Set(parts)];
+}
+
+interface IPortalSessionsBrandingControlsProps {
+  config: PageConfig;
+  setConfig: (next: PageConfig) => void;
+  onOpenBrandingTab?: () => void;
+  showLayoutHint?: boolean;
+}
+
+function PortalSessionsBrandingControls({
+  config,
+  setConfig,
+  onOpenBrandingTab,
+  showLayoutHint = false,
+}: IPortalSessionsBrandingControlsProps) {
+  const hostPortalLayout = config.features.hostPortalLayout || 'legacy_programs';
+  const isSessionsList = hostPortalLayout === 'sessions_list';
+  const isSessionsFirst = hostPortalLayout === 'sessions_first';
+  const isSessionsLayout = isSessionsList || isSessionsFirst;
+
+  if (showLayoutHint && isSessionsLayout) {
+    return null;
+  }
+
+  return (
+    <div className="mt-8 space-y-4 rounded-lg border border-gray-200 p-4">
+      <div>
+        <h3 className="text-base font-semibold text-gray-900">Portal sessions hero &amp; list</h3>
+        <p className="mt-1 text-sm text-gray-600">
+          Styles the hero banner and session row accents on{' '}
+          <code className="rounded bg-gray-100 px-1 text-xs">/portal/&#123;slug&#125;</code> when
+          portal layout is Sessions list or Sessions first.
+        </p>
+      </div>
+      {!isSessionsLayout && (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          Portal layout is still Legacy. Choose{' '}
+          <strong>Sessions list (hero + rows)</strong> under Filters → Partner host shell, then save.
+          {onOpenBrandingTab ? null : (
+            <>
+              {' '}
+              Hero and branding options below are saved now and apply once you switch layout.
+            </>
+          )}
+        </p>
+      )}
+      <label className="flex items-center gap-2 text-sm text-gray-700">
+        <input
+          type="checkbox"
+          checked={
+            isSessionsList
+              ? config.features.portalHeroEnabled !== false
+              : config.features.portalHeroEnabled === true
+          }
+          onChange={(e) =>
+            setConfig({
+              ...config,
+              features: {
+                ...config.features,
+                portalHeroEnabled: e.target.checked,
+              },
+            })
+          }
+        />
+        Show hero banner above filters
+      </label>
+      <div>
+        <label className="label">Hero title (optional)</label>
+        <input
+          type="text"
+          className="input"
+          placeholder="Soccer."
+          value={config.features.portalHeroTitle || ''}
+          onChange={(e) =>
+            setConfig({
+              ...config,
+              features: {
+                ...config.features,
+                portalHeroTitle: e.target.value || undefined,
+              },
+            })
+          }
+        />
+        <p className="mt-1 text-xs text-gray-500">
+          Default: sport label from API (e.g. Soccer.) or page name.
+        </p>
+      </div>
+      <div>
+        <label className="label">Hero subtitle (optional)</label>
+        <textarea
+          className="input min-h-[4rem]"
+          placeholder="All soccer programs at Coppermine. Filter by facility or age…"
+          value={config.features.portalHeroSubtitle || ''}
+          onChange={(e) =>
+            setConfig({
+              ...config,
+              features: {
+                ...config.features,
+                portalHeroSubtitle: e.target.value || undefined,
+              },
+            })
+          }
+        />
+        <p className="mt-1 text-xs text-gray-500">
+          Default: auto-generated from company name and sport.
+        </p>
+      </div>
+      <label className="flex items-start gap-3 text-sm text-gray-700">
+        <input
+          type="checkbox"
+          className="mt-0.5 rounded border-gray-300"
+          checked={config.features.portalAccentSource === PortalAccentSourceEnum.BRANDING}
+          onChange={(e) =>
+            setConfig({
+              ...config,
+              features: {
+                ...config.features,
+                portalAccentSource: e.target.checked
+                  ? PortalAccentSourceEnum.BRANDING
+                  : PortalAccentSourceEnum.SPORT,
+              },
+            })
+          }
+        />
+        <span>
+          <span className="font-medium text-gray-900">
+            Use organization branding on hero &amp; session list
+          </span>
+          <span className="mt-1 block text-xs text-gray-500">
+            Hero gradient, session strip, and register buttons use primary, secondary, and header
+            colors{onOpenBrandingTab ? ' on the Branding tab' : ' above'} (and logo when set). When
+            off, sport-specific colors and icons are used.
+          </span>
+        </span>
+      </label>
+      {!config.branding.logo && (
+        <p className="text-xs text-amber-700">
+          Add a logo URL{onOpenBrandingTab ? ' on the Branding tab' : ''} to show your mark on the
+          hero and session rows when org branding is enabled.
+        </p>
+      )}
+      {onOpenBrandingTab && (
+        <button
+          type="button"
+          className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+          onClick={onOpenBrandingTab}
+        >
+          Open Branding tab to edit colors &amp; logo
+        </button>
+      )}
+    </div>
+  );
 }
 
 export default function EditPagePage({ params }: { params: { slug: string } }) {
@@ -549,6 +702,8 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                 )}
               </div>
             </div>
+
+            <PortalSessionsBrandingControls config={config} setConfig={setConfig} />
           </div>
         )}
 
@@ -1256,95 +1411,14 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
                       Public <code className="bg-gray-100 px-1 rounded text-xs">/&#123;slug&#125;</code> and embed are unchanged.
                     </p>
                   </div>
-                  {(config.features.hostPortalLayout === 'sessions_list' ||
-                    config.features.hostPortalLayout === 'sessions_first') && (
-                    <div className="md:col-span-2 space-y-4 rounded-lg border border-gray-200 p-4">
-                      <h3 className="text-sm font-semibold text-gray-900">Portal hero banner</h3>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input
-                          type="checkbox"
-                          checked={
-                            config.features.hostPortalLayout === 'sessions_list'
-                              ? config.features.portalHeroEnabled !== false
-                              : config.features.portalHeroEnabled === true
-                          }
-                          onChange={(e) =>
-                            setConfig({
-                              ...config,
-                              features: {
-                                ...config.features,
-                                portalHeroEnabled: e.target.checked,
-                              },
-                            })
-                          }
-                        />
-                        Show hero banner above filters
-                      </label>
-                      <div>
-                        <label className="label">Hero title (optional)</label>
-                        <input
-                          type="text"
-                          className="input"
-                          placeholder="Soccer."
-                          value={config.features.portalHeroTitle || ''}
-                          onChange={(e) =>
-                            setConfig({
-                              ...config,
-                              features: {
-                                ...config.features,
-                                portalHeroTitle: e.target.value || undefined,
-                              },
-                            })
-                          }
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Default: sport label from API (e.g. Soccer.) or page name.
-                        </p>
-                      </div>
-                      <div>
-                        <label className="label">Hero subtitle (optional)</label>
-                        <textarea
-                          className="input min-h-[4rem]"
-                          placeholder="All soccer programs at Coppermine. Filter by facility or age…"
-                          value={config.features.portalHeroSubtitle || ''}
-                          onChange={(e) =>
-                            setConfig({
-                              ...config,
-                              features: {
-                                ...config.features,
-                                portalHeroSubtitle: e.target.value || undefined,
-                              },
-                            })
-                          }
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Default: auto-generated from company name and sport.
-                        </p>
-                      </div>
-                      <div>
-                        <label className="label">Session card & hero accents</label>
-                        <select
-                          className="input"
-                          value={config.features.portalAccentSource || 'sport'}
-                          onChange={(e) =>
-                            setConfig({
-                              ...config,
-                              features: {
-                                ...config.features,
-                                portalAccentSource: e.target.value as 'sport' | 'branding',
-                              },
-                            })
-                          }
-                        >
-                          <option value="sport">Sport defaults (per sport colors)</option>
-                          <option value="branding">Organization branding (primary / secondary / header)</option>
-                        </select>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Controls hero banner, session strip, and register button gradients. Filters and prices always use brand colors from the Branding tab.
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  <div className="md:col-span-2">
+                    <PortalSessionsBrandingControls
+                      config={config}
+                      setConfig={setConfig}
+                      showLayoutHint
+                      onOpenBrandingTab={() => setActiveTab('branding')}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

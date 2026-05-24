@@ -6,6 +6,7 @@ import {
   resolvePortalUiColors,
   resolvePortalVisualTheme,
 } from '@/lib/host-shell/portal-accent-theme';
+import { resolvePortalBrandingLogoUrl } from '@/lib/host-shell/portal-branding';
 
 function buildConfig(
   features: Partial<DiscoveryConfig['features']> = {},
@@ -65,6 +66,14 @@ describe('resolvePortalVisualTheme', () => {
       iconBackground: '#AABBCC',
       iconColor: '#112233',
     });
+  });
+});
+
+describe('resolvePortalBrandingLogoUrl', () => {
+  it('returns trimmed logo url when set', () => {
+    const config = buildConfig();
+    config.branding.logo = '  https://example.com/logo.png  ';
+    expect(resolvePortalBrandingLogoUrl(config)).toBe('https://example.com/logo.png');
   });
 });
 

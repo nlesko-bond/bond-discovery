@@ -9,7 +9,9 @@ import type {
 } from '@/lib/host-shell/session-card-model';
 import type { IHostPortalSessionTimeChip } from '@/lib/host-shell/portal-session-events';
 import { formatSessionTimeChipLabel } from '@/lib/host-shell/portal-session-events';
+import { PortalAccentSourceEnum } from '@/types';
 import { resolvePortalUiColors } from '@/lib/host-shell/portal-accent-theme';
+import { resolvePortalBrandingLogoUrl } from '@/lib/host-shell/portal-branding';
 import { hasHostPortalSessionDescription } from '@/lib/host-shell/portal-session-description';
 import { HostPortalSessionInfoDialog } from './HostPortalSessionInfoDialog';
 import { resolvePortalScheduleLinkTarget } from '@/lib/host-shell/portal-schedule-events';
@@ -251,7 +253,11 @@ export function HostPortalSessionListRow({
   onOpenSchedule,
 }: IHostPortalSessionListRowProps) {
   const uiColors = resolvePortalUiColors(config, card.sport);
-  const { visualTheme, primaryColor } = uiColors;
+  const { visualTheme, primaryColor, accentSource } = uiColors;
+  const logoUrl = resolvePortalBrandingLogoUrl(config);
+  const useOrgBranding = accentSource === PortalAccentSourceEnum.BRANDING;
+  const showOrgLogo = useOrgBranding && Boolean(logoUrl);
+  const showSportIcon = !useOrgBranding && Boolean(card.sport);
   const linkTarget = resolvePortalScheduleLinkTarget(config);
   const [infoOpen, setInfoOpen] = useState(false);
   const [expandedSlotKey, setExpandedSlotKey] = useState<string | null>(null);
@@ -350,7 +356,14 @@ export function HostPortalSessionListRow({
               {card.ageRange}
             </span>
           )}
-          {card.sport && (
+          {showOrgLogo && logoUrl && (
+            <img
+              src={logoUrl}
+              alt=""
+              className="h-10 w-auto max-w-[5.5rem] object-contain brightness-0 invert"
+            />
+          )}
+          {showSportIcon && card.sport && (
             <HostPortalSportIcon sportId={card.sport} size={40} className="brightness-0 invert" />
           )}
         </div>
