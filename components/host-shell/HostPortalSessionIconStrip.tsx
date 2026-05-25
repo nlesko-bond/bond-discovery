@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { MapPin, Users } from 'lucide-react';
 import { resolvePortalUiColors } from '@/lib/host-shell/portal-accent-theme';
 import type { DiscoveryConfig } from '@/types';
-import { getSportLabel } from '@/lib/utils';
+import { cn, getSportLabel } from '@/lib/utils';
 import { HostPortalSportIcon } from './HostPortalSportIcon';
 
 interface IHostPortalSessionIconStripProps {
@@ -14,6 +14,11 @@ interface IHostPortalSessionIconStripProps {
   ageRange?: string;
   genderLabel?: string;
 }
+
+const ICON_STRIP_GRADIENT_FROM_ALPHA_HEX = '40';
+const ICON_STRIP_GRADIENT_MID_ALPHA_HEX = '28';
+const ICON_STRIP_GRADIENT_END_ALPHA_HEX = '14';
+const ICON_STRIP_ACCENT_BAR_HEIGHT_CLASS = 'h-1';
 
 function formatAgeGenderLine(ageRange?: string, genderLabel?: string): string | undefined {
   if (ageRange && genderLabel) {
@@ -69,11 +74,11 @@ export function HostPortalSessionIconStrip({
     <div
       className="relative overflow-hidden px-4 py-3 border-b border-gray-100"
       style={{
-        background: `linear-gradient(135deg, ${visualTheme.gradientFrom}18 0%, ${secondaryColor}12 55%, ${primaryColor}08 100%)`,
+        background: `linear-gradient(135deg, ${visualTheme.gradientFrom}${ICON_STRIP_GRADIENT_FROM_ALPHA_HEX} 0%, ${secondaryColor}${ICON_STRIP_GRADIENT_MID_ALPHA_HEX} 55%, ${primaryColor}${ICON_STRIP_GRADIENT_END_ALPHA_HEX} 100%)`,
       }}
     >
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-0.5"
+        className={cn('pointer-events-none absolute inset-x-0 top-0', ICON_STRIP_ACCENT_BAR_HEIGHT_CLASS)}
         style={{
           background: `linear-gradient(90deg, ${visualTheme.gradientFrom}, ${visualTheme.gradientTo})`,
         }}
