@@ -4,6 +4,11 @@ export interface StepLink {
   icon: string;
 }
 
+export interface TemplateMeta {
+  kickoffDividerAfterStepIndex?: number;
+}
+
+
 export interface TemplateStep {
   title: string;
   time: string;
@@ -13,6 +18,8 @@ export interface TemplateStep {
   checklist?: string[];
   doneWhen: string;
   optional?: boolean;
+  /** When true, checklist shows CSV template download + upload for rentable spaces */
+  spacesCsvUpload?: boolean;
 }
 
 export interface Template {
@@ -20,6 +27,7 @@ export interface Template {
   name: string;
   steps: TemplateStep[];
   is_default: boolean;
+  meta?: TemplateMeta | null;
   created_at: string;
 }
 
@@ -35,6 +43,12 @@ export interface Org {
   /** HTTPS URL to a logo image, shown on the public onboarding checklist */
   logo_url?: string | null;
   status: 'active' | 'completed' | 'paused' | 'archived';
+  /** Target go-live date (YYYY-MM-DD) for Slack + internal dashboards */
+  expected_launch_date?: string | null;
+  spaces_upload_storage_path?: string | null;
+  spaces_upload_original_filename?: string | null;
+  spaces_uploaded_at?: string | null;
+  onboarding_notify_state?: Record<string, unknown>;
   created_at: string;
   completed_at: string | null;
 }

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { OnboardingLinkCard } from '@/app/admin/onboarding/components/OnboardingLinkCard';
-import type { TemplateStep } from '@/lib/onboarding/types';
+import type { Org, TemplateStep } from '@/lib/onboarding/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import {
   OrgActivitySection,
@@ -57,7 +57,9 @@ export default async function OnboardingOrgDetailPage({ params, searchParams }: 
     .limit(50);
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const onboardUrl = `${baseUrl.replace(/\/$/, '')}/onboard/${org.slug}`;
+  const baseTrim = baseUrl.replace(/\/$/, '');
+  const onboardUrl = `${baseTrim}/onboard/${org.slug}`;
+  const oo = org as Org;
 
   return (
     <div className="space-y-8">
@@ -88,6 +90,40 @@ export default async function OnboardingOrgDetailPage({ params, searchParams }: 
             <p className="text-xs font-medium uppercase text-gray-500">Contact</p>
             <p className="mt-1 text-gray-900">{org.contact_name ?? '—'}</p>
             <p className="text-sm text-gray-600">{org.contact_email ?? '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase text-gray-500">Expected launch</p>
+            <p className="mt-1 text-gray-900">{oo.expected_launch_date ?? '—'}</p>
+            <p className="mt-2 text-xs text-gray-500">Editable in Organization settings.</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase text-gray-500">Rentable spaces CSV</p>
+            {oo.spaces_uploaded_at ? (
+              <>
+                <p className="mt-1 text-sm text-gray-900">{oo.spaces_upload_original_filename ?? 'uploaded CSV'}</p>
+                <p className="text-xs text-gray-500">
+                  Last upload{' '}
+                  <time dateTime={oo.spaces_uploaded_at}>
+                    {new Date(oo.spaces_uploaded_at).toLocaleString()}
+                  </time>
+                </p>
+                <a
+                  href={`${baseTrim}/api/admin/onboarding/orgs/${org.id}/spaces-file`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex text-sm font-medium text-blue-700 hover:underline"
+                >
+                  Open secure download link
+                </a>
+              </>
+            ) : (
+              <>
+                <p className="mt-1 text-sm text-gray-600">Waiting for CSV from the onboarding checklist.</p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Files live in Supabase Storage bucket <span className="font-mono">onboarding-uploads</span>.
+                </p>
+              </>
+            )}
           </div>
         </div>
 

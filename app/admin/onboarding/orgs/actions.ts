@@ -115,9 +115,19 @@ export async function updateOrg(
   const pinRaw = String(formData.get('pin') ?? '').trim();
   const status = String(formData.get('status') ?? 'active');
   const logoUrlRaw = String(formData.get('logo_url') ?? '').trim();
+  const launchDateRaw = String(formData.get('expected_launch_date') ?? '').trim();
 
   if (!name || !slug) {
     return { success: false, error: 'Name and slug are required.' };
+  }
+
+  let expected_launch_date: string | null = null;
+  if (launchDateRaw) {
+    const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+    if (!ISO_DATE.test(launchDateRaw)) {
+      return { success: false, error: 'Expected launch date must be YYYY-MM-DD or left blank.' };
+    }
+    expected_launch_date = launchDateRaw;
   }
 
   let logo_url: string | null = null;
@@ -134,7 +144,11 @@ export async function updateOrg(
     logo_url = parsed.toString();
   }
 
-  const { data: existing } = await admin.from('orgs').select('pin, slug').eq('id', orgId).single();
+  const { data: existing } = await admin
+    .from('orgs')
+    .select('pin, slug')
+    .eq('id', orgId)
+    .single();
 
   const pin = pinRaw === '' ? existing?.pin ?? null : pinRaw;
 
@@ -150,6 +164,7 @@ export async function updateOrg(
       pin,
       status,
       logo_url,
+      expected_launch_date,
     })
     .eq('id', orgId);
 

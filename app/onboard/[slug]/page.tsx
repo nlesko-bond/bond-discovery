@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
-import type { TemplateStep } from '@/lib/onboarding/types';
+import type { Org, TemplateMeta, TemplateStep } from '@/lib/onboarding/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { OnboardingChecklist } from './components/OnboardingChecklist';
 import { PinGate } from './components/PinGate';
@@ -50,16 +50,25 @@ export default async function OnboardSlugPage({ params }: Props) {
   }
 
   const steps = template.steps as TemplateStep[];
+  const templateMetaRaw = template.meta as TemplateMeta | undefined | null;
+  const kickoffDividerAfterStepIndex =
+    typeof templateMetaRaw?.kickoffDividerAfterStepIndex === 'number'
+      ? templateMetaRaw.kickoffDividerAfterStepIndex
+      : null;
 
-  const logoUrl = (org as { logo_url?: string | null }).logo_url ?? null;
+  const o = org as Org;
 
   return (
     <OnboardingChecklist
       orgId={org.id}
+      slug={org.slug}
       orgName={org.name}
-      logoUrl={logoUrl}
+      logoUrl={o.logo_url ?? null}
       steps={steps}
       initialProgress={progressRows ?? []}
+      kickoffDividerAfterStepIndex={kickoffDividerAfterStepIndex}
+      spacesUploadedAt={o.spaces_uploaded_at ?? null}
+      spacesUploadOriginalFilename={o.spaces_upload_original_filename ?? null}
     />
   );
 }

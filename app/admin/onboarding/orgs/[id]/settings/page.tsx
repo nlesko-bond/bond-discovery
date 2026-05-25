@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
+import type { Org } from '@/lib/onboarding/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { saveOrgSettings } from '../../actions';
 
@@ -27,7 +28,8 @@ export default async function OnboardingOrgSettingsPage({ params, searchParams }
   const { data: staff } = await admin.from('staff').select('id, name, email').order('name');
 
   const save = saveOrgSettings.bind(null, id);
-  const logoUrl = (org as { logo_url?: string | null }).logo_url ?? null;
+  const oo = org as Org;
+  const logoUrl = oo.logo_url ?? null;
 
   return (
     <div className="mx-auto max-w-xl space-y-8">
@@ -124,6 +126,21 @@ export default async function OnboardingOrgSettingsPage({ params, searchParams }
             defaultValue={org.contact_email ?? ''}
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
           />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-900" htmlFor="expected_launch_date">
+            Expected launch date (optional)
+          </label>
+          <input
+            id="expected_launch_date"
+            name="expected_launch_date"
+            type="date"
+            defaultValue={oo.expected_launch_date ?? ''}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Used for onboarding stall checks and Slack updates when edited. Clearing the date removes it.
+          </p>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-900" htmlFor="template_id">

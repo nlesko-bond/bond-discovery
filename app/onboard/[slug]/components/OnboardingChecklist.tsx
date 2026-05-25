@@ -1,33 +1,27 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import { BOND_LOGO_URL } from '@/lib/onboarding/bond-brand';
 import type { StepProgress, TemplateStep } from '@/lib/onboarding/types';
 import { fireOnboardingConfetti, getStepEncouragement } from '@/lib/onboarding/encouragements';
 import { getOnboardingBrowserClient } from '@/lib/onboarding/supabase-browser';
+import { SpacesCsvUploader } from './SpacesCsvUploader';
 import { toggleStep } from '../actions';
 
 const BONDY_CELEBRATION = '/images/onboarding/bondy-celebration.png';
 
-const GOALS = [
-  'Payments and banking are connected so you can collect revenue.',
-  'Staff roles reflect who does what in your facility.',
-  'Taxes and accounting codes are configured before products go live.',
-  'Rentals and bookable inventory are set up for customers.',
-  'Programs and registrations are ready for classes and leagues.',
-  'Forms and waivers protect your organization and participants.',
-];
-
 type Props = {
   orgId: string;
+  slug: string;
   orgName: string;
-  /** Public image URL from org settings (optional) */
   logoUrl?: string | null;
   steps: TemplateStep[];
   initialProgress: StepProgress[];
+  kickoffDividerAfterStepIndex?: number | null;
+  spacesUploadedAt?: string | null;
+  spacesUploadOriginalFilename?: string | null;
 };
-
 function CheckIcon() {
   return (
     <svg
@@ -51,10 +45,14 @@ function CheckIcon() {
 
 export function OnboardingChecklist({
   orgId,
+  slug,
   orgName,
   logoUrl,
   steps,
   initialProgress,
+  kickoffDividerAfterStepIndex = null,
+  spacesUploadedAt = null,
+  spacesUploadOriginalFilename = null,
 }: Props) {
   const byIndex = useMemo(() => {
     const m = new Map<number, StepProgress>();
@@ -302,6 +300,13 @@ export function OnboardingChecklist({
           Hi {orgName} — this checklist walks through the core setup steps so you can go live with confidence.
           Work through each section in order; your Bond team sees your progress in real time.
         </p>
+        {kickoffDividerAfterStepIndex != null ? (
+          <p className="mt-3 rounded-[10px] border border-bond-border bg-white px-4 py-3 text-left text-[15px] leading-relaxed text-bond-muted-dark shadow-sm sm:text-[16px]">
+            Part 1 highlights everything needed before your kickoff call with Bond. Sections marked{' '}
+            <span className="font-semibold text-bond-text">Before kickoff</span> are in that bucket; afterward you will
+            see <span className="font-semibold text-bond-text">After kickoff</span> guidance.
+          </p>
+        ) : null}
         <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-[15px] text-bond-muted-dark sm:text-base">
           <span>⏱ Total time: {estimatedTotal}</span>
           <span className="text-bond-border">|</span>
@@ -340,114 +345,143 @@ export function OnboardingChecklist({
         </div>
       </div>
 
-      <section className="mb-10 rounded-[12px] border border-bond-border bg-white p-5 sm:p-6">
-        <h2 className="border-l-[3px] border-bond-accent pl-3 text-[15px] font-semibold text-bond-text">
-          Goals for this setup
-        </h2>
-        <ul className="mt-3 space-y-2 text-[15px] leading-relaxed text-bond-muted-dark sm:text-base">
-          {GOALS.map((g) => (
-            <li key={g} className="flex gap-2">
-              <span className="text-bond-green-dark">✓</span>
-              <span>{g}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
       <div className="space-y-3">
         {steps.map((step, idx) => {
           const p = progressMap.get(idx);
           const done = Boolean(p?.completed);
           const isOpen = expanded.has(idx);
           const showOptional = step.optional;
+          const showKickoffDivider =
+            kickoffDividerAfterStepIndex != null && kickoffDividerAfterStepIndex === idx;
 
           return (
-            <div
-              key={idx}
-              id={`onboard-step-${idx}`}
-              className={`scroll-mt-4 overflow-hidden rounded-[12px] border bg-white transition-colors ${
-                done ? 'border-bond-green-light' : 'border-[0.5px] border-bond-border'
-              }`}
-            >
-              <div className="flex items-start gap-3 p-4 sm:p-5">
-                <button
-                  type="button"
-                  className={`mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[6px] border-[1.5px] border-[#d0cec8] transition-colors ${
-                    done ? 'border-bond-green bg-bond-green' : 'bg-white'
-                  }`}
-                  onClick={() => onCheck(idx, !done)}
-                  disabled={pending}
-                  aria-label={done ? 'Mark incomplete' : 'Mark complete'}
-                  aria-checked={done}
-                  role="checkbox"
-                >
-                  {done ? <CheckIcon /> : null}
-                </button>
-                <button type="button" onClick={() => toggleExpanded(idx)} className="min-w-0 flex-1 text-left">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-[999px] bg-bond-brand px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                      Step {idx + 1}
-                    </span>
-                    {showOptional ? (
-                      <span className="rounded-[999px] bg-bond-optional-bg px-2 py-0.5 text-[10px] font-medium text-bond-optional-text">
-                        Optional
-                      </span>
-                    ) : null}
-                    <span className="rounded-[999px] bg-bond-badge-bg px-2 py-0.5 text-[11px] text-bond-badge-text">
-                      {step.time}
-                    </span>
-                  </div>
-                  <h3
-                    className={`mt-1 text-[1.05rem] font-semibold leading-snug sm:text-[1.125rem] ${
-                      done ? 'text-bond-green-dark' : 'text-bond-text'
+            <Fragment key={idx}>
+              <div
+                id={`onboard-step-${idx}`}
+                className={`scroll-mt-4 overflow-hidden rounded-[12px] border bg-white transition-colors ${
+                  done ? 'border-bond-green-light' : 'border-[0.5px] border-bond-border'
+                }`}
+              >
+                <div className="flex items-start gap-3 p-4 sm:p-5">
+                  <button
+                    type="button"
+                    className={`mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[6px] border-[1.5px] border-[#d0cec8] transition-colors ${
+                      done ? 'border-bond-green bg-bond-green' : 'bg-white'
                     }`}
+                    onClick={() => onCheck(idx, !done)}
+                    disabled={pending}
+                    aria-label={done ? 'Mark incomplete' : 'Mark complete'}
+                    aria-checked={done}
+                    role="checkbox"
                   >
-                    {step.title}
-                  </h3>
-                </button>
+                    {done ? <CheckIcon /> : null}
+                  </button>
+                  <button type="button" onClick={() => toggleExpanded(idx)} className="min-w-0 flex-1 text-left">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-[999px] bg-bond-brand px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                        Step {idx + 1}
+                      </span>
+                      {showOptional ? (
+                        <span className="rounded-[999px] bg-bond-optional-bg px-2 py-0.5 text-[10px] font-medium text-bond-optional-text">
+                          Optional
+                        </span>
+                      ) : null}
+                      <span className="rounded-[999px] bg-bond-badge-bg px-2 py-0.5 text-[11px] text-bond-badge-text">
+                        {step.time}
+                      </span>
+                      {kickoffDividerAfterStepIndex !== null &&
+                      idx <= kickoffDividerAfterStepIndex ? (
+                        <span className="rounded-[999px] bg-bond-brand-light px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-bond-brand">
+                          Before kickoff
+                        </span>
+                      ) : null}
+                      {kickoffDividerAfterStepIndex !== null &&
+                      idx > kickoffDividerAfterStepIndex ? (
+                        <span className="rounded-[999px] bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-700">
+                          After kickoff
+                        </span>
+                      ) : null}
+                    </div>
+                    <h3
+                      className={`mt-1 text-[1.05rem] font-semibold leading-snug sm:text-[1.125rem] ${
+                        done ? 'text-bond-green-dark' : 'text-bond-text'
+                      }`}
+                    >
+                      {step.title}
+                    </h3>
+                  </button>
+                </div>
+
+                {isOpen ? (
+                  <div className="border-t border-bond-border px-4 pb-4 pt-0 pl-[52px] sm:px-5 sm:pb-5">
+                    <p className="mt-3 text-base leading-relaxed text-bond-muted-dark sm:text-[17px]">
+                      {step.description}
+                    </p>
+
+                    {step.note ? (
+                      <div className="mt-4 border-l-[3px] border-bond-note-border bg-bond-note-bg px-3 py-2 text-[15px] text-bond-note-text sm:text-base">
+                        {step.note}
+                      </div>
+                    ) : null}
+
+                    {step.checklist?.length ? (
+                      <ul className="mt-4 list-disc space-y-1 pl-5 text-[15px] text-bond-muted-dark sm:text-base">
+                        {step.checklist.map((c) => (
+                          <li key={c}>{c}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+
+                    <div className="mt-4 flex flex-col gap-2">
+                      {step.links.map((link) => (
+                        <a
+                          key={link.url}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-[7px] bg-bond-brand-light px-3 py-2 text-[15px] font-medium text-bond-brand transition hover:opacity-90 sm:text-base"
+                        >
+                          <span>{link.icon}</span>
+                          {link.label}
+                        </a>
+                      ))}
+                    </div>
+
+                    {step.spacesCsvUpload ? (
+                      <SpacesCsvUploader
+                        slug={slug}
+                        uploadedAt={spacesUploadedAt}
+                        originalFilename={spacesUploadOriginalFilename}
+                      />
+                    ) : null}
+
+                    <div className="mt-4 rounded-[8px] bg-bond-green-bg px-3 py-2 text-[15px] text-bond-green-dark sm:text-base">
+                      <strong className="font-semibold">Done when:</strong> {step.doneWhen}
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
-              {isOpen ? (
-                <div className="border-t border-bond-border px-4 pb-4 pt-0 pl-[52px] sm:px-5 sm:pb-5">
-                  <p className="mt-3 text-base leading-relaxed text-bond-muted-dark sm:text-[17px]">
-                    {step.description}
+              {showKickoffDivider ? (
+                <section
+                  className="my-10 rounded-[12px] border border-bond-accent bg-bond-brand-light/30 px-5 py-8 text-center shadow-sm sm:px-8"
+                  aria-label="Part two"
+                >
+                  <div className="mx-auto mb-4 flex items-center gap-4">
+                    <div className="h-px flex-1 bg-bond-border" aria-hidden />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.28em] text-bond-muted-dark">
+                      Part 2
+                    </span>
+                    <div className="h-px flex-1 bg-bond-border" aria-hidden />
+                  </div>
+                  <p className="text-[16px] font-semibold text-bond-text sm:text-[17px]">After kickoff</p>
+                  <p className="mx-auto mt-3 max-w-[36rem] text-[15px] leading-relaxed text-bond-muted-dark sm:text-[16px]">
+                    The rest can wait until after our kickoff call, but feel free to take a look and get started if you
+                    feel up for it!
                   </p>
-
-                  {step.note ? (
-                    <div className="mt-4 border-l-[3px] border-bond-note-border bg-bond-note-bg px-3 py-2 text-[15px] text-bond-note-text sm:text-base">
-                      {step.note}
-                    </div>
-                  ) : null}
-
-                  {step.checklist?.length ? (
-                    <ul className="mt-4 list-disc space-y-1 pl-5 text-[15px] text-bond-muted-dark sm:text-base">
-                      {step.checklist.map((c) => (
-                        <li key={c}>{c}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-
-                  <div className="mt-4 flex flex-col gap-2">
-                    {step.links.map((link) => (
-                      <a
-                        key={link.url}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 rounded-[7px] bg-bond-brand-light px-3 py-2 text-[15px] font-medium text-bond-brand transition hover:opacity-90 sm:text-base"
-                      >
-                        <span>{link.icon}</span>
-                        {link.label}
-                      </a>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 rounded-[8px] bg-bond-green-bg px-3 py-2 text-[15px] text-bond-green-dark sm:text-base">
-                    <strong className="font-semibold">Done when:</strong> {step.doneWhen}
-                  </div>
-                </div>
+                </section>
               ) : null}
-            </div>
+            </Fragment>
           );
         })}
       </div>
@@ -467,8 +501,8 @@ export function OnboardingChecklist({
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bond-green-dark">Congratulations</p>
           <h2 className="mt-2 text-xl font-semibold text-bond-green-dark">You&apos;re all set</h2>
           <p className="mt-2 text-[15px] text-bond-muted-dark sm:text-base">
-            Required onboarding is complete. Your Bond team has been notified. Optional steps are still above if you
-            want to polish further.
+            Every required onboarding task is marked complete — amazing work. Your Bond onboarding lead can monitor
+            progress in real time, and optional steps above are still available if you want extras.
           </p>
         </section>
       ) : null}
@@ -495,15 +529,24 @@ export function OnboardingChecklist({
       ) : null}
 
       <footer className="mt-12 border-t border-bond-border pt-8 text-center text-[13px] text-bond-muted sm:text-sm">
-        <p>Questions? Reach out to your Bond onboarding contact or visit</p>
+        <p>For questions email</p>
         <a
-          href="https://help.bondsports.co"
-          className="mt-1 inline-block font-medium text-bond-brand underline decoration-bond-accent underline-offset-2"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="mailto:customersuccess@bondsports.co"
+          className="mt-2 inline-block text-[15px] font-semibold text-bond-brand underline decoration-bond-accent underline-offset-2"
         >
-          help.bondsports.co
+          customersuccess@bondsports.co
         </a>
+        <div className="mt-6 text-[13px] text-bond-muted">
+          Help center:{' '}
+          <a
+            href="https://help.bondsports.co"
+            className="font-medium text-bond-brand underline decoration-bond-accent underline-offset-2"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            help.bondsports.co
+          </a>
+        </div>
       </footer>
     </div>
   );
