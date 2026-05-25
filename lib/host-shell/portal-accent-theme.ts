@@ -41,6 +41,13 @@ function buildBrandingVisualTheme(brand: IPortalBrandColors): ISportVisualTheme 
   };
 }
 
+/**
+ * Org brand gradient used as the anchor for portal card accent waves.
+ */
+export function buildPortalOrgVisualTheme(config: DiscoveryConfig): ISportVisualTheme {
+  return buildBrandingVisualTheme(resolvePortalBrandColors(config));
+}
+
 export function resolvePortalVisualTheme(
   config: DiscoveryConfig,
   sportId?: string,

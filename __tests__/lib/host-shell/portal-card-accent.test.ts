@@ -92,26 +92,19 @@ describe('resolvePortalCardAccentMode', () => {
       PortalCardAccentModeEnum.SPORT,
     );
   });
-
-  it('uses sport accents when a sport filter is active even with many facilities', () => {
-    const cards = [
-      makeCard({ sessionId: 's1', sport: 'soccer' }),
-      makeCard({ sessionId: 's2', sport: 'basketball', facilityId: '645', facilityName: 'Du Burns' }),
-    ];
-
-    expect(
-      resolvePortalCardAccentMode(cards, { ...EMPTY_FILTERS, sports: ['soccer', 'basketball'] }),
-    ).toBe(PortalCardAccentModeEnum.SPORT);
-  });
 });
 
 describe('buildPortalCardAccentContext', () => {
-  it('returns distinct sport palettes per card in multi-sport mode', () => {
+  it('returns sport palettes when sport accent source is selected', () => {
     const cards = [
       makeCard({ sessionId: 's1', sport: 'soccer' }),
       makeCard({ sessionId: 's2', sport: 'basketball', facilityId: '645', facilityName: 'Du Burns' }),
     ];
-    const context = buildPortalCardAccentContext(buildConfig(), cards, EMPTY_FILTERS);
+    const context = buildPortalCardAccentContext(
+      buildConfig({ portalAccentSource: PortalAccentSourceEnum.SPORT }),
+      cards,
+      EMPTY_FILTERS,
+    );
 
     expect(context.mode).toBe(PortalCardAccentModeEnum.SPORT);
     expect(context.getCardVisualTheme(cards[0]).gradientFrom).toBe(
@@ -122,7 +115,7 @@ describe('buildPortalCardAccentContext', () => {
     );
   });
 
-  it('returns hue-shifted facility palettes anchored to the sport in single-sport mode', () => {
+  it('returns hue-shifted facility palettes anchored to org branding by default', () => {
     const cards = [
       makeCard({ sessionId: 's1', sport: 'soccer', facilityId: '639', facilityName: 'Sports Center' }),
       makeCard({ sessionId: 's2', sport: 'soccer', facilityId: '645', facilityName: 'Du Burns Arena' }),
@@ -130,14 +123,13 @@ describe('buildPortalCardAccentContext', () => {
     const context = buildPortalCardAccentContext(buildConfig(), cards, EMPTY_FILTERS);
     const sportsCenterTheme = context.getCardVisualTheme(cards[0]);
     const duBurnsTheme = context.getCardVisualTheme(cards[1]);
-    const soccerTheme = getSportVisualTheme('soccer');
 
     expect(context.mode).toBe(PortalCardAccentModeEnum.FACILITY);
-    expect(duBurnsTheme.gradientFrom).toBe(soccerTheme.gradientFrom);
+    expect(duBurnsTheme.gradientFrom).toBe('#112233');
     expect(sportsCenterTheme.gradientFrom).not.toBe(duBurnsTheme.gradientFrom);
   });
 
-  it('uses org branding for all cards when branding accent source is selected', () => {
+  it('returns distinct org-based sport waves when multiple sports are visible', () => {
     const cards = [
       makeCard({ sessionId: 's1', sport: 'soccer' }),
       makeCard({ sessionId: 's2', sport: 'basketball', facilityId: '645', facilityName: 'Du Burns' }),
@@ -148,7 +140,7 @@ describe('buildPortalCardAccentContext', () => {
       EMPTY_FILTERS,
     );
 
-    expect(context.getCardVisualTheme(cards[0]).gradientFrom).toBe('#112233');
     expect(context.getCardVisualTheme(cards[1]).gradientFrom).toBe('#112233');
+    expect(context.getCardVisualTheme(cards[0]).gradientFrom).not.toBe('#112233');
   });
 });

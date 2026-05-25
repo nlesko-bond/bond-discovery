@@ -6,6 +6,7 @@ import type { DiscoveryConfig } from '@/types';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
 import type { IPortalCardAccentContext } from '@/lib/host-shell/portal-card-accent';
 import { HostPortalSessionIconStrip } from './HostPortalSessionIconStrip';
+import { HostPortalSessionSegmentsPanel } from './HostPortalSessionSegmentsPanel';
 import { resolvePortalUiColors } from '@/lib/host-shell/portal-accent-theme';
 import { cn } from '@/lib/utils';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
@@ -129,7 +130,7 @@ export function HostPortalSessionCard({
   return (
     <article
       className={cn(
-        'flex h-full flex-col rounded-2xl bg-white ring-1 ring-gray-200/90 shadow-sm',
+        'flex h-full flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-gray-200/90 shadow-sm',
         'transition-shadow duration-300 hover:shadow-lg hover:ring-gray-300/90',
         segmentsOpen && 'ring-gray-300 shadow-md',
       )}
@@ -205,6 +206,14 @@ export function HostPortalSessionCard({
                 <ChevronDown size={16} className="shrink-0 text-gray-500" />
               )}
             </button>
+          )}
+
+          {segmentsOpen && showSegmentsButton && (
+            <HostPortalSessionSegmentsPanel
+              card={card}
+              config={config}
+              variant="inline"
+            />
           )}
 
           {pricingOpen && showPricingOptions && (

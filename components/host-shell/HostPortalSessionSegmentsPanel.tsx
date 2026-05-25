@@ -1,6 +1,5 @@
 'use client';
 
-import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { DiscoveryConfig } from '@/types';
 import type {
@@ -12,19 +11,18 @@ import { cn } from '@/lib/utils';
 interface IHostPortalSessionSegmentsPanelProps {
   card: IHostPortalSessionCardModel;
   config: DiscoveryConfig;
-  onClose: () => void;
-  className?: string;
+  variant?: 'inline' | 'standalone';
 }
 
 export function HostPortalSessionSegmentsPanel({
   card,
   config,
-  onClose,
-  className,
+  variant = 'standalone',
 }: IHostPortalSessionSegmentsPanelProps) {
   const [loadedSegments, setLoadedSegments] = useState<IHostPortalSegmentRow[]>(card.segments);
   const [segmentsLoading, setSegmentsLoading] = useState(false);
   const [segmentsError, setSegmentsError] = useState<string | null>(null);
+  const isInline = variant === 'inline';
 
   useEffect(() => {
     setLoadedSegments(card.segments);
@@ -72,35 +70,24 @@ export function HostPortalSessionSegmentsPanel({
   ]);
 
   return (
-    <section
-      id={`portal-segments-${card.sessionId}`}
+    <div
       className={cn(
-        'rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm',
-        className,
+        isInline
+          ? 'mt-2 space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-3'
+          : 'rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm',
       )}
       aria-label={`Segments for ${card.name}`}
     >
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Segments</p>
-          <p className="mt-0.5 truncate text-sm font-semibold text-gray-900">{card.name}</p>
-        </div>
-        <button
-          type="button"
-          className="shrink-0 rounded-md p-1.5 text-gray-500 hover:bg-white hover:text-gray-800"
-          aria-label="Close segments"
-          onClick={onClose}
-        >
-          <X size={18} aria-hidden />
-        </button>
-      </div>
+      {!isInline && (
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Segments</p>
+      )}
 
       {segmentsLoading && <p className="text-sm text-gray-500">Loading segments...</p>}
       {!segmentsLoading && segmentsError && (
         <p className="text-sm text-red-600">{segmentsError}</p>
       )}
       {!segmentsLoading && !segmentsError && loadedSegments.length > 0 && (
-        <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="space-y-2">
           {loadedSegments.map((segment) => (
             <li
               key={segment.id}
@@ -117,6 +104,6 @@ export function HostPortalSessionSegmentsPanel({
       {!segmentsLoading && !segmentsError && loadedSegments.length === 0 && (
         <p className="text-sm text-gray-500">No segments listed for this session.</p>
       )}
-    </section>
+    </div>
   );
 }

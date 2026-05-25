@@ -2,8 +2,8 @@ import type { DiscoveryConfig, DiscoveryFilters } from '@/types';
 import { PortalAccentSourceEnum } from '@/types';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
 import {
+  buildPortalOrgVisualTheme,
   resolvePortalAccentSource,
-  resolvePortalVisualTheme,
 } from '@/lib/host-shell/portal-accent-theme';
 import { shiftHexHue } from '@/lib/host-shell/portal-color-utils';
 import {
@@ -24,6 +24,7 @@ export interface IPortalCardAccentContext {
 }
 
 const FACILITY_HUE_WAVE_SHIFTS_DEG = [0, 32, -28, 48, -18, 22, -38, 14] as const;
+const SPORT_HUE_WAVE_SHIFTS_DEG = [0, 36, -32, 54, -22, 26] as const;
 const FACILITY_GRADIENT_TO_HUE_RATIO = 0.65;
 const FACILITY_ICON_BACKGROUND_HUE_RATIO = 0.25;
 
@@ -44,7 +45,7 @@ function collectDistinctSports(cards: IHostPortalSessionCardModel[]): string[] {
       sports.add(normalizeSportKey(card.sport));
     }
   });
-  return Array.from(sports);
+  return Array.from(sports).sort();
 }
 
 function collectSortedFacilityKeys(cards: IHostPortalSessionCardModel[]): string[] {
@@ -61,10 +62,7 @@ function collectSortedFacilityKeys(cards: IHostPortalSessionCardModel[]): string
     .map(([key]) => key);
 }
 
-function shiftSportVisualTheme(
-  theme: ISportVisualTheme,
-  hueShiftDeg: number,
-): ISportVisualTheme {
+function shiftVisualTheme(theme: ISportVisualTheme, hueShiftDeg: number): ISportVisualTheme {
   return {
     gradientFrom: shiftHexHue(theme.gradientFrom, hueShiftDeg),
     gradientTo: shiftHexHue(theme.gradientTo, hueShiftDeg * FACILITY_GRADIENT_TO_HUE_RATIO),
@@ -76,20 +74,17 @@ function shiftSportVisualTheme(
   };
 }
 
-function buildFacilityThemeMap(
-  anchorSportId: string | undefined,
-  facilityKeys: string[],
+function buildShiftedThemeMap(
+  baseTheme: ISportVisualTheme,
+  keys: string[],
+  shifts: readonly number[],
 ): Map<string, ISportVisualTheme> {
-  const baseTheme = getSportVisualTheme(anchorSportId);
-  const themeByFacility = new Map<string, ISportVisualTheme>();
-
-  facilityKeys.forEach((facilityKey, index) => {
-    const hueShift =
-      FACILITY_HUE_WAVE_SHIFTS_DEG[index % FACILITY_HUE_WAVE_SHIFTS_DEG.length];
-    themeByFacility.set(facilityKey, shiftSportVisualTheme(baseTheme, hueShift));
+  const themeByKey = new Map<string, ISportVisualTheme>();
+  keys.forEach((key, index) => {
+    const hueShift = shifts[index % shifts.length];
+    themeByKey.set(key, shiftVisualTheme(baseTheme, hueShift));
   });
-
-  return themeByFacility;
+  return themeByKey;
 }
 
 /**
@@ -115,42 +110,67 @@ export function resolvePortalCardAccentMode(
 }
 
 /**
- * Builds per-card visual themes: sport palette by default, facility hue waves when one sport spans many locations.
+ * Builds per-card visual themes. Org branding is the default anchor; facilities and sports
+ * get hue waves from that palette. Legacy sport accent source still uses sport palettes.
  */
 export function buildPortalCardAccentContext(
   config: DiscoveryConfig,
   cards: IHostPortalSessionCardModel[],
   filters: DiscoveryFilters,
 ): IPortalCardAccentContext {
-  if (resolvePortalAccentSource(config) === PortalAccentSourceEnum.BRANDING) {
-    const brandingTheme = resolvePortalVisualTheme(config);
-    return {
-      mode: PortalCardAccentModeEnum.SPORT,
-      getCardVisualTheme: () => brandingTheme,
-    };
-  }
-
+  const orgTheme = buildPortalOrgVisualTheme(config);
+  const useSportPalettes = resolvePortalAccentSource(config) === PortalAccentSourceEnum.SPORT;
   const mode = resolvePortalCardAccentMode(cards, filters);
 
-  if (mode === PortalCardAccentModeEnum.SPORT) {
+  if (mode === PortalCardAccentModeEnum.FACILITY) {
+    const facilityKeys = collectSortedFacilityKeys(cards);
+    const themeByFacility = buildShiftedThemeMap(
+      orgTheme,
+      facilityKeys,
+      FACILITY_HUE_WAVE_SHIFTS_DEG,
+    );
+
     return {
       mode,
-      getCardVisualTheme: (card) => getSportVisualTheme(card.sport),
+      anchorSportId: filters.sports?.[0] ?? cards.find((card) => card.sport)?.sport,
+      getCardVisualTheme: (card) =>
+        themeByFacility.get(resolveCardFacilityKey(card)) ?? orgTheme,
     };
   }
 
-  const anchorSportId =
-    filters.sports?.[0] ??
-    cards.find((card) => card.sport)?.sport ??
-    collectDistinctSports(cards)[0];
-  const facilityKeys = collectSortedFacilityKeys(cards);
-  const themeByFacility = buildFacilityThemeMap(anchorSportId, facilityKeys);
-  const anchorTheme = getSportVisualTheme(anchorSportId);
+  if (mode === PortalCardAccentModeEnum.SPORT) {
+    const distinctSports = collectDistinctSports(cards);
+
+    if (useSportPalettes) {
+      return {
+        mode,
+        getCardVisualTheme: (card) => getSportVisualTheme(card.sport),
+      };
+    }
+
+    if (distinctSports.length > 1) {
+      const themeBySport = buildShiftedThemeMap(
+        orgTheme,
+        distinctSports,
+        SPORT_HUE_WAVE_SHIFTS_DEG,
+      );
+      return {
+        mode,
+        getCardVisualTheme: (card) =>
+          card.sport
+            ? themeBySport.get(normalizeSportKey(card.sport)) ?? orgTheme
+            : orgTheme,
+      };
+    }
+
+    return {
+      mode,
+      getCardVisualTheme: () => orgTheme,
+    };
+  }
 
   return {
     mode,
-    anchorSportId,
-    getCardVisualTheme: (card) =>
-      themeByFacility.get(resolveCardFacilityKey(card)) ?? anchorTheme,
+    getCardVisualTheme: () => orgTheme,
   };
 }
