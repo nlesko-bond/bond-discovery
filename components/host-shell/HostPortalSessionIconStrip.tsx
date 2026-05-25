@@ -7,12 +7,15 @@ import type { DiscoveryConfig } from '@/types';
 import { cn, getSportLabel } from '@/lib/utils';
 import { HostPortalSportIcon } from './HostPortalSportIcon';
 
+import type { ISportVisualTheme } from '@/lib/host-shell/sport-visuals';
+
 interface IHostPortalSessionIconStripProps {
   config: DiscoveryConfig;
   sport?: string;
   facilityName?: string;
   ageRange?: string;
   genderLabel?: string;
+  visualTheme?: ISportVisualTheme;
 }
 
 const ICON_STRIP_GRADIENT_FROM_ALPHA_HEX = '40';
@@ -57,8 +60,11 @@ export function HostPortalSessionIconStrip({
   facilityName,
   ageRange,
   genderLabel,
+  visualTheme,
 }: IHostPortalSessionIconStripProps) {
-  const { primaryColor, secondaryColor, visualTheme } = resolvePortalUiColors(config, sport);
+  const uiColors = resolvePortalUiColors(config, sport, visualTheme);
+  const { primaryColor, secondaryColor } = uiColors;
+  const theme = uiColors.visualTheme;
   const sportLabel = sport ? getSportLabel(sport) : undefined;
   const ageGenderLine = formatAgeGenderLine(ageRange, genderLabel);
 
@@ -74,13 +80,13 @@ export function HostPortalSessionIconStrip({
     <div
       className="relative overflow-hidden px-4 py-3 border-b border-gray-100"
       style={{
-        background: `linear-gradient(135deg, ${visualTheme.gradientFrom}${ICON_STRIP_GRADIENT_FROM_ALPHA_HEX} 0%, ${secondaryColor}${ICON_STRIP_GRADIENT_MID_ALPHA_HEX} 55%, ${primaryColor}${ICON_STRIP_GRADIENT_END_ALPHA_HEX} 100%)`,
+        background: `linear-gradient(135deg, ${theme.gradientFrom}${ICON_STRIP_GRADIENT_FROM_ALPHA_HEX} 0%, ${secondaryColor}${ICON_STRIP_GRADIENT_MID_ALPHA_HEX} 55%, ${primaryColor}${ICON_STRIP_GRADIENT_END_ALPHA_HEX} 100%)`,
       }}
     >
       <div
         className={cn('pointer-events-none absolute inset-x-0 top-0', ICON_STRIP_ACCENT_BAR_HEIGHT_CLASS)}
         style={{
-          background: `linear-gradient(90deg, ${visualTheme.gradientFrom}, ${visualTheme.gradientTo})`,
+          background: `linear-gradient(90deg, ${theme.gradientFrom}, ${theme.gradientTo})`,
         }}
       />
       <div className="flex flex-wrap items-center gap-2">
@@ -88,16 +94,16 @@ export function HostPortalSessionIconStrip({
           <MetaChip
             icon={<HostPortalSportIcon sportId={sport} size={16} className="shrink-0" />}
             label={sportLabel}
-            iconBackground={visualTheme.iconBackground}
-            iconColor={visualTheme.iconColor}
+            iconBackground={theme.iconBackground}
+            iconColor={theme.iconColor}
           />
         )}
         {hasFacility && facilityName && (
           <MetaChip
             icon={<MapPin size={15} strokeWidth={2.25} aria-hidden />}
             label={facilityName}
-            iconBackground={`${primaryColor}12`}
-            iconColor={primaryColor}
+            iconBackground={theme.iconBackground}
+            iconColor={theme.iconColor}
           />
         )}
         {hasAgeGender && ageGenderLine && (

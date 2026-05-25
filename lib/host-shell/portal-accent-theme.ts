@@ -68,10 +68,11 @@ function withHexAlpha(hex: string, alpha: number): string {
 export function resolvePortalUiColors(
   config: DiscoveryConfig,
   sportId?: string,
+  visualThemeOverride?: ISportVisualTheme,
 ): IPortalUiColors {
   const brand = resolvePortalBrandColors(config);
   const accentSource = resolvePortalAccentSource(config);
-  const visualTheme = resolvePortalVisualTheme(config, sportId);
+  const visualTheme = visualThemeOverride ?? resolvePortalVisualTheme(config, sportId);
   const accentColor =
     accentSource === PortalAccentSourceEnum.BRANDING
       ? brand.secondaryColor

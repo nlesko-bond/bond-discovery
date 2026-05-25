@@ -4,6 +4,7 @@ import { Calendar, Clock, ChevronDown, ChevronUp, ExternalLink, X } from 'lucide
 import { useEffect, useState } from 'react';
 import type { DiscoveryConfig } from '@/types';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
+import type { IPortalCardAccentContext } from '@/lib/host-shell/portal-card-accent';
 import { HostPortalSessionIconStrip } from './HostPortalSessionIconStrip';
 import { resolvePortalUiColors } from '@/lib/host-shell/portal-accent-theme';
 import { cn } from '@/lib/utils';
@@ -16,6 +17,7 @@ interface IHostPortalSessionCardProps {
   card: IHostPortalSessionCardModel;
   config: DiscoveryConfig;
   hideRegistrationLinks?: boolean;
+  accentContext: IPortalCardAccentContext;
   segmentsOpen: boolean;
   onSegmentsOpenChange: (open: boolean) => void;
   onOpenSchedule?: (programId: string, sessionId: string) => void;
@@ -25,11 +27,17 @@ export function HostPortalSessionCard({
   card,
   config,
   hideRegistrationLinks = false,
+  accentContext,
   segmentsOpen,
   onSegmentsOpenChange,
   onOpenSchedule,
 }: IHostPortalSessionCardProps) {
-  const { primaryColor, secondaryColor, visualTheme } = resolvePortalUiColors(config, card.sport);
+  const cardVisualTheme = accentContext.getCardVisualTheme(card);
+  const { primaryColor, secondaryColor, visualTheme } = resolvePortalUiColors(
+    config,
+    card.sport,
+    cardVisualTheme,
+  );
   const showPricing = config.features.showPricing !== false;
   const showAgeGender = config.features.showAgeGender !== false;
   const showScheduleTab = (config.features.enabledTabs || ['programs', 'schedule']).includes(
@@ -132,6 +140,7 @@ export function HostPortalSessionCard({
         facilityName={card.facilityName}
         ageRange={showAgeGender ? card.ageRange : undefined}
         genderLabel={showAgeGender ? card.genderLabel : undefined}
+        visualTheme={cardVisualTheme}
       />
 
       <div className="flex flex-1 flex-col p-4 sm:p-5">

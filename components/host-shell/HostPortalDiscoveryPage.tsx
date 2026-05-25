@@ -493,6 +493,7 @@ export function HostPortalDiscoveryPage({
           <HostPortalSessionList
             cards={sessionCards}
             config={config}
+            filters={filters}
             onOpenSchedule={openScheduleForSession}
           />
         ) : (

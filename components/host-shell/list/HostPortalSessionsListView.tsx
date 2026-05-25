@@ -11,6 +11,7 @@ import {
   derivePortalAgeBounds,
   sortPortalSessionCards,
 } from '@/lib/host-shell/portal-list-layout';
+import { buildPortalCardAccentContext } from '@/lib/host-shell/portal-card-accent';
 import { shouldShowPortalSessionHero } from '@/lib/host-shell/portal-session-layout';
 import { buildSessionTimeChipsBySessionId } from '@/lib/host-shell/portal-session-events';
 import { HostPortalSessionList } from '../HostPortalSessionList';
@@ -74,6 +75,10 @@ export function HostPortalSessionsListView({
   };
 
   const sortedCards = useMemo(() => sortPortalSessionCards(cards, sort), [cards, sort]);
+  const accentContext = useMemo(
+    () => buildPortalCardAccentContext(config, sortedCards, filters),
+    [config, sortedCards, filters],
+  );
   const timeChipsBySession = useMemo(
     () =>
       buildSessionTimeChipsBySessionId(apiEvents, {
@@ -125,6 +130,7 @@ export function HostPortalSessionsListView({
                     <HostPortalSessionListRow
                       card={card}
                       config={config}
+                      accentContext={accentContext}
                       timeChips={timeChipsBySession.get(card.sessionId) ?? []}
                       onOpenSchedule={onOpenSchedule}
                     />
@@ -138,6 +144,7 @@ export function HostPortalSessionsListView({
             <HostPortalSessionList
               cards={sortedCards}
               config={config}
+              filters={filters}
               onOpenSchedule={onOpenSchedule}
             />
           </div>

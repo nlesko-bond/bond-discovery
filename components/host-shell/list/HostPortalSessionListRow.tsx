@@ -10,6 +10,7 @@ import type {
 import type { IHostPortalSessionTimeChip } from '@/lib/host-shell/portal-session-events';
 import { formatSessionTimeChipLabel } from '@/lib/host-shell/portal-session-events';
 import { resolvePortalUiColors } from '@/lib/host-shell/portal-accent-theme';
+import type { IPortalCardAccentContext } from '@/lib/host-shell/portal-card-accent';
 import { hasHostPortalSessionDescription } from '@/lib/host-shell/portal-session-description';
 import { HostPortalSessionInfoDialog } from './HostPortalSessionInfoDialog';
 import { resolvePortalScheduleLinkTarget } from '@/lib/host-shell/portal-schedule-events';
@@ -29,6 +30,7 @@ const SLOT_BUBBLE_OVERFLOW_FADE_WIDTH_PX = 48;
 interface IHostPortalSessionListRowProps {
   card: IHostPortalSessionCardModel;
   config: DiscoveryConfig;
+  accentContext: IPortalCardAccentContext;
   timeChips: IHostPortalSessionTimeChip[];
   onOpenSchedule?: (programId: string, sessionId: string) => void;
 }
@@ -247,10 +249,12 @@ function SessionSlotExpandPanel({
 export function HostPortalSessionListRow({
   card,
   config,
+  accentContext,
   timeChips,
   onOpenSchedule,
 }: IHostPortalSessionListRowProps) {
-  const uiColors = resolvePortalUiColors(config, card.sport);
+  const cardVisualTheme = accentContext.getCardVisualTheme(card);
+  const uiColors = resolvePortalUiColors(config, card.sport, cardVisualTheme);
   const { visualTheme, primaryColor } = uiColors;
   const linkTarget = resolvePortalScheduleLinkTarget(config);
   const [infoOpen, setInfoOpen] = useState(false);

@@ -1,23 +1,27 @@
 'use client';
 
 import { Fragment, useEffect, useState } from 'react';
-import type { DiscoveryConfig } from '@/types';
+import type { DiscoveryConfig, DiscoveryFilters } from '@/types';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
+import { buildPortalCardAccentContext } from '@/lib/host-shell/portal-card-accent';
 import { HostPortalSessionCard } from './HostPortalSessionCard';
 import { HostPortalSessionSegmentsPanel } from './HostPortalSessionSegmentsPanel';
 
 interface IHostPortalSessionListProps {
   cards: IHostPortalSessionCardModel[];
   config: DiscoveryConfig;
+  filters: DiscoveryFilters;
   onOpenSchedule?: (programId: string, sessionId: string) => void;
 }
 
 export function HostPortalSessionList({
   cards,
   config,
+  filters,
   onOpenSchedule,
 }: IHostPortalSessionListProps) {
   const [segmentsOpenSessionId, setSegmentsOpenSessionId] = useState<string | null>(null);
+  const accentContext = buildPortalCardAccentContext(config, cards, filters);
 
   useEffect(() => {
     if (!segmentsOpenSessionId) {
@@ -45,6 +49,7 @@ export function HostPortalSessionList({
               <HostPortalSessionCard
                 card={card}
                 config={config}
+                accentContext={accentContext}
                 hideRegistrationLinks={config.features.hideRegistrationLinks}
                 segmentsOpen={segmentsOpen}
                 onSegmentsOpenChange={(open) =>
