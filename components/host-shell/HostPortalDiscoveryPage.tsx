@@ -60,6 +60,10 @@ export function HostPortalDiscoveryPage({
   const router = useRouter();
   const pathname = usePathname();
   const urlSearchParams = useSearchParams();
+  const currentSearchString = useMemo(
+    () => urlSearchParams.toString(),
+    [urlSearchParams],
+  );
 
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [filters, setFilters] = useState<DiscoveryFilters>(() => ({
@@ -261,11 +265,11 @@ export function HostPortalDiscoveryPage({
   const handleViewModeChange = useCallback(
     (mode: ViewMode) => {
       setViewMode(mode);
-      const params = new URLSearchParams(urlSearchParams.toString());
+      const params = new URLSearchParams(currentSearchString);
       params.set('viewMode', mode);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [router, pathname, urlSearchParams],
+    [router, pathname, currentSearchString],
   );
 
   const handleFiltersChange = useCallback((next: DiscoveryFilters) => {
@@ -273,13 +277,14 @@ export function HostPortalDiscoveryPage({
   }, []);
 
   useEffect(() => {
-    const modeParam = urlSearchParams.get('viewMode');
+    const params = new URLSearchParams(currentSearchString);
+    const modeParam = params.get('viewMode');
     if (modeParam === 'schedule' || modeParam === 'programs') {
       setViewMode(modeParam);
     }
 
-    const programIdsParam = urlSearchParams.get('programIds');
-    const sessionIdsParam = urlSearchParams.get('sessionIds');
+    const programIdsParam = params.get('programIds');
+    const sessionIdsParam = params.get('sessionIds');
     if (programIdsParam || sessionIdsParam) {
       setFilters((previous) => ({
         ...previous,
@@ -287,7 +292,7 @@ export function HostPortalDiscoveryPage({
         sessionIds: sessionIdsParam ? sessionIdsParam.split('_').filter(Boolean) : [],
       }));
     }
-  }, [urlSearchParams]);
+  }, [currentSearchString]);
 
   const openScheduleForSession = useCallback(
     (programId: string, sessionId: string) => {
@@ -299,9 +304,9 @@ export function HostPortalDiscoveryPage({
       setFilters(nextFilters);
       setViewMode('schedule');
 
-      const params = new URLSearchParams(urlSearchParams.toString());
+      const params = new URLSearchParams(currentSearchString);
       params.set('viewMode', 'schedule');
-      params.set('scheduleView', 'list');
+      params.delete('scheduleView');
       params.set('programIds', programId);
       params.set('sessionIds', sessionId);
       const nextUrl = `${pathname}?${params.toString()}`;
@@ -314,12 +319,12 @@ export function HostPortalDiscoveryPage({
         window.scrollTo({ top: 0, behavior: 'instant' });
       }
     },
-    [filters, pathname, router, urlSearchParams, viewMode],
+    [filters, pathname, router, currentSearchString, viewMode],
   );
 
   const setSessionLayout = useCallback(
     (layout: PortalSessionLayoutEnum) => {
-      const params = new URLSearchParams(urlSearchParams.toString());
+      const params = new URLSearchParams(currentSearchString);
       const defaultLayout = resolvePortalSessionLayoutDefault(config);
       if (layout === defaultLayout) {
         params.delete(PORTAL_SESSION_LAYOUT_QUERY_KEY);
@@ -328,7 +333,7 @@ export function HostPortalDiscoveryPage({
       }
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [config, pathname, router, urlSearchParams],
+    [config, pathname, router, currentSearchString],
   );
 
   const backToSessionsList = useCallback(() => {
@@ -340,7 +345,7 @@ export function HostPortalDiscoveryPage({
     setFilters(nextFilters);
     setViewMode('programs');
 
-    const params = new URLSearchParams(urlSearchParams.toString());
+    const params = new URLSearchParams(currentSearchString);
     params.set('viewMode', 'programs');
     params.delete('programIds');
     params.delete('sessionIds');
@@ -349,7 +354,7 @@ export function HostPortalDiscoveryPage({
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
-  }, [filters, pathname, router, urlSearchParams]);
+  }, [filters, pathname, router, currentSearchString]);
 
   return (
     <div
