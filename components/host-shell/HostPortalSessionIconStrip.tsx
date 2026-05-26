@@ -47,6 +47,10 @@ export function HostPortalSessionIconStrip({
 }: IHostPortalSessionIconStripProps) {
   const uiColors = resolvePortalUiColors(config, sport, visualTheme);
   const theme = uiColors.visualTheme;
+  const themeBackground =
+    config.features.scheduleThemeStyle === 'gradient'
+      ? `linear-gradient(135deg, ${theme.gradientFrom} 0%, ${theme.gradientTo} 100%)`
+      : theme.gradientFrom;
   const sportLabel = sport ? getSportLabel(sport) : undefined;
   const ageGenderLine = formatAgeGenderLine(ageRange, genderLabel);
 
@@ -62,7 +66,7 @@ export function HostPortalSessionIconStrip({
     <div
       className="relative overflow-hidden px-4 py-3.5"
       style={{
-        background: `linear-gradient(135deg, ${theme.gradientFrom} 0%, ${theme.gradientTo} 100%)`,
+        background: themeBackground,
       }}
     >
       <div

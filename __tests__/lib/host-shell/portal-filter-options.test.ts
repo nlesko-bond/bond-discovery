@@ -39,4 +39,27 @@ describe('buildPortalFilterOptions', () => {
     expect(duBurns?.count).toBe(1);
     expect(options.hasMultipleFacilities).toBe(true);
   });
+
+  it('normalizes numeric program facility IDs for dropdown options', () => {
+    const programs: Program[] = [
+      {
+        id: '14268',
+        name: 'Soccer Classes',
+        facilityId: 639,
+        facilityName: 'Sports Center',
+        sport: 'soccer',
+        sessions: [
+          {
+            id: '118780',
+            name: 'Session A',
+          },
+        ],
+      } as unknown as Program,
+    ];
+
+    const options = buildPortalFilterOptions(programs);
+
+    expect(options.facilities[0].id).toBe('639');
+    expect(options.facilities[0].name).toBe('Sports Center');
+  });
 });

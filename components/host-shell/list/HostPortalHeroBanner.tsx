@@ -19,12 +19,16 @@ export function HostPortalHeroBanner({ metadata, config, sport }: IHostPortalHer
   const useOrgBranding = accentSource === PortalAccentSourceEnum.BRANDING;
   const showSportWatermark = !useOrgBranding && Boolean(sport);
   const showOrgLogo = useOrgBranding && Boolean(logoUrl);
+  const heroBackground =
+    config.features.scheduleThemeStyle === 'gradient'
+      ? `linear-gradient(135deg, ${visualTheme.gradientFrom} 0%, ${visualTheme.gradientTo} 100%)`
+      : visualTheme.gradientFrom;
 
   return (
     <section
       className="relative overflow-hidden px-4 py-10 sm:px-6 sm:py-12"
       style={{
-        background: `linear-gradient(135deg, ${visualTheme.gradientFrom} 0%, ${visualTheme.gradientTo} 100%)`,
+        background: heroBackground,
       }}
     >
       <div

@@ -131,4 +131,21 @@ describe('buildHostPortalSessionCards', () => {
     const product = cards[0].products[0];
     expect(product.registrationUrl).toContain(`productId=${product.id}`);
   });
+
+  it('normalizes program facility IDs on card models', () => {
+    const session: Session = {
+      ...mockSession,
+      facility: undefined,
+    };
+    const program = {
+      ...mockProgram,
+      facilityId: 639,
+      facilityName: 'Sports Center',
+      sessions: [session],
+    } as unknown as typeof mockProgram;
+    const cards = buildHostPortalSessionCards([program], mockConfig);
+
+    expect(cards[0].facilityId).toBe('639');
+    expect(cards[0].facilityName).toBe('Sports Center');
+  });
 });

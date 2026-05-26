@@ -11,6 +11,7 @@ import { resolvePortalUiColors } from '@/lib/host-shell/portal-accent-theme';
 import { cn } from '@/lib/utils';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
+import { resolvePortalScheduleLinkTarget } from '@/lib/host-shell/portal-schedule-events';
 
 const CLOSED_REGISTER_BACKGROUND = '#9CA3AF';
 
@@ -44,6 +45,12 @@ export function HostPortalSessionCard({
   const showScheduleTab = (config.features.enabledTabs || ['programs', 'schedule']).includes(
     'schedule',
   );
+  const linkTarget = resolvePortalScheduleLinkTarget(config);
+  const linkRel = linkTarget === '_blank' ? 'noopener noreferrer' : undefined;
+  const themeBackground =
+    config.features.scheduleThemeStyle === 'gradient'
+      ? `linear-gradient(135deg, ${visualTheme.gradientFrom}, ${visualTheme.gradientTo})`
+      : visualTheme.gradientFrom;
 
   const [pricingOpen, setPricingOpen] = useState(false);
 
@@ -109,6 +116,8 @@ export function HostPortalSessionCard({
       </div>
       <a
         href={card.registerUrl}
+        target={linkTarget}
+        rel={linkRel}
         className={cn(
           'inline-flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90',
           card.isClosed && 'pointer-events-none cursor-not-allowed opacity-60',
@@ -116,7 +125,7 @@ export function HostPortalSessionCard({
         style={{
           background: card.isClosed
             ? CLOSED_REGISTER_BACKGROUND
-            : `linear-gradient(135deg, ${visualTheme.gradientFrom}, ${visualTheme.gradientTo})`,
+            : themeBackground,
         }}
         aria-disabled={card.isClosed}
         onClick={() => trackRegisterClick(card.registerProductId)}
@@ -248,6 +257,8 @@ export function HostPortalSessionCard({
                     {!hideRegistrationLinks && product.registrationUrl && (
                       <a
                         href={product.registrationUrl}
+                        target={linkTarget}
+                        rel={linkRel}
                         className={cn(
                           'inline-flex shrink-0 items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold text-white shadow-sm',
                           product.registerDisabled &&
@@ -256,7 +267,7 @@ export function HostPortalSessionCard({
                         style={{
                           background: product.registerDisabled
                             ? CLOSED_REGISTER_BACKGROUND
-                            : `linear-gradient(135deg, ${visualTheme.gradientFrom}, ${visualTheme.gradientTo})`,
+                            : themeBackground,
                         }}
                         aria-disabled={product.registerDisabled}
                         onClick={() => {
