@@ -257,6 +257,11 @@ export function HostPortalSessionListRow({
   const uiColors = resolvePortalUiColors(config, card.sport, cardVisualTheme);
   const { visualTheme, primaryColor } = uiColors;
   const linkTarget = resolvePortalScheduleLinkTarget(config);
+  const linkRel = linkTarget === '_blank' ? 'noopener noreferrer' : undefined;
+  const themeBackground =
+    config.features.scheduleThemeStyle === 'gradient'
+      ? `linear-gradient(160deg, ${visualTheme.gradientFrom}, ${visualTheme.gradientTo})`
+      : visualTheme.gradientFrom;
   const [infoOpen, setInfoOpen] = useState(false);
   const [expandedSlotKey, setExpandedSlotKey] = useState<string | null>(null);
   const [loadedSegments, setLoadedSegments] = useState<IHostPortalSegmentRow[]>(card.segments);
@@ -346,7 +351,7 @@ export function HostPortalSessionListRow({
         <div
           className="flex w-full shrink-0 flex-col items-center justify-center gap-3 px-4 py-6 sm:w-36"
           style={{
-            background: `linear-gradient(160deg, ${visualTheme.gradientFrom}, ${visualTheme.gradientTo})`,
+            background: themeBackground,
           }}
         >
           {card.ageRange && (
@@ -412,6 +417,8 @@ export function HostPortalSessionListRow({
                 {showSessionRegister && (
                   <a
                     href={card.registerUrl}
+                    target={linkTarget}
+                    rel={linkRel}
                     className={cn(
                       'inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-sm',
                       card.isClosed && 'pointer-events-none opacity-60',
@@ -419,7 +426,7 @@ export function HostPortalSessionListRow({
                     style={{
                       background: card.isClosed
                         ? CLOSED_REGISTER_BACKGROUND
-                        : `linear-gradient(135deg, ${visualTheme.gradientFrom}, ${visualTheme.gradientTo})`,
+                        : themeBackground,
                     }}
                     aria-disabled={card.isClosed}
                   >

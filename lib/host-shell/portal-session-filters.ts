@@ -89,9 +89,11 @@ export function filterProgramsForPortalSessions(
   if (filters.facilityIds && filters.facilityIds.length > 0) {
     result = result.reduce<Program[]>((accumulator, program) => {
       const sessions = getSessionsFromProgram(program).filter((session) => {
-        const sessionFacilityId = session.facility?.id
+        const sessionFacilityId = session.facility?.id !== undefined && session.facility.id !== null
           ? String(session.facility.id)
-          : program.facilityId;
+          : program.facilityId !== undefined && program.facilityId !== null
+            ? String(program.facilityId)
+            : undefined;
         return sessionFacilityId && filters.facilityIds!.includes(sessionFacilityId);
       });
       if (sessions.length === 0) {

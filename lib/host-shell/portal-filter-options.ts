@@ -54,16 +54,18 @@ function resolveSessionFacility(
   session: Session,
   program: Program,
 ): { id: string; name: string } | null {
-  if (session.facility?.id) {
+  if (session.facility?.id !== undefined && session.facility.id !== null) {
+    const id = String(session.facility.id);
     return {
-      id: String(session.facility.id),
-      name: session.facility.name || String(session.facility.id),
+      id,
+      name: session.facility.name || id,
     };
   }
-  if (program.facilityId) {
+  if (program.facilityId !== undefined && program.facilityId !== null) {
+    const id = String(program.facilityId);
     return {
-      id: program.facilityId,
-      name: program.facilityName || program.facilityId,
+      id,
+      name: program.facilityName || id,
     };
   }
   return null;
