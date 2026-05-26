@@ -135,6 +135,17 @@ export async function getActiveDocumentationPageByPath(rawPath: string): Promise
   return rowToDocumentationPage(data as DocumentationPageRow);
 }
 
+export async function getDocumentationPageById(id: string): Promise<DocumentationPage | null> {
+  const db = getSupabaseAdmin();
+  const { data, error } = await db.from('documentation_pages').select('*').eq('id', id).maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return rowToDocumentationPage(data as DocumentationPageRow);
+}
+
 export async function createDocumentationPage(input: DocumentationPageInput): Promise<DocumentationPage> {
   const db = getSupabaseAdmin();
   const { path } = normalizeDocumentationPath(input.path);

@@ -21,6 +21,7 @@ import {
   deleteDocumentationPage,
   getActiveDocumentationPageByPath,
   getAllDocumentationPages,
+  getDocumentationPageById,
   normalizeDocumentationPath,
   updateDocumentationPage,
 } from '@/lib/documentation-pages';
@@ -120,6 +121,22 @@ describe('documentation pages', () => {
     expect(mockEq).toHaveBeenCalledWith('path', 'apis');
     expect(mockEq).toHaveBeenCalledWith('is_active', true);
     expect(page?.publicPath).toBe('/documentation/apis');
+  });
+
+  it('fetches documentation pages by id for admin editing', async () => {
+    mockMaybeSingle.mockResolvedValue({ data: documentationRow, error: null });
+    mockFrom.mockReturnValue({
+      select: mockSelect.mockReturnThis(),
+      eq: mockEq.mockReturnThis(),
+      maybeSingle: mockMaybeSingle,
+    });
+
+    const page = await getDocumentationPageById('doc-1');
+
+    expect(mockFrom).toHaveBeenCalledWith('documentation_pages');
+    expect(mockEq).toHaveBeenCalledWith('id', 'doc-1');
+    expect(page?.id).toBe('doc-1');
+    expect(page?.sourceHtml).toBe(documentationRow.source_html);
   });
 
   it('creates documentation pages with normalized paths and author metadata', async () => {

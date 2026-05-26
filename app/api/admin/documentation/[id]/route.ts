@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   deleteDocumentationPage,
+  getDocumentationPageById,
   updateDocumentationPage,
   type DocumentationPageUpdates,
 } from '@/lib/documentation-pages';
 import { requireAdminApiAccess } from '@/lib/admin-api-access';
 
 const HTTP_BAD_REQUEST_STATUS = 400;
+const HTTP_NOT_FOUND_STATUS = 404;
 const HTTP_SERVER_ERROR_STATUS = 500;
 
 type DocumentationUpdateContext = {
@@ -47,6 +49,29 @@ function parseUpdateBody(value: unknown): DocumentationPageUpdates | null {
   if (typeof isActive === 'boolean') updates.isActive = isActive;
 
   return updates;
+}
+
+export async function GET(_request: NextRequest, context: DocumentationUpdateContext) {
+  const access = await requireAdminApiAccess();
+  if (!access.ok) {
+    return access.response;
+  }
+
+  const { id } = await context.params;
+
+  try {
+    const page = await getDocumentationPageById(id);
+    if (!page) {
+      return NextResponse.json({ error: 'Documentation page not found' }, { status: HTTP_NOT_FOUND_STATUS });
+    }
+    return NextResponse.json({ page });
+  } catch (error) {
+    console.error('[Admin/Documentation] GET:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to fetch documentation page' },
+      { status: HTTP_SERVER_ERROR_STATUS },
+    );
+  }
 }
 
 export async function PATCH(request: NextRequest, context: DocumentationUpdateContext) {
