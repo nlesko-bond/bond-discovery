@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   FileText,
+  BookOpen,
   HelpCircle,
   LogOut,
   User,
@@ -101,6 +102,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </NavLink>
             <NavLink pathname={pathname} href="/admin/pages" icon={FileText}>
               Discovery Pages
+            </NavLink>
+            <NavLink pathname={pathname} href="/admin/documentation" icon={BookOpen}>
+              Documentation
             </NavLink>
             <NavLink pathname={pathname} href="/admin/memberships" icon={CreditCard}>
               Memberships

@@ -41,7 +41,7 @@ const nextConfig = {
     return [
       // Discovery pages - cache with revalidation
       {
-        source: '/:slug((?!admin|api|embed|portal|form-responses|reporting|reservations|_next).*)',
+        source: '/:slug((?!admin|api|documentation(?:/|$)|embed|portal|form-responses|reporting|reservations|_next).*)',
         headers: [
           {
             key: 'Cache-Control',
