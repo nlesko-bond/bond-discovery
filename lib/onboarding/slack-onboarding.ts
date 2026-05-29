@@ -30,14 +30,7 @@ function repLine(name: string, slackMemberId: string | null): string {
   return slackEscape(name);
 }
 
-function orgContactLine(contactName: string | null, contactEmail: string | null): string {
-  const parts: string[] = [];
-  if (contactName?.trim()) parts.push(slackEscape(contactName.trim()));
-  if (contactEmail?.trim()) parts.push(slackEscape(contactEmail.trim()));
-  return parts.length ? parts.join(' · ') : '—';
-}
-
-async function postSlack(webhookUrl: string, text: string, blocks: unknown[]) {
+async function postSlack(webhookUrl: string, text: string, blocks: unknown[]): Promise<void> {
   const res = await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -54,6 +47,7 @@ export interface IOrgSlackContext {
     id: string;
     name: string;
     slug: string;
+    bond_organization_id?: number | null;
     contact_name: string | null;
     contact_email: string | null;
     assigned_rep: string | null;
@@ -73,7 +67,7 @@ export async function getOrgNotifyContext(orgId: string): Promise<IOrgSlackConte
   const base = process.env.NEXT_PUBLIC_APP_URL ?? '';
   const { data: org } = await admin
     .from('orgs')
-    .select('id, name, slug, contact_name, contact_email, assigned_rep, template_id')
+    .select('id, name, slug, bond_organization_id, contact_name, contact_email, assigned_rep, template_id')
     .eq('id', orgId)
     .maybeSingle();
 
@@ -97,6 +91,8 @@ export async function getOrgNotifyContext(orgId: string): Promise<IOrgSlackConte
       id: org.id,
       name: org.name,
       slug: org.slug,
+      bond_organization_id:
+        typeof org.bond_organization_id === 'number' ? org.bond_organization_id : null,
       contact_name: org.contact_name,
       contact_email: org.contact_email,
       assigned_rep: org.assigned_rep,
@@ -125,10 +121,34 @@ export function buildOnboardingSlackBlocks(params: {
 
   const body = bodyMarkdown.trim().slice(0, SLACK_PLAIN_TRUNCATE);
 
+  const bondOrgId =
+    ctx.org.bond_organization_id != null ? String(ctx.org.bond_organization_id) : null;
+  const orgCorrelationParts = [
+    `Discovery org:\`${slackEscape(ctx.org.id)}\``,
+    bondOrgId ? `Bond org:\`${slackEscape(bondOrgId)}\`` : null,
+    `slug:\`${slackEscape(ctx.org.slug)}\``,
+  ].filter(Boolean);
+  const orgCorrelation = orgCorrelationParts.join(' · ');
+
   return [
     {
       type: 'header',
       text: { type: 'plain_text', text: slackHeaderPlain(headerLine), emoji: false },
+    },
+    {
+      type: 'section',
+      fields: [
+        {
+          type: 'mrkdwn',
+          text: `*Discovery org ID*\n\`${slackEscape(ctx.org.id)}\``,
+        },
+        {
+          type: 'mrkdwn',
+          text: bondOrgId
+            ? `*Bond org ID*\n\`${slackEscape(bondOrgId)}\``
+            : `*Onboarding slug*\n\`${slackEscape(ctx.org.slug)}\``,
+        },
+      ],
     },
     {
       type: 'section',
@@ -145,6 +165,10 @@ export function buildOnboardingSlackBlocks(params: {
     {
       type: 'context',
       elements: [
+        {
+          type: 'mrkdwn',
+          text: slackEscape(orgCorrelation),
+        },
         {
           type: 'mrkdwn',
           text: slackEscape(
@@ -175,7 +199,17 @@ export async function postOnboardingSlackNotification(params: {
     throw new Error('SLACK_ONBOARDING_WEBHOOK_URL not configured');
   }
   const suffix = params.fallbackSuffix?.trim() ? ` — ${params.fallbackSuffix.trim()}` : '';
-  const fallbackText = `${params.ctx.org.name}${suffix}`.slice(0, SLACK_PLAIN_TRUNCATE);
+  const bondOrgId =
+    params.ctx.org.bond_organization_id != null ? String(params.ctx.org.bond_organization_id) : null;
+  const fallbackCore = [
+    params.ctx.org.name + suffix,
+    bondOrgId ? `bond_org_id:${bondOrgId}` : null,
+    `org_id:${params.ctx.org.id}`,
+    `slug:${params.ctx.org.slug}`,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const fallbackText = fallbackCore.slice(0, SLACK_PLAIN_TRUNCATE);
   const blocks = buildOnboardingSlackBlocks({
     ctx: params.ctx,
     headerLine: params.headline,

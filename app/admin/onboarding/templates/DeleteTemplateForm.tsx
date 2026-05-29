@@ -2,13 +2,33 @@
 
 import { deleteTemplate } from './actions';
 
-export function DeleteTemplateForm({ id }: { id: string }) {
+type Props = {
+  id: string;
+  orgCount: number;
+  isDefault: boolean;
+};
+
+export function DeleteTemplateForm({ id, orgCount, isDefault }: Props) {
+  const blocked = isDefault || orgCount > 0;
+
+  if (blocked) {
+    return (
+      <div className="mt-4 border-t border-gray-200 pt-4">
+        <p className="text-sm text-gray-600">
+          {isDefault
+            ? 'Default template cannot be deleted. Choose another default first.'
+            : `${orgCount} organization(s) use this template. Reassign them before deleting.`}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <form
       action={deleteTemplate.bind(null, id)}
       className="mt-4 border-t border-gray-200 pt-4"
       onSubmit={(e) => {
-        if (!confirm('Delete this template? Orgs that use it may need to be reassigned first.')) {
+        if (!confirm('Delete this template? This cannot be undone.')) {
           e.preventDefault();
         }
       }}

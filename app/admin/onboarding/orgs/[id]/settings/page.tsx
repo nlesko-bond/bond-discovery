@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
+import { formatFacilityIdsList } from '@/lib/onboarding/parse-org-ids';
 import type { Org } from '@/lib/onboarding/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { saveOrgSettings } from '../../actions';
@@ -47,6 +48,32 @@ export default async function OnboardingOrgSettingsPage({ params, searchParams }
       ) : null}
 
       <form action={save} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <div>
+          <label className="block text-sm font-medium text-gray-900" htmlFor="bond_organization_id">
+            Bond organization ID *
+          </label>
+          <input
+            id="bond_organization_id"
+            name="bond_organization_id"
+            required
+            inputMode="numeric"
+            pattern="[0-9]+"
+            defaultValue={oo.bond_organization_id != null ? String(oo.bond_organization_id) : ''}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-900" htmlFor="facility_ids">
+            Facility IDs (optional)
+          </label>
+          <input
+            id="facility_ids"
+            name="facility_ids"
+            defaultValue={formatFacilityIdsList(oo.facility_ids)}
+            placeholder="101, 102"
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+          />
+        </div>
         <div>
           <label className="block text-sm font-medium text-gray-900" htmlFor="name">
             Organization name *

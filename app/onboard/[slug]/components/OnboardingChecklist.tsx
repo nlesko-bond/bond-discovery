@@ -11,6 +11,13 @@ import { toggleStep } from '../actions';
 
 const BONDY_CELEBRATION = '/images/onboarding/bondy-celebration.png';
 
+/** Responsive content width scale (was capped at ~780px). */
+const CONTENT_MAX_CLASSES =
+  'w-full max-w-3xl sm:max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl';
+const PAGE_HORIZONTAL_PAD = 'px-4 sm:px-8 lg:px-12 xl:px-14';
+const BLEED_NEGATIVE_PAD = '-mx-4 sm:-mx-8 lg:-mx-12 xl:-mx-14';
+const BLEED_POSITIVE_PAD = 'px-4 sm:px-8 lg:px-12 xl:px-14';
+
 type Props = {
   orgId: string;
   slug: string;
@@ -22,6 +29,7 @@ type Props = {
   spacesUploadedAt?: string | null;
   spacesUploadOriginalFilename?: string | null;
 };
+
 function CheckIcon() {
   return (
     <svg
@@ -289,7 +297,9 @@ export function OnboardingChecklist({
   const requiredTotal = requiredIndices.length;
 
   return (
-    <div className="relative mx-auto max-w-[min(100%,780px)] px-4 pb-16 pt-8 sm:px-6">
+    <div
+      className={`relative mx-auto ${CONTENT_MAX_CLASSES} ${PAGE_HORIZONTAL_PAD} pb-16 pt-8`}
+    >
       <header className="mb-6 text-center sm:mb-8">
         <div className="mb-5 flex flex-wrap items-center justify-center gap-3 sm:mb-6 sm:gap-5">{logoPair}</div>
         <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-bond-brand">BOND SPORTS</p>
@@ -308,16 +318,18 @@ export function OnboardingChecklist({
           </p>
         ) : null}
         <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-[15px] text-bond-muted-dark sm:text-base">
-          <span>⏱ Total time: {estimatedTotal}</span>
+          <span>Total time: {estimatedTotal}</span>
           <span className="text-bond-border">|</span>
           <span>
-            ✅ {totalDone} of {steps.length} steps complete
+            Steps: {totalDone} of {steps.length} complete
           </span>
         </div>
       </header>
 
-      <div className="sticky top-0 z-40 -mx-4 mb-8 border-b border-bond-border/90 border-t-[3px] border-t-bond-accent bg-bond-bg/95 px-4 py-3.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] backdrop-blur-md sm:-mx-6 sm:mb-10 sm:px-6 sm:py-4">
-        <div className="mx-auto flex max-w-[min(100%,780px)] items-center gap-3 sm:gap-4">
+      <div
+        className={`sticky top-0 z-40 ${BLEED_NEGATIVE_PAD} mb-8 border-b border-bond-border/90 border-t-[3px] border-t-bond-accent bg-bond-bg/95 py-3.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] backdrop-blur-md sm:mb-10 sm:py-4 ${BLEED_POSITIVE_PAD}`}
+      >
+        <div className="mx-auto flex w-full items-center gap-3 sm:gap-4">
           {logoPairSticky}
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline justify-between gap-2">
@@ -475,7 +487,7 @@ export function OnboardingChecklist({
                     <div className="h-px flex-1 bg-bond-border" aria-hidden />
                   </div>
                   <p className="text-[16px] font-semibold text-bond-text sm:text-[17px]">After kickoff</p>
-                  <p className="mx-auto mt-3 max-w-[36rem] text-[15px] leading-relaxed text-bond-muted-dark sm:text-[16px]">
+                  <p className="mx-auto mt-3 max-w-prose text-[15px] leading-relaxed text-bond-muted-dark sm:max-w-none sm:text-[16px] lg:text-[17px]">
                     The rest can wait until after our kickoff call, but feel free to take a look and get started if you
                     feel up for it!
                   </p>

@@ -82,6 +82,16 @@ export default async function OnboardingOrgDetailPage({ params, searchParams }: 
 
         <div className="grid gap-4 rounded-lg border border-gray-200 bg-white p-5 shadow-sm sm:grid-cols-2">
           <div>
+            <p className="text-xs font-medium uppercase text-gray-500">Bond organization ID</p>
+            <p className="mt-1 font-mono text-gray-900">{oo.bond_organization_id ?? '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase text-gray-500">Facility IDs</p>
+            <p className="mt-1 font-mono text-sm text-gray-900">
+              {oo.facility_ids?.length ? oo.facility_ids.join(', ') : '—'}
+            </p>
+          </div>
+          <div>
             <p className="text-xs font-medium uppercase text-gray-500">Assigned rep</p>
             <p className="mt-1 text-gray-900">{rep?.name ?? '—'}</p>
             <p className="text-sm text-gray-600">{rep?.email}</p>

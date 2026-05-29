@@ -2,9 +2,11 @@ import Link from 'next/link';
 import { unstable_noStore as noStore } from 'next/cache';
 import { Suspense } from 'react';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
+import { CANONICAL_ONBOARDING_TEMPLATE_STEPS } from '@/lib/onboarding/default-onboarding-template';
 import type { TemplateStep } from '@/lib/onboarding/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { DeleteTemplateForm } from './DeleteTemplateForm';
+import { ApplyCanonicalTemplateForm } from './ApplyCanonicalTemplateForm';
 import { saveTemplate } from './actions';
 import { TemplatesSavedRefresh } from './TemplatesSavedRefresh';
 
@@ -26,7 +28,16 @@ export default async function OnboardingTemplatesPage({
 
   const { data: templates } = await admin.from('templates').select('*').order('created_at', { ascending: false });
 
-  const defaultSteps: TemplateStep[] = [];
+  const { data: orgTemplateRows } = await admin.from('orgs').select('template_id');
+  const orgCountByTemplateId = new Map<string, number>();
+  for (const row of orgTemplateRows ?? []) {
+    const templateId = row.template_id;
+    if (typeof templateId === 'string' && templateId) {
+      orgCountByTemplateId.set(templateId, (orgCountByTemplateId.get(templateId) ?? 0) + 1);
+    }
+  }
+
+  const defaultSteps: TemplateStep[] = CANONICAL_ONBOARDING_TEMPLATE_STEPS;
 
   return (
     <div className="space-y-10">
@@ -101,6 +112,7 @@ export default async function OnboardingTemplatesPage({
       <div className="space-y-8">
         {(templates ?? []).map((t) => {
           const steps = t.steps as TemplateStep[];
+          const orgCount = orgCountByTemplateId.get(t.id) ?? 0;
           return (
             <section key={t.id} className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -112,7 +124,10 @@ export default async function OnboardingTemplatesPage({
                     </span>
                   ) : null}
                 </h2>
-                <p className="text-sm text-gray-600">{Array.isArray(steps) ? steps.length : 0} steps</p>
+                <p className="text-sm text-gray-600">
+                  {Array.isArray(steps) ? steps.length : 0} steps
+                  {orgCount > 0 ? ` · ${orgCount} org${orgCount === 1 ? '' : 's'}` : ''}
+                </p>
               </div>
               <form action={saveTemplate} className="mt-4 space-y-3">
                 <input type="hidden" name="id" value={t.id} />
@@ -143,7 +158,8 @@ export default async function OnboardingTemplatesPage({
                   Save
                 </button>
               </form>
-              <DeleteTemplateForm id={t.id} />
+              <ApplyCanonicalTemplateForm templateId={t.id} />
+              <DeleteTemplateForm id={t.id} orgCount={orgCount} isDefault={Boolean(t.is_default)} />
             </section>
           );
         })}

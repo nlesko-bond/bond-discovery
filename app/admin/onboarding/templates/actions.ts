@@ -2,6 +2,10 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import {
+  CANONICAL_ONBOARDING_TEMPLATE_META,
+  CANONICAL_ONBOARDING_TEMPLATE_STEPS,
+} from '@/lib/onboarding/default-onboarding-template';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
 import type { TemplateStep } from '@/lib/onboarding/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -65,6 +69,42 @@ export async function saveTemplate(formData: FormData): Promise<void> {
 
 export async function deleteTemplate(templateId: string): Promise<void> {
   const admin = getSupabaseAdmin();
+
+  const { data: template } = await admin
+    .from('templates')
+    .select('id, name, is_default')
+    .eq('id', templateId)
+    .maybeSingle();
+
+  if (!template) {
+    redirect(`${ONBOARDING_BASE}/templates?error=${encodeURIComponent('Template not found.')}`);
+  }
+
+  if (template.is_default) {
+    redirect(
+      `${ONBOARDING_BASE}/templates?error=${encodeURIComponent(
+        'Cannot delete the default template. Set another template as default first.',
+      )}`,
+    );
+  }
+
+  const { count, error: countError } = await admin
+    .from('orgs')
+    .select('id', { count: 'exact', head: true })
+    .eq('template_id', templateId);
+
+  if (countError) {
+    redirect(`${ONBOARDING_BASE}/templates?error=${encodeURIComponent(countError.message)}`);
+  }
+
+  if ((count ?? 0) > 0) {
+    redirect(
+      `${ONBOARDING_BASE}/templates?error=${encodeURIComponent(
+        `Cannot delete "${template.name}" — ${count} organization(s) still use this template. Reassign them in Organization settings first.`,
+      )}`,
+    );
+  }
+
   const { error } = await admin.from('templates').delete().eq('id', templateId);
   if (error) {
     redirect(`${ONBOARDING_BASE}/templates?error=${encodeURIComponent(error.message)}`);
@@ -72,4 +112,29 @@ export async function deleteTemplate(templateId: string): Promise<void> {
   revalidatePath(`${ONBOARDING_BASE}/templates`, 'page');
   revalidatePath(`${ONBOARDING_BASE}`, 'layout');
   redirect(`${ONBOARDING_BASE}/templates?deleted=1`);
+}
+
+export async function applyCanonicalTemplateSteps(templateId: string): Promise<void> {
+  const admin = getSupabaseAdmin();
+  const { data: template } = await admin.from('templates').select('id').eq('id', templateId).maybeSingle();
+
+  if (!template) {
+    redirect(`${ONBOARDING_BASE}/templates?error=${encodeURIComponent('Template not found.')}`);
+  }
+
+  const { error } = await admin
+    .from('templates')
+    .update({
+      steps: CANONICAL_ONBOARDING_TEMPLATE_STEPS as unknown as Record<string, unknown>,
+      meta: CANONICAL_ONBOARDING_TEMPLATE_META as unknown as Record<string, unknown>,
+    })
+    .eq('id', templateId);
+
+  if (error) {
+    redirect(`${ONBOARDING_BASE}/templates?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath(`${ONBOARDING_BASE}/templates`, 'page');
+  revalidatePath(`${ONBOARDING_BASE}`, 'layout');
+  redirect(`${ONBOARDING_BASE}/templates?saved=1`);
 }

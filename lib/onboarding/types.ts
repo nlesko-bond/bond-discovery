@@ -35,6 +35,10 @@ export interface Org {
   id: string;
   name: string;
   slug: string;
+  /** Bond back-office organization id (from Retool / main Postgres). */
+  bond_organization_id?: number | null;
+  /** Bond facility ids scoped to this onboarding org. */
+  facility_ids?: number[] | null;
   contact_name: string | null;
   contact_email: string | null;
   pin: string | null;

@@ -6,8 +6,41 @@ import { getServerSession } from 'next-auth';
 import slugify from 'slugify';
 import { authOptions } from '@/lib/auth';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
+import {
+  parseBondOrganizationId,
+  parseFacilityIdsList,
+} from '@/lib/onboarding/parse-org-ids';
 import type { TemplateStep } from '@/lib/onboarding/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
+
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseExpectedLaunchDate(raw: string): { value: string | null; error?: string } {
+  const launchDateRaw = raw.trim();
+  if (!launchDateRaw) {
+    return { value: null };
+  }
+  if (!ISO_DATE_PATTERN.test(launchDateRaw)) {
+    return { value: null, error: 'Expected launch date must be YYYY-MM-DD or left blank.' };
+  }
+  return { value: launchDateRaw };
+}
+
+async function assertUniqueBondOrganizationId(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  bondOrganizationId: number,
+  excludeOrgId?: string,
+): Promise<string | null> {
+  let query = admin.from('orgs').select('id').eq('bond_organization_id', bondOrganizationId);
+  if (excludeOrgId) {
+    query = query.neq('id', excludeOrgId);
+  }
+  const { data } = await query.maybeSingle();
+  if (data) {
+    return `Bond organization ID ${bondOrganizationId} is already linked to another onboarding org.`;
+  }
+  return null;
+}
 
 async function uniqueSlug(base: string): Promise<string> {
   const admin = getSupabaseAdmin();
@@ -28,6 +61,9 @@ export async function createOrg(formData: FormData): Promise<void> {
   const admin = getSupabaseAdmin();
   const name = String(formData.get('name') ?? '').trim();
   const slugInput = String(formData.get('slug') ?? '').trim();
+  const bondOrganizationIdRaw = String(formData.get('bond_organization_id') ?? '').trim();
+  const facilityIdsRaw = String(formData.get('facility_ids') ?? '').trim();
+  const launchDateRaw = String(formData.get('expected_launch_date') ?? '').trim();
   const contactName = String(formData.get('contact_name') ?? '').trim() || null;
   const contactEmail = String(formData.get('contact_email') ?? '').trim() || null;
   const templateId = String(formData.get('template_id') ?? '');
@@ -36,6 +72,21 @@ export async function createOrg(formData: FormData): Promise<void> {
 
   if (!name) {
     errRedirect('Organization name is required.');
+  }
+
+  const bondOrganizationId = parseBondOrganizationId(bondOrganizationIdRaw);
+  if (bondOrganizationId === null) {
+    errRedirect('Bond organization ID is required and must be a positive number.');
+  }
+
+  const duplicateBondOrgError = await assertUniqueBondOrganizationId(admin, bondOrganizationId);
+  if (duplicateBondOrgError) {
+    errRedirect(duplicateBondOrgError);
+  }
+
+  const launchDateResult = parseExpectedLaunchDate(launchDateRaw);
+  if (launchDateResult.error) {
+    errRedirect(launchDateResult.error);
   }
 
   if (!templateId) {
@@ -52,12 +103,16 @@ export async function createOrg(formData: FormData): Promise<void> {
 
   const baseSlug = slugInput || slugify(name, { lower: true, strict: true });
   const slug = await uniqueSlug(baseSlug);
+  const facilityIds = parseFacilityIdsList(facilityIdsRaw);
 
   const { data: org, error: orgError } = await admin
     .from('orgs')
     .insert({
       name,
       slug,
+      bond_organization_id: bondOrganizationId,
+      facility_ids: facilityIds,
+      expected_launch_date: launchDateResult.value,
       contact_name: contactName,
       contact_email: contactEmail,
       template_id: templateId || null,
@@ -108,6 +163,8 @@ export async function updateOrg(
   const admin = getSupabaseAdmin();
   const name = String(formData.get('name') ?? '').trim();
   const slug = String(formData.get('slug') ?? '').trim();
+  const bondOrganizationIdRaw = String(formData.get('bond_organization_id') ?? '').trim();
+  const facilityIdsRaw = String(formData.get('facility_ids') ?? '').trim();
   const contactName = String(formData.get('contact_name') ?? '').trim() || null;
   const contactEmail = String(formData.get('contact_email') ?? '').trim() || null;
   const templateId = String(formData.get('template_id') ?? '');
@@ -121,13 +178,19 @@ export async function updateOrg(
     return { success: false, error: 'Name and slug are required.' };
   }
 
-  let expected_launch_date: string | null = null;
-  if (launchDateRaw) {
-    const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-    if (!ISO_DATE.test(launchDateRaw)) {
-      return { success: false, error: 'Expected launch date must be YYYY-MM-DD or left blank.' };
-    }
-    expected_launch_date = launchDateRaw;
+  const bondOrganizationId = parseBondOrganizationId(bondOrganizationIdRaw);
+  if (bondOrganizationId === null) {
+    return { success: false, error: 'Bond organization ID is required and must be a positive number.' };
+  }
+
+  const duplicateBondOrgError = await assertUniqueBondOrganizationId(admin, bondOrganizationId, orgId);
+  if (duplicateBondOrgError) {
+    return { success: false, error: duplicateBondOrgError };
+  }
+
+  const launchDateResult = parseExpectedLaunchDate(launchDateRaw);
+  if (launchDateResult.error) {
+    return { success: false, error: launchDateResult.error };
   }
 
   let logo_url: string | null = null;
@@ -151,12 +214,15 @@ export async function updateOrg(
     .single();
 
   const pin = pinRaw === '' ? existing?.pin ?? null : pinRaw;
+  const facilityIds = parseFacilityIdsList(facilityIdsRaw);
 
   const { error } = await admin
     .from('orgs')
     .update({
       name,
       slug,
+      bond_organization_id: bondOrganizationId,
+      facility_ids: facilityIds,
       contact_name: contactName,
       contact_email: contactEmail,
       template_id: templateId || null,
@@ -164,7 +230,7 @@ export async function updateOrg(
       pin,
       status,
       logo_url,
-      expected_launch_date,
+      expected_launch_date: launchDateResult.value,
     })
     .eq('id', orgId);
 

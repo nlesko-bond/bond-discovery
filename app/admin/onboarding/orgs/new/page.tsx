@@ -38,6 +38,47 @@ export default async function NewOnboardingOrgPage({
 
       <form action={createOrg} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <div>
+          <label className="block text-sm font-medium text-gray-900" htmlFor="bond_organization_id">
+            Bond organization ID *
+          </label>
+          <input
+            id="bond_organization_id"
+            name="bond_organization_id"
+            required
+            inputMode="numeric"
+            pattern="[0-9]+"
+            placeholder="From Bond back office / Retool"
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Numeric organization id from Bond&apos;s main database. Used to link onboarding with CS Health and Retool.
+          </p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-900" htmlFor="facility_ids">
+            Facility IDs (optional)
+          </label>
+          <input
+            id="facility_ids"
+            name="facility_ids"
+            placeholder="101, 102, 103"
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900"
+          />
+          <p className="mt-1 text-xs text-gray-500">Comma-separated Bond facility ids for this onboarding org.</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-900" htmlFor="expected_launch_date">
+            Expected launch date (optional)
+          </label>
+          <input
+            id="expected_launch_date"
+            name="expected_launch_date"
+            type="date"
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+          />
+          <p className="mt-1 text-xs text-gray-500">Target go-live date for stall alerts and CS Health sync.</p>
+        </div>
+        <div>
           <label className="block text-sm font-medium text-gray-900" htmlFor="name">
             Organization name *
           </label>
