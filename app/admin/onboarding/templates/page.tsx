@@ -48,8 +48,8 @@ export default async function OnboardingTemplatesPage({
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">Onboarding templates</h1>
         <p className="mt-1 text-sm text-gray-600">
-          Step definitions are stored as JSON. Each step should include title, time, description, links (label, url,
-          icon), and doneWhen.
+          Step definitions are stored as JSON. New templates seed from the Onboarding Template checklist (12 steps).
+          Use <strong>Reset to Onboarding Template checklist</strong> to restore the official order after edits.
         </p>
       </div>
 

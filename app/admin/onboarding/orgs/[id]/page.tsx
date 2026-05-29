@@ -107,6 +107,30 @@ export default async function OnboardingOrgDetailPage({ params, searchParams }: 
             <p className="mt-2 text-xs text-gray-500">Editable in Organization settings.</p>
           </div>
           <div>
+            <p className="text-xs font-medium uppercase text-gray-500">Accounting codes CSV</p>
+            {oo.gl_codes_uploaded_at ? (
+              <>
+                <p className="mt-1 text-sm text-gray-900">{oo.gl_codes_upload_original_filename ?? 'uploaded CSV'}</p>
+                <p className="text-xs text-gray-500">
+                  Last upload{' '}
+                  <time dateTime={oo.gl_codes_uploaded_at}>
+                    {new Date(oo.gl_codes_uploaded_at).toLocaleString()}
+                  </time>
+                </p>
+                <a
+                  href={`${baseTrim}/api/admin/onboarding/orgs/${org.id}/gl-codes-file`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex text-sm font-medium text-blue-700 hover:underline"
+                >
+                  Open secure download link
+                </a>
+              </>
+            ) : (
+              <p className="mt-1 text-sm text-gray-600">Waiting for CSV from the onboarding checklist.</p>
+            )}
+          </div>
+          <div>
             <p className="text-xs font-medium uppercase text-gray-500">Rentable spaces CSV</p>
             {oo.spaces_uploaded_at ? (
               <>

@@ -1,29 +1,15 @@
 import type { TemplateMeta, TemplateStep } from '@/lib/onboarding/types';
 
-/** Pre-kickoff boundary: divider renders after step index 2 (Roles & Permissions). */
+/** Part 2 divider renders after step 6 — Add Employees & Assign Roles (index 5). */
 export const CANONICAL_ONBOARDING_TEMPLATE_META: TemplateMeta = {
-  kickoffDividerAfterStepIndex: 2,
+  kickoffDividerAfterStepIndex: 5,
 };
 
 /**
- * Canonical onboarding checklist steps (spaces CSV upload, kickoff split, no emoji icons).
- * Keep in sync with supabase/migrations that sync default templates.
+ * Onboarding Template checklist — source of truth for step order and copy.
+ * Keep in sync with supabase/migrations that sync named/default templates.
  */
 export const CANONICAL_ONBOARDING_TEMPLATE_STEPS: TemplateStep[] = [
-  {
-    title: 'Understand the Back Office',
-    time: '~3 min',
-    description:
-      "Before diving into setup, spend a few minutes getting oriented with how Bond's back office is organized. Understanding the main navigation will make every step below much faster.",
-    links: [
-      {
-        label: 'Back Office Overview',
-        url: 'https://help.bondsports.co/en/collections/11612167-getting-started',
-        icon: 'Book',
-      },
-    ],
-    doneWhen: "Done when you've watched the overview and can find the main nav sections.",
-  },
   {
     title: 'Connect Your Bank Account',
     time: '~5 min',
@@ -37,51 +23,6 @@ export const CANONICAL_ONBOARDING_TEMPLATE_STEPS: TemplateStep[] = [
       },
     ],
     doneWhen: 'Done when your bank account shows as connected in Settings.',
-  },
-  {
-    title: 'Set Up Roles & Permissions',
-    time: '~10 min',
-    description:
-      'Control what each member of your staff can access and do in Bond. This step directly impacts both daily operations and account security.',
-    links: [
-      {
-        label: 'Roles & Permissions Guide',
-        url: 'https://help.bondsports.co/en/articles/10128365-roles-permissions',
-        icon: 'Guide',
-      },
-    ],
-    note: 'Important: Incorrect permissions can affect security and daily operations. Take a few extra minutes to assign roles carefully.',
-    checklist: ['Add all employees to the system', 'Assign the correct role to each person'],
-    doneWhen: 'Done when all staff are added and roles are assigned.',
-  },
-  {
-    title: 'Configure Your Tax Rates',
-    time: '~5 min',
-    description:
-      "Set how taxes are applied to your products. You'll want this in place before creating any rentals or programs.",
-    links: [
-      {
-        label: 'Open Tax Settings',
-        url: 'https://backoffice.bondsports.co/client/settings#/organization/taxes/tax-rates',
-        icon: 'Settings',
-      },
-    ],
-    checklist: ['Exclusive tax, added on top of product price', 'Inclusive tax, built into the product price'],
-    doneWhen: 'Done when your tax rates are saved in Settings.',
-  },
-  {
-    title: 'Set Up Accounting Codes',
-    time: '~5 min',
-    description:
-      'Set up your accounting codes before creating any products. This keeps your reporting organized from the start and avoids having to remap codes later.',
-    links: [
-      {
-        label: 'Accounting Codes Guide',
-        url: 'https://help.bondsports.co/en/articles/12968674-accounting-codes',
-        icon: 'Guide',
-      },
-    ],
-    doneWhen: 'Done when your accounting codes are created and ready to assign.',
   },
   {
     title: 'List Your Rentable Spaces',
@@ -102,6 +43,115 @@ export const CANONICAL_ONBOARDING_TEMPLATE_STEPS: TemplateStep[] = [
     ],
     spacesCsvUpload: true,
     doneWhen: 'Done when you have uploaded your spaces CSV and reviewed it for accuracy.',
+  },
+  {
+    title: 'Understand the Back Office',
+    time: '~3 min',
+    description:
+      "Before diving into setup, spend a few minutes getting oriented with how Bond's back office is organized. Understanding the main navigation will make every step below much faster.",
+    links: [
+      {
+        label: 'Back Office Overview',
+        url: 'https://help.bondsports.co/en/collections/11612167-getting-started',
+        icon: 'Book',
+      },
+    ],
+    doneWhen: "Done when you've watched the overview and can find the main nav sections.",
+  },
+  {
+    title: 'Order Your Point of Sale Devices',
+    time: '~5 min',
+    description:
+      'If you plan to take in-person payments, order the card readers and POS hardware Bond supports for your facility. Getting this started early avoids delays before go-live.',
+    links: [
+      {
+        label: 'Contact Bond support to order POS hardware',
+        url: 'https://help.bondsports.co/en/collections/11612167-getting-started',
+        icon: 'Guide',
+      },
+    ],
+    doneWhen: 'Done when you have submitted a POS hardware order or confirmed you do not need in-person devices.',
+  },
+  {
+    title: 'Set Up Roles & Permissions',
+    time: '~10 min',
+    description:
+      'Define the roles your staff will use in Bond — what each role can view and change in the back office. You will assign people to these roles in the next step.',
+    links: [
+      {
+        label: 'Roles & Permissions Guide',
+        url: 'https://help.bondsports.co/en/articles/10128365-roles-permissions',
+        icon: 'Guide',
+      },
+    ],
+    note: 'Important: Incorrect permissions can affect security and daily operations. Take a few extra minutes to configure roles carefully.',
+    doneWhen: 'Done when your roles are created and reflect how your team actually works.',
+  },
+  {
+    title: 'Add Employees & Assign Roles',
+    time: '~10 min',
+    description:
+      'Add each member of your staff to Bond and assign them the role you configured in the previous step.',
+    links: [
+      {
+        label: 'Roles & Permissions Guide',
+        url: 'https://help.bondsports.co/en/articles/10128365-roles-permissions',
+        icon: 'Guide',
+      },
+    ],
+    checklist: ['Add all employees to the system', 'Assign the correct role to each person'],
+    doneWhen: 'Done when all staff are added and roles are assigned.',
+  },
+  {
+    title: 'Configure Your Tax Rates',
+    time: '~5 min',
+    description:
+      "Set how taxes are applied to your products. You'll want this in place before creating rentals or programs.",
+    links: [
+      {
+        label: 'Open Tax Settings',
+        url: 'https://backoffice.bondsports.co/client/settings#/organization/taxes/tax-rates',
+        icon: 'Settings',
+      },
+    ],
+    checklist: ['Exclusive tax, added on top of product price', 'Inclusive tax, built into the product price'],
+    optional: true,
+    doneWhen: 'Done when your tax rates are saved in Settings.',
+  },
+  {
+    title: 'Upload a List of Your Accounting Codes',
+    time: '~10 min',
+    description:
+      'Download the CSV template, list your GL / accounting codes, and upload the file below. Bond uses this during setup so reporting and product mapping stay aligned from day one.',
+    links: [
+      {
+        label: 'Accounting Codes Guide',
+        url: 'https://help.bondsports.co/en/articles/12968674-accounting-codes',
+        icon: 'Guide',
+      },
+    ],
+    glCodesCsvUpload: true,
+    optional: true,
+    doneWhen: 'Done when you have uploaded your accounting codes CSV and reviewed it for accuracy.',
+  },
+  {
+    title: 'Set Up Rental Products',
+    time: '~15 min',
+    description:
+      'Create your rental products, courts, fields, ice time, cages, or any bookable space at your facility. Program products will be set up together during your initial program training call with the Bond team.',
+    links: [
+      {
+        label: 'Setting Up Rental Products',
+        url: 'https://help.bondsports.co/en/articles/11021853-setting-up-rental-products',
+        icon: 'Guide',
+      },
+      {
+        label: 'Rental Reservations Overview',
+        url: 'https://help.bondsports.co/en/articles/11403275-rental-reservations-overview',
+        icon: 'Guide',
+      },
+    ],
+    doneWhen: 'Done when your rental products are created and visible in the back office.',
   },
   {
     title: 'Set Up Programs (Registrations)',

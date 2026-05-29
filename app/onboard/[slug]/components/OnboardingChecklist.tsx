@@ -7,6 +7,7 @@ import type { StepProgress, TemplateStep } from '@/lib/onboarding/types';
 import { fireOnboardingConfetti, getStepEncouragement } from '@/lib/onboarding/encouragements';
 import { getOnboardingBrowserClient } from '@/lib/onboarding/supabase-browser';
 import { SpacesCsvUploader } from './SpacesCsvUploader';
+import { GlCodesCsvUploader } from './GlCodesCsvUploader';
 import { toggleStep } from '../actions';
 
 const BONDY_CELEBRATION = '/images/onboarding/bondy-celebration.png';
@@ -28,6 +29,8 @@ type Props = {
   kickoffDividerAfterStepIndex?: number | null;
   spacesUploadedAt?: string | null;
   spacesUploadOriginalFilename?: string | null;
+  glCodesUploadedAt?: string | null;
+  glCodesUploadOriginalFilename?: string | null;
 };
 
 function CheckIcon() {
@@ -61,6 +64,8 @@ export function OnboardingChecklist({
   kickoffDividerAfterStepIndex = null,
   spacesUploadedAt = null,
   spacesUploadOriginalFilename = null,
+  glCodesUploadedAt = null,
+  glCodesUploadOriginalFilename = null,
 }: Props) {
   const byIndex = useMemo(() => {
     const m = new Map<number, StepProgress>();
@@ -464,6 +469,14 @@ export function OnboardingChecklist({
                         slug={slug}
                         uploadedAt={spacesUploadedAt}
                         originalFilename={spacesUploadOriginalFilename}
+                      />
+                    ) : null}
+
+                    {step.glCodesCsvUpload ? (
+                      <GlCodesCsvUploader
+                        slug={slug}
+                        uploadedAt={glCodesUploadedAt}
+                        originalFilename={glCodesUploadOriginalFilename}
                       />
                     ) : null}
 

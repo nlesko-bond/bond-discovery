@@ -69,6 +69,8 @@ export default async function OnboardSlugPage({ params }: Props) {
       kickoffDividerAfterStepIndex={kickoffDividerAfterStepIndex}
       spacesUploadedAt={o.spaces_uploaded_at ?? null}
       spacesUploadOriginalFilename={o.spaces_upload_original_filename ?? null}
+      glCodesUploadedAt={o.gl_codes_uploaded_at ?? null}
+      glCodesUploadOriginalFilename={o.gl_codes_upload_original_filename ?? null}
     />
   );
 }

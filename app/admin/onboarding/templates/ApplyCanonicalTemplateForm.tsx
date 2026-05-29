@@ -10,7 +10,7 @@ export function ApplyCanonicalTemplateForm({ templateId }: { templateId: string 
       onSubmit={(e) => {
         if (
           !confirm(
-            'Replace this template’s steps with the canonical onboarding checklist (spaces CSV upload, kickoff split, etc.)? Existing org progress is unchanged; only the step definitions update.',
+            'Replace this template’s steps with the official Onboarding Template checklist (12 steps, kickoff after Add Employees, spaces + GL CSV uploads)? Existing org progress is unchanged; only step definitions update.',
           )
         ) {
           e.preventDefault();
@@ -18,7 +18,7 @@ export function ApplyCanonicalTemplateForm({ templateId }: { templateId: string 
       }}
     >
       <button type="submit" className="text-sm text-primary hover:underline">
-        Reset steps to canonical checklist
+        Reset to Onboarding Template checklist
       </button>
     </form>
   );
