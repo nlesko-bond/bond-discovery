@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import type { Org } from '@/lib/onboarding/types';
+import { pushKeyDatesSnapshotSafe } from '@/lib/onboarding/key-dates-webhook';
+import { markOnboardingStartedIfNeeded } from '@/lib/onboarding/onboarding-started';
 import {
   getOrgNotifyContext,
   postOnboardingSlackNotification,
@@ -117,6 +119,9 @@ export async function POST(
     actor: 'org',
     metadata: { filename: fileNameRaw, storage_path: storageRelPath },
   });
+
+  await markOnboardingStartedIfNeeded(org.id, uploadedAtIso);
+  await pushKeyDatesSnapshotSafe(org.id);
 
   try {
     if (process.env.SLACK_ONBOARDING_WEBHOOK_URL) {

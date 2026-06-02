@@ -6,25 +6,14 @@ import { getServerSession } from 'next-auth';
 import slugify from 'slugify';
 import { authOptions } from '@/lib/auth';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
+import { pushKeyDatesSnapshotSafe } from '@/lib/onboarding/key-dates-webhook';
 import {
   parseBondOrganizationId,
   parseFacilityIdsList,
 } from '@/lib/onboarding/parse-org-ids';
+import { parseOptionalIsoDate } from '@/lib/onboarding/parse-iso-date';
 import type { TemplateStep } from '@/lib/onboarding/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
-
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
-function parseExpectedLaunchDate(raw: string): { value: string | null; error?: string } {
-  const launchDateRaw = raw.trim();
-  if (!launchDateRaw) {
-    return { value: null };
-  }
-  if (!ISO_DATE_PATTERN.test(launchDateRaw)) {
-    return { value: null, error: 'Expected launch date must be YYYY-MM-DD or left blank.' };
-  }
-  return { value: launchDateRaw };
-}
 
 async function assertUniqueBondOrganizationId(
   admin: ReturnType<typeof getSupabaseAdmin>,
@@ -84,7 +73,7 @@ export async function createOrg(formData: FormData): Promise<void> {
     errRedirect(duplicateBondOrgError);
   }
 
-  const launchDateResult = parseExpectedLaunchDate(launchDateRaw);
+  const launchDateResult = parseOptionalIsoDate(launchDateRaw);
   if (launchDateResult.error) {
     errRedirect(launchDateResult.error);
   }
@@ -150,6 +139,8 @@ export async function createOrg(formData: FormData): Promise<void> {
     actor: userEmail ?? 'staff',
   });
 
+  await pushKeyDatesSnapshotSafe(org.id);
+
   revalidatePath(`${ONBOARDING_BASE}/orgs`);
   revalidatePath(`${ONBOARDING_BASE}/dashboard`);
 
@@ -173,6 +164,7 @@ export async function updateOrg(
   const status = String(formData.get('status') ?? 'active');
   const logoUrlRaw = String(formData.get('logo_url') ?? '').trim();
   const launchDateRaw = String(formData.get('expected_launch_date') ?? '').trim();
+  const actualLaunchDateRaw = String(formData.get('actual_launch_date') ?? '').trim();
 
   if (!name || !slug) {
     return { success: false, error: 'Name and slug are required.' };
@@ -188,9 +180,14 @@ export async function updateOrg(
     return { success: false, error: duplicateBondOrgError };
   }
 
-  const launchDateResult = parseExpectedLaunchDate(launchDateRaw);
+  const launchDateResult = parseOptionalIsoDate(launchDateRaw);
   if (launchDateResult.error) {
     return { success: false, error: launchDateResult.error };
+  }
+
+  const actualLaunchDateResult = parseOptionalIsoDate(actualLaunchDateRaw);
+  if (actualLaunchDateResult.error) {
+    return { success: false, error: actualLaunchDateResult.error };
   }
 
   let logo_url: string | null = null;
@@ -231,12 +228,15 @@ export async function updateOrg(
       status,
       logo_url,
       expected_launch_date: launchDateResult.value,
+      actual_launch_date: actualLaunchDateResult.value,
     })
     .eq('id', orgId);
 
   if (error) {
     return { success: false, error: error.message };
   }
+
+  await pushKeyDatesSnapshotSafe(orgId);
 
   revalidatePath(`${ONBOARDING_BASE}/orgs/${orgId}`);
   revalidatePath(`${ONBOARDING_BASE}/orgs`);

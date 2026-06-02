@@ -68,7 +68,7 @@ export default async function NewOnboardingOrgPage({
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-900" htmlFor="expected_launch_date">
-            Expected launch date (optional)
+            Current planned launch (optional)
           </label>
           <input
             id="expected_launch_date"

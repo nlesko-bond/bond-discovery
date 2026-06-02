@@ -154,21 +154,66 @@ export default async function OnboardingOrgSettingsPage({ params, searchParams }
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-900" htmlFor="expected_launch_date">
-            Expected launch date (optional)
-          </label>
-          <input
-            id="expected_launch_date"
-            name="expected_launch_date"
-            type="date"
-            defaultValue={oo.expected_launch_date ?? ''}
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            Used for onboarding stall checks and Slack updates when edited. Clearing the date removes it.
-          </p>
-        </div>
+        <fieldset className="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <legend className="px-1 text-sm font-semibold text-gray-900">Key dates (Customer Health)</legend>
+          <div>
+            <label className="block text-sm font-medium text-gray-900" htmlFor="expected_launch_date">
+              Current planned launch (optional)
+            </label>
+            <input
+              id="expected_launch_date"
+              name="expected_launch_date"
+              type="date"
+              defaultValue={oo.expected_launch_date ?? ''}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 bg-white"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Synced to Customer Health as <span className="font-mono">planned_launch</span>. Clearing removes it on
+              the next sync.
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-900" htmlFor="actual_launch_date">
+              Actual launch (optional)
+            </label>
+            <input
+              id="actual_launch_date"
+              name="actual_launch_date"
+              type="date"
+              defaultValue={oo.actual_launch_date ?? ''}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 bg-white"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Enter when the org has gone live. Synced as <span className="font-mono">actual_launch</span>.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Onboarding started</p>
+              <p className="mt-1 text-sm text-gray-700">
+                {oo.onboarding_started_at ? (
+                  <time dateTime={oo.onboarding_started_at}>
+                    {new Date(oo.onboarding_started_at).toLocaleString()}
+                  </time>
+                ) : (
+                  '—'
+                )}
+              </p>
+              <p className="mt-1 text-xs text-gray-500">Set on first checklist activity (step or CSV upload).</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900">Onboarding completed</p>
+              <p className="mt-1 text-sm text-gray-700">
+                {oo.completed_at ? (
+                  <time dateTime={oo.completed_at}>{new Date(oo.completed_at).toLocaleString()}</time>
+                ) : (
+                  '—'
+                )}
+              </p>
+              <p className="mt-1 text-xs text-gray-500">Set when all required checklist steps are done.</p>
+            </div>
+          </div>
+        </fieldset>
         <div>
           <label className="block text-sm font-medium text-gray-900" htmlFor="template_id">
             Template

@@ -102,9 +102,35 @@ export default async function OnboardingOrgDetailPage({ params, searchParams }: 
             <p className="text-sm text-gray-600">{org.contact_email ?? '—'}</p>
           </div>
           <div>
-            <p className="text-xs font-medium uppercase text-gray-500">Expected launch</p>
+            <p className="text-xs font-medium uppercase text-gray-500">Current planned launch</p>
             <p className="mt-1 text-gray-900">{oo.expected_launch_date ?? '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase text-gray-500">Actual launch</p>
+            <p className="mt-1 text-gray-900">{oo.actual_launch_date ?? '—'}</p>
             <p className="mt-2 text-xs text-gray-500">Editable in Organization settings.</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase text-gray-500">Onboarding started</p>
+            <p className="mt-1 text-gray-900">
+              {oo.onboarding_started_at ? (
+                <time dateTime={oo.onboarding_started_at}>
+                  {new Date(oo.onboarding_started_at).toLocaleString()}
+                </time>
+              ) : (
+                '—'
+              )}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase text-gray-500">Onboarding completed</p>
+            <p className="mt-1 text-gray-900">
+              {oo.completed_at ? (
+                <time dateTime={oo.completed_at}>{new Date(oo.completed_at).toLocaleString()}</time>
+              ) : (
+                '—'
+              )}
+            </p>
           </div>
           <div>
             <p className="text-xs font-medium uppercase text-gray-500">Accounting codes CSV</p>

@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
+import { pushKeyDatesSnapshotSafe } from '@/lib/onboarding/key-dates-webhook';
+import { markOnboardingStartedIfNeeded } from '@/lib/onboarding/onboarding-started';
 import { ONBOARDING_BASE } from '@/lib/onboarding/paths';
 import type { TemplateStep } from '@/lib/onboarding/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -13,7 +15,8 @@ export async function toggleStep(
   completedBy?: string | null,
 ) {
   const admin = getSupabaseAdmin();
-  const now = completed ? new Date().toISOString() : null;
+  const activityAt = new Date().toISOString();
+  const now = completed ? activityAt : null;
 
   const { error } = await admin.from('step_progress').upsert(
     {
@@ -27,6 +30,10 @@ export async function toggleStep(
   );
 
   if (error) throw new Error(error.message);
+
+  if (completed) {
+    await markOnboardingStartedIfNeeded(orgId, activityAt);
+  }
 
   await admin.from('activity_log').insert({
     org_id: orgId,
@@ -87,6 +94,8 @@ export async function toggleStep(
   if (orgRow?.slug) {
     revalidatePath(`/onboard/${orgRow.slug}`);
   }
+
+  await pushKeyDatesSnapshotSafe(orgId);
 
   return { success: true as const, allRequiredDone: requiredComplete };
 }

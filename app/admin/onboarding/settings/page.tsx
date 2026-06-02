@@ -9,6 +9,7 @@ export default function OnboardingSettingsPage() {
   const webhookUrl = `${appBase || ''}/api/webhooks/step-completed`;
   const orgWebhookUrl = `${appBase || ''}/api/webhooks/org-updated`;
   const stallCronPath = `/api/cron/onboarding-stall-alerts`;
+  const keyDatesCronPath = `/api/cron/push-key-dates`;
 
   return (
     <div className="max-w-2xl space-y-4">
@@ -50,6 +51,27 @@ export default function OnboardingSettingsPage() {
           Configure payloads with <code className="font-mono">record</code> and{' '}
           <code className="font-mono">old_record</code>. The org endpoint fires only when{' '}
           <code className="font-mono">expected_launch_date</code> differs from the prior value.
+        </p>
+      </div>
+
+      <div className="rounded-lg border border-gray-200 bg-white p-5 text-sm text-gray-600 shadow-sm">
+        <p className="font-medium text-gray-900">Customer Health key dates</p>
+        <p className="mt-2">
+          Discovery pushes a full key-dates snapshot to Customer Health when org dates change or checklist activity
+          completes. Set{' '}
+          <code className="rounded bg-gray-100 px-1 font-mono text-xs">KEY_DATES_WEBHOOK_SECRET</code> (shared with CS
+          Health) and optionally{' '}
+          <code className="rounded bg-gray-100 px-1 font-mono text-xs">KEY_DATES_WEBHOOK_URL</code> (defaults to{' '}
+          <code className="font-mono text-xs">https://cs.bondsports.co/api/webhooks/key-dates</code>).
+        </p>
+        <p className="mt-3">
+          Daily backstop: Vercel runs{' '}
+          <code className="rounded bg-gray-100 px-1 font-mono text-xs">{keyDatesCronPath}</code> for every org with a
+          Bond organization ID. Requires <code className="font-mono text-xs">CRON_SECRET</code> bearer auth.
+        </p>
+        <p className="mt-3 text-xs text-gray-500">
+          Milestones synced: current planned launch, actual launch (manual in org settings), onboarding started (first
+          checklist activity), onboarding completed (all required steps done).
         </p>
       </div>
 

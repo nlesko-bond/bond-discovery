@@ -49,8 +49,12 @@ export interface Org {
   /** HTTPS URL to a logo image, shown on the public onboarding checklist */
   logo_url?: string | null;
   status: 'active' | 'completed' | 'paused' | 'archived';
-  /** Target go-live date (YYYY-MM-DD) for Slack + internal dashboards */
+  /** Current planned launch date (YYYY-MM-DD) for Slack, CS Health, and dashboards */
   expected_launch_date?: string | null;
+  /** Actual go-live date (YYYY-MM-DD); CS enters manually in Discovery admin */
+  actual_launch_date?: string | null;
+  /** First checklist activity (step completion or CSV upload) */
+  onboarding_started_at?: string | null;
   spaces_upload_storage_path?: string | null;
   spaces_upload_original_filename?: string | null;
   spaces_uploaded_at?: string | null;
