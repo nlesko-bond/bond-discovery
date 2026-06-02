@@ -1,6 +1,6 @@
 import type { TemplateMeta, TemplateStep } from '@/lib/onboarding/types';
 
-/** Part 2 divider renders after step 6 — Add Employees & Assign Roles (index 5). */
+/** Part 2 divider renders after step 6 — Add Employees & Assign Roles (index 5). 13 steps total. */
 export const CANONICAL_ONBOARDING_TEMPLATE_META: TemplateMeta = {
   kickoffDividerAfterStepIndex: 5,
 };
@@ -101,6 +101,21 @@ export const CANONICAL_ONBOARDING_TEMPLATE_STEPS: TemplateStep[] = [
     ],
     checklist: ['Add all employees to the system', 'Assign the correct role to each person'],
     doneWhen: 'Done when all staff are added and roles are assigned.',
+  },
+  {
+    title: 'Upcoming Programs Template',
+    time: '~10 min',
+    description:
+      'Download the CSV template and list the programs you plan to run — camps, leagues, classes, clinics, and training sessions. Fill in one row per program and upload your file below. Bond uses this during program setup after kickoff.',
+    links: [
+      {
+        label: 'Programs Getting Started Guide',
+        url: 'https://help.bondsports.co/en/articles/11060636-getting-started',
+        icon: 'Guide',
+      },
+    ],
+    programsCsvUpload: true,
+    doneWhen: 'Done when you have uploaded your upcoming programs CSV and reviewed it for accuracy.',
   },
   {
     title: 'Configure Your Tax Rates',

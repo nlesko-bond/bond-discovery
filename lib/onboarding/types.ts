@@ -22,6 +22,8 @@ export interface TemplateStep {
   spacesCsvUpload?: boolean;
   /** When true, checklist shows CSV template download + upload for accounting / GL codes */
   glCodesCsvUpload?: boolean;
+  /** When true, checklist shows CSV template download + upload for upcoming programs */
+  programsCsvUpload?: boolean;
 }
 
 export interface Template {
@@ -61,6 +63,9 @@ export interface Org {
   gl_codes_upload_storage_path?: string | null;
   gl_codes_upload_original_filename?: string | null;
   gl_codes_uploaded_at?: string | null;
+  programs_upload_storage_path?: string | null;
+  programs_upload_original_filename?: string | null;
+  programs_uploaded_at?: string | null;
   onboarding_notify_state?: Record<string, unknown>;
   created_at: string;
   completed_at: string | null;

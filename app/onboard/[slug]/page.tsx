@@ -71,6 +71,8 @@ export default async function OnboardSlugPage({ params }: Props) {
       spacesUploadOriginalFilename={o.spaces_upload_original_filename ?? null}
       glCodesUploadedAt={o.gl_codes_uploaded_at ?? null}
       glCodesUploadOriginalFilename={o.gl_codes_upload_original_filename ?? null}
+      programsUploadedAt={o.programs_uploaded_at ?? null}
+      programsUploadOriginalFilename={o.programs_upload_original_filename ?? null}
     />
   );
 }

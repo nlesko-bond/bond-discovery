@@ -31,6 +31,7 @@ type OrgKeyDateRow = Pick<
   | 'completed_at'
   | 'spaces_uploaded_at'
   | 'gl_codes_uploaded_at'
+  | 'programs_uploaded_at'
 >;
 
 /**
@@ -44,7 +45,7 @@ export async function buildKeyDatesSnapshot(orgId: string): Promise<{
   const { data: orgRow } = await admin
     .from('orgs')
     .select(
-      'id, bond_organization_id, expected_launch_date, actual_launch_date, onboarding_started_at, completed_at, spaces_uploaded_at, gl_codes_uploaded_at',
+      'id, bond_organization_id, expected_launch_date, actual_launch_date, onboarding_started_at, completed_at, spaces_uploaded_at, gl_codes_uploaded_at, programs_uploaded_at',
     )
     .eq('id', orgId)
     .maybeSingle();
@@ -134,6 +135,9 @@ async function resolveOnboardingStartedAt(org: OrgKeyDateRow): Promise<string | 
   }
   if (org.gl_codes_uploaded_at) {
     candidates.push(org.gl_codes_uploaded_at);
+  }
+  if (org.programs_uploaded_at) {
+    candidates.push(org.programs_uploaded_at);
   }
 
   if (candidates.length === 0) {
