@@ -26,7 +26,31 @@ export function getDiscoveryIncludedProgramIds(config: DiscoveryConfig): string[
  * Excluded program IDs from page config.
  */
 export function getDiscoveryExcludedProgramIds(config: DiscoveryConfig): string[] {
-  return normalizeProgramIdList(config.excludedProgramIds);
+  const root = normalizeProgramIdList(config.excludedProgramIds);
+  if (root.length > 0) {
+    return root;
+  }
+  return normalizeProgramIdList(config.features.excludedProgramIds);
+}
+
+/**
+ * Whether a program should be omitted from discovery fetches (events pipeline).
+ */
+export function shouldSkipProgramByPageConfig(
+  programId: unknown,
+  config: DiscoveryConfig,
+): boolean {
+  const mode = config.features.programFilterMode || 'all';
+  const included = getDiscoveryIncludedProgramIds(config);
+  const excluded = getDiscoveryExcludedProgramIds(config);
+
+  if (mode === 'include' && included.length > 0) {
+    return !programIdsFilterMatches(included, programId);
+  }
+  if (mode === 'exclude' && excluded.length > 0) {
+    return programIdsFilterMatches(excluded, programId);
+  }
+  return false;
 }
 
 /**

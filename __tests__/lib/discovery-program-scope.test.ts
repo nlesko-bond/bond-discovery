@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   filterProgramsByPageConfig,
   filterProgramsWithActiveSessions,
+  getDiscoveryExcludedProgramIds,
   getDiscoveryIncludedProgramIds,
   sessionEndDateOnOrAfterToday,
+  shouldSkipProgramByPageConfig,
 } from '@/lib/discovery-program-scope';
 import type { DiscoveryConfig, Program } from '@/types';
 
@@ -79,5 +81,30 @@ describe('filterProgramsByPageConfig', () => {
     });
     expect(getDiscoveryIncludedProgramIds(config)).toEqual(['7']);
     expect(filterProgramsByPageConfig([program('7'), program('8')], config)).toHaveLength(1);
+  });
+
+  it('excludes listed program ids with string-safe matching', () => {
+    const config = minimalConfig({
+      features: {
+        enableFilters: [],
+        programFilterMode: 'exclude',
+        excludedProgramIds: ['14945', '14849'],
+      },
+    });
+    const programs = [program('14945'), program('999')];
+    expect(filterProgramsByPageConfig(programs, config).map((p) => p.id)).toEqual(['999']);
+  });
+
+  it('reads excluded ids from features when root is empty', () => {
+    const config = minimalConfig({
+      features: {
+        enableFilters: [],
+        programFilterMode: 'exclude',
+        excludedProgramIds: ['14951'],
+      },
+    });
+    expect(getDiscoveryExcludedProgramIds(config)).toEqual(['14951']);
+    expect(shouldSkipProgramByPageConfig('14951', config)).toBe(true);
+    expect(shouldSkipProgramByPageConfig('100', config)).toBe(false);
   });
 });

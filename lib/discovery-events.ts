@@ -1,5 +1,10 @@
 import { createBondClient, DEFAULT_API_KEY, DEFAULT_ORG_IDS } from '@/lib/bond-client';
 import { getConfigBySlug } from '@/lib/config';
+import {
+  getDiscoveryExcludedProgramIds,
+  getDiscoveryIncludedProgramIds,
+  shouldSkipProgramByPageConfig,
+} from '@/lib/discovery-program-scope';
 import { transformProgram, transformSession } from '@/lib/transformers';
 import { cacheGet, cacheSet, discoveryAvailabilityCacheKey, discoveryFullCacheKey } from '@/lib/cache';
 import type { Program, DiscoveryConfig, Session } from '@/types';
@@ -223,8 +228,8 @@ async function buildContext(request: DiscoveryEventsRequest): Promise<DiscoveryE
     }
     fullCacheTtl = Math.max(config.cacheTtl || 0, fullCacheTtl);
     programFilterMode = config.features?.programFilterMode || 'all';
-    excludedProgramIds = config.excludedProgramIds || [];
-    includedProgramIds = config.includedProgramIds || [];
+    excludedProgramIds = getDiscoveryExcludedProgramIds(config);
+    includedProgramIds = getDiscoveryIncludedProgramIds(config);
     if (typeof config.features?.availabilityCacheTtl === 'number') {
       availabilityCacheTtl = config.features.availabilityCacheTtl;
     }
@@ -291,14 +296,17 @@ function toCacheKey(context: DiscoveryEventsContext): string {
   return discoveryFullCacheKey('_shared', cacheScope);
 }
 
-function shouldSkipProgram(programId: string, context: DiscoveryEventsContext): boolean {
-  if (context.programFilterMode === 'include' && context.includedProgramIds.length > 0) {
-    return !context.includedProgramIds.includes(programId);
+function shouldSkipProgram(programId: unknown, context: DiscoveryEventsContext): boolean {
+  if (!context.config) {
+    if (context.programFilterMode === 'include' && context.includedProgramIds.length > 0) {
+      return !context.includedProgramIds.some((id) => String(id) === String(programId));
+    }
+    if (context.programFilterMode === 'exclude' && context.excludedProgramIds.length > 0) {
+      return context.excludedProgramIds.some((id) => String(id) === String(programId));
+    }
+    return false;
   }
-  if (context.programFilterMode === 'exclude' && context.excludedProgramIds.length > 0) {
-    return context.excludedProgramIds.includes(programId);
-  }
-  return false;
+  return shouldSkipProgramByPageConfig(programId, context.config);
 }
 
 function shouldSkipSessionByDate(session: any, includePast: boolean): boolean {

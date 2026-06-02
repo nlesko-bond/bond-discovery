@@ -51,6 +51,12 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
   const includedProgramIds = features.includedProgramIds 
     ? (Array.isArray(features.includedProgramIds) ? features.includedProgramIds.map(String) : [])
     : [];
+
+  const excludedProgramIdsFromFeatures = features.excludedProgramIds
+    ? (Array.isArray(features.excludedProgramIds)
+        ? features.excludedProgramIds.map(String).filter(Boolean)
+        : [])
+    : [];
   
   // Get tableColumns from features, cast to proper type
   const tableColumns = (features.tableColumns as ScheduleTableColumn[] | undefined) || undefined;
@@ -75,7 +81,9 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
     partnerGroupId: row.partner_group_id || undefined,
     organizationIds: row.organization_ids.map(String),
     facilityIds: row.facility_ids?.map(String) || [],
-    excludedProgramIds: (row as any).excluded_program_ids?.map(String) || features.excludedProgramIds || undefined,
+    excludedProgramIds:
+      (row as any).excluded_program_ids?.map(String) ||
+      (excludedProgramIdsFromFeatures.length > 0 ? excludedProgramIdsFromFeatures : undefined),
     includedProgramIds, // Also expose at root for API routes
     apiKey,
     gtmId,
@@ -84,7 +92,9 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
       ...row.features,
       enableFilters,
       linkBehavior, // Ensure camelCase for frontend
-      includedProgramIds, // Ensure it's in features for admin UI
+      includedProgramIds,
+      excludedProgramIds:
+        excludedProgramIdsFromFeatures.length > 0 ? excludedProgramIdsFromFeatures : undefined,
       tableColumns, // Cast to proper type
       allowTableViewOnMobile,
       defaultScheduleView,
@@ -317,7 +327,18 @@ export async function updatePageConfig(slug: string, updates: Partial<DiscoveryC
   if (updates.apiKey !== undefined) updateData.api_key = updates.apiKey;
   if (updates.gtmId !== undefined) updateData.gtm_id = updates.gtmId;
   if (updates.branding !== undefined) updateData.branding = updates.branding;
-  if (updates.features !== undefined) updateData.features = updates.features;
+  if (updates.features !== undefined || updates.excludedProgramIds !== undefined || updates.includedProgramIds !== undefined) {
+    const featuresNext: Record<string, unknown> = {
+      ...(updates.features ?? {}),
+    };
+    if (updates.excludedProgramIds !== undefined) {
+      featuresNext.excludedProgramIds = updates.excludedProgramIds;
+    }
+    if (updates.includedProgramIds !== undefined) {
+      featuresNext.includedProgramIds = updates.includedProgramIds;
+    }
+    updateData.features = featuresNext;
+  }
   if (updates.allowedParams !== undefined) updateData.allowed_params = updates.allowedParams;
   if (updates.defaultParams !== undefined) updateData.default_params = updates.defaultParams;
   if (updates.cacheTtl !== undefined) updateData.cache_ttl = updates.cacheTtl;
