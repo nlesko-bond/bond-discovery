@@ -102,6 +102,26 @@ export default async function OnboardingOrgDetailPage({ params, searchParams }: 
             <p className="text-sm text-gray-600">{org.contact_email ?? '—'}</p>
           </div>
           <div>
+            <p className="text-xs font-medium uppercase text-gray-500">POS devices requested</p>
+            {oo.pos_devices_requested != null ? (
+              <>
+                <p className="mt-1 text-gray-900">
+                  {oo.pos_devices_requested} device{oo.pos_devices_requested === 1 ? '' : 's'}
+                </p>
+                {oo.pos_devices_requested_at ? (
+                  <p className="text-xs text-gray-500">
+                    Saved{' '}
+                    <time dateTime={oo.pos_devices_requested_at}>
+                      {new Date(oo.pos_devices_requested_at).toLocaleString()}
+                    </time>
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <p className="mt-1 text-sm text-gray-600">Not entered on the onboarding checklist yet.</p>
+            )}
+          </div>
+          <div>
             <p className="text-xs font-medium uppercase text-gray-500">Current planned launch</p>
             <p className="mt-1 text-gray-900">{oo.expected_launch_date ?? '—'}</p>
           </div>
@@ -223,7 +243,9 @@ export default async function OnboardingOrgDetailPage({ params, searchParams }: 
         <div className="rounded-lg border border-red-200 bg-red-50/50 p-4">
           <h2 className="text-sm font-semibold text-red-900">Danger zone</h2>
           <p className="mt-1 text-sm text-red-800/90">
-            Permanently remove this organization and all related onboarding data. There is no undo.
+            Permanently remove this organization and all related onboarding data (checklist progress,
+            uploads, and captured answers). Use <strong>New org</strong> afterward to start the same
+            customer fresh. There is no undo.
           </p>
           <div className="mt-3">
             <DeleteOrgButton orgId={org.id} orgName={org.name} />

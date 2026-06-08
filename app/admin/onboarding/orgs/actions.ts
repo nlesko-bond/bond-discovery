@@ -12,6 +12,7 @@ import {
   parseFacilityIdsList,
 } from '@/lib/onboarding/parse-org-ids';
 import { parseOptionalIsoDate } from '@/lib/onboarding/parse-iso-date';
+import { purgeOrgOnboardingStorage } from '@/lib/onboarding/purge-org-storage';
 import type { TemplateStep } from '@/lib/onboarding/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -277,13 +278,41 @@ export async function setOrgStatus(
 export async function deleteOrg(
   orgId: string,
 ): Promise<{ success: boolean; error?: string }> {
+  const session = await getServerSession(authOptions);
+  const userEmail = session?.user?.email?.trim();
+  if (!userEmail) {
+    return { success: false, error: 'You must be signed in to delete an organization.' };
+  }
+
   const admin = getSupabaseAdmin();
-  const { data: org } = await admin.from('orgs').select('slug').eq('id', orgId).maybeSingle();
+  const { data: staff } = await admin.from('staff').select('id').eq('email', userEmail).maybeSingle();
+  if (!staff) {
+    return { success: false, error: 'Only Bond staff can delete onboarding organizations.' };
+  }
+
+  const { data: org } = await admin
+    .from('orgs')
+    .select(
+      'slug, spaces_upload_storage_path, gl_codes_upload_storage_path, programs_upload_storage_path',
+    )
+    .eq('id', orgId)
+    .maybeSingle();
+
+  if (!org) {
+    return { success: false, error: 'Organization not found.' };
+  }
+
+  await purgeOrgOnboardingStorage(orgId, {
+    spaces_upload_storage_path: org.spaces_upload_storage_path,
+    gl_codes_upload_storage_path: org.gl_codes_upload_storage_path,
+    programs_upload_storage_path: org.programs_upload_storage_path,
+  });
+
   const { error } = await admin.from('orgs').delete().eq('id', orgId);
   if (error) return { success: false, error: error.message };
   revalidatePath(`${ONBOARDING_BASE}/orgs`);
   revalidatePath(`${ONBOARDING_BASE}/dashboard`);
-  if (org?.slug) {
+  if (org.slug) {
     revalidatePath(`/onboard/${org.slug}`);
   }
   return { success: true };

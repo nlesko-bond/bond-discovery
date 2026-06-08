@@ -9,6 +9,7 @@ import { getOnboardingBrowserClient } from '@/lib/onboarding/supabase-browser';
 import { SpacesCsvUploader } from './SpacesCsvUploader';
 import { GlCodesCsvUploader } from './GlCodesCsvUploader';
 import { ProgramsCsvUploader } from './ProgramsCsvUploader';
+import { PosDeviceCountInput } from './PosDeviceCountInput';
 import { toggleStep } from '../actions';
 
 const BONDY_CELEBRATION = '/images/onboarding/bondy-celebration.png';
@@ -34,6 +35,8 @@ type Props = {
   glCodesUploadOriginalFilename?: string | null;
   programsUploadedAt?: string | null;
   programsUploadOriginalFilename?: string | null;
+  posDevicesRequested?: number | null;
+  posDevicesRequestedAt?: string | null;
 };
 
 function CheckIcon() {
@@ -71,6 +74,8 @@ export function OnboardingChecklist({
   glCodesUploadOriginalFilename = null,
   programsUploadedAt = null,
   programsUploadOriginalFilename = null,
+  posDevicesRequested = null,
+  posDevicesRequestedAt = null,
 }: Props) {
   const byIndex = useMemo(() => {
     const m = new Map<number, StepProgress>();
@@ -454,20 +459,30 @@ export function OnboardingChecklist({
                       </ul>
                     ) : null}
 
-                    <div className="mt-4 flex flex-col gap-2">
-                      {step.links.map((link) => (
-                        <a
-                          key={link.url}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 rounded-[7px] bg-bond-brand-light px-3 py-2 text-[15px] font-medium text-bond-brand transition hover:opacity-90 sm:text-base"
-                        >
-                          <span>{link.icon}</span>
-                          {link.label}
-                        </a>
-                      ))}
-                    </div>
+                    {step.links.length > 0 ? (
+                      <div className="mt-4 flex flex-col gap-2">
+                        {step.links.map((link) => (
+                          <a
+                            key={link.url}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 rounded-[7px] bg-bond-brand-light px-3 py-2 text-[15px] font-medium text-bond-brand transition hover:opacity-90 sm:text-base"
+                          >
+                            <span>{link.icon}</span>
+                            {link.label}
+                          </a>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    {step.posDeviceCountInput ? (
+                      <PosDeviceCountInput
+                        slug={slug}
+                        savedCount={posDevicesRequested}
+                        savedAt={posDevicesRequestedAt}
+                      />
+                    ) : null}
 
                     {step.spacesCsvUpload ? (
                       <SpacesCsvUploader

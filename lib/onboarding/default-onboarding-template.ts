@@ -62,15 +62,11 @@ export const CANONICAL_ONBOARDING_TEMPLATE_STEPS: TemplateStep[] = [
     title: 'Order Your Point of Sale Devices',
     time: '~5 min',
     description:
-      'If you plan to take in-person payments, order the card readers and POS hardware Bond supports for your facility. Getting this started early avoids delays before go-live.',
-    links: [
-      {
-        label: 'Contact Bond support to order POS hardware',
-        url: 'https://help.bondsports.co/en/collections/11612167-getting-started',
-        icon: 'Guide',
-      },
-    ],
-    doneWhen: 'Done when you have submitted a POS hardware order or confirmed you do not need in-person devices.',
+      'If you plan to take in-person payments, tell us how many Bond-supported POS devices you need. Getting this started early avoids delays before go-live. Enter 0 if you will not use in-person card readers.',
+    links: [],
+    posDeviceCountInput: true,
+    doneWhen:
+      'Done when you have saved how many POS devices you need (enter 0 if you do not need in-person devices).',
   },
   {
     title: 'Set Up Roles & Permissions',

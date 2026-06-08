@@ -30,6 +30,7 @@ export default function OnboardingSettingsPage() {
         <ul className="list-disc space-y-1 pl-5">
           <li>Bank account connected (step checked complete)</li>
           <li>Spaces uploaded (CSV uploaded from the onboarding checklist)</li>
+          <li>POS device count saved from the onboarding checklist</li>
           <li>Upcoming programs uploaded (CSV uploaded from the onboarding checklist)</li>
           <li>Accounting codes uploaded (CSV uploaded from the onboarding checklist)</li>
           <li>Finished all pre-kickoff tasks (template configures which steps belong to Part 1)</li>

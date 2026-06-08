@@ -24,6 +24,8 @@ export interface TemplateStep {
   glCodesCsvUpload?: boolean;
   /** When true, checklist shows CSV template download + upload for upcoming programs */
   programsCsvUpload?: boolean;
+  /** When true, checklist shows numeric input for POS devices to order */
+  posDeviceCountInput?: boolean;
 }
 
 export interface Template {
@@ -66,6 +68,8 @@ export interface Org {
   programs_upload_storage_path?: string | null;
   programs_upload_original_filename?: string | null;
   programs_uploaded_at?: string | null;
+  pos_devices_requested?: number | null;
+  pos_devices_requested_at?: string | null;
   onboarding_notify_state?: Record<string, unknown>;
   created_at: string;
   completed_at: string | null;
