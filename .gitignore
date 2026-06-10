@@ -25,3 +25,7 @@ test-results/
 package 2.json
 package-lock 3.json
 .vercel
+
+# Playwright artifacts
+/test-results/
+/playwright-report/
