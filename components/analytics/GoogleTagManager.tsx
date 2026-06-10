@@ -99,36 +99,17 @@ export const gtmEvent = {
   },
 
   /**
-   * Track page view
+   * Track page view. Fired exactly once per page load (mount effect) — the
+   * discovery surface intentionally emits only page_view + register-intent
+   * clicks to partner GTM containers. page_location / page_referrer are
+   * included so partner GA4 can distinguish the iframe context.
    */
   pageView: (pagePath: string, pageTitle: string) => {
     gtmEvent.push('page_view', {
       page_path: pagePath,
       page_title: pageTitle,
-    });
-  },
-
-  /**
-   * Track program view
-   */
-  viewProgram: (program: { id: string; name: string; type?: string; sport?: string }) => {
-    gtmEvent.push('view_program', {
-      program_id: program.id,
-      program_name: program.name,
-      program_type: program.type,
-      sport: program.sport,
-    });
-  },
-
-  /**
-   * Track session view
-   */
-  viewSession: (session: { id: string; name: string; programId: string; programName: string }) => {
-    gtmEvent.push('view_session', {
-      session_id: session.id,
-      session_name: session.name,
-      program_id: session.programId,
-      program_name: session.programName,
+      page_location: typeof window !== 'undefined' ? window.location.href : undefined,
+      page_referrer: typeof document !== 'undefined' ? document.referrer : undefined,
     });
   },
 
@@ -168,64 +149,6 @@ export const gtmEvent = {
       program_name: data.programName,
       session_id: data.sessionId,
       session_name: data.sessionName,
-    });
-  },
-
-  /**
-   * Track filter applied
-   */
-  filterApplied: (filterType: string, filterValue: string | string[]) => {
-    gtmEvent.push('filter_applied', {
-      filter_type: filterType,
-      filter_value: Array.isArray(filterValue) ? filterValue.join(',') : filterValue,
-    });
-  },
-
-  /**
-   * Track view mode change
-   */
-  viewModeChanged: (fromView: string, toView: string) => {
-    gtmEvent.push('view_mode_changed', {
-      from_view: fromView,
-      to_view: toView,
-    });
-  },
-
-  /**
-   * Track schedule view change
-   */
-  scheduleViewChanged: (viewType: string) => {
-    gtmEvent.push('schedule_view_changed', {
-      view_type: viewType,
-    });
-  },
-
-  /**
-   * Track share link clicked
-   */
-  shareLink: (pageSlug: string, url: string) => {
-    gtmEvent.push('share_link', {
-      page_slug: pageSlug,
-      shared_url: url,
-    });
-  },
-
-  /**
-   * Track event click (calendar event)
-   */
-  clickEvent: (event: {
-    id: string;
-    title: string;
-    programId?: string;
-    programName?: string;
-    sessionId?: string;
-  }) => {
-    gtmEvent.push('click_event', {
-      event_id: event.id,
-      event_title: event.title,
-      program_id: event.programId,
-      program_name: event.programName,
-      session_id: event.sessionId,
     });
   },
 };

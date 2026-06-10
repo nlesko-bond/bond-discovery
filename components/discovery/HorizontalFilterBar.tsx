@@ -35,7 +35,6 @@ import {
 } from 'lucide-react';
 import { DiscoveryFilters, DiscoveryConfig } from '@/types';
 import { cn, getProgramTypeLabel, getSportLabel } from '@/lib/utils';
-import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 
 const PROGRAM_TYPE_ICONS: Record<string, LucideIcon> = {
   class: Users,
@@ -288,38 +287,7 @@ export function HorizontalFilterBar({
     const newValues = isAdding
       ? [...current, value]
       : current.filter(v => v !== value);
-    
-    // Track filter applied events when adding a filter
-    if (isAdding) {
-      let filterType: string = key;
-      let filterValue: string = value;
-      
-      if (key === 'facilityIds') {
-        const facility = filterOptions.facilities.find(f => f.id === value);
-        filterType = 'facility';
-        filterValue = facility?.name || value;
-      } else if (key === 'programIds') {
-        const program = filterOptions.programs.find(p => p.id === value);
-        filterType = 'program';
-        filterValue = program?.name || value;
-      } else if (key === 'programTypes') {
-        filterType = 'programType';
-        filterValue = getProgramTypeLabel(value as any);
-      } else if (key === 'sports') {
-        filterType = 'sport';
-        filterValue = getSportLabel(value);
-      } else if (key === 'sessionIds') {
-        const session = filterOptions.sessions?.find(s => s.id === value);
-        filterType = 'session';
-        filterValue = session?.name || value;
-      } else if (key === 'spaceNames') {
-        filterType = 'space';
-        filterValue = value;
-      }
-      
-      gtmEvent.filterApplied(filterType, filterValue);
-    }
-    
+
     // If clearing program selection, also clear session selection
     const extraUpdates: Partial<DiscoveryFilters> = {};
     if (key === 'programIds' && newValues.length === 0) {
@@ -825,9 +793,6 @@ export function HorizontalFilterBar({
                     ...filters,
                     gender: isSelected ? undefined : option.value as any,
                   });
-                  if (!isSelected) {
-                    gtmEvent.filterApplied('gender', option.label);
-                  }
                 }}
                 brandColor={secondaryColor}
               />

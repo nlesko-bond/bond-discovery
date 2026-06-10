@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import { X, ChevronDown, Search } from 'lucide-react';
 import { DiscoveryFilters, FilterType, FilterOption } from '@/types';
 import { getProgramTypeLabel, getSportLabel, cn } from '@/lib/utils';
-import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 
 interface ProgramFilterOption {
   id: string;
@@ -172,9 +171,6 @@ export function MobileFilters({
                               ...filters,
                               spaceNames: updated.length > 0 ? updated : undefined,
                             });
-                            if (e.target.checked) {
-                              gtmEvent.filterApplied('space', sp.name);
-                            }
                           }}
                           className="w-5 h-5 rounded"
                           style={{ accentColor: brandColor }}
@@ -205,9 +201,6 @@ export function MobileFilters({
                           ? [...(filters.facilityIds || []), facility.id]
                           : (filters.facilityIds || []).filter(f => f !== facility.id);
                         onFiltersChange({ ...filters, facilityIds: updated });
-                        if (e.target.checked) {
-                          gtmEvent.filterApplied('facility', facility.name);
-                        }
                       }}
                       className="w-5 h-5 rounded"
                       style={{ accentColor: brandColor }}
@@ -244,9 +237,6 @@ export function MobileFilters({
                           const extra: Partial<DiscoveryFilters> = {};
                           if (updated.length === 0) extra.sessionIds = undefined;
                           onFiltersChange({ ...filters, programIds: updated.length > 0 ? updated : undefined, ...extra });
-                          if (e.target.checked) {
-                            gtmEvent.filterApplied('program', program.name);
-                          }
                         }}
                         className="w-5 h-5 rounded"
                         style={{ accentColor: brandColor }}
@@ -308,9 +298,6 @@ export function MobileFilters({
                           ? (filters.programTypes || []).filter(t => t !== type.id)
                           : [...(filters.programTypes || []), type.id as any];
                         onFiltersChange({ ...filters, programTypes: updated });
-                        if (!isSelected) {
-                          gtmEvent.filterApplied('programType', getProgramTypeLabel(type.id));
-                        }
                       }}
                       className={cn(
                         'px-4 py-2 rounded-full text-sm font-medium transition-colors',
@@ -341,9 +328,6 @@ export function MobileFilters({
                           ? (filters.sports || []).filter(s => s !== sport.id)
                           : [...(filters.sports || []), sport.id];
                         onFiltersChange({ ...filters, sports: updated });
-                        if (!isSelected) {
-                          gtmEvent.filterApplied('sport', getSportLabel(sport.id));
-                        }
                       }}
                       className={cn(
                         'px-4 py-2 rounded-full text-sm font-medium transition-colors capitalize',
@@ -449,9 +433,6 @@ export function MobileFilters({
                       checked={filters.availability === option.id || (!filters.availability && option.id === 'all')}
                       onChange={() => {
                         onFiltersChange({ ...filters, availability: option.id as any });
-                        if (option.id !== 'all') {
-                          gtmEvent.filterApplied('availability', option.label);
-                        }
                       }}
                       className="w-5 h-5"
                       style={{ accentColor: brandColor }}

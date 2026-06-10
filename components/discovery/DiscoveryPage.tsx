@@ -279,8 +279,7 @@ export function DiscoveryPage({
   // Copy current URL to clipboard
   const handleShare = useCallback(async () => {
     const url = window.location.href;
-    // Track share event (GTM + Bond Analytics)
-    gtmEvent.shareLink(config.slug, url);
+    // Track share event (Bond Analytics only — not part of the partner GTM contract)
     bondAnalytics.shareLink(config.slug, url);
     try {
       await navigator.clipboard.writeText(url);
@@ -319,12 +318,13 @@ export function DiscoveryPage({
     }
   }, [urlSearchParams, viewMode]);
   
-  // Track page view on mount (Bond Analytics)
+  // Track page view on mount (Bond Analytics + single GTM page_view)
   useEffect(() => {
     bondAnalytics.pageView({
       pageSlug: config.slug,
       viewMode,
     });
+    gtmEvent.pageView(window.location.pathname, document.title);
   }, [config.slug]); // Only track once on mount
   
   // Load Google Font if custom font is specified
@@ -521,12 +521,6 @@ export function DiscoveryPage({
       contentTimedRef.current = true;
       const ttc = Math.round(performance.now());
       console.log(`[perf] time-to-content: ${ttc}ms (${viewMode} view, ${config.slug})`);
-      gtmEvent.push('perf_time_to_content', {
-        ttc_ms: ttc,
-        view_mode: viewMode,
-        slug: config.slug,
-        program_count: initialPrograms.length,
-      });
     }
   }, [viewMode, eventsFetched, initialPrograms.length, config.slug]);
   // Tracks the latest user-initiated tab target to avoid URL/state races
@@ -585,12 +579,6 @@ export function DiscoveryPage({
         const fetchMs = Math.round(performance.now() - fetchStart);
         const total = data?.meta?.totalFiltered ?? data?.data?.length ?? 0;
         console.log(`[perf] events fetch: ${fetchMs}ms (${data?.data?.length ?? 0}/${total} events)`);
-        gtmEvent.push('perf_events_fetch', {
-          fetch_duration_ms: fetchMs,
-          event_count: data?.data?.length ?? 0,
-          total_events: total,
-          slug: config.slug,
-        });
 
         if (data && Array.isArray(data.data)) {
           setApiEvents(data.data);
@@ -1102,8 +1090,7 @@ export function DiscoveryPage({
   const handleViewModeChange = useCallback((newMode: ViewMode) => {
     if (newMode === viewMode) return;
 
-    // Track view mode change (GTM + Bond Analytics)
-    gtmEvent.viewModeChanged(viewMode, newMode);
+    // Track view mode change (Bond Analytics only — not part of the partner GTM contract)
     bondAnalytics.viewModeChanged(config.slug, viewMode, newMode);
     pendingViewModeRef.current = newMode;
     if (pendingViewModeTimeoutRef.current) {

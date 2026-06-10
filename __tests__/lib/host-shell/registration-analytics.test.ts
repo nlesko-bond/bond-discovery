@@ -6,11 +6,18 @@ import {
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
 
-vi.mock('@/components/analytics/GoogleTagManager', () => ({
-  gtmEvent: {
-    clickRegister: vi.fn(),
-  },
-}));
+vi.mock('@/components/analytics/GoogleTagManager', async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import('@/components/analytics/GoogleTagManager')
+  >();
+  return {
+    gtmEvent: {
+      ...actual.gtmEvent,
+      // Pass-through spy: records calls AND performs the real dataLayer push
+      clickRegister: vi.fn(actual.gtmEvent.clickRegister),
+    },
+  };
+});
 
 vi.mock('@/lib/analytics', () => ({
   bondAnalytics: {
@@ -55,6 +62,25 @@ describe('parseRegistrationAnalyticsFromHref', () => {
 describe('trackHostShellRegisterClick', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.dataLayer = [];
+  });
+
+  it('pushes a click_register event to the GTM dataLayer', () => {
+    trackHostShellRegisterClick(
+      'https://bondsports.co/programs/3817/session/87596?productId=119110',
+      'toca-evanston',
+    );
+
+    expect(window.dataLayer).toContainEqual({
+      event: 'click_register',
+      program_id: '3817',
+      program_name: '3817',
+      session_id: '87596',
+      session_name: '87596',
+      product_id: '119110',
+      price: undefined,
+      currency: 'USD',
+    });
   });
 
   it('fires GTM and Bond analytics when slug and href are valid', () => {

@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { LayoutGrid, Calendar } from 'lucide-react';
 import type { DiscoveryConfig, DiscoveryFilters, Program, ViewMode } from '@/types';
-import { GoogleTagManager } from '@/components/analytics/GoogleTagManager';
+import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
 import {
   isHostPortalSessionLayout,
@@ -168,6 +168,8 @@ export function HostPortalDiscoveryPage({
       pageSlug: config.slug,
       viewMode,
     });
+    // Single GTM page_view per load (partner GTM contract)
+    gtmEvent.pageView(window.location.pathname, document.title);
   }, [config.slug]);
 
   const isEmbedded = useHostPortalEmbedResize(embedRootRef, {
