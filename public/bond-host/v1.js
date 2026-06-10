@@ -15,6 +15,7 @@
   var MSG_CHROME_OFFSET = 'bond:chrome-offset';
   var MSG_REQUEST_CHROME_OFFSET = 'bond:request-chrome-offset';
   var MSG_REQUEST_RESIZE = 'bond:request-resize';
+  var MSG_GTM_EVENT = 'BOND_GTM_EVENT';
   var EMBED_CHROME_QUERY_PARAM = 'embedChromePx';
   var CHECKOUT_QUERY_PARAM = 'bondPath';
 
@@ -234,6 +235,10 @@
       );
       return;
     }
+    if (data.type === MSG_GTM_EVENT) {
+      this.forwardGtmEvent(data, event.origin);
+      return;
+    }
     if (
       (data.type === MSG_RESIZE || data.type === MSG_RESIZE_LEGACY) &&
       typeof data.height === 'number'
@@ -243,6 +248,23 @@
         height = height + this.chromeOffsetPx;
       }
       setIframeHeight(this.activeIframe, height);
+    }
+  };
+
+  BondHostShell.prototype.forwardGtmEvent = function (data, origin) {
+    try {
+      // Conversion events come only from the Bond checkout (consumer origin).
+      if (origin !== this.bootstrap.consumerOrigin) return;
+      var payload = data.dataLayerEvent;
+      if (!payload || typeof payload !== 'object' || typeof payload.event !== 'string') return;
+      window.dataLayer = window.dataLayer || [];
+      if (window.__bondGtmListenerAttached) return; // partner already runs Bond's manual listener; avoid double-push
+      if (payload.ecommerce) {
+        window.dataLayer.push({ ecommerce: null }); // GA4: clear previous ecommerce object
+      }
+      window.dataLayer.push(payload);
+    } catch (e) {
+      /* analytics must never break the partner page */
     }
   };
 
