@@ -172,7 +172,9 @@ Do **not** use scripts that read inside the Bond iframe DOM (cross-origin).
 - **Customer guide:** [guide.html](./documentation/website/discovery/guide.html) → live at https://discovery.bondsports.co/documentation/website/discovery/guide  
 - **Engineering detail:** [analytics-discovery-and-host-shell.md](./analytics-discovery-and-host-shell.md)  
 - **Verify:** GTM Preview on published programs page; click Register inside embed.  
-- **Checkout:** Bond consumer checkout analytics — contact Bond support.  
+- **Checkout conversions:** the host kit (`/bond-host/v1.js`) automatically forwards Bond checkout conversion events (`BOND_GTM_EVENT` postMessages — `begin_checkout`, `select_payment_method`, `purchase`, etc.) into the partner page's `window.dataLayer`. Partners only need GTM installed on their site (the standard GTM head/noscript snippets) plus their GTM/GA4 tag configuration per Bond's help-center articles 11139263 / 12580240 — no extra listener script.  
+- **Manual "Script 3" listener:** partners who previously pasted Bond's manual `BOND_GTM_EVENT` listener ("Script 3" from the help center) can keep it — the kit detects it via `window.__bondGtmListenerAttached` and will not double-fire — but new setups should omit Script 3.  
+- **Limitation:** conversion events are forwarded only on pages where the kit mounts the checkout iframe (discovery/landing pages). If a partner deep-links users directly to `bondsports.co` (no iframe), conversions are tracked by GTM configured inside Bond checkout itself, not by the partner page.  
 
 Admin GTM UI: `/admin/help/gtm-setup`
 

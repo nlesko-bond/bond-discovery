@@ -89,6 +89,8 @@ Replace `GTM-XXXXXXX` with your ID.
 
 **Why both?** Bond script runs the embed. GTM on **your** domain records pageviews on your URLs (`/programs`, `/register`). Bond admin GTM ID records register clicks from inside the iframe.
 
+**No extra listener script needed:** the Bond host script automatically forwards Bond checkout conversion events (`BOND_GTM_EVENT` messages — e.g. `begin_checkout`, `select_payment_method`, `purchase`) into your page's `dataLayer`. You only need GTM installed (the snippet above) plus your GTM/GA4 tag configuration per Bond's help-center articles 11139263 / 12580240. If you previously pasted Bond's manual "Script 3" listener, you can keep it — the host script detects it (via `window.__bondGtmListenerAttached`) and will not double-fire — but new setups should omit Script 3.
+
 ---
 
 ## Step 4 — Two pages on your site
@@ -144,6 +146,7 @@ Same embed (adjust offset if needed):
 | `product_id` | `product_id` |
 
 4. Optional: repeat for `click_redeem_pass` (Schedule tab).
+5. **Checkout conversions:** configure GA4 ecommerce tags for `begin_checkout`, `select_payment_method`, and `purchase` (Custom Event triggers; the payloads use the standard GA4 ecommerce shape) per Bond's help-center articles 11139263 / 12580240. The host script pushes these into your `dataLayer` automatically (see Step 3).
 
 **Tip:** If you see two pageviews on the programs page (your page + iframe), restrict the GA4 Configuration tag to fire only when **Page Hostname** equals your site domain.
 
@@ -157,6 +160,7 @@ Same embed (adjust offset if needed):
 | Register opens a **new tab** on your `/register` URL | |
 | Checkout loads (not blank) | |
 | GTM Preview: click Register → `click_register` with IDs **and** names | |
+| GTM Preview on your `/register` page: complete a test checkout → `begin_checkout` / `purchase` in your `dataLayer` | |
 | GA4 Realtime: pageview on your `/programs` URL | |
 
 Use **published** URLs. In GTM Preview, connect to your live programs page and click **inside** the Bond embed.
@@ -170,7 +174,9 @@ Use **published** URLs. In GTM Preview, connect to your live programs page and c
 | `click_register` | Register clicked on programs page | `program_id`, `program_name`, `session_id`, `session_name`, `product_id` |
 | `click_redeem_pass` | Redeem on Schedule tab | program/session IDs and names |
 | Pageview (GA4) | Your GTM on your footer | Your page URLs |
-| Checkout steps | Inside Bond checkout app | Separate Bond/consumer GA setup — ask Bond support for conversion tracking |
+| Checkout conversions (`begin_checkout`, `select_payment_method`, `purchase`, +12 more) | Inside the checkout iframe on your register/discovery pages | Forwarded automatically by the host script into your `dataLayer` (GA4 ecommerce shape, e.g. `transaction_id`, `currency`, `value`, `items`) |
+
+**Limitation:** conversion events are forwarded only on pages where the host script mounts the checkout iframe (your discovery/landing pages). If you deep-link users directly to `bondsports.co` (no iframe), conversions are tracked by GTM configured inside Bond checkout itself, not by your page.
 
 ---
 
@@ -181,6 +187,7 @@ Use **published** URLs. In GTM Preview, connect to your live programs page and c
 | No events in GA4 | GTM ID saved in Bond admin; GTM snippet in footer; tags published |
 | Register tab 404 | Register page exists; checkout path matches Bond admin |
 | Blank checkout | Bond must allow iframe embed — contact support |
+| No `purchase` events | GTM snippet on the register page footer; checkout actually loads in the iframe (not a direct `bondsports.co` link) |
 | Footer cut off on register | Increase `data-bond-chrome-offset-px` |
 | White gap above programs | Lower or remove chrome offset; remove extra top padding in Webflow |
 
