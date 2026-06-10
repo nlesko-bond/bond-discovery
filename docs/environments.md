@@ -7,8 +7,9 @@ never printed).
 
 > **Deprecation warning (one release only)**: if the Supabase env vars are
 > missing, the app currently logs a loud `console.error` and falls back to the
-> hardcoded **production** Supabase project. That fallback lives in a single
-> constant — `DEPRECATED_PROD_FALLBACK` in `lib/supabase.ts` — and will be
+> hardcoded **production** Supabase project. UPDATE 2026-06-10: the fallback has
+> been REMOVED (`DEPRECATED_PROD_FALLBACK` is now `null`) after the operator
+> confirmed the Vercel env vars; missing env now throws. Historical note: it was
 > REMOVED in the next release (set the constant to `null`). After removal,
 > missing env vars throw at first use. **Operators: verify the production
 > Vercel project has all Supabase env vars set before the next release.**

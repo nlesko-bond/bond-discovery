@@ -4,19 +4,12 @@ export const SUPABASE_ENV_ERROR =
   'Supabase env not configured: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (see .env.example)';
 
 /**
- * @deprecated Hardcoded PRODUCTION Supabase fallback. Retained for exactly one
- * release so deployments whose Vercel env vars were never set do not break.
- * It will be REMOVED in the next release.
- *
- * To remove the fallback (one-line change): set this constant to `null`.
- * Every resolution path below will then throw {@link SUPABASE_ENV_ERROR}
- * instead of silently targeting production.
+ * Removed 2026-06-10 after the operator confirmed NEXT_PUBLIC_SUPABASE_URL,
+ * NEXT_PUBLIC_SUPABASE_ANON_KEY, and SUPABASE_SERVICE_KEY are set in Vercel.
+ * Every resolution path now throws {@link SUPABASE_ENV_ERROR} when env vars
+ * are missing instead of silently targeting production.
  */
-const DEPRECATED_PROD_FALLBACK: { url: string; anonKey: string } | null = {
-  url: 'https://mxketdjzelojxjnzsjgd.supabase.co',
-  anonKey:
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14a2V0ZGp6ZWxvanhqbnpzamdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MTI4NDQsImV4cCI6MjA3NjI4ODg0NH0._zB2_IAm6R4oFSXgfJwUUrL8VOgt91hkmuHfKsG7_yc',
-};
+const DEPRECATED_PROD_FALLBACK: { url: string; anonKey: string } | null = null;
 
 /**
  * Single funnel for the deprecated fallback: throws when the fallback has been

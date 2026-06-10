@@ -66,27 +66,14 @@ describe('supabase env resolution', () => {
     expect(mod.getSupabasePublic()).toBe(mod.getSupabasePublic());
   });
 
-  it('missing public env uses the deprecated production fallback and logs a loud removal warning', async () => {
-    // Transitional behavior (one release). After DEPRECATED_PROD_FALLBACK is
-    // set to null, this case must throw SUPABASE_ENV_ERROR instead.
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
+  it('missing public env throws the actionable env error (fallback removed)', async () => {
     const mod = await loadModule();
-    const client = mod.getSupabasePublic();
-    expect(client).toBeTruthy();
-    expect(errorSpy).toHaveBeenCalled();
-    const messages = errorSpy.mock.calls.map((call) => String(call[0])).join('\n');
-    expect(messages).toContain('NEXT_PUBLIC_SUPABASE_URL env var is missing');
-    expect(messages).toContain('REMOVED in the next release');
+    expect(() => mod.getSupabasePublic()).toThrow(mod.SUPABASE_ENV_ERROR);
   });
 
-  it('missing server env uses the deprecated production fallback URL with a warning', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
+  it('missing server env throws the actionable env error (fallback removed)', async () => {
     const mod = await loadModule();
-    expect(mod.getSupabaseUrlForServer()).toBe('https://mxketdjzelojxjnzsjgd.supabase.co');
-    expect(errorSpy).toHaveBeenCalled();
-    expect(String(errorSpy.mock.calls[0][0])).toContain('REMOVED in the next release');
+    expect(() => mod.getSupabaseUrlForServer()).toThrow(mod.SUPABASE_ENV_ERROR);
   });
 
   it('derives the server URL from the service-role JWT ref when no URL env is set', async () => {
