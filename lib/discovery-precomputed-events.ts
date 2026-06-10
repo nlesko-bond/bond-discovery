@@ -33,7 +33,7 @@ export async function getPrecomputedDiscoveryEvents(
     }
 
     let events = filterDiscoveryEventsByPageConfig(
-      precomputed.data as Array<{ programId?: unknown }>,
+      precomputed.data as Array<{ programId?: unknown; id?: string | number }>,
       config,
     );
 

@@ -1,4 +1,9 @@
-import { cache } from 'react';
+import { cache as reactCache } from 'react';
+
+// React's `cache` exists in Next.js' server runtime, but not in the plain
+// React 18 client build used by the test environment — fall back to identity.
+const cache: typeof reactCache =
+  typeof reactCache === 'function' ? reactCache : (fn) => fn;
 import {
   DiscoveryConfig,
   BrandingConfig,

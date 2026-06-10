@@ -61,15 +61,23 @@ describe('ProgramCard', () => {
     });
 
     it('renders session count', () => {
-      render(<ProgramCard program={mockProgram} config={mockConfig} />);
-      // Program has 2 sessions
+      // The card only counts sessions that haven't ended yet, so pin
+      // far-future end dates to keep this test stable over time.
+      const programWithTwoUpcomingSessions = {
+        ...mockProgram,
+        sessions: [
+          { ...mockSession, endDate: '2099-05-31' },
+          { ...mockSessionFull, endDate: '2099-08-31' },
+        ],
+      };
+      render(<ProgramCard program={programWithTwoUpcomingSessions} config={mockConfig} />);
       expect(screen.getByText(/2 sessions/)).toBeInTheDocument();
     });
 
     it('renders singular session text for 1 session', () => {
       const programWithOneSession = {
         ...mockProgram,
-        sessions: [mockSession],
+        sessions: [{ ...mockSession, endDate: '2099-05-31' }],
       };
       render(<ProgramCard program={programWithOneSession} config={mockConfig} />);
       expect(screen.getByText(/1 session/)).toBeInTheDocument();

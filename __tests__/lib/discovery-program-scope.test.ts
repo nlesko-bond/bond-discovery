@@ -10,7 +10,11 @@ import {
 } from '@/lib/discovery-program-scope';
 import type { DiscoveryConfig, Program } from '@/types';
 
-function minimalConfig(overrides: Partial<DiscoveryConfig> = {}): DiscoveryConfig {
+type MinimalConfigOverrides = Omit<Partial<DiscoveryConfig>, 'features'> & {
+  features?: Partial<DiscoveryConfig['features']>;
+};
+
+function minimalConfig(overrides: MinimalConfigOverrides = {}): DiscoveryConfig {
   return {
     id: '1',
     name: 'Test',

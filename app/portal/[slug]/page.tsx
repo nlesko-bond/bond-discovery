@@ -10,6 +10,7 @@ import {
   isSessionsListPortalLayout,
   toPortalDiscoveryConfig,
 } from '@/lib/host-shell/portal-config';
+import type { IDiscoveryApiEvent } from '@/lib/host-shell/portal-schedule-events';
 import { Program, DiscoveryConfig } from '@/types';
 import { fetchProgramsForDiscoveryPage } from '@/lib/embed-discovery-programs';
 
@@ -57,7 +58,7 @@ export default async function PortalDiscoverySlugPage({ params, searchParams }: 
       {useHostPortalSessionLayout ? (
         <HostPortalDiscoveryPage
           initialPrograms={programs}
-          initialScheduleEvents={eventsResult?.events}
+          initialScheduleEvents={eventsResult?.events as IDiscoveryApiEvent[] | undefined}
           initialEventsFetched={!!eventsResult}
           initialTotalServerEvents={eventsResult?.total ?? 0}
           config={portalConfig}

@@ -129,7 +129,7 @@ export async function GET(request: Request) {
     try {
       const pageConfig = await getConfigBySlug(slug);
       const allowPrecomputed = pageConfig?.features?.discoveryCacheEnabled !== false;
-      if (allowPrecomputed) {
+      if (pageConfig && allowPrecomputed) {
         const filtered = await getPrecomputedDiscoveryEvents(slug, pageConfig);
         if (filtered && filtered.events.length > 0) {
           return NextResponse.json(
