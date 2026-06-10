@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getConfigBySlug, updatePageConfig, deletePageConfig } from '@/lib/config';
+import { requireAdmin } from '@/lib/admin-auth';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
@@ -30,14 +31,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
   try {
-    // Note: Auth temporarily disabled for easier setup
     const body = await request.json();
-    
-    // Debug: Log what we're receiving
-    console.log('[PATCH] Received features:', JSON.stringify(body.features, null, 2));
-    console.log('[PATCH] includedProgramIds in features:', body.features?.includedProgramIds);
-    
+
     // Update the page
     const updatedConfig = await updatePageConfig(params.slug, body);
 
@@ -60,8 +59,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 }
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
   try {
-    // Note: Auth temporarily disabled for easier setup
     const deleted = await deletePageConfig(params.slug);
     
     if (!deleted) {
