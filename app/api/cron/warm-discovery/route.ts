@@ -21,6 +21,10 @@ import {
   resetBondApiStats,
   getBondApiStats,
 } from '@/lib/bond-client';
+import {
+  getDiscoveryExcludedProgramIds,
+  getDiscoveryIncludedProgramIds,
+} from '@/lib/discovery-program-scope';
 import type { DiscoveryConfig } from '@/types';
 
 export const runtime = 'nodejs';
@@ -36,8 +40,8 @@ function computeDataScope(config: DiscoveryConfig): string {
   const orgIds = config.organizationIds.slice().sort().join(',');
   const apiKey = config.apiKey || DEFAULT_API_KEY;
   const filterMode = config.features?.programFilterMode || 'all';
-  const excluded = (config.excludedProgramIds || []).slice().sort().join(',');
-  const included = (config.includedProgramIds || []).slice().sort().join(',');
+  const excluded = getDiscoveryExcludedProgramIds(config).slice().sort().join(',');
+  const included = getDiscoveryIncludedProgramIds(config).slice().sort().join(',');
   const bondEnv = config.features.bondEnv || 'production';
   return `${orgIds}|${apiKey}|${bondEnv}|${filterMode}|${excluded}|${included}`;
 }

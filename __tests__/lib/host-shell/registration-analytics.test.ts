@@ -57,6 +57,29 @@ describe('trackHostShellRegisterClick', () => {
     vi.clearAllMocks();
   });
 
+  it('uses anchor data attributes for program and session names', () => {
+    const anchor = document.createElement('a');
+    anchor.setAttribute('data-bond-program-id', '3817');
+    anchor.setAttribute('data-bond-program-name', 'Flag Football');
+    anchor.setAttribute('data-bond-session-id', '87596');
+    anchor.setAttribute('data-bond-session-name', 'Winter 2 - 12U Coed');
+    anchor.setAttribute('data-bond-product-id', '119110');
+
+    trackHostShellRegisterClick(
+      'https://bondsports.co/programs/3817/session/87596?productId=119110',
+      'toca-evanston',
+      anchor,
+    );
+
+    expect(gtmEvent.clickRegister).toHaveBeenCalledWith({
+      programId: '3817',
+      programName: 'Flag Football',
+      sessionId: '87596',
+      sessionName: 'Winter 2 - 12U Coed',
+      productId: '119110',
+    });
+  });
+
   it('fires GTM and Bond analytics when slug and href are valid', () => {
     trackHostShellRegisterClick(
       'https://bondsports.co/programs/1/session/2?productId=99',

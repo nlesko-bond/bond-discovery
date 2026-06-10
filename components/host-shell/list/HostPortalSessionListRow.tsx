@@ -14,6 +14,7 @@ import type { IPortalCardAccentContext } from '@/lib/host-shell/portal-card-acce
 import { hasHostPortalSessionDescription } from '@/lib/host-shell/portal-session-description';
 import { HostPortalSessionInfoDialog } from './HostPortalSessionInfoDialog';
 import { resolvePortalScheduleLinkTarget } from '@/lib/host-shell/portal-schedule-events';
+import { getBondRegisterLinkAnalyticsAttributes } from '@/lib/host-shell/registration-analytics';
 import { HostPortalSportIcon } from '../HostPortalSportIcon';
 import { cn } from '@/lib/utils';
 
@@ -197,6 +198,10 @@ interface ISessionSlotExpandPanelProps {
   linkTarget: '_blank' | '_top' | '_self';
   fallbackRegistrationUrl?: string;
   accentColor: string;
+  programId: string;
+  programName: string;
+  sessionId: string;
+  sessionName: string;
 }
 
 function SessionSlotExpandPanel({
@@ -207,6 +212,10 @@ function SessionSlotExpandPanel({
   linkTarget,
   fallbackRegistrationUrl,
   accentColor,
+  programId,
+  programName,
+  sessionId,
+  sessionName,
 }: ISessionSlotExpandPanelProps) {
   const dateChips = segment ? buildSegmentDateChips(segment) : sessionDateRange ? [sessionDateRange] : [];
   const registrationUrl = chip.registrationUrl ?? fallbackRegistrationUrl;
@@ -232,6 +241,12 @@ function SessionSlotExpandPanel({
           href={registrationUrl}
           target={linkTarget}
           rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
+          {...getBondRegisterLinkAnalyticsAttributes({
+            programId,
+            programName,
+            sessionId,
+            sessionName,
+          })}
           className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50"
           style={{ color: accentColor }}
           aria-label={`Register for ${slotLabel}`}
@@ -268,6 +283,13 @@ export function HostPortalSessionListRow({
   const [segmentsLoading, setSegmentsLoading] = useState(false);
   const [segmentsError, setSegmentsError] = useState<string | null>(null);
   const hideRegistrationLinks = config.features.hideRegistrationLinks === true;
+  const sessionRegisterAnalyticsAttributes = getBondRegisterLinkAnalyticsAttributes({
+    programId: card.programId,
+    programName: card.programName,
+    sessionId: card.sessionId,
+    sessionName: card.name,
+    productId: card.registerProductId,
+  });
   const showScheduleTab = (config.features.enabledTabs || ['programs', 'schedule']).includes(
     'schedule',
   );
@@ -419,6 +441,7 @@ export function HostPortalSessionListRow({
                     href={card.registerUrl}
                     target={linkTarget}
                     rel={linkRel}
+                    {...sessionRegisterAnalyticsAttributes}
                     className={cn(
                       'inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-sm',
                       card.isClosed && 'pointer-events-none opacity-60',
@@ -459,6 +482,10 @@ export function HostPortalSessionListRow({
                   linkTarget={linkTarget}
                   fallbackRegistrationUrl={card.registerUrl}
                   accentColor={uiColors.secondaryColor}
+                  programId={card.programId}
+                  programName={card.programName}
+                  sessionId={card.sessionId}
+                  sessionName={card.name}
                 />
               )}
             </div>

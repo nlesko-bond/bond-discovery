@@ -5,8 +5,8 @@ import {
   type DiscoveryEventsMode,
   type FullDiscoveryEvent,
 } from '@/lib/discovery-events';
-import { cacheGet, discoveryResponseCacheKey } from '@/lib/cache';
 import { getConfigBySlug } from '@/lib/config';
+import { getPrecomputedDiscoveryEvents } from '@/lib/discovery-precomputed-events';
 import { getAvailabilityPayload } from '@/lib/availability-cache';
 import { maybeAlertZeroDiscoveryEvents } from '@/lib/discovery-zero-events-alert';
 import { getBondApiStats } from '@/lib/bond-client';
@@ -130,17 +130,21 @@ export async function GET(request: Request) {
       const pageConfig = await getConfigBySlug(slug);
       const allowPrecomputed = pageConfig?.features?.discoveryCacheEnabled !== false;
       if (allowPrecomputed) {
-        const precomputed = await cacheGet<any>(
-          discoveryResponseCacheKey(slug, pageConfig?.features?.bondEnv)
-        );
-        if (precomputed && Array.isArray(precomputed.data) && precomputed.data.length > 0) {
-          return NextResponse.json(precomputed, {
-            headers: mergeEmbedCors(request, embedCorsConfig, {
-              'Cache-Control': 's-maxage=60, stale-while-revalidate=120',
-              'X-Bond-Events-Cache': 'PRECOMPUTED',
-              'X-Bond-Events-Mode': 'full',
-            }),
-          });
+        const filtered = await getPrecomputedDiscoveryEvents(slug, pageConfig);
+        if (filtered && filtered.events.length > 0) {
+          return NextResponse.json(
+            {
+              data: filtered.events,
+              meta: { totalFiltered: filtered.total },
+            },
+            {
+              headers: mergeEmbedCors(request, embedCorsConfig, {
+                'Cache-Control': 's-maxage=60, stale-while-revalidate=120',
+                'X-Bond-Events-Cache': 'PRECOMPUTED',
+                'X-Bond-Events-Mode': 'full',
+              }),
+            },
+          );
         }
       }
     } catch (err) {

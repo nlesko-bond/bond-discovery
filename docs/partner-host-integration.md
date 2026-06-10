@@ -45,7 +45,7 @@ Your site                          Bond
 
 Save. Checkout path must match the register page you create in Step 3.
 
-Optional: **Analytics** on same page — add partner **GTM-XXXXXX** (events fire inside discovery iframe; see [analytics doc](./analytics-discovery-and-host-shell.md)).
+Optional: **Analytics** on same page — add partner **GTM-XXXXXX** (see [customer setup guide](./customer-setup-discovery-checkout-analytics.md)).
 
 ---
 
@@ -169,10 +169,10 @@ Do **not** use scripts that read inside the Bond iframe DOM (cross-origin).
 
 ## Analytics quick reference
 
-- **Discovery:** GTM loads inside iframe; events like `click_register`, `filter_applied` — full list in [analytics-discovery-and-host-shell.md](./analytics-discovery-and-host-shell.md).  
-- **Verify:** GTM Preview on published programs page; click Register and filters.  
-- **Checkout tab:** Tracked in Bond consumer app, not in this repo.  
-- **Known gap:** Portal register click may not fire `click_register` until bridge tracking fix — see analytics doc.
+- **Customer guide:** [guide.html](./documentation/website/discovery/guide.html) → live at https://discovery.bondsports.co/documentation/website/discovery/guide  
+- **Engineering detail:** [analytics-discovery-and-host-shell.md](./analytics-discovery-and-host-shell.md)  
+- **Verify:** GTM Preview on published programs page; click Register inside embed.  
+- **Checkout:** Bond consumer checkout analytics — contact Bond support.  
 
 Admin GTM UI: `/admin/help/gtm-setup`
 

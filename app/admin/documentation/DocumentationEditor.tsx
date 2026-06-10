@@ -11,6 +11,7 @@ import {
 } from '@/lib/documentation-preview-edit';
 
 const DEFAULT_DOCUMENTATION_HTML = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1.0" />\n<title>Documentation</title>\n</head>\n<body>\n<h1>Documentation</h1>\n</body>\n</html>';
+const EXAMPLE_DOCUMENTATION_PATH = 'documentation/your-category/your-page';
 const HTML_TEXTAREA_ROWS = 34;
 const PREVIEW_HEIGHT_CLASS = 'h-[78vh] min-h-[720px]';
 const ICON_SIZE_XS = 12;
@@ -47,7 +48,7 @@ type DocumentationEditorProps = {
 const emptyFormState: DocumentationFormState = {
   id: null,
   title: '',
-  path: 'documentation/apis',
+  path: '',
   sourceHtml: DEFAULT_DOCUMENTATION_HTML,
   isActive: true,
 };
@@ -62,6 +63,9 @@ function createPreviewNonce(): string {
 
 function getPublicPathFromInput(path: string): string {
   const trimmedPath = path.trim().replace(/^\/+|\/+$/g, '');
+  if (!trimmedPath) {
+    return `/${EXAMPLE_DOCUMENTATION_PATH}`;
+  }
   const withoutPrefix = trimmedPath.toLowerCase().startsWith('documentation/')
     ? trimmedPath.slice('documentation/'.length)
     : trimmedPath;
@@ -320,7 +324,7 @@ export function DocumentationEditor({ pageId }: DocumentationEditorProps) {
                 }}
                 required
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                placeholder="documentation/apis"
+                placeholder={EXAMPLE_DOCUMENTATION_PATH}
               />
               <span className="flex items-center gap-1 text-xs text-gray-500">
                 <Globe size={ICON_SIZE_XS} />

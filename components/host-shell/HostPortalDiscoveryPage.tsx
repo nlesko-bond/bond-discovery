@@ -362,7 +362,7 @@ export function HostPortalDiscoveryPage({
       className={cn('bg-gray-50', !isEmbedded && 'min-h-screen')}
       style={{ fontFamily: config.branding.fontFamily || 'inherit' }}
     >
-      {config.gtmId && <GoogleTagManager gtmId={config.gtmId} pageSlug={config.slug} />}
+      <GoogleTagManager gtmId={config.gtmId} pageSlug={config.slug} />
 
       {!useSessionPortalShell && (
       <header

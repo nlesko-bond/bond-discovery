@@ -9,6 +9,7 @@ import {
 } from '@/types';
 import { supabase, getSupabaseAdmin, DiscoveryPageRow } from './supabase';
 import { DEFAULT_BOND_ENV, resolveBondEnv } from './bond-env';
+import { invalidateDiscoveryResponseCache } from './cache';
 import { normalizePortalFeatureFields } from './host-shell/portal-feature-config';
 
 /**
@@ -356,6 +357,23 @@ export async function updatePageConfig(slug: string, updates: Partial<DiscoveryC
   if (updateError) {
     console.error('Error updating page config:', updateError);
     throw new Error(updateError.message);
+  }
+
+  const programFilterTouched =
+    updates.excludedProgramIds !== undefined ||
+    updates.includedProgramIds !== undefined ||
+    updates.features?.programFilterMode !== undefined ||
+    updates.features?.excludedProgramIds !== undefined ||
+    updates.features?.includedProgramIds !== undefined;
+
+  if (programFilterTouched) {
+    const existingConfig = await getConfigBySlug(slug);
+    const bondEnv = updates.features?.bondEnv ?? existingConfig?.features.bondEnv;
+    const nextSlug = updateData.slug || slug;
+    await invalidateDiscoveryResponseCache(nextSlug, bondEnv);
+    if (nextSlug !== slug) {
+      await invalidateDiscoveryResponseCache(slug, bondEnv);
+    }
   }
   
   // Fetch the updated record using admin client

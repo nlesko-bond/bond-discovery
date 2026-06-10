@@ -13,6 +13,53 @@ export interface IRegistrationAnalyticsPayload {
   productId?: string;
 }
 
+export interface IBondRegisterLinkAnalyticsInput {
+  programId: string;
+  programName: string;
+  sessionId?: string;
+  sessionName?: string;
+  productId?: string;
+}
+
+/**
+ * HTML data attributes read by host-shell register click tracking (names + ids).
+ */
+export function getBondRegisterLinkAnalyticsAttributes(
+  input: IBondRegisterLinkAnalyticsInput,
+): Record<string, string> {
+  const attributes: Record<string, string> = {
+    'data-bond-program-id': input.programId,
+    'data-bond-program-name': input.programName,
+  };
+  if (input.sessionId) {
+    attributes['data-bond-session-id'] = input.sessionId;
+  }
+  if (input.sessionName) {
+    attributes['data-bond-session-name'] = input.sessionName;
+  }
+  if (input.productId) {
+    attributes['data-bond-product-id'] = input.productId;
+  }
+  return attributes;
+}
+
+function mergeRegistrationAnalyticsFromAnchor(
+  payload: IRegistrationAnalyticsPayload,
+  anchor: HTMLAnchorElement | null | undefined,
+): IRegistrationAnalyticsPayload {
+  if (!anchor) {
+    return payload;
+  }
+  const { dataset } = anchor;
+  return {
+    programId: dataset.bondProgramId?.trim() || payload.programId,
+    programName: dataset.bondProgramName?.trim() || payload.programName,
+    sessionId: dataset.bondSessionId?.trim() || payload.sessionId,
+    sessionName: dataset.bondSessionName?.trim() || payload.sessionName,
+    productId: dataset.bondProductId?.trim() || payload.productId,
+  };
+}
+
 function resolveRegistrationUrl(href: string, consumerOrigin: string): URL | null {
   try {
     const base = consumerOrigin.endsWith('/') ? consumerOrigin : `${consumerOrigin}/`;
@@ -77,11 +124,16 @@ export function getPortalPageSlugFromLocation(): string | null {
 /**
  * Fires discovery register analytics before host-shell navigation intercepts the click.
  */
-export function trackHostShellRegisterClick(href: string, pageSlug: string | null): void {
-  const payload = parseRegistrationAnalyticsFromHref(href);
-  if (!payload || !pageSlug) {
+export function trackHostShellRegisterClick(
+  href: string,
+  pageSlug: string | null,
+  anchor?: HTMLAnchorElement | null,
+): void {
+  const parsed = parseRegistrationAnalyticsFromHref(href);
+  if (!parsed || !pageSlug) {
     return;
   }
+  const payload = mergeRegistrationAnalyticsFromAnchor(parsed, anchor);
 
   gtmEvent.clickRegister({
     programId: payload.programId,
