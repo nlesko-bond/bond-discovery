@@ -422,10 +422,14 @@ export function HostPortalV2Page({
         ) : (
           <div
             data-testid="portal-v2-grid"
-            className="grid gap-4 py-4 md:py-6"
-            style={{
-              gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, ${cardMinWidthPx}px), 1fr))`,
-            }}
+            className="grid grid-cols-1 gap-3 py-4 sm:gap-4 sm:[grid-template-columns:var(--v2-grid-cols)] md:py-6"
+            style={
+              {
+                // Single full-width column below 640px (phones feel pinched with
+                // 2-up auto-fill); the configured min-width drives columns from sm up.
+                '--v2-grid-cols': `repeat(auto-fill, minmax(min(100%, ${cardMinWidthPx}px), 1fr))`,
+              } as React.CSSProperties
+            }
           >
             {sessionCards.map((card) => (
               <HostPortalV2Card

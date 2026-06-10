@@ -59,6 +59,16 @@ for (const viewport of [
       await expect(registerLink).toBeVisible();
       await expect(registerLink).toHaveAttribute('data-bond-program-id', /.+/);
 
+      // Phones get one full-bleed column — a card must span nearly the viewport.
+      if (viewport.width < 640) {
+        const cardBox = await page.locator(CARD).first().boundingBox();
+        expect(cardBox, 'first card has no bounding box').toBeTruthy();
+        expect(
+          cardBox!.width,
+          `card width ${cardBox!.width} too narrow for ${viewport.width}px viewport`,
+        ).toBeGreaterThanOrEqual(viewport.width - 40);
+      }
+
       await expectNoHorizontalOverflow(page);
     });
 
