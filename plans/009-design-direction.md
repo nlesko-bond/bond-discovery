@@ -1,19 +1,27 @@
 # Plan 009 — Design direction (Step 1 deliverable)
 
-Status: DRAFT — direction shown to operator on 2026-06-10 (mockup in session);
-awaiting refinements/approval before Steps 2–6 build. Reference pages reviewed:
+Status: APPROVED WITH REFINEMENTS — operator answered the open questions on
+2026-06-10 (folded in below). Reference pages:
 - Current Bond-rendered page: https://discovery.bondsports.co/pbsz?viewMode=programs
-- Partner-built comparison: https://prod-testing.webflow.io/discovery/programs
+- Kit-rendered page on a partner site: https://prod-testing.webflow.io/discovery/programs
+  — IMPORTANT: this page IS this repo's output. The host kit (bond-host/v1.js)
+  iframes /portal/{slug} into the Webflow page. Both reference URLs render the
+  same component family this plan redesigns (HostPortalDiscoveryPage /
+  DiscoveryPage, session cards, filter bar). There is no "partner-built"
+  comparison page — the ugly page is ours, and that is the point of this plan.
 
 ## Diagnosis of current state
 
-- **PBSZ (current template)**: has the right data (price, ages, spots, sessions)
-  but everything renders at equal visual weight — five filter dropdowns in a row,
+- The current template has the right data (price, ages, spots, sessions) but
+  everything renders at equal visual weight — five filter dropdowns in a row,
   cards where all metadata competes. Functional, not scannable.
-- **Webflow partner page**: category-accordion browsing with no decision data on
-  the surface (no price/ages/availability) — every decision costs a click-through.
-  Proof that partners hand-build worse pages than Bond can render; the template
-  upgrade is the adoption argument for the host kit.
+- **Filters are a first-class problem, not just styling** (operator, verbatim:
+  "Its filters don't work well"). Builders must treat filter BEHAVIOR as in
+  scope: audit each filter on real configs (sport/activity, age, gender,
+  facility, program type) for (a) options that match the loaded data, (b)
+  results updating correctly and visibly, (c) state surviving register
+  round-trips, (d) mobile usability. File and fix behavioral bugs found during
+  the rebuild — they are part of this plan, not follow-ups.
 
 ## Direction (what changes)
 
@@ -58,12 +66,23 @@ awaiting refinements/approval before Steps 2–6 build. Reference pages reviewed
 - Roll out behind `features.portalTemplate: 'v2'` per page; default unchanged
   until operator flips it.
 
-## Open questions for the operator
+## Operator answers (2026-06-10) — binding for the build
 
-- Card density: current mock is ~3-up at desktop width; prefer 2-up larger cards?
-- Search affordance: keep the quiet search pill, or drop search entirely (chips
-  may be sufficient at current program counts)?
-- Member pricing prominence: quiet inline hook (current direction) vs. explicit
-  member/non-member price rows?
-- Real program photography availability per customer (drives how good the
-  image-panel fallback must look).
+1. **Card density**: depends on the page's content hierarchy — pages render
+   different shapes (programs → sessions → segments, sessions → segments,
+   sessions → event schedule, etc.; e.g. Coppermine is sessions-first, not
+   programs). So density is NOT one global choice: make it configurable, e.g.
+   `features.portalCardMinWidth` (px) feeding
+   `grid-template-columns: repeat(auto-fill, minmax(var(--card-min-w), 1fr))`,
+   with sensible defaults per layout mode (sessions-first lists can run denser
+   than program cards). Admin control belongs in the Appearance section.
+2. **Search**: keep it — useful.
+3. **Member pricing**: inline hook, designed to work both with and without
+   member pricing present (absent → row simply shows "From $X" alone, no gap).
+   Build 2–3 visual variants and show the operator examples before settling.
+4. **Imagery**: do NOT design around photos. No guaranteed program photography,
+   and the API returns no session-level images at all (sessions-first pages
+   like Coppermine would never have them). The tinted sport-glyph panel is the
+   PRIMARY card visual; a real photo (program-level only, when present) is the
+   enhancement, not the default. The glyph panels must look intentional, not
+   like fallbacks.
