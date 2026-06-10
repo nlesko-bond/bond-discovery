@@ -113,8 +113,8 @@ describe('HorizontalFilterBar', () => {
       const typeButton = screen.getByText('Type');
       fireEvent.click(typeButton);
       
-      // Dropdown should show program type options
-      expect(screen.getByText('Camp')).toBeInTheDocument();
+      // Dropdown should show program type options (also rendered as a quick chip)
+      expect(screen.getAllByText('Camp').length).toBeGreaterThan(0);
     });
 
     it('shows program type options with counts', () => {
@@ -123,9 +123,9 @@ describe('HorizontalFilterBar', () => {
       const typeButton = screen.getByText('Type');
       fireEvent.click(typeButton);
       
-      // Should show type options
-      expect(screen.getByText('Camp')).toBeInTheDocument();
-      expect(screen.getByText('Clinic')).toBeInTheDocument();
+      // Should show type options (each may also be rendered as a quick chip)
+      expect(screen.getAllByText('Camp').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Clinic').length).toBeGreaterThan(0);
     });
 
     it('selects program type and calls onFilterChange', () => {
@@ -135,9 +135,9 @@ describe('HorizontalFilterBar', () => {
       const typeButton = screen.getByText('Type');
       fireEvent.click(typeButton);
       
-      // Select Camp
-      const campOption = screen.getByText('Camp');
-      fireEvent.click(campOption);
+      // Select Camp (last match is the dropdown option; first is the quick chip)
+      const campOptions = screen.getAllByText('Camp');
+      fireEvent.click(campOptions[campOptions.length - 1]);
       
       expect(mockOnFilterChange).toHaveBeenCalled();
     });

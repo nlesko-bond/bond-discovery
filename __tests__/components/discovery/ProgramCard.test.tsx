@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { ProgramCard } from '@/components/discovery/ProgramCard';
 import {
@@ -37,6 +37,13 @@ vi.mock('next/navigation', () => ({
 describe('ProgramCard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Pin "today" inside the fixture sessions' date ranges (Mar 1 - May 31 / Jun 1 - Aug 31, 2026)
+    // so upcoming-session counts are deterministic regardless of the real date.
+    vi.useFakeTimers({ now: new Date('2026-04-15T12:00:00Z'), toFake: ['Date'] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe('Basic Rendering', () => {
