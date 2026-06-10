@@ -2,6 +2,11 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { DiscoveryPage } from '@/components/discovery/DiscoveryPage';
 import { HostPortalDiscoveryPage } from '@/components/host-shell/HostPortalDiscoveryPage';
+import { HostPortalV2Page } from '@/components/host-shell/v2/HostPortalV2Page';
+import {
+  applyPortalV2PreviewOverrides,
+  isPortalTemplateV2,
+} from '@/lib/host-shell/portal-v2';
 import { ProgramGridSkeleton } from '@/components/ui/Skeletons';
 import { getConfigBySlug, getAllPageConfigs } from '@/lib/config';
 import { getPrecomputedDiscoveryEvents } from '@/lib/discovery-precomputed-events';
@@ -42,13 +47,34 @@ export default async function PortalDiscoverySlugPage({ params, searchParams }: 
     notFound();
   }
 
-  const portalConfig = toPortalDiscoveryConfig(config);
+  // Preview-only URL overrides (?portalTemplate=v2&memberPricingStyle=…&portalCardMinWidth=…);
+  // without these params the stored config is used unchanged.
+  const portalConfig = applyPortalV2PreviewOverrides(
+    toPortalDiscoveryConfig(config),
+    searchParams,
+  );
   const viewMode = (searchParams.viewMode as string) || portalConfig.features.defaultView;
 
   const [programs, eventsResult] = await Promise.all([
     getPrograms(portalConfig),
     getPrecomputedEvents(slug, portalConfig),
   ]);
+
+  if (isPortalTemplateV2(portalConfig)) {
+    return (
+      <Suspense fallback={<PortalLoadingState />}>
+        <HostPortalV2Page
+          initialPrograms={programs}
+          initialScheduleEvents={eventsResult?.events as IDiscoveryApiEvent[] | undefined}
+          initialEventsFetched={!!eventsResult}
+          initialTotalServerEvents={eventsResult?.total ?? 0}
+          config={portalConfig}
+          initialViewMode={viewMode as 'programs' | 'schedule'}
+          searchParams={searchParams}
+        />
+      </Suspense>
+    );
+  }
 
   const useHostPortalSessionLayout =
     isSessionsFirstPortalLayout(portalConfig) || isSessionsListPortalLayout(portalConfig);

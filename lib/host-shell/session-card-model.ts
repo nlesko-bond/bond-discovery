@@ -16,6 +16,8 @@ export interface IHostPortalProductRow {
   priceLabel?: string;
   registrationUrl?: string;
   registerDisabled: boolean;
+  /** Visual-only (v2 member pricing hook): product flagged as member pricing. */
+  isMemberProduct?: boolean;
 }
 
 export interface IHostPortalSegmentRow {
@@ -55,6 +57,11 @@ export interface IHostPortalSessionCardModel {
   weekCountLabel?: string;
   segments: IHostPortalSegmentRow[];
   products: IHostPortalProductRow[];
+  /** Visual-only (v2): program-level photo when present (sessions have none). */
+  imageUrl?: string;
+  /** Visual-only (v2): availability pill inputs from SessionDto capacity. */
+  spotsRemaining?: number;
+  isFull?: boolean;
 }
 
 /**
@@ -218,6 +225,9 @@ function mapProductRow(
       lowest !== undefined ? formatPrice(lowest, 'USD', { minimumFractionDigits: 2 }) : undefined,
     registrationUrl: registerDisabled ? builtUrl : registrationUrl,
     registerDisabled,
+    ...(product.isMemberProduct !== undefined && {
+      isMemberProduct: product.isMemberProduct,
+    }),
   };
 }
 
@@ -292,6 +302,9 @@ export function buildHostPortalSessionCards(
         organizationId: program.organizationId,
         segments: mapSegmentRows(getSegmentsFromSession(session)),
         products,
+        imageUrl: program.mainMedia?.url || program.imageUrl || undefined,
+        spotsRemaining: session.spotsRemaining,
+        isFull: session.isFull,
         ...registerAction,
       });
     }

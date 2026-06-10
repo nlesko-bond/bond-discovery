@@ -1,6 +1,6 @@
 'use client';
 
-import { PortalSessionLayoutEnum } from '@/types';
+import { PortalSessionLayoutEnum, type MemberPricingStyle, type PortalTemplate } from '@/types';
 import { PortalSessionsBrandingControls } from '../components/PortalSessionsBrandingControls';
 import { SurfaceBadge } from '../components/SurfaceBadge';
 import type { IPageEditorSectionProps } from '../page-config-types';
@@ -477,6 +477,90 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
               </label>
             </div>
           )}
+
+          <div className="space-y-4 rounded-lg border border-gray-200 p-4">
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900">Discovery template</h4>
+              <p className="mt-1 text-xs text-gray-500">
+                Redesigned template (plan 009). Applies to /portal/&#123;slug&#125; and the
+                public /&#123;slug&#125; page. &quot;Current&quot; keeps existing rendering
+                unchanged.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="label">Template</label>
+                <select
+                  className="input"
+                  value={config.features.portalTemplate || 'current'}
+                  onChange={(event) => {
+                    const value = event.target.value as PortalTemplate;
+                    setConfig({
+                      ...config,
+                      features: {
+                        ...config.features,
+                        portalTemplate: value === 'current' ? undefined : value,
+                      },
+                    });
+                  }}
+                >
+                  <option value="current">Current</option>
+                  <option value="v2">V2 (redesigned)</option>
+                </select>
+              </div>
+              <div>
+                <label className="label">Card min width (px)</label>
+                <input
+                  type="number"
+                  className="input"
+                  min={160}
+                  max={480}
+                  step={10}
+                  placeholder="Default: 240 (cards) / 200 (list)"
+                  value={config.features.portalCardMinWidth ?? ''}
+                  onChange={(event) => {
+                    const parsed = Number.parseInt(event.target.value, 10);
+                    setConfig({
+                      ...config,
+                      features: {
+                        ...config.features,
+                        portalCardMinWidth: Number.isFinite(parsed) ? parsed : undefined,
+                      },
+                    });
+                  }}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Feeds the V2 auto-fill grid: smaller = denser columns.
+                </p>
+              </div>
+            </div>
+            {config.features.portalTemplate === 'v2' && (
+              <div>
+                <label className="label">Member price style (temporary)</label>
+                <select
+                  className="input"
+                  value={config.features.memberPricingStyle || 'inline'}
+                  onChange={(event) =>
+                    setConfig({
+                      ...config,
+                      features: {
+                        ...config.features,
+                        memberPricingStyle: event.target.value as MemberPricingStyle,
+                      },
+                    })
+                  }
+                >
+                  <option value="inline">Inline — From $30 · $24 members</option>
+                  <option value="badge">Badge — From $30 [Members $24]</option>
+                  <option value="stacked">Stacked — second line under price</option>
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Compare on a preview URL:
+                  ?portalTemplate=v2&amp;memberPricingStyle=badge&amp;portalCardMinWidth=280
+                </p>
+              </div>
+            )}
+          </div>
 
           <PortalSessionsBrandingControls config={config} setConfig={setConfig} />
         </div>
