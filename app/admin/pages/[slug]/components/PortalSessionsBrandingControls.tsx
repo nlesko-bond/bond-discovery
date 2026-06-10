@@ -1,18 +1,16 @@
 'use client';
 
 import { PortalAccentSourceEnum } from '@/types';
-import type { IPageConfig, PageEditorSectionId } from '../page-config-types';
+import type { IPageConfig } from '../page-config-types';
 
 interface IPortalSessionsBrandingControlsProps {
   config: IPageConfig;
   setConfig: (next: IPageConfig) => void;
-  onNavigateToSection?: (section: PageEditorSectionId) => void;
 }
 
 export function PortalSessionsBrandingControls({
   config,
   setConfig,
-  onNavigateToSection,
 }: IPortalSessionsBrandingControlsProps) {
   const hostPortalLayout = config.features.hostPortalLayout || 'legacy_programs';
   const isSessionsList = hostPortalLayout === 'sessions_list';
@@ -126,17 +124,9 @@ export function PortalSessionsBrandingControls({
       </label>
       {!config.branding.logo && (
         <p className="text-xs text-amber-700">
-          Add a logo URL in Branding to show your mark on the hero when org branding is enabled.
+          Add a logo URL (top of this section) to show your mark on the hero when org branding is
+          enabled.
         </p>
-      )}
-      {onNavigateToSection && (
-        <button
-          type="button"
-          className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
-          onClick={() => onNavigateToSection('branding')}
-        >
-          Open Branding to edit colors &amp; logo
-        </button>
       )}
     </div>
   );

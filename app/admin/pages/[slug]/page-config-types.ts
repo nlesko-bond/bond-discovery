@@ -87,26 +87,24 @@ export interface IPageConfig {
 }
 
 export type PageEditorSectionId =
-  | 'basics'
-  | 'branding'
+  | 'page'
+  | 'appearance'
   | 'programs'
-  | 'filters'
   | 'registration'
-  | 'embed'
-  | 'host-portal'
-  | 'analytics'
-  | 'advanced';
+  | 'data';
 
 export interface IPageEditorSectionProps {
   config: IPageConfig;
   setConfig: (next: IPageConfig) => void;
 }
 
-export interface IPageEditorBasicsSectionProps extends IPageEditorSectionProps {
+export interface IPageEditorPageSectionProps extends IPageEditorSectionProps {
   organizationIdsInput: string;
   setOrganizationIdsInput: (value: string) => void;
   facilityIdsInput: string;
   setFacilityIdsInput: (value: string) => void;
+  allowedOriginsInput: string;
+  setAllowedOriginsInput: (value: string) => void;
 }
 
 export interface IPageEditorProgramsSectionProps extends IPageEditorSectionProps {
@@ -114,29 +112,28 @@ export interface IPageEditorProgramsSectionProps extends IPageEditorSectionProps
   updateTableColumns: (nextColumns: NonNullable<IPageConfig['features']['tableColumns']>) => void;
 }
 
-export interface IPageEditorEmbedSectionProps extends IPageEditorSectionProps {
-  embedAllowedOriginsInput: string;
-  setEmbedAllowedOriginsInput: (value: string) => void;
-}
-
-export interface IPageEditorHostPortalSectionProps extends IPageEditorSectionProps {
-  onNavigateToSection: (section: PageEditorSectionId) => void;
-}
-
 export const PAGE_EDITOR_SECTIONS: ReadonlyArray<{
   id: PageEditorSectionId;
   label: string;
   description: string;
 }> = [
-  { id: 'basics', label: 'Basics', description: 'Identity, scope, and program filtering' },
-  { id: 'branding', label: 'Branding', description: 'Logo, colors, and theme style' },
-  { id: 'programs', label: 'Programs & schedule', description: 'Tabs, views, and display options' },
-  { id: 'filters', label: 'Filters', description: 'Which filters visitors can use' },
-  { id: 'registration', label: 'Registration', description: 'Register links and checkout behavior' },
-  { id: 'embed', label: 'Embed (Bond iframe)', description: 'Header and script embed on Bond URLs' },
-  { id: 'host-portal', label: 'Host portal', description: 'Webflow org site and /portal layout' },
-  { id: 'analytics', label: 'Analytics', description: 'Google Tag Manager' },
-  { id: 'advanced', label: 'Advanced', description: 'API, cache, and deep links' },
+  { id: 'page', label: 'Page', description: 'Name, slug, org scope, API key, status' },
+  {
+    id: 'appearance',
+    label: 'Appearance',
+    description: 'Branding, header, and portal overrides',
+  },
+  {
+    id: 'programs',
+    label: 'Programs & Filters',
+    description: 'What shows, default views, visitor filters',
+  },
+  {
+    id: 'registration',
+    label: 'Registration & Analytics',
+    description: 'Register links, GTM, deep links',
+  },
+  { id: 'data', label: 'Data & Caching', description: 'Freshness, cache, Bond environment' },
 ];
 
 export const ALL_FILTERS = [

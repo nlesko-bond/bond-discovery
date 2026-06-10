@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ExternalLink, RefreshCw, Save } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Check, ExternalLink, RefreshCw, Save } from 'lucide-react';
 import { PageEditorSectionNav } from './components/PageEditorSectionNav';
 import {
   buildNextTableColumns,
@@ -12,28 +12,63 @@ import {
   parseOriginsList,
 } from './page-config-utils';
 import type { IPageConfig, PageEditorSectionId } from './page-config-types';
-import { PageEditorBasicsSection } from './sections/PageEditorBasicsSection';
-import { PageEditorBrandingSection } from './sections/PageEditorBrandingSection';
+import { PageEditorPageSection } from './sections/PageEditorPageSection';
+import { PageEditorAppearanceSection } from './sections/PageEditorAppearanceSection';
 import { PageEditorProgramsSection } from './sections/PageEditorProgramsSection';
-import { PageEditorFiltersSection } from './sections/PageEditorFiltersSection';
 import { PageEditorRegistrationSection } from './sections/PageEditorRegistrationSection';
-import { PageEditorEmbedSection } from './sections/PageEditorEmbedSection';
-import { PageEditorHostPortalSection } from './sections/PageEditorHostPortalSection';
-import { PageEditorAnalyticsSection } from './sections/PageEditorAnalyticsSection';
-import { PageEditorAdvancedSection } from './sections/PageEditorAdvancedSection';
+import { PageEditorDataSection } from './sections/PageEditorDataSection';
+
+type SaveState = 'clean' | 'dirty' | 'saving' | 'saved' | 'error';
 
 export default function EditPagePage({ params }: { params: { slug: string } }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [config, setConfig] = useState<IPageConfig | null>(null);
-  const [activeSection, setActiveSection] = useState<PageEditorSectionId>('basics');
-  const [organizationIdsInput, setOrganizationIdsInput] = useState('');
-  const [facilityIdsInput, setFacilityIdsInput] = useState('');
-  const [embedAllowedOriginsInput, setEmbedAllowedOriginsInput] = useState('');
+  const [saveState, setSaveState] = useState<SaveState>('clean');
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [config, setConfigState] = useState<IPageConfig | null>(null);
+  const [activeSection, setActiveSection] = useState<PageEditorSectionId>('page');
+  const [organizationIdsInput, setOrganizationIdsInputState] = useState('');
+  const [facilityIdsInput, setFacilityIdsInputState] = useState('');
+  const [allowedOriginsInput, setAllowedOriginsInputState] = useState('');
+
+  const markDirty = useCallback(() => {
+    setSaveState((prev) => (prev === 'saving' ? prev : 'dirty'));
+    setSaveError(null);
+  }, []);
+
+  const setConfig = useCallback(
+    (next: IPageConfig) => {
+      setConfigState(next);
+      markDirty();
+    },
+    [markDirty],
+  );
+  const setOrganizationIdsInput = useCallback(
+    (value: string) => {
+      setOrganizationIdsInputState(value);
+      markDirty();
+    },
+    [markDirty],
+  );
+  const setFacilityIdsInput = useCallback(
+    (value: string) => {
+      setFacilityIdsInputState(value);
+      markDirty();
+    },
+    [markDirty],
+  );
+  const setAllowedOriginsInput = useCallback(
+    (value: string) => {
+      setAllowedOriginsInputState(value);
+      markDirty();
+    },
+    [markDirty],
+  );
 
   useEffect(() => {
     fetchPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.slug]);
 
   const fetchPage = async () => {
@@ -43,10 +78,12 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
         throw new Error('Page not found');
       }
       const data = await res.json();
-      setConfig(data.page);
-      setOrganizationIdsInput(data.page.organizationIds.join(', '));
-      setFacilityIdsInput(data.page.facilityIds?.join(', ') || '');
-      setEmbedAllowedOriginsInput((data.page.features?.embedAllowedOrigins || []).join('\n'));
+      setConfigState(data.page);
+      setOrganizationIdsInputState(data.page.organizationIds.join(', '));
+      setFacilityIdsInputState(data.page.facilityIds?.join(', ') || '');
+      setAllowedOriginsInputState((data.page.features?.embedAllowedOrigins || []).join('\n'));
+      setSaveState('clean');
+      setSaveError(null);
     } catch (error) {
       console.error('Error fetching page:', error);
       alert('Page not found');
@@ -60,9 +97,10 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
     if (!config) {
       return;
     }
-    setSaving(true);
+    setSaveState('saving');
+    setSaveError(null);
     try {
-      const origins = parseOriginsList(embedAllowedOriginsInput);
+      const origins = parseOriginsList(allowedOriginsInput);
       const featuresNext: IPageConfig['features'] = { ...config.features };
       if (origins.length > 0) {
         featuresNext.embedAllowedOrigins = origins;
@@ -83,25 +121,32 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
       });
 
       if (res.ok) {
-        setConfig(sanitizedConfig);
-        setOrganizationIdsInput(sanitizedConfig.organizationIds.join(', '));
-        setFacilityIdsInput(sanitizedConfig.facilityIds?.join(', ') || '');
-        setEmbedAllowedOriginsInput(
+        setConfigState(sanitizedConfig);
+        setOrganizationIdsInputState(sanitizedConfig.organizationIds.join(', '));
+        setFacilityIdsInputState(sanitizedConfig.facilityIds?.join(', ') || '');
+        setAllowedOriginsInputState(
           (sanitizedConfig.features.embedAllowedOrigins || []).join('\n'),
         );
-        alert('Page saved successfully!');
+        setSaveState('saved');
+        setLastSavedAt(new Date());
         if (sanitizedConfig.slug !== params.slug) {
           router.push(`/admin/pages/${sanitizedConfig.slug}`);
         }
       } else {
-        const error = await res.json();
-        alert(error.error || 'Failed to save page');
+        let message = 'Failed to save page';
+        try {
+          const error = await res.json();
+          message = error.error || message;
+        } catch {
+          message = `Failed to save page (HTTP ${res.status})`;
+        }
+        setSaveState('error');
+        setSaveError(message);
       }
     } catch (error) {
       console.error('Error saving page:', error);
-      alert('Failed to save page');
-    } finally {
-      setSaving(false);
+      setSaveState('error');
+      setSaveError(error instanceof Error ? error.message : 'Failed to save page');
     }
   };
 
@@ -125,6 +170,7 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
   };
 
   const sectionProps = { config, setConfig };
+  const saving = saveState === 'saving';
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -139,6 +185,21 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <span className="text-sm" aria-live="polite">
+            {saveState === 'dirty' && <span className="text-amber-700">Unsaved changes</span>}
+            {saveState === 'saved' && lastSavedAt && (
+              <span className="flex items-center gap-1 text-green-700">
+                <Check size={14} />
+                Saved at {lastSavedAt.toLocaleTimeString()}
+              </span>
+            )}
+            {saveState === 'error' && (
+              <span className="flex items-center gap-1 text-red-700">
+                <AlertCircle size={14} />
+                Save failed
+              </span>
+            )}
+          </span>
           <Link
             href={`${process.env.NEXT_PUBLIC_DISCOVERY_DOMAIN || ''}/${config.slug}`}
             target="_blank"
@@ -168,22 +229,31 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
         </div>
       </div>
 
+      {saveError && (
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <span>{saveError}</span>
+        </div>
+      )}
+
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <aside className="w-full shrink-0 lg:sticky lg:top-24 lg:w-64">
           <PageEditorSectionNav activeSection={activeSection} onSectionChange={setActiveSection} />
         </aside>
 
         <div className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white p-6">
-          {activeSection === 'basics' && (
-            <PageEditorBasicsSection
+          {activeSection === 'page' && (
+            <PageEditorPageSection
               {...sectionProps}
               organizationIdsInput={organizationIdsInput}
               setOrganizationIdsInput={setOrganizationIdsInput}
               facilityIdsInput={facilityIdsInput}
               setFacilityIdsInput={setFacilityIdsInput}
+              allowedOriginsInput={allowedOriginsInput}
+              setAllowedOriginsInput={setAllowedOriginsInput}
             />
           )}
-          {activeSection === 'branding' && <PageEditorBrandingSection {...sectionProps} />}
+          {activeSection === 'appearance' && <PageEditorAppearanceSection {...sectionProps} />}
           {activeSection === 'programs' && (
             <PageEditorProgramsSection
               {...sectionProps}
@@ -191,25 +261,10 @@ export default function EditPagePage({ params }: { params: { slug: string } }) {
               updateTableColumns={updateTableColumns}
             />
           )}
-          {activeSection === 'filters' && <PageEditorFiltersSection {...sectionProps} />}
           {activeSection === 'registration' && (
             <PageEditorRegistrationSection {...sectionProps} />
           )}
-          {activeSection === 'embed' && (
-            <PageEditorEmbedSection
-              {...sectionProps}
-              embedAllowedOriginsInput={embedAllowedOriginsInput}
-              setEmbedAllowedOriginsInput={setEmbedAllowedOriginsInput}
-            />
-          )}
-          {activeSection === 'host-portal' && (
-            <PageEditorHostPortalSection
-              {...sectionProps}
-              onNavigateToSection={setActiveSection}
-            />
-          )}
-          {activeSection === 'analytics' && <PageEditorAnalyticsSection {...sectionProps} />}
-          {activeSection === 'advanced' && <PageEditorAdvancedSection {...sectionProps} />}
+          {activeSection === 'data' && <PageEditorDataSection {...sectionProps} />}
         </div>
       </div>
     </div>

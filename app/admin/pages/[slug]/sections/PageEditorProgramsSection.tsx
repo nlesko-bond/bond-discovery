@@ -1,6 +1,6 @@
 'use client';
 
-import { TABLE_COLUMNS, type IPageEditorProgramsSectionProps } from '../page-config-types';
+import { ALL_FILTERS, TABLE_COLUMNS, type IPageEditorProgramsSectionProps } from '../page-config-types';
 import { SurfaceBadge } from '../components/SurfaceBadge';
 
 export function PageEditorProgramsSection({
@@ -12,14 +12,171 @@ export function PageEditorProgramsSection({
   const enabledTabs = config.features.enabledTabs || ['programs', 'schedule'];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">Programs &amp; schedule</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Programs &amp; Filters</h2>
         <p className="mt-1 text-sm text-gray-600">
-          Tabs, default views, card/schedule display, and table options.
+          Which programs appear, default views, display options, and the filters visitors can use.
         </p>
         <div className="mt-3">
           <SurfaceBadge surfaces={['Public', 'Embed', 'Portal']} />
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-1 font-semibold text-gray-900">Program filtering</h3>
+        <p className="mb-4 text-sm text-gray-600">
+          Which programs from the configured organizations appear on all discovery surfaces.
+        </p>
+        <div className="mt-2 space-y-3">
+          <label className="flex items-center gap-3">
+            <input
+              type="radio"
+              name="programFilterMode"
+              className="text-indigo-600"
+              checked={(config.features.programFilterMode || 'all') === 'all'}
+              onChange={() =>
+                setConfig({
+                  ...config,
+                  excludedProgramIds: undefined,
+                  features: {
+                    ...config.features,
+                    programFilterMode: 'all',
+                    includedProgramIds: undefined,
+                    customRegistrationUrl: undefined,
+                  },
+                })
+              }
+            />
+            <div>
+              <span className="font-medium">All active programs (default)</span>
+              <p className="text-sm text-gray-500">
+                Show all published programs from configured organizations
+              </p>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3">
+            <input
+              type="radio"
+              name="programFilterMode"
+              className="text-indigo-600"
+              checked={config.features.programFilterMode === 'exclude'}
+              onChange={() =>
+                setConfig({
+                  ...config,
+                  features: {
+                    ...config.features,
+                    programFilterMode: 'exclude',
+                    includedProgramIds: undefined,
+                    customRegistrationUrl: undefined,
+                  },
+                })
+              }
+            />
+            <div>
+              <span className="font-medium">Exclude specific programs</span>
+              <p className="text-sm text-gray-500">Show all programs except the ones listed</p>
+            </div>
+          </label>
+
+          {config.features.programFilterMode === 'exclude' && (
+            <div className="ml-7">
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g., 12345, 67890"
+                value={config.excludedProgramIds?.join(', ') || ''}
+                onChange={(event) =>
+                  setConfig({
+                    ...config,
+                    excludedProgramIds: event.target.value
+                      ? event.target.value.split(',').map((item) => item.trim()).filter(Boolean)
+                      : undefined,
+                  })
+                }
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Comma-separated list of program IDs to hide
+              </p>
+            </div>
+          )}
+
+          <label className="flex items-center gap-3">
+            <input
+              type="radio"
+              name="programFilterMode"
+              className="text-indigo-600"
+              checked={config.features.programFilterMode === 'include'}
+              onChange={() =>
+                setConfig({
+                  ...config,
+                  excludedProgramIds: undefined,
+                  features: { ...config.features, programFilterMode: 'include' },
+                })
+              }
+            />
+            <div>
+              <span className="font-medium">Include specific programs only</span>
+              <p className="text-sm text-gray-500">Only show the programs listed (lightweight mode)</p>
+            </div>
+          </label>
+
+          {config.features.programFilterMode === 'include' && (
+            <div className="ml-7 space-y-3">
+              <div>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="e.g., 12345, 67890"
+                  value={config.features.includedProgramIds?.join(', ') || ''}
+                  onChange={(event) => {
+                    const ids = event.target.value
+                      ? event.target.value.split(',').map((item) => item.trim()).filter(Boolean)
+                      : undefined;
+                    setConfig({
+                      ...config,
+                      includedProgramIds: ids,
+                      features: {
+                        ...config.features,
+                        includedProgramIds: ids,
+                        customRegistrationUrl:
+                          ids?.length === 1 ? config.features.customRegistrationUrl : undefined,
+                      },
+                    });
+                  }}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Comma-separated list of program IDs to show
+                </p>
+              </div>
+
+              {config.features.includedProgramIds?.length === 1 && (
+                <div className="rounded-lg bg-blue-50 p-3">
+                  <label className="label text-blue-800">Custom registration URL (optional)</label>
+                  <input
+                    type="url"
+                    className="input"
+                    placeholder="https://example.com/register"
+                    value={config.features.customRegistrationUrl || ''}
+                    onChange={(event) =>
+                      setConfig({
+                        ...config,
+                        features: {
+                          ...config.features,
+                          customRegistrationUrl: event.target.value || undefined,
+                        },
+                      })
+                    }
+                  />
+                  <p className="mt-1 text-xs text-blue-600">
+                    With exactly one program, registration links can point to a custom URL instead of
+                    Bond checkout.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -117,7 +274,7 @@ export function PageEditorProgramsSection({
               })
             }
           >
-            <option value="list">List</option>
+            <option value="list">List (default)</option>
             <option value="table">Table</option>
             <option value="day">Day</option>
             <option value="week">Week grid</option>
@@ -145,7 +302,7 @@ export function PageEditorProgramsSection({
               })
             }
           >
-            <option value="list">List</option>
+            <option value="list">List (default)</option>
             {config.features.allowTableViewOnMobile && <option value="table">Table</option>}
             <option value="day">Day</option>
             <option value="week">Week grid</option>
@@ -237,7 +394,9 @@ export function PageEditorProgramsSection({
             />
             <div>
               <span className="font-medium">Enable mobile quick chips</span>
-              <p className="text-xs text-gray-500">Compact Type/Gender chip rows on mobile schedule</p>
+              <p className="text-xs text-gray-500">
+                Default: on. Compact Type/Gender chip rows on mobile schedule.
+              </p>
             </div>
           </label>
         </div>
@@ -245,7 +404,7 @@ export function PageEditorProgramsSection({
 
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
         <div className="text-sm font-medium text-gray-900">Table columns</div>
-        <p className="mt-1 text-xs text-gray-500">Controls which columns appear in schedule table view.</p>
+        <p className="mt-1 text-xs text-gray-500">Controls which columns appear in schedule table view. Default: all columns.</p>
         <div className="mt-3 grid grid-cols-2 gap-2">
           {TABLE_COLUMNS.map((column) => (
             <label key={column.id} className="flex items-center gap-2 text-sm text-gray-700">
@@ -282,7 +441,9 @@ export function PageEditorProgramsSection({
           />
           <div>
             <span className="font-medium">Allow table view on mobile</span>
-            <p className="text-xs text-gray-500">Enable for compact tables that fit on small screens</p>
+            <p className="text-xs text-gray-500">
+              Default: off. Enable for compact tables that fit on small screens.
+            </p>
           </div>
         </label>
         <label className="mt-3 flex items-center gap-2 border-t border-gray-200 pt-3 text-sm text-gray-700">
@@ -299,7 +460,90 @@ export function PageEditorProgramsSection({
           />
           <div>
             <span className="font-medium">Show schedule table date &amp; weekday filters</span>
-            <p className="text-xs text-gray-500">Off by default. Adds date range and weekday chips above the grid.</p>
+            <p className="text-xs text-gray-500">Default: off. Adds date range and weekday chips above the grid.</p>
+          </div>
+        </label>
+      </div>
+
+      <div>
+        <h3 className="mb-1 font-semibold text-gray-900">Visitor filters</h3>
+        <p className="mb-4 text-sm text-gray-600">
+          Choose which filter dimensions visitors can use on this page.
+        </p>
+        <div className="space-y-3">
+          {ALL_FILTERS.map((filter) => (
+            <label
+              key={filter.id}
+              className="flex cursor-pointer items-start gap-3 rounded-lg bg-gray-50 p-3 transition-colors hover:bg-gray-100"
+            >
+              <input
+                type="checkbox"
+                className="mt-1 rounded border-gray-300"
+                checked={config.features.enableFilters.includes(filter.id)}
+                onChange={(event) => {
+                  const newFilters = event.target.checked
+                    ? [...config.features.enableFilters, filter.id]
+                    : config.features.enableFilters.filter((item) => item !== filter.id);
+                  setConfig({
+                    ...config,
+                    features: { ...config.features, enableFilters: newFilters },
+                  });
+                }}
+              />
+              <div>
+                <p className="font-medium text-gray-900">{filter.name}</p>
+                <p className="text-sm text-gray-500">{filter.description}</p>
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-gray-200 p-4">
+        <label className="block text-sm font-medium text-gray-900">Space column label (optional)</label>
+        <p className="mb-2 mt-0.5 text-xs text-gray-500">
+          Shown on the schedule table header and space filter when Space is enabled. Default:
+          &quot;Space&quot;.
+        </p>
+        <input
+          type="text"
+          className="w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
+          placeholder="Space"
+          value={config.features.spaceColumnLabel ?? ''}
+          onChange={(event) => {
+            const value = event.target.value.trim();
+            setConfig({
+              ...config,
+              features: {
+                ...config.features,
+                spaceColumnLabel: value.length > 0 ? value : undefined,
+              },
+            });
+          }}
+        />
+      </div>
+
+      <div className="rounded-lg border border-gray-200 p-4">
+        <h3 className="text-sm font-semibold text-gray-900">Browser storage (privacy)</h3>
+        <p className="mt-1 text-sm text-gray-500">
+          When enabled, filter choices are saved in the browser and restored on return visits.
+          Shared links with query parameters always work.
+        </p>
+        <label className="mt-3 flex items-start gap-3">
+          <input
+            type="checkbox"
+            className="mt-1 rounded border-gray-300"
+            checked={config.features.persistFiltersInLocalStorage !== false}
+            onChange={(event) =>
+              setConfig({
+                ...config,
+                features: { ...config.features, persistFiltersInLocalStorage: event.target.checked },
+              })
+            }
+          />
+          <div>
+            <span className="font-medium text-gray-900">Remember filter selections (localStorage)</span>
+            <p className="mt-1 text-xs text-gray-500">Default: on</p>
           </div>
         </label>
       </div>
