@@ -29,7 +29,7 @@ pipeline writes only).
 | 006 | Caching hardening: warm-on-create, dedupe drift files, invalidation coverage, programs SWR | P2 | M | 002 | DONE |
 | 007 | Remove the embed kit safely | P2 | M | 002, 005 | BLOCKED (needs operator: embed-kit traffic evidence from Vercel logs) |
 | 008 | Admin settings UI restructure (9 sections → 5) | P2 | M–L | 001, 007 | DONE |
-| 009 | Discovery page templates — visual upgrade, mobile-first | P2 | L | 005, 007 | IN PROGRESS (Step 1 direction doc drafted — plans/009-design-direction.md; awaiting operator approval) |
+| 009 | Discovery page templates — visual upgrade, mobile-first | P2 | L | 005, 007 | BUILT — in operator preview review (v2 behind portalTemplate flag) |
 | 010 | Production-readiness sweep + docs consolidation | P3 | M | 001–009 | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with rationale)
