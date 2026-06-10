@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllPageConfigs, createPageConfig, defaultConfig } from '@/lib/config';
+import { requireAdmin } from '@/lib/admin-auth';
 
 // Disable caching for this route - always fetch fresh data
 export const dynamic = 'force-dynamic';
@@ -20,10 +21,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
   try {
-    // Note: Auth temporarily disabled for easier setup
-    // TODO: Re-enable when Google OAuth is configured
-    
     const body = await request.json();
     
     // Validate required fields
