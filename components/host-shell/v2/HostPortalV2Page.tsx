@@ -1,0 +1,454 @@
+'use client';
+
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { LayoutGrid, Calendar } from 'lucide-react';
+import type { DiscoveryConfig, DiscoveryFilters, Program, ViewMode } from '@/types';
+import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
+import { bondAnalytics } from '@/lib/analytics';
+import { cn } from '@/lib/utils';
+import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
+import { buildHostPortalSessionCards } from '@/lib/host-shell/session-card-model';
+import { filterProgramsForPortalSessions } from '@/lib/host-shell/portal-session-filters';
+import { buildPortalFilterOptions } from '@/lib/host-shell/portal-filter-options';
+import {
+  buildPortalScheduleWeeks,
+  filterPortalScheduleEvents,
+  resolvePortalScheduleLinkTarget,
+  type IDiscoveryApiEvent,
+} from '@/lib/host-shell/portal-schedule-events';
+import {
+  resolveMemberPricingStyle,
+  resolvePortalCardMinWidth,
+} from '@/lib/host-shell/portal-v2';
+import { HostPortalLayoutEnum } from '@/types';
+import { BrandLogo } from '@/components/ui/BrandLogo';
+import { HostPortalScheduleTab } from '../HostPortalScheduleTab';
+import { useHostPortalEmbedResize } from '../useHostPortalEmbedResize';
+import { HostPortalV2Card } from './HostPortalV2Card';
+import { HostPortalV2FilterBar } from './HostPortalV2FilterBar';
+import {
+  HostPortalV2EmptyState,
+  HostPortalV2ZeroEventsState,
+} from './HostPortalV2States';
+
+const EMPTY_EVENTS: IDiscoveryApiEvent[] = [];
+const EVENTS_PAGE_LIMIT = 200;
+
+interface IHostPortalV2PageProps {
+  initialPrograms: Program[];
+  initialScheduleEvents?: IDiscoveryApiEvent[];
+  initialEventsFetched?: boolean;
+  initialTotalServerEvents?: number;
+  config: DiscoveryConfig;
+  initialViewMode: ViewMode;
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+/**
+ * Redesigned ("v2") discovery template — plan 009. Activity chips are the hero
+ * filter; cards lead with a tinted sport-glyph panel; everything renders in-flow
+ * (no 100vh / position:fixed) so the iframe resize contract keeps working.
+ */
+export function HostPortalV2Page({
+  initialPrograms,
+  initialScheduleEvents = EMPTY_EVENTS,
+  initialEventsFetched = false,
+  initialTotalServerEvents = 0,
+  config,
+  initialViewMode,
+  searchParams,
+}: IHostPortalV2PageProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const urlSearchParams = useSearchParams();
+  const currentSearchString = useMemo(
+    () => urlSearchParams.toString(),
+    [urlSearchParams],
+  );
+
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
+  const [filters, setFilters] = useState<DiscoveryFilters>(() => ({
+    search: (searchParams.search as string) || '',
+    programIds: searchParams.programIds
+      ? (searchParams.programIds as string).split('_')
+      : [],
+    sessionIds: searchParams.sessionIds
+      ? (searchParams.sessionIds as string).split('_')
+      : [],
+    facilityIds: searchParams.facilityIds
+      ? (searchParams.facilityIds as string).split('_')
+      : [],
+    programTypes: searchParams.programTypes
+      ? ((searchParams.programTypes as string).split('_') as DiscoveryFilters['programTypes'])
+      : [],
+    sports: searchParams.sports ? (searchParams.sports as string).split('_') : [],
+    dateRange: {
+      start: searchParams.startDate as string,
+      end: searchParams.endDate as string,
+    },
+    ageRange: {},
+    gender: 'all',
+    availability: 'all',
+    membershipRequired: null,
+  }));
+
+  const [apiEvents, setApiEvents] = useState<IDiscoveryApiEvent[]>(initialScheduleEvents);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventsError, setEventsError] = useState<string | null>(null);
+  const [eventsFetched, setEventsFetched] = useState(initialEventsFetched);
+  const [totalServerEvents, setTotalServerEvents] = useState(initialTotalServerEvents);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const embedRootRef = useRef<HTMLDivElement>(null);
+
+  const brand = resolvePortalBrandColors(config);
+  const accentColor = config.branding.accentColor?.trim() || brand.primaryColor;
+  const linkTarget = resolvePortalScheduleLinkTarget(config);
+  const memberPricingStyle = resolveMemberPricingStyle(config.features.memberPricingStyle);
+  const cardLayoutMode =
+    config.features.hostPortalLayout === HostPortalLayoutEnum.SESSIONS_LIST
+      ? 'list'
+      : 'cards';
+  const cardMinWidthPx = resolvePortalCardMinWidth(
+    config.features.portalCardMinWidth,
+    cardLayoutMode,
+  );
+
+  const enabledTabs = config.features.enabledTabs || ['programs', 'schedule'];
+  const showProgramsTab = enabledTabs.includes('programs');
+  const showScheduleTab = enabledTabs.includes('schedule');
+  const showTabToggle =
+    config.features.allowViewToggle && showProgramsTab && showScheduleTab;
+
+  const scheduleThemeStyle =
+    (config.features.scheduleThemeStyle as 'gradient' | 'solid') || 'solid';
+
+  const filterOptions = useMemo(
+    () => buildPortalFilterOptions(initialPrograms),
+    [initialPrograms],
+  );
+
+  const filteredPrograms = useMemo(
+    () => filterProgramsForPortalSessions(initialPrograms, filters),
+    [initialPrograms, filters],
+  );
+
+  const sessionCards = useMemo(
+    () => buildHostPortalSessionCards(filteredPrograms, config),
+    [filteredPrograms, config],
+  );
+
+  const hasAnyCards = useMemo(
+    () => buildHostPortalSessionCards(initialPrograms, config).length > 0,
+    [initialPrograms, config],
+  );
+
+  const filteredEvents = useMemo(
+    () =>
+      filterPortalScheduleEvents(
+        apiEvents,
+        filters,
+        initialPrograms,
+        config.features.showScheduleTableDateFilters === true,
+      ),
+    [apiEvents, filters, initialPrograms, config.features.showScheduleTableDateFilters],
+  );
+
+  const scheduleData = useMemo(() => {
+    if (viewMode !== 'schedule') {
+      return null;
+    }
+    return buildPortalScheduleWeeks(filteredEvents);
+  }, [filteredEvents, viewMode]);
+
+  useEffect(() => {
+    bondAnalytics.pageView({
+      pageSlug: config.slug,
+      viewMode,
+    });
+    // Single GTM page_view per load (partner GTM contract)
+    gtmEvent.pageView(window.location.pathname, document.title);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.slug]);
+
+  const isEmbedded = useHostPortalEmbedResize(embedRootRef, {
+    slug: config.slug,
+    remeasureKeys: [viewMode, eventsFetched, sessionCards.length, filters],
+  });
+
+  useEffect(() => {
+    if (eventsFetched || viewMode !== 'schedule') {
+      return;
+    }
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    setEventsLoading(true);
+    setEventsError(null);
+
+    const params = new URLSearchParams();
+    params.set('slug', config.slug);
+
+    fetch(`/api/events?${params.toString()}`, { signal: abortController.signal })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+        if (data && Array.isArray(data.data)) {
+          setApiEvents(data.data);
+          setTotalServerEvents(data.meta?.totalFiltered ?? data.data.length);
+          setEventsFetched(true);
+        } else {
+          setEventsError('Unexpected response from server');
+          setEventsFetched(true);
+        }
+      })
+      .catch((error) => {
+        if (abortController.signal.aborted || error?.name === 'AbortError') {
+          return;
+        }
+        setEventsError('Failed to load events');
+        setEventsFetched(true);
+      })
+      .finally(() => {
+        if (!abortController.signal.aborted) {
+          setEventsLoading(false);
+        }
+      });
+
+    return () => abortController.abort();
+  }, [viewMode, eventsFetched, config.slug]);
+
+  const loadMoreEvents = useCallback(() => {
+    if (loadingMore || apiEvents.length >= totalServerEvents) {
+      return;
+    }
+    setLoadingMore(true);
+    const params = new URLSearchParams();
+    params.set('slug', config.slug);
+    params.set('limit', String(EVENTS_PAGE_LIMIT));
+    params.set('offset', String(apiEvents.length));
+
+    fetch(`/api/events?${params.toString()}`)
+      .then((response) =>
+        response.ok ? response.json() : Promise.reject(new Error(`${response.status}`)),
+      )
+      .then((data) => {
+        if (data && Array.isArray(data.data)) {
+          setApiEvents((previous) => [...previous, ...data.data]);
+        }
+      })
+      .catch((error) => console.error('Error loading more events:', error))
+      .finally(() => setLoadingMore(false));
+  }, [loadingMore, apiEvents.length, totalServerEvents, config.slug]);
+
+  const handleViewModeChange = useCallback(
+    (mode: ViewMode) => {
+      setViewMode(mode);
+      const params = new URLSearchParams(currentSearchString);
+      params.set('viewMode', mode);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [router, pathname, currentSearchString],
+  );
+
+  const handleFiltersChange = useCallback((next: DiscoveryFilters) => {
+    setFilters(next);
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setFilters((previous) => ({
+      ...previous,
+      search: '',
+      programIds: [],
+      sessionIds: [],
+      facilityIds: [],
+      programTypes: [],
+      sports: [],
+      dateRange: {},
+      ageRange: {},
+      ageBucketIds: [],
+      gender: 'all',
+      genders: [],
+      availability: 'all',
+      availabilityModes: [],
+      spaceNames: undefined,
+    }));
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(currentSearchString);
+    const modeParam = params.get('viewMode');
+    if (modeParam === 'schedule' || modeParam === 'programs') {
+      setViewMode(modeParam);
+    }
+  }, [currentSearchString]);
+
+  return (
+    <div
+      ref={embedRootRef}
+      className={cn('bg-gray-50', !isEmbedded && 'min-h-screen')}
+      style={{ fontFamily: config.branding.fontFamily || 'inherit' }}
+    >
+      <GoogleTagManager gtmId={config.gtmId} pageSlug={config.slug} />
+
+      <header
+        className="border-b px-3 py-3 sm:px-4"
+        style={{
+          backgroundColor: brand.headerBackgroundColor,
+          borderColor: brand.headerTextLight
+            ? 'rgba(255,255,255,0.15)'
+            : `${brand.primaryColor}18`,
+        }}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            {config.branding.logo && <BrandLogo config={config} size="sm" className="h-8" />}
+            <h1
+              className="truncate text-sm font-semibold"
+              style={{ color: brand.headerTextLight ? '#ffffff' : brand.primaryColor }}
+            >
+              {config.branding.companyName}
+            </h1>
+          </div>
+
+          {showTabToggle && (
+            <div
+              className="flex shrink-0 rounded-lg p-0.5"
+              style={{
+                backgroundColor: brand.headerTextLight
+                  ? 'rgba(255,255,255,0.15)'
+                  : `${brand.secondaryColor}12`,
+              }}
+            >
+              <button
+                type="button"
+                className={cn(
+                  'flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
+                  viewMode !== 'programs' &&
+                    (brand.headerTextLight ? 'text-white/70' : 'text-gray-600'),
+                )}
+                style={
+                  viewMode === 'programs'
+                    ? {
+                        backgroundColor: brand.headerTextLight
+                          ? 'rgba(255,255,255,0.25)'
+                          : '#ffffff',
+                        color: brand.headerTextLight ? '#ffffff' : brand.primaryColor,
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
+                      }
+                    : undefined
+                }
+                onClick={() => handleViewModeChange('programs')}
+              >
+                <LayoutGrid size={14} aria-hidden />
+                Programs
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  'flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
+                  viewMode !== 'schedule' &&
+                    (brand.headerTextLight ? 'text-white/70' : 'text-gray-600'),
+                )}
+                style={
+                  viewMode === 'schedule'
+                    ? {
+                        backgroundColor: brand.headerTextLight
+                          ? 'rgba(255,255,255,0.25)'
+                          : '#ffffff',
+                        color: brand.headerTextLight ? '#ffffff' : brand.primaryColor,
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
+                      }
+                    : undefined
+                }
+                onClick={() => handleViewModeChange('schedule')}
+              >
+                <Calendar size={14} aria-hidden />
+                Schedule
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+
+      <HostPortalV2FilterBar
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        options={filterOptions}
+        programs={initialPrograms}
+        config={config}
+        accentColor={accentColor}
+        resultCount={viewMode === 'schedule' ? filteredEvents.length : sessionCards.length}
+        isScheduleView={viewMode === 'schedule'}
+      />
+
+      <main className="mx-auto max-w-7xl px-3 pb-8 sm:px-4">
+        {viewMode === 'schedule' ? (
+          <HostPortalScheduleTab
+            schedule={scheduleData}
+            config={config}
+            scheduleThemeStyle={scheduleThemeStyle}
+            isLoading={eventsLoading}
+            error={eventsError}
+            totalEvents={filteredEvents.length}
+            totalServerEvents={totalServerEvents}
+            onLoadMore={loadMoreEvents}
+            loadingMore={loadingMore}
+            hasMultipleFacilities={filterOptions.hasMultipleFacilities}
+            filters={config.features.showScheduleTableDateFilters ? filters : undefined}
+            onScheduleFiltersChange={
+              config.features.showScheduleTableDateFilters ? handleFiltersChange : undefined
+            }
+            searchParams={searchParams}
+            programs={initialPrograms}
+            linkTarget={linkTarget}
+          />
+        ) : !hasAnyCards ? (
+          <HostPortalV2ZeroEventsState companyName={config.branding.companyName} />
+        ) : sessionCards.length === 0 ? (
+          <HostPortalV2EmptyState accentColor={accentColor} onClearFilters={clearFilters} />
+        ) : (
+          <div
+            data-testid="portal-v2-grid"
+            className="grid gap-4 py-4 md:py-6"
+            style={{
+              gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, ${cardMinWidthPx}px), 1fr))`,
+            }}
+          >
+            {sessionCards.map((card) => (
+              <HostPortalV2Card
+                key={card.sessionId}
+                card={card}
+                config={config}
+                accentColor={accentColor}
+                memberPricingStyle={memberPricingStyle}
+                hideRegistrationLinks={config.features.hideRegistrationLinks}
+              />
+            ))}
+          </div>
+        )}
+      </main>
+
+      {!isEmbedded && (
+        <footer className="mt-4 border-t border-gray-200 bg-white">
+          <div className="mx-auto flex max-w-7xl justify-between px-3 py-3 text-xs text-gray-500">
+            <span style={{ color: brand.primaryColor }}>{config.branding.companyName}</span>
+            <span>Powered by Bond Sports</span>
+          </div>
+        </footer>
+      )}
+    </div>
+  );
+}

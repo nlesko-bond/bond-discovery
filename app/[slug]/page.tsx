@@ -1,6 +1,12 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { DiscoveryPage } from '@/components/discovery/DiscoveryPage';
+import { HostPortalV2Page } from '@/components/host-shell/v2/HostPortalV2Page';
+import {
+  applyPortalV2PreviewOverrides,
+  isPortalTemplateV2,
+} from '@/lib/host-shell/portal-v2';
+import type { IDiscoveryApiEvent } from '@/lib/host-shell/portal-schedule-events';
 import { ProgramGridSkeleton } from '@/components/ui/Skeletons';
 import { getConfigBySlug, getAllPageConfigs } from '@/lib/config';
 import { getPrecomputedDiscoveryEvents } from '@/lib/discovery-precomputed-events';
@@ -39,14 +45,33 @@ export default async function DiscoverySlugPage({ params, searchParams }: PagePr
     notFound();
   }
   
-  const viewMode = (searchParams.viewMode as string) || config.features.defaultView;
-  
+  // Preview-only URL overrides (?portalTemplate=v2&memberPricingStyle=…&portalCardMinWidth=…);
+  // without these params the stored config is used unchanged.
+  const resolvedConfig = applyPortalV2PreviewOverrides(config, searchParams);
+  const viewMode = (searchParams.viewMode as string) || resolvedConfig.features.defaultView;
+
   // Fetch programs and pre-computed events in parallel
   const [programs, eventsResult] = await Promise.all([
-    getPrograms(config),
-    getPrecomputedEvents(slug, config),
+    getPrograms(resolvedConfig),
+    getPrecomputedEvents(slug, resolvedConfig),
   ]);
-  
+
+  if (isPortalTemplateV2(resolvedConfig)) {
+    return (
+      <Suspense fallback={<LoadingState />}>
+        <HostPortalV2Page
+          initialPrograms={programs}
+          initialScheduleEvents={eventsResult?.events as IDiscoveryApiEvent[] | undefined}
+          initialEventsFetched={!!eventsResult}
+          initialTotalServerEvents={eventsResult?.total ?? 0}
+          config={resolvedConfig}
+          initialViewMode={viewMode as 'programs' | 'schedule'}
+          searchParams={searchParams}
+        />
+      </Suspense>
+    );
+  }
+
   return (
     <Suspense fallback={<LoadingState />}>
       <DiscoveryPage 

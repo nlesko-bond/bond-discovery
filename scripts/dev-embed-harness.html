@@ -1,0 +1,88 @@
+<!doctype html>
+<!--
+  Dev embed harness (plan 009, step 4) — test the portal "as the partner sees it".
+
+  Usage:
+    1. npm run dev (portal on http://localhost:3000)
+    2. Open this file in a browser, e.g.
+         open scripts/dev-embed-harness.html
+       Pick the page with ?slug=, e.g.
+         file://…/dev-embed-harness.html?slug=pbsz
+    3. The kit script (public/bond-host/v1.js, served by the dev server) mounts
+       the /portal/{slug} iframe exactly like a partner page does. The log panel
+       below prints every bond:resize / discovery-resize postMessage so you can
+       verify height reporting when filters expand/collapse.
+
+  Note: preview params (?portalTemplate=v2) do not pass through the kit; to test
+  v2 in the harness, flip the page's "Discovery template" to V2 in /admin, or
+  open http://localhost:3000/portal/{slug}?portalTemplate=v2 directly.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bond host kit — dev embed harness</title>
+    <style>
+      body { margin: 0; font-family: system-ui, sans-serif; background: #f8fafc; }
+      .partner-nav {
+        height: 64px; display: flex; align-items: center; padding: 0 24px;
+        background: #0f172a; color: #fff; font-weight: 600;
+      }
+      .partner-section { max-width: 1100px; margin: 0 auto; padding: 24px; }
+      .partner-footer { padding: 40px 24px; background: #0f172a; color: #94a3b8; font-size: 13px; }
+      #resize-log {
+        position: sticky; bottom: 0; max-height: 140px; overflow-y: auto;
+        background: #111827; color: #a7f3d0; font: 12px/1.5 ui-monospace, monospace;
+        padding: 8px 12px; border-top: 2px solid #34d399;
+      }
+      #resize-log .meta { color: #6b7280; }
+    </style>
+  </head>
+  <body>
+    <nav class="partner-nav">Fake Partner Site — host kit harness</nav>
+
+    <div class="partner-section">
+      <h1>Programs</h1>
+      <p>Everything below this line is the Bond-rendered iframe.</p>
+      <hr />
+      <div
+        id="bond-mount"
+        data-bond-host
+        data-bond-slug="pbsz"
+        data-bond-discovery-base="http://localhost:3000"
+      ></div>
+    </div>
+
+    <footer class="partner-footer">Fake partner footer — content after the iframe.</footer>
+
+    <div id="resize-log"><span class="meta">resize log — waiting for postMessages…</span></div>
+
+    <script>
+      // Allow ?slug=… (and ?base=…) before the kit auto-initializes.
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var mount = document.getElementById('bond-mount');
+        var slug = params.get('slug');
+        var base = params.get('base');
+        if (slug) mount.setAttribute('data-bond-slug', slug);
+        if (base) mount.setAttribute('data-bond-discovery-base', base);
+      })();
+
+      // Log every resize postMessage so height reporting is observable.
+      window.addEventListener('message', function (event) {
+        var data = event.data;
+        if (!data || typeof data !== 'object') return;
+        if (data.type !== 'bond:resize' && data.type !== 'discovery-resize') return;
+        var log = document.getElementById('resize-log');
+        var line = document.createElement('div');
+        line.textContent =
+          new Date().toISOString().slice(11, 23) +
+          '  ' + data.type + '  height=' + data.height +
+          (data.slug ? '  slug=' + data.slug : '');
+        log.appendChild(line);
+        log.scrollTop = log.scrollHeight;
+      });
+    </script>
+    <script src="http://localhost:3000/bond-host/v1.js"></script>
+  </body>
+</html>

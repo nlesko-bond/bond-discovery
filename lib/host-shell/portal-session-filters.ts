@@ -181,62 +181,81 @@ export function filterProgramsForPortalSessions(
     }, []);
   }
 
+  // Availability narrows to the matching sessions (not just the program) so a
+  // "Has open spots" filter never leaves full/closed session cards on screen.
+  const sessionMatchesAvailabilityMode = (
+    session: Session,
+    mode: 'available' | 'almost_full',
+  ): boolean => {
+    if (mode === 'available') {
+      return !session.isFull;
+    }
+    return (
+      session.spotsRemaining !== undefined &&
+      session.spotsRemaining > 0 &&
+      session.spotsRemaining <= ALMOST_FULL_SPOTS_THRESHOLD
+    );
+  };
+
   if (filters.availabilityModes && filters.availabilityModes.length > 0) {
-    result = result.filter((program) => {
-      const sessions = getSessionsFromProgram(program);
-      return filters.availabilityModes!.some((mode) => {
-        if (mode === 'available') {
-          return sessions.some((session) => !session.isFull);
-        }
-        if (mode === 'almost_full') {
-          return sessions.some(
-            (session) =>
-              session.spotsRemaining !== undefined &&
-              session.spotsRemaining > 0 &&
-              session.spotsRemaining <= ALMOST_FULL_SPOTS_THRESHOLD,
-          );
-        }
-        return false;
-      });
-    });
-  } else if (filters.availability && filters.availability !== 'all') {
-    result = result.filter((program) => {
-      const sessions = getSessionsFromProgram(program);
-      if (filters.availability === 'available') {
-        return sessions.some((session) => !session.isFull);
+    result = result.reduce<Program[]>((accumulator, program) => {
+      const sessions = getSessionsFromProgram(program).filter((session) =>
+        filters.availabilityModes!.some((mode) =>
+          sessionMatchesAvailabilityMode(session, mode),
+        ),
+      );
+      if (sessions.length === 0) {
+        return accumulator;
       }
-      if (filters.availability === 'almost_full') {
-        return sessions.some(
-          (session) =>
-            session.spotsRemaining !== undefined &&
-            session.spotsRemaining > 0 &&
-            session.spotsRemaining <= ALMOST_FULL_SPOTS_THRESHOLD,
-        );
+      accumulator.push({ ...program, sessions });
+      return accumulator;
+    }, []);
+  } else if (
+    filters.availability === 'available' ||
+    filters.availability === 'almost_full'
+  ) {
+    const mode = filters.availability;
+    result = result.reduce<Program[]>((accumulator, program) => {
+      const sessions = getSessionsFromProgram(program).filter((session) =>
+        sessionMatchesAvailabilityMode(session, mode),
+      );
+      if (sessions.length === 0) {
+        return accumulator;
       }
-      return true;
-    });
+      accumulator.push({ ...program, sessions });
+      return accumulator;
+    }, []);
   }
 
   if (filters.dateRange?.start || filters.dateRange?.end) {
-    result = result.filter((program) => {
-      const sessions = getSessionsFromProgram(program);
-      if (sessions.length === 0) {
-        return true;
+    const filterStart = filters.dateRange?.start ? new Date(filters.dateRange.start) : null;
+    const filterEnd = filters.dateRange?.end ? new Date(filters.dateRange.end) : null;
+    const sessionMatchesDateRange = (session: Session): boolean => {
+      const sessionStart = session.startDate ? new Date(session.startDate) : null;
+      const sessionEnd = session.endDate ? new Date(session.endDate) : null;
+      if (filterStart && sessionEnd && sessionEnd < filterStart) {
+        return false;
       }
-      return sessions.some((session) => {
-        const sessionStart = session.startDate ? new Date(session.startDate) : null;
-        const sessionEnd = session.endDate ? new Date(session.endDate) : null;
-        const filterStart = filters.dateRange?.start ? new Date(filters.dateRange.start) : null;
-        const filterEnd = filters.dateRange?.end ? new Date(filters.dateRange.end) : null;
-        if (filterStart && sessionEnd && sessionEnd < filterStart) {
-          return false;
-        }
-        if (filterEnd && sessionStart && sessionStart > filterEnd) {
-          return false;
-        }
-        return true;
-      });
-    });
+      if (filterEnd && sessionStart && sessionStart > filterEnd) {
+        return false;
+      }
+      return true;
+    };
+    // Narrow to in-range sessions so out-of-range session cards drop with the
+    // filter (previously the whole program was kept with all of its sessions).
+    result = result.reduce<Program[]>((accumulator, program) => {
+      const allSessions = getSessionsFromProgram(program);
+      if (allSessions.length === 0) {
+        accumulator.push(program);
+        return accumulator;
+      }
+      const sessions = allSessions.filter(sessionMatchesDateRange);
+      if (sessions.length === 0) {
+        return accumulator;
+      }
+      accumulator.push({ ...program, sessions });
+      return accumulator;
+    }, []);
   }
 
   if (filters.sessionIds && filters.sessionIds.length > 0) {

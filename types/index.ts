@@ -381,6 +381,12 @@ export type EnabledTab = 'programs' | 'schedule';
 
 export type BondEmbedPortalTemplate = 'classic' | 'hero-carousel' | 'schedule-first';
 
+/** Portal/public discovery template. Absent or 'current' → existing rendering unchanged. */
+export type PortalTemplate = 'current' | 'v2';
+
+/** Temporary comparison flag: member-price presentation on v2 cards. */
+export type MemberPricingStyle = 'inline' | 'badge' | 'stacked';
+
 export enum HostPortalLayoutEnum {
   LEGACY_PROGRAMS = 'legacy_programs',
   SESSIONS_FIRST = 'sessions_first',
@@ -489,6 +495,18 @@ export interface FeatureConfig {
    * (`lib/league-schedule-context.ts`). Default off — opt in per page in admin.
    */
   showLeagueScheduleTableAndExport?: boolean;
+  /**
+   * Redesigned discovery template (plan 009). Only 'v2' changes rendering;
+   * absent/'current'/unknown values keep the existing templates byte-identical.
+   */
+  portalTemplate?: PortalTemplate;
+  /**
+   * Min card width in px feeding `repeat(auto-fill, minmax(var(--card-min-w), 1fr))`
+   * on the v2 grid. Default depends on layout mode (cards ~240, list rows denser).
+   */
+  portalCardMinWidth?: number;
+  /** Temporary: member price row style on v2 cards while the operator compares variants. */
+  memberPricingStyle?: MemberPricingStyle;
   /** Layout for iframe-free embed kit (`/embed-kit/v1`) */
   embedPortalTemplate?: BondEmbedPortalTemplate;
   /** When set, browser `Origin` must match one entry for embed-kit CORS */

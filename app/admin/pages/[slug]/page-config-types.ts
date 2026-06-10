@@ -1,4 +1,4 @@
-import type { BondEmbedPortalTemplate } from '@/types';
+import type { BondEmbedPortalTemplate, MemberPricingStyle, PortalTemplate } from '@/types';
 import type { BondEnv } from '@/lib/bond-env';
 
 export interface IPageConfig {
@@ -67,6 +67,9 @@ export interface IPageConfig {
     portalAccentSource?: 'sport' | 'branding';
     portalSessionLayoutDefault?: 'list' | 'grid';
     allowPortalSessionLayoutToggle?: boolean;
+    portalTemplate?: PortalTemplate;
+    portalCardMinWidth?: number;
+    memberPricingStyle?: MemberPricingStyle;
     discoveryCacheEnabled?: boolean;
     availabilityCacheTtl?: number;
     discoveryRefreshPolicy?: '5min' | '15min' | '30min' | '60min';

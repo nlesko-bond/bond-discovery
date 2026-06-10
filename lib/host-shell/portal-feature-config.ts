@@ -3,6 +3,8 @@ import {
   PortalAccentSourceEnum,
   PortalSessionLayoutEnum,
   type FeatureConfig,
+  type MemberPricingStyle,
+  type PortalTemplate,
 } from '@/types';
 
 function resolveHostPortalLayout(
@@ -48,6 +50,42 @@ function resolvePortalSessionLayoutDefault(
   return undefined;
 }
 
+function resolvePortalTemplate(
+  features: Record<string, unknown>,
+): PortalTemplate | undefined {
+  const raw = features.portalTemplate ?? features.portal_template;
+  if (raw === 'v2') {
+    return 'v2';
+  }
+  if (raw === 'current') {
+    return 'current';
+  }
+  return undefined;
+}
+
+function resolveMemberPricingStyle(
+  features: Record<string, unknown>,
+): MemberPricingStyle | undefined {
+  const raw = features.memberPricingStyle ?? features.member_pricing_style;
+  if (raw === 'inline' || raw === 'badge' || raw === 'stacked') {
+    return raw;
+  }
+  return undefined;
+}
+
+function resolvePortalCardMinWidth(
+  features: Record<string, unknown>,
+): number | undefined {
+  const raw = features.portalCardMinWidth ?? features.portal_card_min_width;
+  const value =
+    typeof raw === 'number'
+      ? raw
+      : typeof raw === 'string' && raw.trim() !== ''
+        ? Number(raw)
+        : Number.NaN;
+  return Number.isFinite(value) && value > 0 ? Math.round(value) : undefined;
+}
+
 function resolveOptionalBoolean(
   features: Record<string, unknown>,
   camelKey: string,
@@ -87,8 +125,14 @@ export function normalizePortalFeatureFields(
   | 'portalAccentSource'
   | 'portalSessionLayoutDefault'
   | 'allowPortalSessionLayoutToggle'
+  | 'portalTemplate'
+  | 'portalCardMinWidth'
+  | 'memberPricingStyle'
 > {
   const hostPortalLayout = resolveHostPortalLayout(features);
+  const portalTemplate = resolvePortalTemplate(features);
+  const portalCardMinWidth = resolvePortalCardMinWidth(features);
+  const memberPricingStyle = resolveMemberPricingStyle(features);
   const portalAccentSource = resolvePortalAccentSource(features);
   const portalSessionLayoutDefault = resolvePortalSessionLayoutDefault(features);
   const allowPortalSessionLayoutToggle = resolveOptionalBoolean(
@@ -120,6 +164,9 @@ export function normalizePortalFeatureFields(
     ...(portalHeroEnabled !== undefined && { portalHeroEnabled }),
     ...(portalHeroTitle !== undefined && { portalHeroTitle }),
     ...(portalHeroSubtitle !== undefined && { portalHeroSubtitle }),
+    ...(portalTemplate !== undefined && { portalTemplate }),
+    ...(portalCardMinWidth !== undefined && { portalCardMinWidth }),
+    ...(memberPricingStyle !== undefined && { memberPricingStyle }),
   };
 }
 
