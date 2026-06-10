@@ -15,7 +15,7 @@ const CARD = '[data-testid="portal-v2-card"]';
 const ACTIVITY_CHIP = '[data-testid="portal-v2-activity-chip"]';
 
 async function gotoV2(page: Page): Promise<boolean> {
-  const response = await page.goto(V2_URL);
+  const response = await page.goto(V2_URL, { timeout: 90_000 }); // dev-server cold compile can exceed the 30s default
   if (!response || response.status() >= 400) {
     return false;
   }
