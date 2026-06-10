@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getConfigBySlug, updatePageConfig, deletePageConfig } from '@/lib/config';
+import {
+  getConfigBySlug,
+  updatePageConfig,
+  deletePageConfig,
+  updateAffectsDiscoveryPayload,
+} from '@/lib/config';
 import { requireAdmin } from '@/lib/admin-auth';
+import { warmScopeGroupWithTimeout } from '@/lib/discovery-warm';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
@@ -46,6 +52,14 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (body.slug && typeof body.slug === 'string' && body.slug !== params.slug) {
       revalidatePath(`/${params.slug}`);
       revalidatePath(`/portal/${params.slug}`);
+    }
+
+    // updatePageConfig already invalidated the response cache for
+    // payload-affecting changes; re-warm now (awaited with timeout — see
+    // warm-on-create in app/api/pages/route.ts for the Vercel rationale)
+    // so live pages don't serve the slow cold path until the next cron.
+    if (updateAffectsDiscoveryPayload(body)) {
+      await warmScopeGroupWithTimeout([updatedConfig]);
     }
 
     return NextResponse.json({ page: updatedConfig });

@@ -318,11 +318,37 @@ export async function createPageConfig(config: {
 }
 
 /**
+ * Returns true when an update touches a field that changes the events
+ * payload served from `discovery:response:{slug}` — meaning the cached
+ * response must be invalidated and re-warmed. Branding/params-only edits
+ * do not affect the payload and must NOT invalidate.
+ */
+export function updateAffectsDiscoveryPayload(updates: Partial<DiscoveryConfig>): boolean {
+  return (
+    updates.excludedProgramIds !== undefined ||
+    updates.includedProgramIds !== undefined ||
+    updates.organizationIds !== undefined ||
+    updates.facilityIds !== undefined ||
+    updates.apiKey !== undefined ||
+    updates.features?.programFilterMode !== undefined ||
+    updates.features?.excludedProgramIds !== undefined ||
+    updates.features?.includedProgramIds !== undefined ||
+    updates.features?.eventHorizonMonths !== undefined ||
+    updates.features?.bondEnv !== undefined
+  );
+}
+
+/**
  * Update an existing page configuration
  */
 export async function updatePageConfig(slug: string, updates: Partial<DiscoveryConfig>): Promise<DiscoveryConfig> {
   const supabaseAdmin = getSupabaseAdmin();
-  
+
+  // Capture the pre-update config when the payload is affected, so we can
+  // invalidate under the OLD bondEnv cache key as well if bondEnv changes.
+  const payloadAffected = updateAffectsDiscoveryPayload(updates);
+  const previousConfig = payloadAffected ? await getConfigBySlug(slug) : null;
+
   // Build the update object
   const updateData: any = {};
   
@@ -364,21 +390,26 @@ export async function updatePageConfig(slug: string, updates: Partial<DiscoveryC
     throw new Error(updateError.message);
   }
 
-  const programFilterTouched =
-    updates.excludedProgramIds !== undefined ||
-    updates.includedProgramIds !== undefined ||
-    updates.features?.programFilterMode !== undefined ||
-    updates.features?.excludedProgramIds !== undefined ||
-    updates.features?.includedProgramIds !== undefined;
-
-  if (programFilterTouched) {
-    const existingConfig = await getConfigBySlug(slug);
-    const bondEnv = updates.features?.bondEnv ?? existingConfig?.features.bondEnv;
+  if (payloadAffected) {
+    const previousBondEnv = previousConfig?.features.bondEnv;
+    const nextBondEnv = updates.features?.bondEnv ?? previousBondEnv;
     const nextSlug = updateData.slug || slug;
-    await invalidateDiscoveryResponseCache(nextSlug, bondEnv);
-    if (nextSlug !== slug) {
-      await invalidateDiscoveryResponseCache(slug, bondEnv);
+
+    const invalidations: Array<Promise<void>> = [
+      invalidateDiscoveryResponseCache(nextSlug, nextBondEnv),
+    ];
+    // bondEnv changed: clear the OLD env's cache key too, or the stale
+    // payload would keep serving under the previous key variant.
+    if (updates.features?.bondEnv !== undefined && previousBondEnv !== nextBondEnv) {
+      invalidations.push(invalidateDiscoveryResponseCache(nextSlug, previousBondEnv));
     }
+    if (nextSlug !== slug) {
+      invalidations.push(invalidateDiscoveryResponseCache(slug, nextBondEnv));
+      if (updates.features?.bondEnv !== undefined && previousBondEnv !== nextBondEnv) {
+        invalidations.push(invalidateDiscoveryResponseCache(slug, previousBondEnv));
+      }
+    }
+    await Promise.all(invalidations);
   }
   
   // Fetch the updated record using admin client

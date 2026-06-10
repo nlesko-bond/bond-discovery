@@ -26,6 +26,13 @@ vi.mock('@/lib/config', () => ({
   createPageConfig: (...args: unknown[]) => mockCreatePageConfig(...args),
   updatePageConfig: (...args: unknown[]) => mockUpdatePageConfig(...args),
   deletePageConfig: (...args: unknown[]) => mockDeletePageConfig(...args),
+  updateAffectsDiscoveryPayload: () => false,
+}));
+
+// The routes warm the discovery cache after create/update; irrelevant here.
+vi.mock('@/lib/discovery-warm', () => ({
+  warmScopeGroup: vi.fn().mockResolvedValue([]),
+  warmScopeGroupWithTimeout: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('next/cache', () => ({

@@ -2,25 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAllPageConfigs } from '@/lib/config';
 import {
   shouldRefreshDiscovery,
-  markDiscoveryRefreshed,
-  programsCacheKey,
-  discoveryResponseCacheKey,
-  cacheGet,
   cacheSet,
   type DiscoveryRefreshPolicy,
 } from '@/lib/cache';
-import {
-  getDiscoveryEvents,
-  filterEventsForResponse,
-  type FullDiscoveryEvent,
-  type DiscoveryEventsResult,
-} from '@/lib/discovery-events';
-import {
-  createBondClient,
-  DEFAULT_API_KEY,
-  resetBondApiStats,
-  getBondApiStats,
-} from '@/lib/bond-client';
+import { warmScopeGroup, type WarmDetail } from '@/lib/discovery-warm';
+import { DEFAULT_API_KEY, resetBondApiStats, getBondApiStats } from '@/lib/bond-client';
 import {
   getDiscoveryExcludedProgramIds,
   getDiscoveryIncludedProgramIds,
@@ -92,120 +78,11 @@ export async function GET(request: NextRequest) {
       scopeGroups.set(scope, group);
     }
 
-    const details: Array<{
-      slug: string;
-      status: 'warmed' | 'error' | 'shared';
-      totalEvents?: number;
-      durationMs: number;
-    }> = [];
+    const details: WarmDetail[] = [];
 
     // Process one scope group at a time to avoid cross-scope rate-limiting
-    for (const [, configs] of scopeGroups) {
-      const primary = configs[0];
-      const groupStart = Date.now();
-
-      try {
-        // Warm programs cache (shared across all slugs in this scope)
-        const apiKey = primary.apiKey || DEFAULT_API_KEY;
-        const client = createBondClient(apiKey, primary.features.bondEnv);
-        const programsTtl = Math.max(primary.cacheTtl || 0, 4 * 60 * 60);
-        await Promise.all(
-          primary.organizationIds.map(async (orgId: string) => {
-            try {
-              const key = programsCacheKey(orgId, undefined, apiKey, primary.features.bondEnv);
-              const response = await client.getPrograms(orgId);
-              await cacheSet(key, response, { ttl: programsTtl });
-            } catch (err) {
-              console.error(`[warm-discovery] Failed to warm programs for org ${orgId}:`, err);
-            }
-          })
-        );
-
-        // Fetch full events ONCE for this scope
-        const full: DiscoveryEventsResult = await getDiscoveryEvents({
-          slug: primary.slug,
-          mode: 'full',
-          forceFresh: true,
-        });
-
-        // Availability is no longer written to KV (always fetched fresh from Bond per request).
-
-        // Write discovery:response for EVERY slug that shares this scope
-        const today = new Date().toISOString().split('T')[0];
-        for (const config of configs) {
-          try {
-            const horizonMonths = config.features?.eventHorizonMonths ?? 3;
-            const filtered = filterEventsForResponse(
-              full.payload.data as FullDiscoveryEvent[],
-              horizonMonths,
-              today,
-            );
-            const precomputed = {
-              ...full.payload,
-              data: filtered,
-              meta: {
-                ...full.payload.meta,
-                totalFiltered: filtered.length,
-                precomputedAt: new Date().toISOString(),
-              },
-            };
-
-            const previous = await cacheGet<{ meta?: { totalFiltered?: number } }>(
-              discoveryResponseCacheKey(config.slug, config.features.bondEnv),
-            );
-            const previousCount = previous?.meta?.totalFiltered ?? 0;
-            if (filtered.length === 0 && previousCount > 0) {
-              console.error('[warm-discovery] refusing empty write; keeping previous payload', {
-                slug: config.slug,
-                previousCount,
-              });
-              details.push({
-                slug: config.slug,
-                status: 'error',
-                durationMs: Date.now() - groupStart,
-              });
-              continue;
-            }
-
-            await cacheSet(
-              discoveryResponseCacheKey(config.slug, config.features.bondEnv),
-              precomputed,
-              { ttl: 4 * 60 * 60 }
-            );
-            await markDiscoveryRefreshed(config.slug);
-
-            const isPrimary = config.slug === primary.slug;
-            details.push({
-              slug: config.slug,
-              status: isPrimary ? 'warmed' : 'shared',
-              totalEvents: full.payload.meta.totalEvents,
-              durationMs: Date.now() - groupStart,
-            });
-
-            if (!isPrimary) {
-              console.log(
-                `[warm-discovery] ${config.slug} shared data from ${primary.slug} (${full.payload.meta.totalEvents} events)`
-              );
-            }
-          } catch (writeErr) {
-            console.error(`[warm-discovery] Failed to write response for ${config.slug}:`, writeErr);
-            details.push({
-              slug: config.slug,
-              status: 'error',
-              durationMs: Date.now() - groupStart,
-            });
-          }
-        }
-      } catch (error) {
-        console.error(`[warm-discovery] Failed to warm scope (primary: ${primary.slug}):`, error);
-        for (const config of configs) {
-          details.push({
-            slug: config.slug,
-            status: 'error',
-            durationMs: Date.now() - groupStart,
-          });
-        }
-      }
+    for (const [, groupConfigs] of scopeGroups) {
+      details.push(...(await warmScopeGroup(groupConfigs)));
     }
 
     // Persist a compact last-run record so cache staleness is diagnosable

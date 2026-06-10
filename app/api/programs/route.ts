@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createBondClient, DEFAULT_API_KEY, DEFAULT_ORG_IDS } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
 import { getConfigBySlug } from '@/lib/config';
-import { cached, programsCacheKey } from '@/lib/cache';
+import { cachedSWR, programsCacheKey } from '@/lib/cache';
 import { Program } from '@/types';
 import {
   filterProgramsByPageConfig,
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     const promises = orgIds.map(async (orgId) => {
       try {
         const cacheKey = programsCacheKey(orgId, facilityId, apiKey, bondEnv);
-        const response = await cached(
+        const response = await cachedSWR(
           cacheKey,
           () => client.getPrograms(orgId, { expand, facilityId }),
           { ttl: 4 * 60 * 60 }
