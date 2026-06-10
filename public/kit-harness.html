@@ -1,0 +1,95 @@
+<!doctype html>
+<!-- Kit test harness: simulates a partner website embedding Bond via the host kit.
+     Served from the discovery deployment itself (e.g. <preview-url>/kit-harness.html?slug=coppermine).
+     Loads the REAL bond-host/v1.js from this origin, mounts the discovery iframe the same
+     way Webflow does, and logs every Bond postMessage + parent dataLayer push (GA4 wiring).
+     Not linked from anywhere; safe to keep deployed. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Bond kit harness — fake partner site</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, sans-serif; background: #f6f7f9; }
+    .nav { position: sticky; top: 0; background: #1d2733; color: #fff; padding: 18px 24px; font-weight: 600; z-index: 5; }
+    .nav small { font-weight: 400; opacity: .7; margin-left: 12px; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 16px; }
+    #log { position: fixed; right: 12px; bottom: 12px; width: 360px; max-height: 40vh; overflow: auto;
+           background: #101418; color: #9fe1cb; font: 11px/1.5 ui-monospace, monospace; border-radius: 10px;
+           padding: 10px 12px; opacity: .94; z-index: 10; }
+    #log .gtm { color: #fac775; }
+    #log .err { color: #f09595; }
+    #log b { color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="nav">Fake Partner Site <small>embedding Bond via bond-host/v1.js — this mimics the Webflow setup</small></div>
+  <div class="wrap">
+    <div id="bond-mount" data-bond-host data-bond-slug="coppermine"></div>
+  </div>
+  <div id="log"><b>harness log</b><br/></div>
+
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var slug = params.get('slug') || 'coppermine';
+      var mount = document.getElementById('bond-mount');
+      mount.setAttribute('data-bond-slug', slug);
+
+      var logEl = document.getElementById('log');
+      function log(msg, cls) {
+        var d = document.createElement('div');
+        if (cls) d.className = cls;
+        d.textContent = new Date().toISOString().slice(11, 19) + ' ' + msg;
+        logEl.appendChild(d);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      // Observe the parent page dataLayer exactly as partner GTM would.
+      window.dataLayer = window.dataLayer || [];
+      var origPush = window.dataLayer.push.bind(window.dataLayer);
+      window.dataLayer.push = function (entry) {
+        try { log('dataLayer ⟵ ' + JSON.stringify(entry).slice(0, 220), 'gtm'); } catch (e) {}
+        return origPush(entry);
+      };
+
+      window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (!d || typeof d !== 'object' || typeof d.type !== 'string') return;
+        if (d.type === 'BOND_GTM_EVENT') {
+          log('postMessage BOND_GTM_EVENT (' + ((d.dataLayerEvent || {}).event || '?') + ') from ' + e.origin, 'gtm');
+        } else if (d.type.indexOf('resize') !== -1 || d.type.indexOf('bond:') === 0) {
+          log('postMessage ' + d.type + (typeof d.height === 'number' ? ' h=' + d.height : '') + ' from ' + e.origin);
+        }
+      }, true);
+
+      // After the kit mounts the iframe, forward harness query params (portalTemplate,
+      // memberPricingStyle, portalCardMinWidth, viewMode) into the portal URL so
+      // template variants can be compared without flipping configs.
+      var forward = ['portalTemplate', 'memberPricingStyle', 'portalCardMinWidth', 'viewMode'];
+      var tries = 0;
+      var t = setInterval(function () {
+        tries++;
+        var iframe = mount.querySelector('iframe[data-bond-discovery-iframe]');
+        if (iframe) {
+          clearInterval(t);
+          var extra = forward.filter(function (k) { return params.get(k); })
+            .map(function (k) { return k + '=' + encodeURIComponent(params.get(k)); }).join('&');
+          if (extra) {
+            iframe.src += (iframe.src.indexOf('?') === -1 ? '?' : '&') + extra;
+            log('forwarded params to portal iframe: ' + extra);
+          }
+          log('discovery iframe mounted: ' + iframe.src);
+        } else if (tries > 40) {
+          clearInterval(t);
+          log('iframe never mounted — check slug / bootstrap', 'err');
+        }
+      }, 250);
+
+      log('harness ready — slug=' + slug);
+    })();
+  </script>
+  <script src="/bond-host/v1.js" defer></script>
+</body>
+</html>
