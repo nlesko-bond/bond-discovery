@@ -1,14 +1,64 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const DEFAULT_SUPABASE_URL = 'https://mxketdjzelojxjnzsjgd.supabase.co';
-const DEFAULT_SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14a2V0ZGp6ZWxvanhqbnpzamdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MTI4NDQsImV4cCI6MjA3NjI4ODg0NH0._zB2_IAm6R4oFSXgfJwUUrL8VOgt91hkmuHfKsG7_yc';
+export const SUPABASE_ENV_ERROR =
+  'Supabase env not configured: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (see .env.example)';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
+/**
+ * @deprecated Hardcoded PRODUCTION Supabase fallback. Retained for exactly one
+ * release so deployments whose Vercel env vars were never set do not break.
+ * It will be REMOVED in the next release.
+ *
+ * To remove the fallback (one-line change): set this constant to `null`.
+ * Every resolution path below will then throw {@link SUPABASE_ENV_ERROR}
+ * instead of silently targeting production.
+ */
+const DEPRECATED_PROD_FALLBACK: { url: string; anonKey: string } | null = {
+  url: 'https://mxketdjzelojxjnzsjgd.supabase.co',
+  anonKey:
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14a2V0ZGp6ZWxvanhqbnpzamdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MTI4NDQsImV4cCI6MjA3NjI4ODg0NH0._zB2_IAm6R4oFSXgfJwUUrL8VOgt91hkmuHfKsG7_yc',
+};
 
-// Public client with anon key - for read operations (browser + server)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+/**
+ * Single funnel for the deprecated fallback: throws when the fallback has been
+ * removed, otherwise logs a loud warning and returns the production value.
+ */
+function useDeprecatedProdFallback(kind: 'url' | 'anonKey', missingVar: string): string {
+  if (!DEPRECATED_PROD_FALLBACK) {
+    throw new Error(SUPABASE_ENV_ERROR);
+  }
+  console.error(
+    `[supabase] ${missingVar} env var is missing — falling back to the hardcoded PRODUCTION Supabase ${kind}. ` +
+      'This hardcoded production fallback is deprecated and will be REMOVED in the next release; ' +
+      'set the env var now (see .env.example).'
+  );
+  return DEPRECATED_PROD_FALLBACK[kind];
+}
+
+function getPublicSupabaseUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ||
+    useDeprecatedProdFallback('url', 'NEXT_PUBLIC_SUPABASE_URL')
+  );
+}
+
+function getPublicSupabaseAnonKey(): string {
+  return (
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
+    useDeprecatedProdFallback('anonKey', 'NEXT_PUBLIC_SUPABASE_ANON_KEY')
+  );
+}
+
+// Public client with anon key - for read operations (browser + server).
+// Lazy so missing env throws/warns at first use, not at import (Next.js builds
+// import modules without runtime env).
+let _supabasePublic: SupabaseClient | null = null;
+
+export function getSupabasePublic(): SupabaseClient {
+  if (!_supabasePublic) {
+    _supabasePublic = createClient(getPublicSupabaseUrl(), getPublicSupabaseAnonKey());
+  }
+  return _supabasePublic;
+}
 
 // Admin client with service key - for privileged operations (lazy init to avoid build errors)
 let _supabaseAdmin: SupabaseClient | null = null;
@@ -30,7 +80,7 @@ function getSupabaseAnonKeyForServer(): string {
   return (
     process.env.SUPABASE_ANON_KEY?.trim() ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
-    DEFAULT_SUPABASE_ANON_KEY
+    useDeprecatedProdFallback('anonKey', 'SUPABASE_ANON_KEY / NEXT_PUBLIC_SUPABASE_ANON_KEY')
   );
 }
 
@@ -48,7 +98,7 @@ export function getSupabaseUrlForServer(): string {
   const ref = parseProjectRefFromServiceJwt(getSupabaseServiceRoleKey());
   if (ref) return `https://${ref}.supabase.co`;
 
-  return DEFAULT_SUPABASE_URL;
+  return useDeprecatedProdFallback('url', 'SUPABASE_URL / NEXT_PUBLIC_SUPABASE_URL');
 }
 
 function createServerSupabaseClient(url: string, key: string): SupabaseClient {

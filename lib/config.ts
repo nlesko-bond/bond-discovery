@@ -12,7 +12,7 @@ import {
   HostPortalLayoutEnum,
   ScheduleTableColumn,
 } from '@/types';
-import { supabase, getSupabaseAdmin, DiscoveryPageRow } from './supabase';
+import { getSupabaseAdmin, DiscoveryPageRow } from './supabase';
 import { DEFAULT_BOND_ENV, resolveBondEnv } from './bond-env';
 import { invalidateDiscoveryResponseCache } from './cache';
 import { normalizePortalFeatureFields } from './host-shell/portal-feature-config';

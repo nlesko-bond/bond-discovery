@@ -32,13 +32,23 @@ const mockOrder = vi.fn();
 const mockAdminFrom = vi.fn();
 
 vi.mock('@/lib/supabase', () => ({
-  supabase: {
+  getSupabasePublic: () => ({
     from: (table: string) => mockFrom(table),
-  },
+  }),
   getSupabaseAdmin: () => ({
     from: (table: string) => mockAdminFrom(table),
   }),
 }));
+
+// React 18's client build (used by vitest/jsdom) has no `cache`; lib/config.ts
+// uses it as a per-request memo on the server. Identity-wrap it in tests.
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>();
+  return {
+    ...actual,
+    cache: (actual as { cache?: unknown }).cache ?? (<T,>(fn: T) => fn),
+  };
+});
 
 // Set up mock returns
 const createChainableMock = (resolvedValue: any) => ({
