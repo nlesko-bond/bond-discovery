@@ -376,9 +376,6 @@ export async function updatePageConfig(slug: string, updates: Partial<DiscoveryC
   if (updates.cacheTtl !== undefined) updateData.cache_ttl = updates.cacheTtl;
   if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
   
-  // Debug: Log what we're saving
-  console.log('[updatePageConfig] features to save:', JSON.stringify(updateData.features, null, 2));
-  
   // Perform the update using admin client
   const { error: updateError } = await supabaseAdmin
     .from('discovery_pages')

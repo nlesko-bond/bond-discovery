@@ -1,5 +1,7 @@
 # Webflow embed kit playbook (iframe-free)
 
+> **DEPRECATED — pending removal.** The embed kit (`/embed-kit/v1.js`, `/embed/{slug}`, `/api/embed/*`) is still deployed for existing integrations but is no longer the supported path. New integrations must use the **host kit** (`/bond-host/v1.js`) — see `docs/partner-host-integration.md`.
+
 This guide is for operators who host customer sites in **Webflow** (or any static host) and want the Bond Discovery experience **in the page DOM** without a full-page iframe.
 
 ## What gets loaded
