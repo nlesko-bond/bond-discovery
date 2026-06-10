@@ -24,12 +24,12 @@ pipeline writes only).
 | 001 | Require authentication on the page-config API | P1 | S | — | DONE |
 | 002 | Verification baseline: cache + cron tests, cron fail-closed auth, last-run record | P1 | M | — | DONE |
 | 003 | Host kit forwards BOND_GTM_EVENT checkout conversions to partner dataLayer | P1 | M | — | DONE |
-| 004 | Trim discovery GTM events to page_view + register clicks | P2 | M | 003 | TODO |
+| 004 | Trim discovery GTM events to page_view + register clicks | P2 | M | 003 | DONE |
 | 005 | True staging environment (Vercel + Supabase + KV + cron) | P1 | M | — | DONE |
-| 006 | Caching hardening: warm-on-create, dedupe drift files, invalidation coverage, programs SWR | P2 | M | 002 | TODO |
-| 007 | Remove the embed kit safely | P2 | M | 002, 005 | TODO |
+| 006 | Caching hardening: warm-on-create, dedupe drift files, invalidation coverage, programs SWR | P2 | M | 002 | DONE |
+| 007 | Remove the embed kit safely | P2 | M | 002, 005 | BLOCKED (needs operator: embed-kit traffic evidence from Vercel logs) |
 | 008 | Admin settings UI restructure (9 sections → 5) | P2 | M–L | 001, 007 | TODO |
-| 009 | Discovery page templates — visual upgrade, mobile-first | P2 | L | 005, 007 | TODO |
+| 009 | Discovery page templates — visual upgrade, mobile-first | P2 | L | 005, 007 | TODO (awaiting operator design input; Step 1 spike can start any time) |
 | 010 | Production-readiness sweep + docs consolidation | P3 | M | 001–009 | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with rationale)
