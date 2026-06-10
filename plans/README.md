@@ -21,11 +21,11 @@ pipeline writes only).
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| 001 | Require authentication on the page-config API | P1 | S | — | TODO |
-| 002 | Verification baseline: cache + cron tests, cron fail-closed auth, last-run record | P1 | M | — | TODO |
-| 003 | Host kit forwards BOND_GTM_EVENT checkout conversions to partner dataLayer | P1 | M | — | TODO |
+| 001 | Require authentication on the page-config API | P1 | S | — | DONE |
+| 002 | Verification baseline: cache + cron tests, cron fail-closed auth, last-run record | P1 | M | — | DONE |
+| 003 | Host kit forwards BOND_GTM_EVENT checkout conversions to partner dataLayer | P1 | M | — | DONE |
 | 004 | Trim discovery GTM events to page_view + register clicks | P2 | M | 003 | TODO |
-| 005 | True staging environment (Vercel + Supabase + KV + cron) | P1 | M | — | TODO |
+| 005 | True staging environment (Vercel + Supabase + KV + cron) | P1 | M | — | DONE |
 | 006 | Caching hardening: warm-on-create, dedupe drift files, invalidation coverage, programs SWR | P2 | M | 002 | TODO |
 | 007 | Remove the embed kit safely | P2 | M | 002, 005 | TODO |
 | 008 | Admin settings UI restructure (9 sections → 5) | P2 | M–L | 001, 007 | TODO |
