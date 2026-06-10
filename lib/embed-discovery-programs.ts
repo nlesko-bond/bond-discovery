@@ -1,6 +1,6 @@
 import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
-import { cached, programsCacheKey } from '@/lib/cache';
+import { cachedSWR, programsCacheKey } from '@/lib/cache';
 import {
   filterProgramsByPageConfig,
   filterProgramsWithActiveSessions,
@@ -30,7 +30,9 @@ async function fetchProgramsForOrg(
 ): Promise<Program[]> {
   const cacheKey = programsDiscoveryCacheKey(orgId, apiKey, bondEnv);
 
-  const response = await cached(
+  // SWR: programs expiry (4h TTL) never blocks a user request as long as
+  // the shadow key (2x TTL = 8h) still holds data.
+  const response = await cachedSWR(
     cacheKey,
     async () => {
       try {

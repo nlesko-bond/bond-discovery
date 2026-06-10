@@ -11,6 +11,7 @@ import { resolvePortalUiColors } from '@/lib/host-shell/portal-accent-theme';
 import { cn } from '@/lib/utils';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
+import { getBondRegisterLinkAnalyticsAttributes } from '@/lib/host-shell/registration-analytics';
 import { resolvePortalScheduleLinkTarget } from '@/lib/host-shell/portal-schedule-events';
 
 const CLOSED_REGISTER_BACKGROUND = '#9CA3AF';
@@ -68,8 +69,19 @@ export function HostPortalSessionCard({
         : card.products[0]?.priceLabel
       : undefined;
 
+  const registerAnalyticsAttributes = getBondRegisterLinkAnalyticsAttributes({
+    programId: card.programId,
+    programName: card.programName,
+    sessionId: card.sessionId,
+    sessionName: card.name,
+    productId: card.registerProductId,
+  });
+
   const trackRegisterClick = (productId?: string) => {
     if (card.isClosed) {
+      return;
+    }
+    if (typeof window !== 'undefined' && window.self !== window.top) {
       return;
     }
     gtmEvent.clickRegister({
@@ -118,6 +130,7 @@ export function HostPortalSessionCard({
         href={card.registerUrl}
         target={linkTarget}
         rel={linkRel}
+        {...registerAnalyticsAttributes}
         className={cn(
           'inline-flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90',
           card.isClosed && 'pointer-events-none cursor-not-allowed opacity-60',
@@ -259,6 +272,13 @@ export function HostPortalSessionCard({
                         href={product.registrationUrl}
                         target={linkTarget}
                         rel={linkRel}
+                        {...getBondRegisterLinkAnalyticsAttributes({
+                          programId: card.programId,
+                          programName: card.programName,
+                          sessionId: card.sessionId,
+                          sessionName: card.name,
+                          productId: product.id,
+                        })}
                         className={cn(
                           'inline-flex shrink-0 items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold text-white shadow-sm',
                           product.registerDisabled &&

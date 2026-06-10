@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllPageConfigs, createPageConfig, defaultConfig } from '@/lib/config';
+import { requireAdmin } from '@/lib/admin-auth';
+import { warmScopeGroupWithTimeout } from '@/lib/discovery-warm';
 
 // Disable caching for this route - always fetch fresh data
 export const dynamic = 'force-dynamic';
@@ -20,10 +22,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
   try {
-    // Note: Auth temporarily disabled for easier setup
-    // TODO: Re-enable when Google OAuth is configured
-    
     const body = await request.json();
     
     // Validate required fields
@@ -64,6 +66,13 @@ export async function POST(request: NextRequest) {
       isActive: body.isActive !== false,
     });
     
+    // Warm the discovery response cache for the new slug so first visitors
+    // don't hit the slow cold-path pipeline (cron only runs every 15 min).
+    // Awaited with a timeout rather than fire-and-forget: on Vercel a
+    // detached promise can be killed at lambda teardown. On timeout the
+    // warm is abandoned and the next cron run covers the slug.
+    await warmScopeGroupWithTimeout([newConfig]);
+
     return NextResponse.json({ page: newConfig });
   } catch (error: any) {
     console.error('Error creating page:', error);

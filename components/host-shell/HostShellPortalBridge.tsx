@@ -48,7 +48,7 @@ export function HostShellPortalBridge() {
       if (targetAttr && targetAttr !== '_blank') {
         return;
       }
-      trackHostShellRegisterClick(href, getPortalPageSlugFromLocation());
+      trackHostShellRegisterClick(href, getPortalPageSlugFromLocation(), anchor);
       const { path, search } = parseHostRegistrationPath(href, DEFAULT_BOND_CONSUMER_ORIGIN);
       event.preventDefault();
       event.stopPropagation();

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getSupabasePublic } from '@/lib/supabase';
 import { 
   Users, 
   FileText, 
@@ -10,6 +10,7 @@ import {
 import Link from 'next/link';
 
 async function getStats() {
+  const supabase = getSupabasePublic();
   const { data: partners } = await supabase
     .from('partner_groups')
     .select('id, name, branding')

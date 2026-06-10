@@ -4,13 +4,13 @@ import { DiscoveryPage } from '@/components/discovery/DiscoveryPage';
 import { HostPortalDiscoveryPage } from '@/components/host-shell/HostPortalDiscoveryPage';
 import { ProgramGridSkeleton } from '@/components/ui/Skeletons';
 import { getConfigBySlug, getAllPageConfigs } from '@/lib/config';
-import { cacheGet, discoveryResponseCacheKey } from '@/lib/cache';
-import { getAvailabilityMap, mergeAvailabilityIntoEvents } from '@/lib/availability-cache';
+import { getPrecomputedDiscoveryEvents } from '@/lib/discovery-precomputed-events';
 import {
   isSessionsFirstPortalLayout,
   isSessionsListPortalLayout,
   toPortalDiscoveryConfig,
 } from '@/lib/host-shell/portal-config';
+import type { IDiscoveryApiEvent } from '@/lib/host-shell/portal-schedule-events';
 import { Program, DiscoveryConfig } from '@/types';
 import { fetchProgramsForDiscoveryPage } from '@/lib/embed-discovery-programs';
 
@@ -27,35 +27,10 @@ async function getPrecomputedEvents(
   slug: string,
   config: DiscoveryConfig,
 ): Promise<{
-  events: any[];
+  events: unknown[];
   total: number;
 } | null> {
-  if (config.features.discoveryCacheEnabled === false) {
-    return null;
-  }
-  try {
-    const precomputed = await cacheGet<any>(
-      discoveryResponseCacheKey(slug, config.features.bondEnv),
-    );
-    if (precomputed?.data && Array.isArray(precomputed.data) && precomputed.data.length > 0) {
-      let events = precomputed.data;
-      try {
-        const availabilityById = await getAvailabilityMap(slug);
-        if (availabilityById.size > 0) {
-          events = mergeAvailabilityIntoEvents(events, availabilityById);
-        }
-      } catch (err) {
-        console.error('[portal page] availability overlay failed', { slug, err });
-      }
-      return {
-        events,
-        total: precomputed.meta?.totalFiltered ?? events.length,
-      };
-    }
-  } catch {
-    return null;
-  }
-  return null;
+  return getPrecomputedDiscoveryEvents(slug, config);
 }
 
 export default async function PortalDiscoverySlugPage({ params, searchParams }: PageProps) {
@@ -83,7 +58,7 @@ export default async function PortalDiscoverySlugPage({ params, searchParams }: 
       {useHostPortalSessionLayout ? (
         <HostPortalDiscoveryPage
           initialPrograms={programs}
-          initialScheduleEvents={eventsResult?.events}
+          initialScheduleEvents={eventsResult?.events as IDiscoveryApiEvent[] | undefined}
           initialEventsFetched={!!eventsResult}
           initialTotalServerEvents={eventsResult?.total ?? 0}
           config={portalConfig}

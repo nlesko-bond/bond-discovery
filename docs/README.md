@@ -2,6 +2,8 @@
 
 | Doc | Audience |
 |-----|----------|
+| [documentation/website/discovery/guide.html](./documentation/website/discovery/guide.html) | Partners — Discovery + checkout + analytics (live: `/documentation/website/discovery/guide`) |
+| [customer-setup-discovery-checkout-analytics.md](./customer-setup-discovery-checkout-analytics.md) | Same guide in Markdown + publish notes for Bond team |
 | [partner-host-integration.md](./partner-host-integration.md) | Partners / Webflow — host shell setup |
 | [analytics-discovery-and-host-shell.md](./analytics-discovery-and-host-shell.md) | Engineering + analytics — events, GTM, gaps |
 | [portal-session-first-design-spec.md](./portal-session-first-design-spec.md) | Engineering — Phase 2 portal UI handoff |

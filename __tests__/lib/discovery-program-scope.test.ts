@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   filterProgramsByPageConfig,
   filterProgramsWithActiveSessions,
+  filterDiscoveryEventsByPageConfig,
   getDiscoveryExcludedProgramIds,
   getDiscoveryIncludedProgramIds,
   sessionEndDateOnOrAfterToday,
@@ -9,7 +10,11 @@ import {
 } from '@/lib/discovery-program-scope';
 import type { DiscoveryConfig, Program } from '@/types';
 
-function minimalConfig(overrides: Partial<DiscoveryConfig> = {}): DiscoveryConfig {
+type MinimalConfigOverrides = Omit<Partial<DiscoveryConfig>, 'features'> & {
+  features?: Partial<DiscoveryConfig['features']>;
+};
+
+function minimalConfig(overrides: MinimalConfigOverrides = {}): DiscoveryConfig {
   return {
     id: '1',
     name: 'Test',
@@ -106,5 +111,23 @@ describe('filterProgramsByPageConfig', () => {
     expect(getDiscoveryExcludedProgramIds(config)).toEqual(['14951']);
     expect(shouldSkipProgramByPageConfig('14951', config)).toBe(true);
     expect(shouldSkipProgramByPageConfig('100', config)).toBe(false);
+  });
+});
+
+describe('filterDiscoveryEventsByPageConfig', () => {
+  it('removes events for excluded program ids from stale precomputed payloads', () => {
+    const config = minimalConfig({
+      features: {
+        enableFilters: [],
+        programFilterMode: 'exclude',
+        excludedProgramIds: ['14945', '14849', '14951'],
+      },
+    });
+    const events = [
+      { id: 'e1', programId: '14945' },
+      { id: 'e2', programId: 14849 },
+      { id: 'e3', programId: '999' },
+    ];
+    expect(filterDiscoveryEventsByPageConfig(events, config).map((e) => e.id)).toEqual(['e3']);
   });
 });

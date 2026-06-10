@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Bond Discovery To Your Website</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #0d4774;
+      --navy-dark: #092d4a;
+      --navy-light: #1a5a8a;
+      --navy-5: rgba(13,71,116,0.05);
+      --navy-10: rgba(13,71,116,0.10);
+      --navy-20: rgba(13,71,116,0.20);
+      --gold: #d4a853;
+      --white: #ffffff;
+      --gray-50: hsl(210 40% 96%);
+      --gray-100: hsl(210 20% 92%);
+      --gray-200: hsl(210 15% 85%);
+      --gray-400: hsl(210 10% 60%);
+      --gray-600: hsl(210 10% 40%);
+      --gray-900: hsl(210 15% 12%);
+      --font-display: 'Plus Jakarta Sans', sans-serif;
+      --font-body: 'Montserrat', sans-serif;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 1px 3px rgba(13,71,116,0.08), 0 1px 2px rgba(13,71,116,0.04);
+      --shadow-md: 0 4px 16px rgba(13,71,116,0.10), 0 2px 6px rgba(13,71,116,0.06);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--white);
+      color: var(--gray-900);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .site-header {
+      background: var(--navy-dark);
+      padding: 0 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .header-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-mark {
+      width: 32px; height: 32px; background: var(--gold); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-text {
+      font-family: var(--font-display); font-weight: 700; font-size: 18px;
+      color: var(--white); letter-spacing: -0.02em;
+    }
+    .header-badge {
+      font-size: 12px; font-weight: 500; color: var(--gold);
+      background: rgba(212,168,83,0.12); border: 1px solid rgba(212,168,83,0.25);
+      border-radius: 100px; padding: 4px 12px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 60%, var(--navy-light) 100%);
+      padding: 80px 2rem 96px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 80% 50%, rgba(212,168,83,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-inner { max-width: 720px; margin: 0 auto; position: relative; }
+    .hero-eyebrow {
+      font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-family: var(--font-display); font-size: clamp(32px, 5vw, 52px); font-weight: 800;
+      color: var(--white); line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 20px;
+    }
+    .hero-sub { font-size: 17px; color: rgba(255,255,255,0.72); max-width: 580px; line-height: 1.65; }
+    .hero-pills { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 36px; }
+    .pill {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 100px; padding: 6px 14px; font-size: 13px;
+      color: rgba(255,255,255,0.82); font-weight: 500;
+    }
+    .pill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+
+    .page-body {
+      max-width: 1120px; margin: 0 auto; padding: 64px 2rem 96px;
+      display: grid; grid-template-columns: 220px 1fr; gap: 60px; align-items: start;
+    }
+
+    .sidebar { position: sticky; top: 96px; }
+    .sidebar-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--gray-400); margin-bottom: 12px;
+    }
+    .sidebar-nav { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: 10px; padding: 7px 12px;
+      border-radius: var(--radius-sm); font-size: 13.5px; font-weight: 500;
+      color: var(--gray-600); text-decoration: none; transition: background 0.15s, color 0.15s;
+    }
+    .sidebar-nav a:hover { background: var(--navy-5); color: var(--navy); }
+    .sidebar-nav a.active { background: var(--navy-10); color: var(--navy); font-weight: 600; }
+    .nav-num {
+      width: 20px; height: 20px; border-radius: 50%; background: var(--gray-100);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--gray-400); flex-shrink: 0;
+    }
+    .sidebar-nav a.active .nav-num { background: var(--navy); color: white; }
+
+    .main-content { min-width: 0; }
+    .content-section { margin-bottom: 64px; scroll-margin-top: 96px; }
+    .section-eyebrow {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 8px;
+    }
+    h2.section-title {
+      font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--navy);
+      letter-spacing: -0.02em; margin-bottom: 16px; line-height: 1.2;
+    }
+    h3.subsection-title {
+      font-family: var(--font-display); font-size: 16px; font-weight: 600; color: var(--navy);
+      margin-top: 32px; margin-bottom: 12px;
+    }
+    p { font-size: 15px; color: var(--gray-600); line-height: 1.75; margin-bottom: 14px; }
+
+    .inline-code {
+      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12.5px;
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: 5px; padding: 1px 6px; color: var(--navy);
+    }
+
+    .page-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+    .page-card {
+      background: var(--gray-50); border: 1px solid var(--gray-100);
+      border-radius: var(--radius-lg); padding: 20px 24px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .page-card:hover { border-color: var(--navy-20); box-shadow: var(--shadow-sm); }
+    .card-icon {
+      width: 36px; height: 36px; border-radius: 10px; background: var(--navy-10);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
+    }
+    .card-icon svg { color: var(--navy); }
+    .page-card h4 { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+    .page-card p { font-size: 13px; margin-bottom: 12px; }
+    .page-card .url-example {
+      font-family: monospace; font-size: 12px; background: white;
+      border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+      padding: 6px 10px; color: var(--navy);
+    }
+
+    .decide-group {
+      background: white; border: 1px solid var(--gray-100); border-radius: var(--radius-lg);
+      overflow: hidden; margin-bottom: 12px; box-shadow: var(--shadow-sm);
+    }
+    .decide-group-header {
+      background: var(--gray-50); padding: 14px 20px; display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .decide-group-header h4 { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--navy); }
+    .decide-group-body { padding: 8px 0; }
+    .decide-item {
+      display: flex; align-items: flex-start; gap: 10px; padding: 9px 20px;
+      font-size: 13.5px; color: var(--gray-600);
+    }
+    .decide-item::before {
+      content: ''; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--gold); flex-shrink: 0; margin-top: 7px;
+    }
+
+    .code-wrap {
+      background: var(--navy-dark); border-radius: var(--radius-lg);
+      overflow: hidden; margin: 20px 0; box-shadow: var(--shadow-md);
+    }
+    .code-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; background: rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .code-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+    }
+    .copy-btn {
+      font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.45);
+      background: none; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;
+      padding: 3px 10px; cursor: pointer; transition: color 0.15s, border-color 0.15s;
+    }
+    .copy-btn:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.3); }
+    pre {
+      padding: 20px; overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 13px; line-height: 1.7; color: #c9d7e8; margin: 0;
+    }
+    .tok-tag { color: #7ec8e3; }
+    .tok-attr { color: #b5cea8; }
+    .tok-val { color: #d4a853; }
+    .tok-comment { color: rgba(255,255,255,0.3); font-style: italic; }
+
+    .steps { display: flex; flex-direction: column; gap: 0; margin: 20px 0; position: relative; }
+    .steps::before {
+      content: ''; position: absolute; left: 19px; top: 40px; bottom: 40px;
+      width: 1px; background: var(--gray-100);
+    }
+    .step { display: flex; gap: 16px; align-items: flex-start; padding: 10px 0; position: relative; }
+    .step-num {
+      width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--gray-200);
+      background: white; display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--navy);
+      flex-shrink: 0; z-index: 1;
+    }
+    .step-body { padding-top: 8px; font-size: 14.5px; color: var(--gray-600); line-height: 1.65; }
+    .step-body code {
+      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12.5px;
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: 5px; padding: 1px 6px; color: var(--navy);
+    }
+
+    .callout {
+      display: flex; gap: 14px; background: rgba(13,71,116,0.04);
+      border: 1px solid rgba(13,71,116,0.12); border-radius: var(--radius-md);
+      padding: 16px 18px; margin: 20px 0;
+    }
+    .callout-icon { width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; color: var(--navy); }
+    .callout p { font-size: 14px; color: var(--navy); margin: 0; opacity: 0.85; }
+    .callout.warning { background: rgba(212,168,83,0.06); border-color: rgba(212,168,83,0.25); }
+    .callout.warning .callout-icon { color: var(--gold); }
+    .callout.warning p { color: var(--gray-600); opacity: 1; }
+
+    .tips { list-style: none; display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+    .tips li {
+      display: flex; align-items: flex-start; gap: 10px; font-size: 14px;
+      color: var(--gray-600); line-height: 1.6;
+    }
+    .tips li::before { content: '→'; color: var(--navy); font-weight: 600; flex-shrink: 0; margin-top: 1px; }
+    .tips li code {
+      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: 5px; padding: 1px 6px; color: var(--navy);
+    }
+
+    .track-table {
+      width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;
+      border: 1px solid var(--gray-100); border-radius: var(--radius-lg); overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .track-table th, .track-table td {
+      padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--gray-100); vertical-align: top;
+    }
+    .track-table th {
+      background: var(--gray-50); font-family: var(--font-display); font-size: 12px;
+      font-weight: 600; color: var(--navy); width: 28%;
+    }
+    .track-table td { color: var(--gray-600); }
+    .track-table tr:last-child td, .track-table tr:last-child th { border-bottom: none; }
+
+    .platform-tabs {
+      display: flex; gap: 6px; margin-bottom: 28px; padding: 4px;
+      background: var(--gray-50); border: 1px solid var(--gray-100);
+      border-radius: var(--radius-md); width: fit-content;
+    }
+    .platform-tab {
+      padding: 8px 20px; border-radius: var(--radius-sm);
+      font-family: var(--font-display); font-size: 13px; font-weight: 600;
+      color: var(--gray-400); border: none; background: none; cursor: pointer; transition: all 0.15s;
+    }
+    .platform-tab.active { background: white; color: var(--navy); box-shadow: var(--shadow-sm); }
+    .platform-panel { display: none; }
+    .platform-panel.active { display: block; }
+
+    .checklist { list-style: none; display: flex; flex-direction: column; gap: 2px; margin: 20px 0; }
+    .checklist li {
+      display: flex; align-items: center; gap: 14px; padding: 11px 16px;
+      border-radius: var(--radius-md); font-size: 14.5px; color: var(--gray-600);
+      cursor: pointer; transition: background 0.12s;
+    }
+    .checklist li:hover { background: var(--gray-50); }
+    .check-box {
+      width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--gray-200);
+      background: white; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .checklist li.checked .check-box { background: var(--navy); border-color: var(--navy); }
+    .checklist li.checked .check-box svg { display: block; }
+    .check-box svg { display: none; }
+    .checklist li.checked span { text-decoration: line-through; color: var(--gray-400); }
+
+    .problem-card {
+      background: white; border: 1px solid var(--gray-100); border-radius: var(--radius-lg);
+      overflow: hidden; margin-bottom: 10px; transition: box-shadow 0.15s;
+    }
+    .problem-card:hover { box-shadow: var(--shadow-sm); }
+    .problem-summary {
+      display: flex; align-items: center; gap: 14px; padding: 16px 20px;
+      cursor: pointer; list-style: none; font-family: var(--font-display);
+      font-size: 14px; font-weight: 600; color: var(--navy);
+    }
+    .problem-summary::-webkit-details-marker { display: none; }
+    .problem-tag {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: rgba(212,68,45,0.7); background: rgba(212,68,45,0.06);
+      border: 1px solid rgba(212,68,45,0.12); border-radius: 100px; padding: 3px 8px; flex-shrink: 0;
+    }
+    .problem-chevron { margin-left: auto; color: var(--gray-400); transition: transform 0.2s; }
+    details[open] .problem-chevron { transform: rotate(180deg); }
+    .problem-fix {
+      padding: 14px 20px 16px; font-size: 14px; color: var(--gray-600); line-height: 1.65;
+      border-top: 1px solid var(--gray-50);
+    }
+    .problem-fix code {
+      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: 5px; padding: 1px 6px; color: var(--navy);
+    }
+
+    .handoff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+    .handoff-item {
+      display: flex; align-items: center; gap: 12px; background: var(--gray-50);
+      border: 1px solid var(--gray-100); border-radius: var(--radius-md);
+      padding: 14px 16px; font-size: 13.5px; color: var(--gray-600);
+    }
+    .handoff-icon {
+      width: 32px; height: 32px; background: var(--navy-10); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--navy);
+    }
+
+    .site-footer { background: var(--navy-dark); padding: 40px 2rem; text-align: center; }
+    .site-footer p { font-size: 13px; color: rgba(255,255,255,0.35); margin: 0; }
+    .site-footer a { color: rgba(255,255,255,0.5); }
+
+    @media (max-width: 768px) {
+      .page-body { grid-template-columns: 1fr; padding-top: 40px; gap: 0; }
+      .sidebar { display: none; }
+      .page-cards, .handoff-grid { grid-template-columns: 1fr; }
+      .hero { padding: 56px 1.25rem 64px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="#" class="logo">
+      <div class="logo-mark">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 3h5.5a3.5 3.5 0 0 1 0 7H3V3Z" fill="#092d4a"></path>
+          <path d="M3 10h6a4 4 0 0 1 0 8H3v-8Z" fill="#092d4a" opacity="0.6"></path>
+        </svg>
+      </div>
+      <span class="logo-text">Bond</span>
+    </a>
+    <span class="header-badge">Integration Guide</span>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <p class="hero-eyebrow">Developer documentation</p>
+    <h1>Add Bond Discovery<br>to your website</h1>
+    <p class="hero-sub">Embed programs and checkout on your domain, then measure pageviews and register clicks with your existing GTM setup. Bond configures Discovery — you paste snippets in your site footer and two pages.</p>
+    <div class="hero-pills">
+      <span class="pill"><span class="pill-dot"></span>Webflow &amp; WordPress</span>
+      <span class="pill"><span class="pill-dot"></span>Two pages, two footer scripts</span>
+      <span class="pill"><span class="pill-dot"></span>GTM + GA4 ready</span>
+    </div>
+  </div>
+</section>
+
+<div class="page-body">
+
+  <aside class="sidebar">
+    <p class="sidebar-label">On this page</p>
+    <ul class="sidebar-nav" id="sidebar-nav">
+      <li><a href="#what-you-build" class="active"><span class="nav-num">1</span>What you're building</a></li>
+      <li><a href="#decide"><span class="nav-num">2</span>Decide with Bond first</a></li>
+      <li><a href="#code-snippets"><span class="nav-num">3</span>Code snippets</a></li>
+      <li><a href="#analytics"><span class="nav-num">4</span>Analytics setup</a></li>
+      <li><a href="#setup"><span class="nav-num">5</span>Setup instructions</a></li>
+      <li><a href="#testing"><span class="nav-num">6</span>Testing checklist</a></li>
+      <li><a href="#problems"><span class="nav-num">7</span>Common problems</a></li>
+      <li><a href="#handoff"><span class="nav-num">8</span>What to send Bond</a></li>
+    </ul>
+  </aside>
+
+  <main class="main-content">
+
+    <section class="content-section" id="what-you-build">
+      <p class="section-eyebrow">Overview</p>
+      <h2 class="section-title">What you're building</h2>
+      <p>You will create two pages on your website. Bond configures your Discovery page and provides the code snippets — you do not need access to Bond's admin tools.</p>
+
+      <div class="page-cards">
+        <div class="page-card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>
+          </div>
+          <h4>Programs page</h4>
+          <p>Visitors browse sessions, classes, camps, leagues, and schedules.</p>
+          <div class="url-example">/programs</div>
+        </div>
+        <div class="page-card">
+          <div class="card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+          </div>
+          <h4>Register page</h4>
+          <p>Bond checkout opens on your domain when someone clicks Register.</p>
+          <div class="url-example">/register</div>
+        </div>
+      </div>
+
+      <p>Bond will confirm your exact page paths and provide your slug (for example, <span class="inline-code">coppermine</span>).</p>
+
+      <div class="callout">
+        <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <p>Your site footer needs <strong>two</strong> scripts: the Bond embed script and your Google Tag Manager install snippet. Bond also loads your GTM container inside the programs iframe for register-click events.</p>
+      </div>
+    </section>
+
+    <section class="content-section" id="decide">
+      <p class="section-eyebrow">Before you start</p>
+      <h2 class="section-title">Decide with Bond first</h2>
+      <p>Confirm these settings with your Bond contact before touching Webflow or WordPress.</p>
+
+      <div class="decide-group">
+        <div class="decide-group-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0d4774" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+          <h4>Page basics</h4>
+        </div>
+        <div class="decide-group-body">
+          <div class="decide-item">Your website domain — for example, <span class="inline-code">https://www.yoursite.com</span></div>
+          <div class="decide-item">Programs page path — usually <span class="inline-code">/programs</span></div>
+          <div class="decide-item">Register page path — usually <span class="inline-code">/register</span> or <span class="inline-code">/discovery/register</span></div>
+          <div class="decide-item">Bond Discovery slug — Bond provides this</div>
+        </div>
+      </div>
+
+      <div class="decide-group">
+        <div class="decide-group-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0d4774" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v4M12 19v4"></path></svg>
+          <h4>Page style</h4>
+        </div>
+        <div class="decide-group-body">
+          <div class="decide-item">Organization name, logo, primary and secondary brand colors</div>
+          <div class="decide-item">Default view (list or grid) and whether visitors can switch</div>
+          <div class="decide-item">Which filters appear — facility, age, sport, program type, or program</div>
+        </div>
+      </div>
+
+      <div class="decide-group">
+        <div class="decide-group-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0d4774" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          <h4>Analytics</h4>
+        </div>
+        <div class="decide-group-body">
+          <div class="decide-item">GTM container ID — for example, <span class="inline-code">GTM-XXXXXXX</span> (Bond enters this in Discovery admin)</div>
+          <div class="decide-item">GA4 property linked to that GTM container</div>
+          <div class="decide-item">Any required conversion event names beyond <span class="inline-code">click_register</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section" id="code-snippets">
+      <p class="section-eyebrow">What Bond provides</p>
+      <h2 class="section-title">Code snippets</h2>
+      <p>Bond will send you embed snippets for each page plus two footer scripts for your whole site.</p>
+
+      <h3 class="subsection-title" style="margin-top:0">Programs page embed</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-label">Programs page</span>
+          <button class="copy-btn" type="button" onclick="copyCode(this, 'code-programs')">Copy</button>
+        </div>
+        <pre id="code-programs"><span class="tok-tag">&lt;div</span>
+  <span class="tok-attr">data-bond-host</span>
+  <span class="tok-attr">data-bond-slug</span>=<span class="tok-val">"YOUR_SLUG"</span>
+  <span class="tok-attr">data-bond-discovery-base</span>=<span class="tok-val">"https://discovery.bondsports.co"</span>
+  <span class="tok-attr">data-bond-chrome-offset-px</span>=<span class="tok-val">"80"</span>
+  <span class="tok-attr">data-bond-chrome-offset-px-mobile</span>=<span class="tok-val">"64"</span>
+<span class="tok-tag">&gt;&lt;/div&gt;</span></pre>
+      </div>
+
+      <h3 class="subsection-title">Register page embed</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-label">Register page</span>
+          <button class="copy-btn" type="button" onclick="copyCode(this, 'code-register')">Copy</button>
+        </div>
+        <pre id="code-register"><span class="tok-tag">&lt;div</span>
+  <span class="tok-attr">data-bond-host</span>
+  <span class="tok-attr">data-bond-slug</span>=<span class="tok-val">"YOUR_SLUG"</span>
+  <span class="tok-attr">data-bond-discovery-base</span>=<span class="tok-val">"https://discovery.bondsports.co"</span>
+  <span class="tok-attr">data-bond-chrome-offset-px</span>=<span class="tok-val">"80"</span>
+<span class="tok-tag">&gt;&lt;/div&gt;</span></pre>
+      </div>
+
+      <div class="callout warning">
+        <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <p>The offset numbers match your fixed header height. Bond will confirm the right values for desktop and mobile.</p>
+      </div>
+
+      <h3 class="subsection-title">Site footer — Bond embed script</h3>
+      <p>Add once on every page of your site.</p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-label">Footer script 1 of 2</span>
+          <button class="copy-btn" type="button" onclick="copyCode(this, 'code-script')">Copy</button>
+        </div>
+        <pre id="code-script"><span class="tok-tag">&lt;script</span> <span class="tok-attr">src</span>=<span class="tok-val">"https://discovery.bondsports.co/bond-host/v1.js"</span> <span class="tok-attr">defer</span><span class="tok-tag">&gt;&lt;/script&gt;</span></pre>
+      </div>
+
+      <h3 class="subsection-title">Site footer — Google Tag Manager</h3>
+      <p>Add your GTM install snippet in the same footer. Use the <strong>same container ID</strong> you gave Bond. This records pageviews on your domain (<span class="inline-code">/programs</span>, <span class="inline-code">/register</span>).</p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-label">Footer script 2 of 2 — replace GTM-XXXXXXX</span>
+          <button class="copy-btn" type="button" onclick="copyCode(this, 'code-gtm')">Copy</button>
+        </div>
+        <pre id="code-gtm"><span class="tok-comment">&lt;!-- Google Tag Manager --&gt;</span>
+<span class="tok-tag">&lt;script&gt;</span>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&amp;l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-XXXXXXX');<span class="tok-tag">&lt;/script&gt;</span>
+<span class="tok-comment">&lt;!-- End Google Tag Manager --&gt;</span></pre>
+      </div>
+    </section>
+
+    <section class="content-section" id="analytics">
+      <p class="section-eyebrow">Measurement</p>
+      <h2 class="section-title">Analytics setup</h2>
+      <p>Bond handles Discovery events inside the programs iframe. Your GTM footer handles pageviews on your website. Checkout steps inside the register iframe may need separate Bond/GA4 setup — ask your Bond contact.</p>
+
+      <h3 class="subsection-title" style="margin-top:0">What Bond configures</h3>
+      <p>Bond enters your GTM container ID in Discovery admin. When someone clicks Register, Bond pushes a <span class="inline-code">click_register</span> event with program and session <strong>IDs and names</strong>.</p>
+
+      <table class="track-table">
+        <tr><th>Event</th><td>When it fires</td></tr>
+        <tr><th><span class="inline-code">click_register</span></th><td>Register clicked on programs page</td></tr>
+        <tr><th><span class="inline-code">click_redeem_pass</span></th><td>Redeem clicked on Schedule tab (optional tag)</td></tr>
+        <tr><th>Pageviews</th><td>Your GTM footer on your site URLs</td></tr>
+        <tr><th>Checkout funnel</th><td>Bond checkout app — contact Bond support</td></tr>
+      </table>
+
+      <h3 class="subsection-title">What you configure in GTM</h3>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">Create a <strong>GA4 Configuration</strong> tag → your Measurement ID → trigger <strong>All Pages</strong>.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body">Create a <strong>GA4 Event</strong> tag → event name <code>click_register</code> → trigger <strong>Custom Event</strong> <code>click_register</code>.</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body">Map Data Layer variables: <code>program_id</code>, <code>program_name</code>, <code>session_id</code>, <code>session_name</code>, <code>product_id</code>.</div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body">Publish the container. Use GTM Preview on your <strong>published</strong> programs page and click Register inside the embed.</div></div>
+      </div>
+
+      <div class="callout warning">
+        <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <p>If you see two pageviews on the programs page, restrict your GA4 Configuration tag to fire only when Page Hostname equals your website domain.</p>
+      </div>
+    </section>
+
+    <section class="content-section" id="setup">
+      <p class="section-eyebrow">Step-by-step</p>
+      <h2 class="section-title">Setup instructions</h2>
+
+      <div class="platform-tabs">
+        <button class="platform-tab active" type="button" onclick="showPlatform('webflow', this)">Webflow</button>
+        <button class="platform-tab" type="button" onclick="showPlatform('wordpress', this)">WordPress</button>
+      </div>
+
+      <div class="platform-panel active" id="panel-webflow">
+        <h3 class="subsection-title" style="margin-top:0">1. Add footer scripts once</h3>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-body">Open <strong>Project Settings → Custom Code</strong>.</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-body">Paste the Bond script and your GTM snippet in <strong>Footer Code</strong>.</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-body">Save and <strong>publish</strong>.</div></div>
+        </div>
+
+        <h3 class="subsection-title">2. Create the programs page</h3>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-body">Create a page at the path Bond confirmed — usually <code>/programs</code>.</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-body">Add an <strong>Embed</strong> element near the top.</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-body">Paste the programs snippet Bond provided.</div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-body">Do not wrap the embed in a fixed-height or <code>overflow: hidden</code> section.</div></div>
+          <div class="step"><div class="step-num">5</div><div class="step-body">Publish.</div></div>
+        </div>
+
+        <h3 class="subsection-title">3. Create the register page</h3>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-body">Create a page at the path Bond confirmed — usually <code>/register</code>.</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-body">Add an Embed and paste the register snippet.</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-body">Keep the page simple — no extra sliders or fixed-height wrappers around the embed.</div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-body">Publish.</div></div>
+        </div>
+
+        <h3 class="subsection-title">Layout tips</h3>
+        <ul class="tips">
+          <li>Put the embed as high on the page as possible.</li>
+          <li>If content starts too low, lower <code>data-bond-chrome-offset-px</code>.</li>
+          <li>If your header covers the embed, increase the offset.</li>
+          <li>Use <code>data-bond-chrome-offset-px-mobile</code> when mobile header height differs.</li>
+        </ul>
+      </div>
+
+      <div class="platform-panel" id="panel-wordpress">
+        <h3 class="subsection-title" style="margin-top:0">1. Add footer scripts once</h3>
+        <p>Add the Bond script and GTM snippet before the closing <code>&lt;/body&gt;</code> tag via your theme, site builder, or a trusted header/footer plugin.</p>
+
+        <h3 class="subsection-title">2. Create the programs page</h3>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-body">Create a page at the path Bond confirmed.</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-body">Add a <strong>Custom HTML</strong> block with the programs snippet.</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-body">Publish and test on the live URL — not the editor preview.</div></div>
+        </div>
+
+        <h3 class="subsection-title">3. Create the register page</h3>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-body">Create the register page with a Custom HTML block.</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-body">Paste the register snippet and publish.</div></div>
+        </div>
+
+        <h3 class="subsection-title">Layout tips</h3>
+        <ul class="tips">
+          <li>Use a full-width template if available.</li>
+          <li>Avoid tabs, accordions, or lazy-loaded sections around the embed.</li>
+          <li>Adjust offset values if your theme has a sticky header.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="content-section" id="testing">
+      <p class="section-eyebrow">Quality check</p>
+      <h2 class="section-title">Testing checklist</h2>
+      <div class="callout">
+        <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <p>Test on the published website — not Webflow preview or WordPress editor preview.</p>
+      </div>
+      <ul class="checklist" id="checklist">
+        <li onclick="toggleCheck(this)"><div class="check-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div><span>Programs page loads Bond content</span></li>
+        <li onclick="toggleCheck(this)"><div class="check-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div><span>Register opens a new tab on your register URL</span></li>
+        <li onclick="toggleCheck(this)"><div class="check-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div><span>Checkout loads and footer is not cut off</span></li>
+        <li onclick="toggleCheck(this)"><div class="check-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div><span>GA4 Realtime shows pageview on your programs URL</span></li>
+        <li onclick="toggleCheck(this)"><div class="check-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div><span>GTM Preview: click_register with program/session IDs and names</span></li>
+        <li onclick="toggleCheck(this)"><div class="check-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div><span>Test on mobile</span></li>
+        <li onclick="toggleCheck(this)"><div class="check-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div><span>Send Bond your live programs and register URLs</span></li>
+      </ul>
+    </section>
+
+    <section class="content-section" id="problems">
+      <p class="section-eyebrow">Troubleshooting</p>
+      <h2 class="section-title">Common problems</h2>
+
+      <details class="problem-card">
+        <summary class="problem-summary"><span class="problem-tag">Issue</span>The Bond page does not load<svg class="problem-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+        <div class="problem-fix">Confirm the Bond footer script is live and the site was published after adding it. Preview modes often block scripts.</div>
+      </details>
+
+      <details class="problem-card">
+        <summary class="problem-summary"><span class="problem-tag">Issue</span>Too much blank space above the embed<svg class="problem-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+        <div class="problem-fix">Lower <code>data-bond-chrome-offset-px</code> or remove extra top padding above the embed.</div>
+      </details>
+
+      <details class="problem-card">
+        <summary class="problem-summary"><span class="problem-tag">Issue</span>Header covers the Bond page<svg class="problem-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+        <div class="problem-fix">Increase <code>data-bond-chrome-offset-px</code>. On mobile only, adjust <code>data-bond-chrome-offset-px-mobile</code>.</div>
+      </details>
+
+      <details class="problem-card">
+        <summary class="problem-summary"><span class="problem-tag">Issue</span>Checkout opens on the wrong page<svg class="problem-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+        <div class="problem-fix">Ask Bond to confirm the register page path matches exactly what you created.</div>
+      </details>
+
+      <details class="problem-card">
+        <summary class="problem-summary"><span class="problem-tag">Issue</span>No events in GA4<svg class="problem-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+        <div class="problem-fix">Confirm GTM ID was given to Bond, GTM snippet is in your site footer, tags are published, and you test on the published programs page (click Register inside the embed).</div>
+      </details>
+
+      <details class="problem-card">
+        <summary class="problem-summary"><span class="problem-tag">Issue</span>Double scrollbars<svg class="problem-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+        <div class="problem-fix">Use only one Bond embed per page. Remove fixed-height or scrollable wrappers around it.</div>
+      </details>
+    </section>
+
+    <section class="content-section" id="handoff">
+      <p class="section-eyebrow">Final step</p>
+      <h2 class="section-title">What to send Bond</h2>
+      <p>Once your pages are live, send Bond the following so we can confirm configuration and test registration routing.</p>
+      <div class="handoff-grid">
+        <div class="handoff-item"><div class="handoff-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></div>Published programs page URL</div>
+        <div class="handoff-item"><div class="handoff-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></div>Published register page URL</div>
+        <div class="handoff-item"><div class="handoff-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>Screenshots — desktop and mobile programs page</div>
+        <div class="handoff-item"><div class="handoff-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>Header height — desktop vs. mobile</div>
+        <div class="handoff-item"><div class="handoff-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></div>GTM Preview screenshot — click_register event</div>
+        <div class="handoff-item"><div class="handoff-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></div>Your GTM container ID</div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Bond Sports &nbsp;·&nbsp; <a href="https://bondsports.co">bondsports.co</a> &nbsp;·&nbsp; discovery.bondsports.co</p>
+</footer>
+
+<script>
+  function showPlatform(id, btn) {
+    document.querySelectorAll('.platform-panel').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.platform-tab').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById('panel-' + id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function toggleCheck(li) {
+    li.classList.toggle('checked');
+  }
+
+  function copyCode(btn, id) {
+    var pre = document.getElementById(id);
+    navigator.clipboard.writeText(pre.innerText).then(function() {
+      btn.textContent = 'Copied';
+      setTimeout(function() { btn.textContent = 'Copy'; }, 1800);
+    });
+  }
+
+  var sections = document.querySelectorAll('.content-section[id]');
+  var navLinks = document.querySelectorAll('.sidebar-nav a');
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        navLinks.forEach(function(a) { a.classList.remove('active'); });
+        var active = document.querySelector('.sidebar-nav a[href="#' + entry.target.id + '"]');
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(function(s) { observer.observe(s); });
+</script>
+
+</body>
+</html>

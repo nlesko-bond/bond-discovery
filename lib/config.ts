@@ -1,4 +1,9 @@
-import { cache } from 'react';
+import { cache as reactCache } from 'react';
+
+// React's `cache` exists in Next.js' server runtime, but not in the plain
+// React 18 client build used by the test environment — fall back to identity.
+const cache: typeof reactCache =
+  typeof reactCache === 'function' ? reactCache : (fn) => fn;
 import {
   DiscoveryConfig,
   BrandingConfig,
@@ -7,8 +12,9 @@ import {
   HostPortalLayoutEnum,
   ScheduleTableColumn,
 } from '@/types';
-import { supabase, getSupabaseAdmin, DiscoveryPageRow } from './supabase';
+import { getSupabaseAdmin, DiscoveryPageRow } from './supabase';
 import { DEFAULT_BOND_ENV, resolveBondEnv } from './bond-env';
+import { invalidateDiscoveryResponseCache } from './cache';
 import { normalizePortalFeatureFields } from './host-shell/portal-feature-config';
 
 /**
@@ -312,11 +318,37 @@ export async function createPageConfig(config: {
 }
 
 /**
+ * Returns true when an update touches a field that changes the events
+ * payload served from `discovery:response:{slug}` — meaning the cached
+ * response must be invalidated and re-warmed. Branding/params-only edits
+ * do not affect the payload and must NOT invalidate.
+ */
+export function updateAffectsDiscoveryPayload(updates: Partial<DiscoveryConfig>): boolean {
+  return (
+    updates.excludedProgramIds !== undefined ||
+    updates.includedProgramIds !== undefined ||
+    updates.organizationIds !== undefined ||
+    updates.facilityIds !== undefined ||
+    updates.apiKey !== undefined ||
+    updates.features?.programFilterMode !== undefined ||
+    updates.features?.excludedProgramIds !== undefined ||
+    updates.features?.includedProgramIds !== undefined ||
+    updates.features?.eventHorizonMonths !== undefined ||
+    updates.features?.bondEnv !== undefined
+  );
+}
+
+/**
  * Update an existing page configuration
  */
 export async function updatePageConfig(slug: string, updates: Partial<DiscoveryConfig>): Promise<DiscoveryConfig> {
   const supabaseAdmin = getSupabaseAdmin();
-  
+
+  // Capture the pre-update config when the payload is affected, so we can
+  // invalidate under the OLD bondEnv cache key as well if bondEnv changes.
+  const payloadAffected = updateAffectsDiscoveryPayload(updates);
+  const previousConfig = payloadAffected ? await getConfigBySlug(slug) : null;
+
   // Build the update object
   const updateData: any = {};
   
@@ -356,6 +388,28 @@ export async function updatePageConfig(slug: string, updates: Partial<DiscoveryC
   if (updateError) {
     console.error('Error updating page config:', updateError);
     throw new Error(updateError.message);
+  }
+
+  if (payloadAffected) {
+    const previousBondEnv = previousConfig?.features.bondEnv;
+    const nextBondEnv = updates.features?.bondEnv ?? previousBondEnv;
+    const nextSlug = updateData.slug || slug;
+
+    const invalidations: Array<Promise<void>> = [
+      invalidateDiscoveryResponseCache(nextSlug, nextBondEnv),
+    ];
+    // bondEnv changed: clear the OLD env's cache key too, or the stale
+    // payload would keep serving under the previous key variant.
+    if (updates.features?.bondEnv !== undefined && previousBondEnv !== nextBondEnv) {
+      invalidations.push(invalidateDiscoveryResponseCache(nextSlug, previousBondEnv));
+    }
+    if (nextSlug !== slug) {
+      invalidations.push(invalidateDiscoveryResponseCache(slug, nextBondEnv));
+      if (updates.features?.bondEnv !== undefined && previousBondEnv !== nextBondEnv) {
+        invalidations.push(invalidateDiscoveryResponseCache(slug, previousBondEnv));
+      }
+    }
+    await Promise.all(invalidations);
   }
   
   // Fetch the updated record using admin client

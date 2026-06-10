@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { ProgramCard } from '@/components/discovery/ProgramCard';
 import {
@@ -37,6 +37,13 @@ vi.mock('next/navigation', () => ({
 describe('ProgramCard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Pin "today" inside the fixture sessions' date ranges (Mar 1 - May 31 / Jun 1 - Aug 31, 2026)
+    // so upcoming-session counts are deterministic regardless of the real date.
+    vi.useFakeTimers({ now: new Date('2026-04-15T12:00:00Z'), toFake: ['Date'] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe('Basic Rendering', () => {
@@ -61,15 +68,23 @@ describe('ProgramCard', () => {
     });
 
     it('renders session count', () => {
-      render(<ProgramCard program={mockProgram} config={mockConfig} />);
-      // Program has 2 sessions
+      // The card only counts sessions that haven't ended yet, so pin
+      // far-future end dates to keep this test stable over time.
+      const programWithTwoUpcomingSessions = {
+        ...mockProgram,
+        sessions: [
+          { ...mockSession, endDate: '2099-05-31' },
+          { ...mockSessionFull, endDate: '2099-08-31' },
+        ],
+      };
+      render(<ProgramCard program={programWithTwoUpcomingSessions} config={mockConfig} />);
       expect(screen.getByText(/2 sessions/)).toBeInTheDocument();
     });
 
     it('renders singular session text for 1 session', () => {
       const programWithOneSession = {
         ...mockProgram,
-        sessions: [mockSession],
+        sessions: [{ ...mockSession, endDate: '2099-05-31' }],
       };
       render(<ProgramCard program={programWithOneSession} config={mockConfig} />);
       expect(screen.getByText(/1 session/)).toBeInTheDocument();

@@ -17,6 +17,7 @@ function buildConfig(
     name: 'Test',
     slug: 'test',
     organizationIds: [],
+    facilityIds: [],
     branding: {
       companyName: 'Test Org',
       primaryColor: '#111111',
@@ -36,6 +37,8 @@ function buildConfig(
     defaultParams: {},
     cacheTtl: 300,
     isActive: true,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
   };
 }
 

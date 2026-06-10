@@ -7,6 +7,17 @@ import {
   mockFeatures,
 } from '../fixtures/mockData';
 
+// lib/config.ts uses React's cache(), which exists in the canary React that
+// Next.js aliases at runtime but not in the plain react 18.x vitest resolves.
+// Provide a pass-through fallback so the module can be imported under tests.
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>();
+  return {
+    ...actual,
+    cache: (actual as { cache?: <T>(fn: T) => T }).cache ?? (<T,>(fn: T) => fn),
+  };
+});
+
 // Mock Supabase
 const mockFrom = vi.fn();
 const mockSelect = vi.fn();
@@ -21,13 +32,23 @@ const mockOrder = vi.fn();
 const mockAdminFrom = vi.fn();
 
 vi.mock('@/lib/supabase', () => ({
-  supabase: {
+  getSupabasePublic: () => ({
     from: (table: string) => mockFrom(table),
-  },
+  }),
   getSupabaseAdmin: () => ({
     from: (table: string) => mockAdminFrom(table),
   }),
 }));
+
+// React 18's client build (used by vitest/jsdom) has no `cache`; lib/config.ts
+// uses it as a per-request memo on the server. Identity-wrap it in tests.
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>();
+  return {
+    ...actual,
+    cache: (actual as { cache?: unknown }).cache ?? (<T,>(fn: T) => fn),
+  };
+});
 
 // Set up mock returns
 const createChainableMock = (resolvedValue: any) => ({

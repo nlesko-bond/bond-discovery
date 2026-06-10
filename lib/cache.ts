@@ -241,6 +241,20 @@ export async function markDiscoveryRefreshed(slug: string): Promise<void> {
 }
 
 /**
+ * Clears precomputed schedule payload so the next request rebuilds or re-filters.
+ * Also resets the cron refresh timer so warm-discovery re-runs sooner.
+ */
+export async function invalidateDiscoveryResponseCache(
+  slug: string,
+  bondEnv?: string,
+): Promise<void> {
+  await Promise.all([
+    cacheDelete(discoveryResponseCacheKey(slug, bondEnv)),
+    cacheDelete(discoveryLastRefreshedKey(slug)),
+  ]);
+}
+
+/**
  * Membership cache keys
  */
 export function membershipsCacheKey(slug: string): string {

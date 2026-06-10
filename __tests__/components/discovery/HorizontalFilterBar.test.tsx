@@ -113,8 +113,10 @@ describe('HorizontalFilterBar', () => {
       const typeButton = screen.getByText('Type');
       fireEvent.click(typeButton);
       
-      // Dropdown should show program type options
-      expect(screen.getByText('Camp')).toBeInTheDocument();
+      // Dropdown should show program type options.
+      // ChipPanel renders its options twice (desktop card + mobile scroller),
+      // so use getAllByText.
+      expect(screen.getAllByText('Camp').length).toBeGreaterThan(0);
     });
 
     it('shows program type options with counts', () => {
@@ -123,9 +125,9 @@ describe('HorizontalFilterBar', () => {
       const typeButton = screen.getByText('Type');
       fireEvent.click(typeButton);
       
-      // Should show type options
-      expect(screen.getByText('Camp')).toBeInTheDocument();
-      expect(screen.getByText('Clinic')).toBeInTheDocument();
+      // Should show type options (rendered twice: desktop + mobile panels)
+      expect(screen.getAllByText('Camp').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Clinic').length).toBeGreaterThan(0);
     });
 
     it('selects program type and calls onFilterChange', () => {
@@ -135,8 +137,8 @@ describe('HorizontalFilterBar', () => {
       const typeButton = screen.getByText('Type');
       fireEvent.click(typeButton);
       
-      // Select Camp
-      const campOption = screen.getByText('Camp');
+      // Select Camp (options render twice: desktop + mobile panels)
+      const campOption = screen.getAllByText('Camp')[0];
       fireEvent.click(campOption);
       
       expect(mockOnFilterChange).toHaveBeenCalled();

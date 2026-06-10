@@ -54,6 +54,21 @@ export function shouldSkipProgramByPageConfig(
 }
 
 /**
+ * Drops schedule events whose programId is filtered out by page config.
+ * Applied when serving precomputed KV payloads that may predate filter changes.
+ */
+export function filterDiscoveryEventsByPageConfig<T extends { programId?: unknown }>(
+  events: T[],
+  config: DiscoveryConfig,
+): T[] {
+  const mode = config.features.programFilterMode || 'all';
+  if (mode === 'all') {
+    return events;
+  }
+  return events.filter((event) => !shouldSkipProgramByPageConfig(event.programId, config));
+}
+
+/**
  * Apply admin program include / exclude / all modes (string-safe ID matching).
  */
 export function filterProgramsByPageConfig(

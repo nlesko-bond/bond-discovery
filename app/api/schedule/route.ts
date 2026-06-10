@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createBondClient, DEFAULT_API_KEY, DEFAULT_ORG_IDS } from '@/lib/bond-client';
 import { transformProgram, programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers';
-import { cached, programsCacheKey, scheduleCacheKey } from '@/lib/cache';
+import { cachedSWR, programsCacheKey, scheduleCacheKey } from '@/lib/cache';
 import { getConfigBySlug } from '@/lib/config';
 import { Program, CalendarEvent, WeekSchedule } from '@/types';
 import { format, addWeeks } from 'date-fns';
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
       try {
         const cacheKey = programsCacheKey(orgId, facilityId, apiKey, bondEnv);
         
-        const response = await cached(
+        const response = await cachedSWR(
           cacheKey,
           () => client.getPrograms(orgId, { 
             expand: 'sessions,sessions.products,sessions.products.prices,sessions.events,facility',

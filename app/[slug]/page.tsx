@@ -3,8 +3,7 @@ import { notFound } from 'next/navigation';
 import { DiscoveryPage } from '@/components/discovery/DiscoveryPage';
 import { ProgramGridSkeleton } from '@/components/ui/Skeletons';
 import { getConfigBySlug, getAllPageConfigs } from '@/lib/config';
-import { cacheGet, discoveryResponseCacheKey } from '@/lib/cache';
-import { getAvailabilityMap, mergeAvailabilityIntoEvents } from '@/lib/availability-cache';
+import { getPrecomputedDiscoveryEvents } from '@/lib/discovery-precomputed-events';
 import { Program, DiscoveryConfig } from '@/types';
 import { fetchProgramsForDiscoveryPage } from '@/lib/embed-discovery-programs';
 
@@ -25,38 +24,10 @@ async function getPrecomputedEvents(
   slug: string,
   config: DiscoveryConfig,
 ): Promise<{
-  events: any[];
+  events: unknown[];
   total: number;
 } | null> {
-  if (config.features.discoveryCacheEnabled === false) {
-    return null;
-  }
-  try {
-    const precomputed = await cacheGet<any>(
-      discoveryResponseCacheKey(slug, config.features.bondEnv)
-    );
-    if (precomputed?.data && Array.isArray(precomputed.data) && precomputed.data.length > 0) {
-      // Overlay fresh availability (KV SWR, <=180s stale) onto the precomputed
-      // full payload so SSR first paint has correct spotsLeft / maxParticipants.
-      // Failures are non-fatal — we fall through to the precomputed values.
-      let events = precomputed.data;
-      try {
-        const availabilityById = await getAvailabilityMap(slug);
-        if (availabilityById.size > 0) {
-          events = mergeAvailabilityIntoEvents(events, availabilityById);
-        }
-      } catch (err) {
-        console.error('[page] availability overlay failed', { slug, err });
-      }
-      return {
-        events,
-        total: precomputed.meta?.totalFiltered ?? events.length,
-      };
-    }
-  } catch {
-    // KV miss -- client will fetch
-  }
-  return null;
+  return getPrecomputedDiscoveryEvents(slug, config);
 }
 
 export default async function DiscoverySlugPage({ params, searchParams }: PageProps) {
