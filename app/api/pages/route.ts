@@ -8,6 +8,10 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
+  // Configs include per-page Bond API keys — admin only.
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
   try {
     const pages = await getAllPageConfigs();
     return NextResponse.json({ pages }, {

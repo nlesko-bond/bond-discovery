@@ -18,6 +18,10 @@ interface RouteParams {
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
+  // Config includes the page's Bond API key — admin only.
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
   try {
     const config = await getConfigBySlug(params.slug);
     

@@ -40,8 +40,8 @@ vi.mock('next/cache', () => ({
 }));
 
 // Import after mocks
-import { POST } from '@/app/api/pages/route';
-import { PATCH, DELETE } from '@/app/api/pages/[slug]/route';
+import { POST, GET as GET_LIST } from '@/app/api/pages/route';
+import { PATCH, DELETE, GET as GET_SLUG } from '@/app/api/pages/[slug]/route';
 
 const SLUG = 'test-slug';
 const routeParams = { params: { slug: SLUG } };
@@ -125,5 +125,39 @@ describe('page-config API auth', () => {
     const res = await POST(postRequest());
     expect(res.status).toBe(401);
     expect(mockCreatePageConfig).not.toHaveBeenCalled();
+  });
+});
+
+describe('GET endpoints also require admin (configs expose Bond API keys)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllEnvs();
+    vi.stubEnv('ADMIN_AUTH_BYPASS', '');
+    vi.stubEnv('NEXT_PUBLIC_ADMIN_AUTH_BYPASS', '');
+    mockGetServerSession.mockResolvedValue(null);
+  });
+
+  it('GET /api/pages without a session returns 401', async () => {
+    const res = await GET_LIST();
+    expect(res.status).toBe(401);
+    expect(mockGetAllPageConfigs).not.toHaveBeenCalled();
+  });
+
+  it('GET /api/pages/[slug] without a session returns 401', async () => {
+    const res = await GET_SLUG(
+      new NextRequest(`http://localhost/api/pages/${SLUG}`),
+      routeParams,
+    );
+    expect(res.status).toBe(401);
+    expect(mockGetConfigBySlug).not.toHaveBeenCalled();
+  });
+
+  it('GET /api/pages with an allowlisted session proceeds', async () => {
+    vi.stubEnv('ADMIN_ALLOWED_EMAILS', 'admin@bondsports.co');
+    mockGetServerSession.mockResolvedValue({ user: { email: 'admin@bondsports.co' } });
+    mockGetAllPageConfigs.mockResolvedValue([]);
+
+    const res = await GET_LIST();
+    expect(res.status).toBe(200);
   });
 });
