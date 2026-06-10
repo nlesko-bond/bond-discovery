@@ -1,5 +1,7 @@
 # Agent prompt — Portal Phase 2 (session-first UI)
 
+> **ARCHIVED (2026-06)**: one-off agent prompt; the Phase 2 portal work it drove has shipped. Kept for historical reference only.
+
 Copy everything below the line into a **new Cursor agent** chat in `bond-discovery`.
 
 ---
