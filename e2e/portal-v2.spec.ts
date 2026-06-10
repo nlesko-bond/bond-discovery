@@ -87,5 +87,76 @@ for (const viewport of [
 
       await expectNoHorizontalOverflow(page);
     });
+
+    test('filter panel opens in-flow, selecting an option narrows results', async ({
+      page,
+    }) => {
+      test.skip(!(await gotoV2(page)), `page ${V2_URL} not reachable`);
+
+      const initialCount = await page.locator(CARD).count();
+      test.skip(initialCount === 0, `slug ${SLUG} has no programs to filter`);
+
+      // Desktop: a secondary pill trigger. Mobile: the single "Filters" pill
+      // opening the in-flow sheet.
+      const isMobile = viewport.width <= 640;
+      const trigger = isMobile
+        ? page.locator('[data-testid="portal-v2-mobile-filters"]')
+        : page.locator('[data-testid="portal-v2-filter-pill"]').first();
+      test.skip(
+        (await trigger.count()) === 0,
+        `slug ${SLUG} exposes no secondary filters`,
+      );
+
+      await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+      await trigger.click();
+      await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+      // Panels are in-flow (inline expansion) — nothing position:fixed may appear.
+      const fixedCount = await page.evaluate(
+        () =>
+          Array.from(document.querySelectorAll<HTMLElement>('body *')).filter(
+            (element) => getComputedStyle(element).position === 'fixed',
+          ).length,
+      );
+      expect(fixedCount, 'position:fixed is forbidden inside the portal iframe').toBe(0);
+
+      // Pick the first option with a non-zero live result count (trailing number).
+      const options = page.locator('[data-testid="portal-v2-option"]:visible');
+      const optionCount = await options.count();
+      test.skip(optionCount === 0, 'open panel has no options');
+      let pickIndex = 0;
+      for (let index = 0; index < optionCount; index += 1) {
+        const text = (await options.nth(index).innerText()).trim();
+        const match = text.match(/(\d+)\s*$/);
+        if (!match || Number(match[1]) > 0) {
+          pickIndex = index;
+          break;
+        }
+      }
+      const picked = options.nth(pickIndex);
+      await picked.click();
+      await expect(picked).toHaveAttribute('aria-selected', 'true');
+
+      // Instant apply: results narrow without any Apply button.
+      await expect
+        .poll(async () => page.locator(CARD).count())
+        .toBeLessThanOrEqual(initialCount);
+      expect(await page.locator(CARD).count()).toBeGreaterThan(0);
+
+      // Active summary chip appears and removes the filter on click.
+      const activeChip = page.locator('[data-testid="portal-v2-active-chip"]').first();
+      await expect(activeChip).toBeVisible();
+
+      if (isMobile) {
+        // The sheet confirms via the sticky "Show N results" row.
+        await page.locator('[data-testid="portal-v2-sheet-confirm"]').click();
+        await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+      }
+
+      await activeChip.click();
+      await expect.poll(async () => page.locator(CARD).count()).toBe(initialCount);
+
+      await expectNoHorizontalOverflow(page);
+    });
   });
 }
