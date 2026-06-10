@@ -30,7 +30,11 @@ const DRY = process.argv.includes('--dry-run');
 const KEEP_KEYS = process.argv.includes('--include-api-keys');
 
 const prodUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const prodKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Reads only — anon suffices when RLS allows select; service key preferred when present.
+const prodKey =
+  process.env.SUPABASE_SERVICE_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const stagingUrl = process.env.STAGING_SUPABASE_URL;
 const stagingKey = process.env.STAGING_SUPABASE_SERVICE_KEY;
 
@@ -56,11 +60,21 @@ const scrubbedGroups = (groups ?? []).map((g) => ({
   api_key: KEEP_KEYS ? g.api_key : null,
   gtm_id: null,
 }));
-const scrubbedPages = (pages ?? []).map((p) => ({
-  ...p,
-  api_key: KEEP_KEYS ? p.api_key : null,
-  gtm_id: null,
-}));
+const seededGroupIds = new Set(scrubbedGroups.map((g) => g.id));
+let droppedGroupRefs = 0;
+const scrubbedPages = (pages ?? []).map((p) => {
+  const groupRefOk = p.partner_group_id && seededGroupIds.has(p.partner_group_id);
+  if (p.partner_group_id && !groupRefOk) droppedGroupRefs++;
+  return {
+    ...p,
+    api_key: KEEP_KEYS ? p.api_key : null,
+    gtm_id: null,
+    // Groups carry shared api_key/gtm_id (scrubbed anyway); drop dangling refs
+    // when the group row wasn't readable/seeded so the FK holds.
+    partner_group_id: groupRefOk ? p.partner_group_id : null,
+  };
+});
+if (droppedGroupRefs) console.log(`partner_group_id nulled on ${droppedGroupRefs} pages (group rows not seeded)`);
 
 console.log(`Production: ${scrubbedGroups.length} partner_groups, ${scrubbedPages.length} discovery_pages`);
 console.log(`API keys: ${KEEP_KEYS ? 'KEPT (--include-api-keys)' : 'scrubbed (pages will use DEFAULT_API_KEY; pass --include-api-keys if staging should hit real org data)'}`);
