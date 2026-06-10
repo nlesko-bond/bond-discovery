@@ -7,6 +7,17 @@ import {
   mockFeatures,
 } from '../fixtures/mockData';
 
+// lib/config.ts uses React's cache(), which exists in the canary React that
+// Next.js aliases at runtime but not in the plain react 18.x vitest resolves.
+// Provide a pass-through fallback so the module can be imported under tests.
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>();
+  return {
+    ...actual,
+    cache: (actual as { cache?: <T>(fn: T) => T }).cache ?? (<T,>(fn: T) => fn),
+  };
+});
+
 // Mock Supabase
 const mockFrom = vi.fn();
 const mockSelect = vi.fn();

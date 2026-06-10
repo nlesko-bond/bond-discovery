@@ -50,6 +50,10 @@ export async function GET(request: NextRequest) {
   const start = Date.now();
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
+  if (process.env.NODE_ENV === 'production' && !cronSecret) {
+    console.error('[warm-discovery] CRON_SECRET not configured; refusing to run');
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -203,6 +207,17 @@ export async function GET(request: NextRequest) {
         }
       }
     }
+
+    // Persist a compact last-run record so cache staleness is diagnosable
+    // after the fact (24h TTL; read by admin tooling / runbooks).
+    await cacheSet('discovery:cron:lastRun', {
+      at: new Date().toISOString(),
+      warmed: details.filter((d) => d.status === 'warmed' || d.status === 'shared').length,
+      errors: details.filter((d) => d.status === 'error').map((d) => d.slug),
+      skipped: skipped.length,
+      bondApi: getBondApiStats(),
+      elapsedMs: Date.now() - start,
+    }, { ttl: 24 * 60 * 60 });
 
     return NextResponse.json({
       success: true,
