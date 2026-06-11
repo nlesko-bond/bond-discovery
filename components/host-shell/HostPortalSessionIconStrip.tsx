@@ -28,8 +28,8 @@ function formatAgeGenderLine(ageRange?: string, genderLabel?: string): string | 
 
 function MetaChipOnColor({ icon, label }: { icon: ReactNode; label: string }) {
   return (
-    <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/30 bg-white/15 px-2.5 py-1.5 text-xs font-medium text-white shadow-sm backdrop-blur-sm">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/20 text-white">
+    <span className="inline-flex max-w-full items-center gap-1.5 rounded-md bg-black/15 px-2 py-1 text-xs font-medium text-white ring-1 ring-inset ring-white/20">
+      <span className="flex h-4 w-4 shrink-0 items-center justify-center text-white/90">
         {icon}
       </span>
       <span className="truncate">{label}</span>

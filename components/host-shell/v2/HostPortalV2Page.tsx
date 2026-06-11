@@ -145,10 +145,13 @@ export function HostPortalV2Page({
     [filteredPrograms, config],
   );
 
-  const hasAnyCards = useMemo(
-    () => buildHostPortalSessionCards(initialPrograms, config).length > 0,
+  // Unfiltered card set: anchors per-card accent colors so filtering never
+  // recolors the cards that remain visible.
+  const allSessionCards = useMemo(
+    () => buildHostPortalSessionCards(initialPrograms, config),
     [initialPrograms, config],
   );
+  const hasAnyCards = allSessionCards.length > 0;
 
   const filteredEvents = useMemo(
     () =>
@@ -264,6 +267,18 @@ export function HostPortalV2Page({
       setViewMode(mode);
       const params = new URLSearchParams(currentSearchString);
       params.set('viewMode', mode);
+      // The "View schedule" jump narrows to one session via programIds/sessionIds.
+      // Leaving that narrowing active on the programs tab silently hides every
+      // other program with no visible filter — clear it when tabbing back.
+      if (mode === 'programs') {
+        params.delete('programIds');
+        params.delete('sessionIds');
+        setFilters((previous) =>
+          previous.programIds?.length || previous.sessionIds?.length
+            ? { ...previous, programIds: [], sessionIds: [] }
+            : previous,
+        );
+      }
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
     [router, pathname, currentSearchString],
@@ -468,6 +483,7 @@ export function HostPortalV2Page({
           <div data-testid="portal-v2-grid">
             <HostPortalV2SessionsView
               cards={sessionCards}
+              accentCards={allSessionCards}
               config={config}
               filters={filters}
               accentColor={accentColor}

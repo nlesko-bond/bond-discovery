@@ -23,6 +23,7 @@ import {
   type IHostPortalSegmentsPanelActions,
 } from '../HostPortalSessionSegmentsPanel';
 import { HostPortalSportIcon } from '../HostPortalSportIcon';
+import { HostPortalV2Collapse } from './ui/HostPortalV2Collapse';
 
 const CLOSED_REGISTER_BACKGROUND = '#9CA3AF';
 
@@ -190,14 +191,16 @@ function SegmentsChip({
           <ChevronDown size={13} className="shrink-0" aria-hidden />
         )}
       </button>
-      {open && (
-        <HostPortalSessionSegmentsPanel
-          card={card}
-          config={config}
-          variant="inline"
-          actions={panelActions}
-        />
-      )}
+      <HostPortalV2Collapse open={open}>
+        {open && (
+          <HostPortalSessionSegmentsPanel
+            card={card}
+            config={config}
+            variant="inline"
+            actions={panelActions}
+          />
+        )}
+      </HostPortalV2Collapse>
     </div>
   );
 }
@@ -241,7 +244,9 @@ export function HostPortalV2StackedSessionCard({
   const dateLine = buildDateLine(card);
   const ageGenderLine = showAgeGender ? buildAgeGenderLine(card) : undefined;
   const showProductRows = showPricing && card.hasMultipleRegisterOptions && card.products.length > 1;
-  const tint = derivePortalCardTint(accentColor, card.sport);
+  // Band tint derives from the page's brand accent (NOT per-sport palettes) so
+  // the card family always reads as the partner's branding.
+  const tint = derivePortalCardTint(accentColor);
   const sportLabel = card.sport ? getSportLabel(card.sport) : undefined;
   const eyebrow = showProgramName ? card.programName : (sportLabel ?? card.programName);
   const memberPricing =
@@ -263,14 +268,10 @@ export function HostPortalV2StackedSessionCard({
     productId: card.registerProductId,
   });
 
+  // Segments have no register URLs of their own and the card footer already has
+  // the session Register — the panel only adds the View-schedule affordance.
   const panelActions: IHostPortalSegmentsPanelActions = {
     accentColor,
-    registerUrl: hideRegistrationLinks ? undefined : card.registerUrl,
-    registerDisabled: card.isClosed,
-    linkTarget,
-    linkRel,
-    analyticsAttributes: registerAnalyticsAttributes,
-    onRegisterClick: () => trackRegisterClick(config, card, card.registerProductId),
     onOpenSchedule: onOpenSchedule
       ? () => onOpenSchedule(card.programId, card.sessionId)
       : undefined,
@@ -280,7 +281,7 @@ export function HostPortalV2StackedSessionCard({
     <article
       data-testid="portal-v2-card"
       data-card-style="stacked"
-      className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-gray-200 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:ring-gray-300"
+      className="group flex flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-gray-200 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:ring-gray-300"
     >
       {/* Tinted sport-glyph band — the card's primary visual (the API has no session images). */}
       <div
@@ -466,13 +467,14 @@ interface ISessionRowProps {
 }
 
 function rowGridTemplate(columns: PortalV2SessionRowColumn[]): string {
-  return columns
-    .map((column) => {
-      if (column === 'event') return 'minmax(0, 2fr)';
-      if (column === 'action') return 'auto';
-      return 'minmax(0, 1fr)';
-    })
-    .join(' ');
+  // Fixed action width + a trailing chevron slot keep header and row cells
+  // aligned (an `auto` action column shifts with its content per row).
+  const cells = columns.map((column) => {
+    if (column === 'event') return 'minmax(0, 2fr)';
+    if (column === 'action') return '210px';
+    return 'minmax(0, 1fr)';
+  });
+  return [...cells, '20px'].join(' ');
 }
 
 function HostPortalV2SessionRow({
@@ -523,35 +525,24 @@ function HostPortalV2SessionRow({
       case 'event':
         return (
           <div data-portal-v2-cell="event" className="min-w-0">
-            <p className="truncate text-sm font-medium text-gray-900">
+            <p className="truncate text-sm font-semibold text-gray-900">
               {card.name || card.programName}
             </p>
-            {ageGenderLine && <p className="text-xs text-gray-500">{ageGenderLine}</p>}
-            <div className="mt-1">
-              {hasSegmentDetail(card) ? (
-                <button
-                  type="button"
-                  data-testid="portal-v2-segments-chip"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-gray-700 underline-offset-2 hover:underline"
-                  aria-expanded={segmentsOpen}
-                  onClick={() => onSegmentsOpenChange(!segmentsOpen)}
-                >
-                  {segmentsChipLabel(card)}
-                  {segmentsOpen ? (
-                    <ChevronUp size={12} aria-hidden />
-                  ) : (
-                    <ChevronDown size={12} aria-hidden />
-                  )}
-                </button>
-              ) : (
+            {ageGenderLine && <p className="mt-0.5 text-xs text-gray-500">{ageGenderLine}</p>}
+            {hasSegmentDetail(card) ? (
+              <p className="mt-0.5 text-xs text-gray-400" data-testid="portal-v2-segments-chip">
+                {segmentsChipLabel(card)}
+              </p>
+            ) : (
+              <div className="mt-1">
                 <VariableScheduleLine
                   card={card}
                   config={config}
                   onOpenSchedule={onOpenSchedule}
                   compact
                 />
-              )}
-            </div>
+              </div>
+            )}
           </div>
         );
       case 'program':
@@ -599,7 +590,10 @@ function HostPortalV2SessionRow({
                   backgroundColor: card.isClosed ? CLOSED_REGISTER_BACKGROUND : accentColor,
                 }}
                 aria-disabled={card.isClosed}
-                onClick={() => trackRegisterClick(config, card, card.registerProductId)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  trackRegisterClick(config, card, card.registerProductId);
+                }}
               >
                 {card.isClosed ? 'Closed' : 'Register'}
               </a>
@@ -611,39 +605,65 @@ function HostPortalV2SessionRow({
     }
   };
 
+  const expandable = hasSegmentDetail(card);
+  const toggleSegments = () => onSegmentsOpenChange(!segmentsOpen);
+
   return (
-    <div
-      data-testid="portal-v2-card"
-      data-card-style="rows"
-      className="rounded-lg bg-white px-3 py-2.5 ring-1 ring-gray-200 transition-colors hover:bg-gray-50/70 sm:px-4"
-    >
+    <div data-testid="portal-v2-card" data-card-style="rows" className="bg-white">
+      {/* The whole row toggles the segments panel (links stopPropagation). */}
       <div
-        className="flex flex-col gap-2 sm:grid sm:items-center sm:gap-3 sm:[grid-template-columns:var(--v2-row-cols)]"
+        role={expandable ? 'button' : undefined}
+        tabIndex={expandable ? 0 : undefined}
+        aria-expanded={expandable ? segmentsOpen : undefined}
+        onClick={expandable ? toggleSegments : undefined}
+        onKeyDown={
+          expandable
+            ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  toggleSegments();
+                }
+              }
+            : undefined
+        }
+        className={cn(
+          'flex flex-col gap-2 px-3 py-3 transition-colors sm:grid sm:items-center sm:gap-3 sm:px-4 sm:[grid-template-columns:var(--v2-row-cols)]',
+          expandable && 'cursor-pointer hover:bg-gray-50',
+        )}
         style={{ '--v2-row-cols': rowGridTemplate(columns) } as React.CSSProperties}
       >
         {columns.map((column) => (
           <div key={column}>{renderCell(column)}</div>
         ))}
+        <span className="hidden justify-self-end sm:block" aria-hidden>
+          {expandable && (
+            <ChevronDown
+              size={16}
+              className={cn(
+                'text-gray-400 transition-transform duration-200',
+                segmentsOpen && 'rotate-180',
+              )}
+            />
+          )}
+        </span>
       </div>
-      {segmentsOpen && hasSegmentDetail(card) && (
-        <HostPortalSessionSegmentsPanel
-          card={card}
-          config={config}
-          variant="inline"
-          actions={{
-            accentColor,
-            registerUrl: hideRegistrationLinks ? undefined : card.registerUrl,
-            registerDisabled: card.isClosed,
-            linkTarget,
-            linkRel,
-            analyticsAttributes: registerAnalyticsAttributes,
-            onRegisterClick: () => trackRegisterClick(config, card, card.registerProductId),
-            onOpenSchedule: onOpenSchedule
-              ? () => onOpenSchedule(card.programId, card.sessionId)
-              : undefined,
-          }}
-        />
-      )}
+      <HostPortalV2Collapse open={segmentsOpen && expandable}>
+        {segmentsOpen && expandable && (
+          <div className="px-3 pb-3 sm:px-4">
+            <HostPortalSessionSegmentsPanel
+              card={card}
+              config={config}
+              variant="inline"
+              actions={{
+                accentColor,
+                onOpenSchedule: onOpenSchedule
+                  ? () => onOpenSchedule(card.programId, card.sessionId)
+                  : undefined,
+              }}
+            />
+          </div>
+        )}
+      </HostPortalV2Collapse>
     </div>
   );
 }
@@ -671,34 +691,43 @@ export function HostPortalV2SessionRowsList({
   const columns = resolvePortalV2SessionRowColumns(config);
 
   return (
-    <div className="space-y-2" data-testid="portal-v2-rows">
+    <div
+      className="overflow-hidden rounded-xl bg-white ring-1 ring-gray-200"
+      data-testid="portal-v2-rows"
+    >
       <div
-        className="hidden px-4 sm:grid sm:gap-3 sm:[grid-template-columns:var(--v2-row-cols)]"
+        className="hidden border-b border-gray-200 bg-gray-50/80 px-4 py-2.5 sm:grid sm:gap-3 sm:[grid-template-columns:var(--v2-row-cols)]"
         style={{ '--v2-row-cols': rowGridTemplate(columns) } as React.CSSProperties}
         aria-hidden
       >
         {columns.map((column) => (
           <span
             key={column}
-            className="text-[11px] font-semibold uppercase tracking-wide text-gray-400"
+            className={cn(
+              'text-[11px] font-semibold uppercase tracking-wide text-gray-400',
+              column === 'action' && 'text-right',
+            )}
           >
             {ROW_COLUMN_LABELS[column]}
           </span>
         ))}
+        <span />
       </div>
-      {cards.map((card) => (
-        <HostPortalV2SessionRow
-          key={card.sessionId}
-          card={card}
-          config={config}
-          columns={columns}
-          accentColor={accentColor}
-          hideRegistrationLinks={hideRegistrationLinks}
-          segmentsOpen={segmentsOpenSessionId === card.sessionId}
-          onSegmentsOpenChange={(open) => onSegmentsOpenChange(card.sessionId, open)}
-          onOpenSchedule={onOpenSchedule}
-        />
-      ))}
+      <div className="divide-y divide-gray-100">
+        {cards.map((card) => (
+          <HostPortalV2SessionRow
+            key={card.sessionId}
+            card={card}
+            config={config}
+            columns={columns}
+            accentColor={accentColor}
+            hideRegistrationLinks={hideRegistrationLinks}
+            segmentsOpen={segmentsOpenSessionId === card.sessionId}
+            onSegmentsOpenChange={(open) => onSegmentsOpenChange(card.sessionId, open)}
+            onOpenSchedule={onOpenSchedule}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -726,6 +755,8 @@ function groupCardsByProgram(cards: IHostPortalSessionCardModel[]): IProgramGrou
 
 interface IHostPortalV2SessionsViewProps {
   cards: IHostPortalSessionCardModel[];
+  /** Unfiltered card set anchoring per-card accent colors (stable under filtering). */
+  accentCards?: IHostPortalSessionCardModel[];
   config: DiscoveryConfig;
   filters: DiscoveryFilters;
   accentColor: string;
@@ -735,6 +766,9 @@ interface IHostPortalV2SessionsViewProps {
   onOpenSchedule?: (programId: string, sessionId: string) => void;
 }
 
+/** Stable empty filters for accent resolution — active filters must not recolor cards. */
+const ACCENT_CONTEXT_FILTERS = { sports: [] } as unknown as DiscoveryFilters;
+
 /**
  * v2 sessions surface: SESSION cards in the operator-selected style
  * ('classic' reuses the existing HostPortalSessionCard; 'stacked' and 'rows'
@@ -743,8 +777,9 @@ interface IHostPortalV2SessionsViewProps {
  */
 export function HostPortalV2SessionsView({
   cards,
+  accentCards,
   config,
-  filters,
+  filters: _filters,
   accentColor,
   cardStyle,
   displayMode,
@@ -753,9 +788,12 @@ export function HostPortalV2SessionsView({
 }: IHostPortalV2SessionsViewProps) {
   const [segmentsOpenSessionId, setSegmentsOpenSessionId] = useState<string | null>(null);
   const hideRegistrationLinks = config.features.hideRegistrationLinks === true;
+  // Accent themes anchor on the FULL card set with no active filters: narrowing
+  // by facility/sport must never flip the accent mode and recolor visible cards.
+  const themeCards = accentCards ?? cards;
   const accentContext = useMemo(
-    () => buildPortalCardAccentContext(config, cards, filters),
-    [config, cards, filters],
+    () => buildPortalCardAccentContext(config, themeCards, ACCENT_CONTEXT_FILTERS),
+    [config, themeCards],
   );
 
   const handleSegmentsOpenChange = (sessionId: string, open: boolean) => {
@@ -780,12 +818,15 @@ export function HostPortalV2SessionsView({
       );
     }
     if (cardStyle === 'stacked') {
+      // ≥300px cards, never more than 3 across (the 33% floor wins on wide
+      // screens); items-start keeps an expanded card from stretching siblings.
+      const stackedMinPx = Math.max(cardMinWidthPx, 300);
       return (
         <div
-          className="grid grid-cols-1 gap-3 sm:gap-4 sm:[grid-template-columns:var(--v2-grid-cols)]"
+          className="grid grid-cols-1 items-start gap-3 sm:gap-4 sm:[grid-template-columns:var(--v2-grid-cols)]"
           style={
             {
-              '--v2-grid-cols': `repeat(auto-fill, minmax(min(100%, ${cardMinWidthPx}px), 1fr))`,
+              '--v2-grid-cols': `repeat(auto-fill, minmax(min(100%, max(${stackedMinPx}px, calc(33.333% - 1rem))), 1fr))`,
             } as React.CSSProperties
           }
         >
@@ -808,9 +849,9 @@ export function HostPortalV2SessionsView({
     // 'classic': the existing session card, reused (full feature parity by
     // construction); wrapped so v2 tooling/tests can target cards uniformly.
     return (
-      <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
         {groupCards.map((card) => (
-          <div key={card.sessionId} data-testid="portal-v2-card" data-card-style="classic" className="h-full">
+          <div key={card.sessionId} data-testid="portal-v2-card" data-card-style="classic">
             <HostPortalSessionCard
               card={card}
               config={config}

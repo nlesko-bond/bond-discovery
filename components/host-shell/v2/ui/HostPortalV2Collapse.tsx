@@ -58,7 +58,14 @@ export function HostPortalV2Collapse({
         className,
       )}
     >
-      <div className="min-h-0 overflow-hidden">{children}</div>
+      <div
+        className={cn(
+          'min-h-0 overflow-hidden transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none',
+          open ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0',
+        )}
+      >
+        {children}
+      </div>
     </div>
   );
 }
