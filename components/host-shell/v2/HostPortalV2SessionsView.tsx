@@ -227,6 +227,9 @@ export function HostPortalV2StackedSessionCard({
   const dateLine = buildDateLine(card);
   const ageGenderLine = showAgeGender ? buildAgeGenderLine(card) : undefined;
   const showProductRows = showPricing && card.hasMultipleRegisterOptions && card.products.length > 1;
+  const scheduleTabEnabled = (config.features.enabledTabs || ['programs', 'schedule']).includes(
+    'schedule',
+  );
   // Band tint derives from the page's brand accent (NOT per-sport palettes) so
   // the card family always reads as the partner's branding.
   const tint = derivePortalCardTint(accentColor);
@@ -309,12 +312,25 @@ export function HostPortalV2StackedSessionCard({
 
         <div className="mt-3">
           {hasSegmentDetail(card) ? (
-            <SegmentsChip
-              card={card}
-              open={segmentsOpen}
-              onOpenChange={onSegmentsOpenChange}
-              accentColor={accentColor}
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              <SegmentsChip
+                card={card}
+                open={segmentsOpen}
+                onOpenChange={onSegmentsOpenChange}
+                accentColor={accentColor}
+              />
+              {scheduleTabEnabled && onOpenSchedule && (
+                <button
+                  type="button"
+                  data-testid="portal-v2-view-schedule"
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
+                  onClick={() => onOpenSchedule(card.programId, card.sessionId)}
+                >
+                  <Clock size={13} aria-hidden />
+                  View schedule
+                </button>
+              )}
+            </div>
           ) : (
             <VariableScheduleLine card={card} config={config} onOpenSchedule={onOpenSchedule} />
           )}
@@ -463,6 +479,9 @@ function HostPortalV2SessionRow({
   const showAgeGender = config.features.showAgeGender !== false;
   const linkTarget = resolvePortalScheduleLinkTarget(config);
   const linkRel = linkTarget === '_blank' ? 'noopener noreferrer' : undefined;
+  const scheduleTabEnabled = (config.features.enabledTabs || ['programs', 'schedule']).includes(
+    'schedule',
+  );
   const availability = resolveV2Availability(card);
   const pillStyle = AVAILABILITY_PILL_STYLES[availability.kind];
   const ageGenderLine = showAgeGender ? buildAgeGenderLine(card) : undefined;
@@ -502,9 +521,25 @@ function HostPortalV2SessionRow({
             </p>
             {ageGenderLine && <p className="mt-0.5 text-xs text-gray-500">{ageGenderLine}</p>}
             {hasSegmentDetail(card) ? (
-              <p className="mt-0.5 text-xs text-gray-400" data-testid="portal-v2-segments-chip">
-                {segmentsChipLabel(card)}
-              </p>
+              <span className="mt-1 flex flex-wrap items-center gap-2">
+                <span className="text-xs text-gray-400" data-testid="portal-v2-segments-chip">
+                  {segmentsChipLabel(card)}
+                </span>
+                {scheduleTabEnabled && onOpenSchedule && (
+                  <button
+                    type="button"
+                    data-testid="portal-v2-view-schedule"
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onOpenSchedule(card.programId, card.sessionId);
+                    }}
+                  >
+                    <Clock size={12} aria-hidden />
+                    View schedule
+                  </button>
+                )}
+              </span>
             ) : (
               <div className="mt-1">
                 <VariableScheduleLine
@@ -626,12 +661,7 @@ function HostPortalV2SessionRow({
               card={card}
               config={config}
               variant="inline"
-              actions={{
-                accentColor,
-                onOpenSchedule: onOpenSchedule
-                  ? () => onOpenSchedule(card.programId, card.sessionId)
-                  : undefined,
-              }}
+              layout="grid"
             />
           </div>
         )}
@@ -818,12 +848,6 @@ function HostPortalV2StackedGrid({
                   config={config}
                   variant="inline"
                   layout="grid"
-                  actions={{
-                    accentColor,
-                    onOpenSchedule: onOpenSchedule
-                      ? () => onOpenSchedule(openCard.programId, openCard.sessionId)
-                      : undefined,
-                  }}
                 />
               </HostPortalV2Collapse>
             </div>
