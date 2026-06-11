@@ -1,4 +1,10 @@
-import type { BondEmbedPortalTemplate, MemberPricingStyle, PortalTemplate } from '@/types';
+import type {
+  BondEmbedPortalTemplate,
+  MemberPricingStyle,
+  PortalCardStyle,
+  PortalDisplayMode,
+  PortalTemplate,
+} from '@/types';
 import type { BondEnv } from '@/lib/bond-env';
 
 export interface IPageConfig {
@@ -70,6 +76,8 @@ export interface IPageConfig {
     portalTemplate?: PortalTemplate;
     portalCardMinWidth?: number;
     memberPricingStyle?: MemberPricingStyle;
+    portalCardStyle?: PortalCardStyle;
+    portalDisplayMode?: PortalDisplayMode;
     discoveryCacheEnabled?: boolean;
     availabilityCacheTtl?: number;
     discoveryRefreshPolicy?: '5min' | '15min' | '30min' | '60min';

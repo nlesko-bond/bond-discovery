@@ -18,14 +18,16 @@ import {
   type IDiscoveryApiEvent,
 } from '@/lib/host-shell/portal-schedule-events';
 import {
-  resolveMemberPricingStyle,
+  resolveEffectivePortalDisplayMode,
   resolvePortalCardMinWidth,
+  resolvePortalCardStyle,
+  resolvePortalDisplayMode,
 } from '@/lib/host-shell/portal-v2';
 import { HostPortalLayoutEnum } from '@/types';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { HostPortalScheduleTab } from '../HostPortalScheduleTab';
 import { useHostPortalEmbedResize } from '../useHostPortalEmbedResize';
-import { HostPortalV2Card } from './HostPortalV2Card';
+import { HostPortalV2SessionsView } from './HostPortalV2SessionsView';
 import { HostPortalV2FilterBar } from './HostPortalV2FilterBar';
 import {
   HostPortalV2EmptyState,
@@ -105,7 +107,11 @@ export function HostPortalV2Page({
   const brand = resolvePortalBrandColors(config);
   const accentColor = config.branding.accentColor?.trim() || brand.primaryColor;
   const linkTarget = resolvePortalScheduleLinkTarget(config);
-  const memberPricingStyle = resolveMemberPricingStyle(config.features.memberPricingStyle);
+  const cardStyle = resolvePortalCardStyle(config.features.portalCardStyle);
+  const displayMode = resolveEffectivePortalDisplayMode(
+    resolvePortalDisplayMode(config.features.portalDisplayMode),
+    initialPrograms.length,
+  );
   const cardLayoutMode =
     config.features.hostPortalLayout === HostPortalLayoutEnum.SESSIONS_LIST
       ? 'list'
@@ -293,7 +299,46 @@ export function HostPortalV2Page({
     if (modeParam === 'schedule' || modeParam === 'programs') {
       setViewMode(modeParam);
     }
+
+    const programIdsParam = params.get('programIds');
+    const sessionIdsParam = params.get('sessionIds');
+    if (programIdsParam || sessionIdsParam) {
+      setFilters((previous) => ({
+        ...previous,
+        programIds: programIdsParam ? programIdsParam.split('_').filter(Boolean) : [],
+        sessionIds: sessionIdsParam ? sessionIdsParam.split('_').filter(Boolean) : [],
+      }));
+    }
   }, [currentSearchString]);
+
+  // "View schedule" affordance on session cards: narrow the schedule tab to the
+  // session (same contract as the existing sessions-first portal shell).
+  const openScheduleForSession = useCallback(
+    (programId: string, sessionId: string) => {
+      setFilters((previous) => ({
+        ...previous,
+        programIds: [programId],
+        sessionIds: [sessionId],
+      }));
+      setViewMode('schedule');
+
+      const params = new URLSearchParams(currentSearchString);
+      params.set('viewMode', 'schedule');
+      params.delete('scheduleView');
+      params.set('programIds', programId);
+      params.set('sessionIds', sessionId);
+      const nextUrl = `${pathname}?${params.toString()}`;
+      if (viewMode === 'programs') {
+        router.push(nextUrl, { scroll: false });
+      } else {
+        router.replace(nextUrl, { scroll: false });
+      }
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      }
+    },
+    [pathname, router, currentSearchString, viewMode],
+  );
 
   return (
     <div
@@ -420,27 +465,17 @@ export function HostPortalV2Page({
         ) : sessionCards.length === 0 ? (
           <HostPortalV2EmptyState accentColor={accentColor} onClearFilters={clearFilters} />
         ) : (
-          <div
-            data-testid="portal-v2-grid"
-            className="grid grid-cols-1 gap-3 py-4 sm:gap-4 sm:[grid-template-columns:var(--v2-grid-cols)] md:py-6"
-            style={
-              {
-                // Single full-width column below 640px (phones feel pinched with
-                // 2-up auto-fill); the configured min-width drives columns from sm up.
-                '--v2-grid-cols': `repeat(auto-fill, minmax(min(100%, ${cardMinWidthPx}px), 1fr))`,
-              } as React.CSSProperties
-            }
-          >
-            {sessionCards.map((card) => (
-              <HostPortalV2Card
-                key={card.sessionId}
-                card={card}
-                config={config}
-                accentColor={accentColor}
-                memberPricingStyle={memberPricingStyle}
-                hideRegistrationLinks={config.features.hideRegistrationLinks}
-              />
-            ))}
+          <div data-testid="portal-v2-grid">
+            <HostPortalV2SessionsView
+              cards={sessionCards}
+              config={config}
+              filters={filters}
+              accentColor={accentColor}
+              cardStyle={cardStyle}
+              displayMode={displayMode}
+              cardMinWidthPx={cardMinWidthPx}
+              onOpenSchedule={showScheduleTab ? openScheduleForSession : undefined}
+            />
           </div>
         )}
       </main>

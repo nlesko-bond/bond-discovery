@@ -4,6 +4,8 @@ import {
   PortalSessionLayoutEnum,
   type FeatureConfig,
   type MemberPricingStyle,
+  type PortalCardStyle,
+  type PortalDisplayMode,
   type PortalTemplate,
 } from '@/types';
 
@@ -73,6 +75,26 @@ function resolveMemberPricingStyle(
   return undefined;
 }
 
+function resolvePortalCardStyle(
+  features: Record<string, unknown>,
+): PortalCardStyle | undefined {
+  const raw = features.portalCardStyle ?? features.portal_card_style;
+  if (raw === 'classic' || raw === 'stacked' || raw === 'rows') {
+    return raw;
+  }
+  return undefined;
+}
+
+function resolvePortalDisplayMode(
+  features: Record<string, unknown>,
+): PortalDisplayMode | undefined {
+  const raw = features.portalDisplayMode ?? features.portal_display_mode;
+  if (raw === 'programs' || raw === 'sessions' || raw === 'auto') {
+    return raw;
+  }
+  return undefined;
+}
+
 function resolvePortalCardMinWidth(
   features: Record<string, unknown>,
 ): number | undefined {
@@ -128,11 +150,15 @@ export function normalizePortalFeatureFields(
   | 'portalTemplate'
   | 'portalCardMinWidth'
   | 'memberPricingStyle'
+  | 'portalCardStyle'
+  | 'portalDisplayMode'
 > {
   const hostPortalLayout = resolveHostPortalLayout(features);
   const portalTemplate = resolvePortalTemplate(features);
   const portalCardMinWidth = resolvePortalCardMinWidth(features);
   const memberPricingStyle = resolveMemberPricingStyle(features);
+  const portalCardStyle = resolvePortalCardStyle(features);
+  const portalDisplayMode = resolvePortalDisplayMode(features);
   const portalAccentSource = resolvePortalAccentSource(features);
   const portalSessionLayoutDefault = resolvePortalSessionLayoutDefault(features);
   const allowPortalSessionLayoutToggle = resolveOptionalBoolean(
@@ -167,6 +193,8 @@ export function normalizePortalFeatureFields(
     ...(portalTemplate !== undefined && { portalTemplate }),
     ...(portalCardMinWidth !== undefined && { portalCardMinWidth }),
     ...(memberPricingStyle !== undefined && { memberPricingStyle }),
+    ...(portalCardStyle !== undefined && { portalCardStyle }),
+    ...(portalDisplayMode !== undefined && { portalDisplayMode }),
   };
 }
 

@@ -1,8 +1,11 @@
 import type {
   DiscoveryConfig,
   MemberPricingStyle,
+  PortalCardStyle,
+  PortalDisplayMode,
   PortalTemplate,
   Program,
+  ScheduleTableColumn,
   Session,
 } from '@/types';
 import { formatPrice } from '@/lib/utils';
@@ -48,6 +51,117 @@ export function resolveMemberPricingStyle(raw: unknown): MemberPricingStyle {
     return raw;
   }
   return 'inline';
+}
+
+/**
+ * Session-card style on the v2 sessions path. Only known literals activate a
+ * variant; anything else falls back to 'classic' (the existing session card).
+ */
+export function resolvePortalCardStyle(raw: unknown): PortalCardStyle {
+  if (raw === 'classic' || raw === 'stacked' || raw === 'rows') {
+    return raw;
+  }
+  return 'classic';
+}
+
+/**
+ * Stored admin value for the v2 programs-vs-sessions display mode.
+ * Unknown/absent values → 'auto' (preserves default behavior).
+ */
+export function resolvePortalDisplayMode(raw: unknown): PortalDisplayMode {
+  if (raw === 'programs' || raw === 'sessions' || raw === 'auto') {
+    return raw;
+  }
+  return 'auto';
+}
+
+/**
+ * Effective display mode for the v2 path. 'auto' → sessions view when the page
+ * scope resolves to exactly ONE program (e.g. coppermine: include-mode with a
+ * single program), programs-grouped view otherwise. Explicit values force either.
+ */
+export function resolveEffectivePortalDisplayMode(
+  mode: PortalDisplayMode,
+  programCount: number,
+): 'programs' | 'sessions' {
+  if (mode === 'programs' || mode === 'sessions') {
+    return mode;
+  }
+  return programCount === 1 ? 'sessions' : 'programs';
+}
+
+// ---------------------------------------------------------------------------
+// 'rows' card style — session-level columns from the page's tableColumns
+// ---------------------------------------------------------------------------
+
+/**
+ * Columns the 'rows' card style can honor. Only columns that map to
+ * SESSION-LEVEL data qualify: 'time' and 'space' are event-level (a session may
+ * span multiple segments / variable schedules) and are intentionally dropped —
+ * rendering a single weekly timeslot for a session would fabricate data.
+ */
+export type PortalV2SessionRowColumn =
+  | 'date'
+  | 'event'
+  | 'program'
+  | 'location'
+  | 'spots'
+  | 'action';
+
+const DEFAULT_ROW_COLUMNS: ScheduleTableColumn[] = [
+  'date',
+  'time',
+  'event',
+  'program',
+  'location',
+  'spots',
+  'action',
+];
+
+function isSessionLevelRowColumn(
+  column: ScheduleTableColumn,
+): column is PortalV2SessionRowColumn {
+  return (
+    column === 'date' ||
+    column === 'event' ||
+    column === 'program' ||
+    column === 'location' ||
+    column === 'spots' ||
+    column === 'action'
+  );
+}
+
+/**
+ * Resolves the page's configured tableColumns (order preserved) into the
+ * session-level columns the 'rows' style renders. Honors showAvailability
+ * (spots) and hideRegistrationLinks/showPricing (action). 'event' (the session
+ * name) is always present so a row is never anonymous.
+ */
+export function resolvePortalV2SessionRowColumns(
+  config: DiscoveryConfig,
+): PortalV2SessionRowColumn[] {
+  const configured = config.features.tableColumns?.length
+    ? config.features.tableColumns
+    : DEFAULT_ROW_COLUMNS;
+  const showAvailability = config.features.showAvailability !== false;
+  const showPricing = config.features.showPricing !== false;
+  const hideRegistrationLinks = config.features.hideRegistrationLinks === true;
+
+  const columns = configured.filter(isSessionLevelRowColumn).filter((column) => {
+    if (column === 'spots') {
+      return showAvailability;
+    }
+    if (column === 'action') {
+      // Action cell holds price + register; keep it if either is allowed.
+      return !hideRegistrationLinks || showPricing;
+    }
+    return true;
+  });
+
+  const deduped = columns.filter(
+    (column, index) => columns.indexOf(column) === index,
+  );
+  return deduped.includes('event') ? deduped : ['event', ...deduped];
 }
 
 /**
@@ -377,9 +491,9 @@ function firstParam(value: SearchParamValue): string | undefined {
 
 /**
  * Lets the operator preview the v2 template and its variants on any page via
- * URL params (?portalTemplate=v2&memberPricingStyle=badge&portalCardMinWidth=280)
- * without flipping the stored config. Returns the config unchanged when no
- * recognized preview params are present.
+ * URL params (?portalTemplate=v2&memberPricingStyle=badge&portalCardMinWidth=280
+ * &portalCardStyle=stacked) without flipping the stored config. Returns the
+ * config unchanged when no recognized preview params are present.
  */
 export function applyPortalV2PreviewOverrides(
   config: DiscoveryConfig,
@@ -396,8 +510,18 @@ export function applyPortalV2PreviewOverrides(
     minWidthRaw !== undefined && Number.isFinite(Number(minWidthRaw))
       ? Number(minWidthRaw)
       : undefined;
+  const cardStyleRaw = firstParam(searchParams.portalCardStyle);
+  const cardStyleParam =
+    cardStyleRaw === 'classic' || cardStyleRaw === 'stacked' || cardStyleRaw === 'rows'
+      ? cardStyleRaw
+      : undefined;
 
-  if (!templateParam && !styleParam && minWidthParam === undefined) {
+  if (
+    !templateParam &&
+    !styleParam &&
+    minWidthParam === undefined &&
+    !cardStyleParam
+  ) {
     return config;
   }
 
@@ -408,6 +532,7 @@ export function applyPortalV2PreviewOverrides(
       ...(templateParam && { portalTemplate: templateParam }),
       ...(styleParam && { memberPricingStyle: styleParam }),
       ...(minWidthParam !== undefined && { portalCardMinWidth: minWidthParam }),
+      ...(cardStyleParam && { portalCardStyle: cardStyleParam }),
     },
   };
 }

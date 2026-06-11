@@ -387,6 +387,16 @@ export type PortalTemplate = 'current' | 'v2';
 /** Temporary comparison flag: member-price presentation on v2 cards. */
 export type MemberPricingStyle = 'inline' | 'badge' | 'stacked';
 
+/** Session-card presentation on the v2 sessions path. Default 'classic' (existing card). */
+export type PortalCardStyle = 'classic' | 'stacked' | 'rows';
+
+/**
+ * v2 display mode: 'sessions' renders a flat session-card view, 'programs' groups
+ * sessions under program headings. 'auto' (default) → sessions when the page scope
+ * resolves to exactly one program, programs otherwise.
+ */
+export type PortalDisplayMode = 'programs' | 'sessions' | 'auto';
+
 export enum HostPortalLayoutEnum {
   LEGACY_PROGRAMS = 'legacy_programs',
   SESSIONS_FIRST = 'sessions_first',
@@ -507,6 +517,10 @@ export interface FeatureConfig {
   portalCardMinWidth?: number;
   /** Temporary: member price row style on v2 cards while the operator compares variants. */
   memberPricingStyle?: MemberPricingStyle;
+  /** Session-card style on the v2 sessions path (classic | stacked | rows). Default classic. */
+  portalCardStyle?: PortalCardStyle;
+  /** v2 programs-vs-sessions display mode. Default 'auto' (sessions when one program). */
+  portalDisplayMode?: PortalDisplayMode;
   /** Layout for iframe-free embed kit (`/embed-kit/v1`) */
   embedPortalTemplate?: BondEmbedPortalTemplate;
   /** When set, browser `Origin` must match one entry for embed-kit CORS */

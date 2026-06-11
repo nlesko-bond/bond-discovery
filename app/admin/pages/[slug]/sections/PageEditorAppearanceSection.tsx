@@ -1,6 +1,12 @@
 'use client';
 
-import { PortalSessionLayoutEnum, type MemberPricingStyle, type PortalTemplate } from '@/types';
+import {
+  PortalSessionLayoutEnum,
+  type MemberPricingStyle,
+  type PortalCardStyle,
+  type PortalDisplayMode,
+  type PortalTemplate,
+} from '@/types';
 import { PortalSessionsBrandingControls } from '../components/PortalSessionsBrandingControls';
 import { SurfaceBadge } from '../components/SurfaceBadge';
 import type { IPageEditorSectionProps } from '../page-config-types';
@@ -534,6 +540,59 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
                 </p>
               </div>
             </div>
+            {config.features.portalTemplate === 'v2' && (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="label">Display mode</label>
+                  <select
+                    className="input"
+                    value={config.features.portalDisplayMode || 'auto'}
+                    onChange={(event) => {
+                      const value = event.target.value as PortalDisplayMode;
+                      setConfig({
+                        ...config,
+                        features: {
+                          ...config.features,
+                          portalDisplayMode: value === 'auto' ? undefined : value,
+                        },
+                      });
+                    }}
+                  >
+                    <option value="auto">Auto — sessions when the page has one program</option>
+                    <option value="sessions">Sessions — flat session cards</option>
+                    <option value="programs">Programs — sessions grouped by program</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Auto keeps single-program pages (e.g. one-sport portals) as a clean
+                    session list and groups multi-program pages by program.
+                  </p>
+                </div>
+                <div>
+                  <label className="label">Session card style</label>
+                  <select
+                    className="input"
+                    value={config.features.portalCardStyle || 'classic'}
+                    onChange={(event) => {
+                      const value = event.target.value as PortalCardStyle;
+                      setConfig({
+                        ...config,
+                        features: {
+                          ...config.features,
+                          portalCardStyle: value === 'classic' ? undefined : value,
+                        },
+                      });
+                    }}
+                  >
+                    <option value="classic">Classic — current session card</option>
+                    <option value="stacked">Stacked — modern card, segments chip</option>
+                    <option value="rows">Rows — dense table-style rows</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Preview without saving: ?portalTemplate=v2&amp;portalCardStyle=stacked
+                  </p>
+                </div>
+              </div>
+            )}
             {config.features.portalTemplate === 'v2' && (
               <div>
                 <label className="label">Member price style (temporary)</label>
