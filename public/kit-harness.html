@@ -14,7 +14,9 @@
     body { margin: 0; font-family: -apple-system, sans-serif; background: #f6f7f9; }
     .nav { position: sticky; top: 0; background: #1d2733; color: #fff; padding: 18px 24px; font-weight: 600; z-index: 5; }
     .nav small { font-weight: 400; opacity: .7; margin-left: 12px; }
-    .wrap { max-width: 1080px; margin: 0 auto; padding: 16px; }
+    /* Matches the portal's own content ceiling (max-w-7xl = 1280px); ?width=full removes it. */
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 16px; }
+    body[data-width="full"] .wrap { max-width: none; }
     #log { position: fixed; right: 12px; bottom: 12px; width: 360px; max-height: 40vh; overflow: auto;
            background: #101418; color: #9fe1cb; font: 11px/1.5 ui-monospace, monospace; border-radius: 10px;
            padding: 10px 12px; opacity: .94; z-index: 10; }
@@ -38,6 +40,8 @@
       var slug = params.get('slug') || 'coppermine';
       var mount = document.getElementById('bond-mount');
       mount.setAttribute('data-bond-slug', slug);
+
+      if (params.get('width') === 'full') document.body.setAttribute('data-width', 'full');
 
       var logEl = document.getElementById('log');
       if (params.get('log') === '1') logEl.hidden = false;
