@@ -209,7 +209,8 @@ describe('stacked card — session model correctness', () => {
   it('renders product price rows + register hrefs exactly as the model provides them', () => {
     renderStacked(makeMultiSegmentCard());
     expect(screen.getByText('Full season')).toBeInTheDocument();
-    expect(screen.getByText('$150.00')).toBeInTheDocument();
+    // Price appears on the product row AND as the footer price block.
+    expect(screen.getAllByText('$150.00').length).toBeGreaterThanOrEqual(1);
     const productLinks = screen
       .getAllByRole('link', { name: /register/i })
       .map((link) => link.getAttribute('href'));

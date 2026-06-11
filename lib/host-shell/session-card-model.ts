@@ -139,6 +139,46 @@ export function mapSegmentRows(segments: Segment[]): IHostPortalSegmentRow[] {
   return segments.map(mapSegmentRow);
 }
 
+/** Lowercase alphanumerics only, so "FALL@ Sports" matches "FALL @ Sports". */
+function normalizeNamePart(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Bond segment names repeat their program + session names as prefixes
+ * ("Coppermine Soccer Classes - ALL AGES FALL @ Sports Center - Tue 09:30 am").
+ * Drops leading " - " parts that duplicate the card's program/session name so
+ * the panel shows only the distinguishing part ("Tue 09:30 am"). Falls back to
+ * the full name when nothing distinguishing remains.
+ */
+export function trimSegmentDisplayName(
+  segmentName: string,
+  context: Pick<IHostPortalSessionCardModel, 'name' | 'programName'>,
+): string {
+  const knownPrefixes = [context.programName, context.name]
+    .map((value) => normalizeNamePart(value || ''))
+    .filter(Boolean);
+  if (knownPrefixes.length === 0) {
+    return segmentName;
+  }
+  const parts = segmentName.split(/\s+[-–—]\s+/);
+  let firstKept = 0;
+  while (firstKept < parts.length - 1) {
+    const normalized = normalizeNamePart(parts[firstKept]);
+    const isRedundant =
+      normalized.length > 0 &&
+      knownPrefixes.some(
+        (prefix) => prefix === normalized || prefix.includes(normalized),
+      );
+    if (!isRedundant) {
+      break;
+    }
+    firstKept += 1;
+  }
+  const trimmed = parts.slice(firstKept).join(' - ').trim();
+  return trimmed || segmentName;
+}
+
 function lowestProductPrice(product: Product): number | undefined {
   if (!product.prices?.length) {
     return undefined;

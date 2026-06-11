@@ -5,18 +5,24 @@ import { Calendar, ChevronDown, ChevronUp, Clock, ExternalLink } from 'lucide-re
 import type { DiscoveryConfig, DiscoveryFilters, PortalCardStyle } from '@/types';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
 import {
+  derivePortalCardTint,
+  resolveMemberPricing,
   resolvePortalV2SessionRowColumns,
   resolveV2Availability,
   type PortalV2SessionRowColumn,
 } from '@/lib/host-shell/portal-v2';
 import { buildPortalCardAccentContext } from '@/lib/host-shell/portal-card-accent';
-import { cn } from '@/lib/utils';
+import { cn, getSportLabel } from '@/lib/utils';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
 import { getBondRegisterLinkAnalyticsAttributes } from '@/lib/host-shell/registration-analytics';
 import { resolvePortalScheduleLinkTarget } from '@/lib/host-shell/portal-schedule-events';
 import { HostPortalSessionCard } from '../HostPortalSessionCard';
-import { HostPortalSessionSegmentsPanel } from '../HostPortalSessionSegmentsPanel';
+import {
+  HostPortalSessionSegmentsPanel,
+  type IHostPortalSegmentsPanelActions,
+} from '../HostPortalSessionSegmentsPanel';
+import { HostPortalSportIcon } from '../HostPortalSportIcon';
 
 const CLOSED_REGISTER_BACKGROUND = '#9CA3AF';
 
@@ -148,33 +154,49 @@ interface ISegmentsToggleProps {
   config: DiscoveryConfig;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  accentColor: string;
+  panelActions?: IHostPortalSegmentsPanelActions;
 }
 
 /** "{n} segments" chip expanding the existing segments panel inline. */
-function SegmentsChip({ card, config, open, onOpenChange }: ISegmentsToggleProps) {
+function SegmentsChip({
+  card,
+  config,
+  open,
+  onOpenChange,
+  accentColor,
+  panelActions,
+}: ISegmentsToggleProps) {
   return (
     <div>
       <button
         type="button"
         data-testid="portal-v2-segments-chip"
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors',
-          open
-            ? 'border-gray-300 bg-gray-100 text-gray-900'
-            : 'border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100',
+          'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors',
+          !open && 'hover:brightness-95',
         )}
+        style={{
+          backgroundColor: open ? accentColor : `${accentColor}14`,
+          color: open ? '#ffffff' : accentColor,
+        }}
         aria-expanded={open}
         onClick={() => onOpenChange(!open)}
       >
         {segmentsChipLabel(card)}
         {open ? (
-          <ChevronUp size={13} className="shrink-0 text-gray-500" aria-hidden />
+          <ChevronUp size={13} className="shrink-0" aria-hidden />
         ) : (
-          <ChevronDown size={13} className="shrink-0 text-gray-500" aria-hidden />
+          <ChevronDown size={13} className="shrink-0" aria-hidden />
         )}
       </button>
       {open && (
-        <HostPortalSessionSegmentsPanel card={card} config={config} variant="inline" />
+        <HostPortalSessionSegmentsPanel
+          card={card}
+          config={config}
+          variant="inline"
+          actions={panelActions}
+        />
       )}
     </div>
   );
@@ -188,6 +210,8 @@ interface IStackedCardProps {
   segmentsOpen: boolean;
   onSegmentsOpenChange: (open: boolean) => void;
   onOpenSchedule?: (programId: string, sessionId: string) => void;
+  /** Hidden when cards are already grouped under a program heading. */
+  showProgramName?: boolean;
 }
 
 /**
@@ -203,6 +227,7 @@ export function HostPortalV2StackedSessionCard({
   segmentsOpen,
   onSegmentsOpenChange,
   onOpenSchedule,
+  showProgramName = true,
 }: IStackedCardProps) {
   const showPricing = config.features.showPricing !== false;
   const showAvailability = config.features.showAvailability !== false;
@@ -216,13 +241,19 @@ export function HostPortalV2StackedSessionCard({
   const dateLine = buildDateLine(card);
   const ageGenderLine = showAgeGender ? buildAgeGenderLine(card) : undefined;
   const showProductRows = showPricing && card.hasMultipleRegisterOptions && card.products.length > 1;
+  const tint = derivePortalCardTint(accentColor, card.sport);
+  const sportLabel = card.sport ? getSportLabel(card.sport) : undefined;
+  const eyebrow = showProgramName ? card.programName : (sportLabel ?? card.programName);
+  const memberPricing =
+    showPricing && showMembershipBadges ? resolveMemberPricing(card.products) : {};
 
-  const collapsedPriceLabel =
+  const priceLabel =
     showPricing && card.startingPriceLabel
       ? card.hasMultipleRegisterOptions
-        ? `From ${card.startingPriceLabel}`
+        ? card.startingPriceLabel
         : (card.products[0]?.priceLabel ?? card.startingPriceLabel)
       : undefined;
+  const showFromCaption = Boolean(priceLabel) && card.hasMultipleRegisterOptions;
 
   const registerAnalyticsAttributes = getBondRegisterLinkAnalyticsAttributes({
     programId: card.programId,
@@ -232,51 +263,89 @@ export function HostPortalV2StackedSessionCard({
     productId: card.registerProductId,
   });
 
+  const panelActions: IHostPortalSegmentsPanelActions = {
+    accentColor,
+    registerUrl: hideRegistrationLinks ? undefined : card.registerUrl,
+    registerDisabled: card.isClosed,
+    linkTarget,
+    linkRel,
+    analyticsAttributes: registerAnalyticsAttributes,
+    onRegisterClick: () => trackRegisterClick(config, card, card.registerProductId),
+    onOpenSchedule: onOpenSchedule
+      ? () => onOpenSchedule(card.programId, card.sessionId)
+      : undefined,
+  };
+
   return (
     <article
       data-testid="portal-v2-card"
       data-card-style="stacked"
-      className="flex h-full flex-col rounded-xl bg-white p-4 ring-1 ring-gray-200 transition-shadow duration-200 hover:shadow-md"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-gray-200 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:ring-gray-300"
     >
-      <p className="truncate text-xs text-gray-500" title={card.programName}>
-        {card.programName}
-      </p>
-      <div className="mt-1 flex items-start justify-between gap-2">
-        <h3 className="text-[15px] font-medium leading-snug text-gray-900">
-          {card.name || card.programName}
-        </h3>
+      {/* Tinted sport-glyph band — the card's primary visual (the API has no session images). */}
+      <div
+        className="flex items-center justify-between gap-3 px-4 py-3"
+        style={{ backgroundColor: tint.panelBackground }}
+      >
+        <span className="flex min-w-0 items-center gap-2.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
+            {card.sport ? (
+              <HostPortalSportIcon sportId={card.sport} size={20} />
+            ) : (
+              <Calendar size={18} style={{ color: tint.glyphColor }} aria-hidden />
+            )}
+          </span>
+          <span
+            className="truncate text-[11px] font-bold uppercase tracking-wider"
+            style={{ color: tint.glyphColor }}
+            title={eyebrow}
+          >
+            {eyebrow}
+          </span>
+        </span>
         {showAvailability && (
           <span
             data-testid="portal-v2-availability"
-            className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium"
-            style={{ backgroundColor: pillStyle.background, color: pillStyle.color }}
+            className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold shadow-sm"
+            style={{ color: pillStyle.color }}
           >
             {availability.label}
           </span>
         )}
       </div>
 
-      {dateLine && (
-        <p className="mt-1.5 text-xs leading-relaxed text-gray-600" data-testid="portal-v2-date-line">
-          {dateLine}
-        </p>
-      )}
-      {ageGenderLine && (
-        <p className="mt-0.5 text-xs leading-relaxed text-gray-500">{ageGenderLine}</p>
-      )}
+      <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
+        <h3 className="text-base font-semibold leading-snug text-gray-900">
+          {card.name || card.programName}
+        </h3>
 
-      <div className="mt-2.5">
-        {hasSegmentDetail(card) ? (
-          <SegmentsChip
-            card={card}
-            config={config}
-            open={segmentsOpen}
-            onOpenChange={onSegmentsOpenChange}
-          />
-        ) : (
-          <VariableScheduleLine card={card} config={config} onOpenSchedule={onOpenSchedule} />
+        {dateLine && (
+          <p
+            className="mt-2 flex items-center gap-1.5 text-[13px] text-gray-600"
+            data-testid="portal-v2-date-line"
+          >
+            <Calendar size={13} className="shrink-0 text-gray-400" aria-hidden />
+            {dateLine}
+          </p>
         )}
-      </div>
+        {ageGenderLine && (
+          <p className="mt-1 text-xs leading-relaxed text-gray-500">{ageGenderLine}</p>
+        )}
+
+        <div className="mt-3">
+          {hasSegmentDetail(card) ? (
+            <SegmentsChip
+              card={card}
+              config={config}
+              open={segmentsOpen}
+              onOpenChange={onSegmentsOpenChange}
+              accentColor={accentColor}
+              panelActions={panelActions}
+            />
+          ) : (
+            <VariableScheduleLine card={card} config={config} onOpenSchedule={onOpenSchedule} />
+          )}
+        </div>
 
       {showProductRows && (
         <ul className="mt-3 space-y-1.5 border-t border-gray-100 pt-3 text-xs">
@@ -338,34 +407,48 @@ export function HostPortalV2StackedSessionCard({
         </ul>
       )}
 
-      <div className="mt-auto flex items-center justify-between gap-3 pt-3">
-        {collapsedPriceLabel ? (
-          <p className="text-[15px] font-semibold tabular-nums text-gray-900">
-            {collapsedPriceLabel}
-          </p>
-        ) : (
-          <span />
-        )}
-        {!hideRegistrationLinks && card.registerUrl && (
-          <a
-            href={card.registerUrl}
-            target={linkTarget}
-            rel={linkRel}
-            {...registerAnalyticsAttributes}
-            className={cn(
-              'inline-flex min-h-[40px] shrink-0 items-center justify-center gap-1.5 rounded-lg px-4 text-[13px] font-medium text-white transition-opacity hover:opacity-90',
-              card.isClosed && 'pointer-events-none cursor-not-allowed opacity-60',
-            )}
-            style={{
-              backgroundColor: card.isClosed ? CLOSED_REGISTER_BACKGROUND : accentColor,
-            }}
-            aria-disabled={card.isClosed}
-            onClick={() => trackRegisterClick(config, card, card.registerProductId)}
-          >
-            {card.isClosed ? 'Closed' : 'Register'}
-            <ExternalLink size={13} aria-hidden />
-          </a>
-        )}
+        <div className="mt-auto flex items-end justify-between gap-3 border-t border-gray-100 pt-3">
+          {priceLabel ? (
+            <div className="min-w-0">
+              {showFromCaption && (
+                <p className="text-[11px] leading-tight text-gray-500">From</p>
+              )}
+              <p className="text-lg font-bold leading-tight tabular-nums text-gray-900">
+                {priceLabel}
+              </p>
+              {memberPricing.memberPriceLabel && (
+                <p
+                  className="text-[11px] font-semibold leading-tight"
+                  style={{ color: accentColor }}
+                >
+                  {memberPricing.memberPriceLabel} members
+                </p>
+              )}
+            </div>
+          ) : (
+            <span />
+          )}
+          {!hideRegistrationLinks && card.registerUrl && (
+            <a
+              href={card.registerUrl}
+              target={linkTarget}
+              rel={linkRel}
+              {...registerAnalyticsAttributes}
+              className={cn(
+                'inline-flex min-h-[42px] shrink-0 items-center justify-center gap-1.5 rounded-xl px-5 text-sm font-semibold text-white shadow-sm transition-all hover:opacity-90 hover:shadow',
+                card.isClosed && 'pointer-events-none cursor-not-allowed opacity-60',
+              )}
+              style={{
+                backgroundColor: card.isClosed ? CLOSED_REGISTER_BACKGROUND : accentColor,
+              }}
+              aria-disabled={card.isClosed}
+              onClick={() => trackRegisterClick(config, card, card.registerProductId)}
+            >
+              {card.isClosed ? 'Closed' : 'Register'}
+              <ExternalLink size={13} aria-hidden />
+            </a>
+          )}
+        </div>
       </div>
     </article>
   );
@@ -532,7 +615,7 @@ function HostPortalV2SessionRow({
     <div
       data-testid="portal-v2-card"
       data-card-style="rows"
-      className="rounded-lg bg-white px-3 py-2.5 ring-1 ring-gray-200 sm:px-4"
+      className="rounded-lg bg-white px-3 py-2.5 ring-1 ring-gray-200 transition-colors hover:bg-gray-50/70 sm:px-4"
     >
       <div
         className="flex flex-col gap-2 sm:grid sm:items-center sm:gap-3 sm:[grid-template-columns:var(--v2-row-cols)]"
@@ -543,7 +626,23 @@ function HostPortalV2SessionRow({
         ))}
       </div>
       {segmentsOpen && hasSegmentDetail(card) && (
-        <HostPortalSessionSegmentsPanel card={card} config={config} variant="inline" />
+        <HostPortalSessionSegmentsPanel
+          card={card}
+          config={config}
+          variant="inline"
+          actions={{
+            accentColor,
+            registerUrl: hideRegistrationLinks ? undefined : card.registerUrl,
+            registerDisabled: card.isClosed,
+            linkTarget,
+            linkRel,
+            analyticsAttributes: registerAnalyticsAttributes,
+            onRegisterClick: () => trackRegisterClick(config, card, card.registerProductId),
+            onOpenSchedule: onOpenSchedule
+              ? () => onOpenSchedule(card.programId, card.sessionId)
+              : undefined,
+          }}
+        />
       )}
     </div>
   );
@@ -663,7 +762,10 @@ export function HostPortalV2SessionsView({
     setSegmentsOpenSessionId(open ? sessionId : null);
   };
 
-  const renderCardsGrid = (groupCards: IHostPortalSessionCardModel[]) => {
+  const renderCardsGrid = (
+    groupCards: IHostPortalSessionCardModel[],
+    showProgramName = true,
+  ) => {
     if (cardStyle === 'rows') {
       return (
         <HostPortalV2SessionRowsList
@@ -697,6 +799,7 @@ export function HostPortalV2SessionsView({
               segmentsOpen={segmentsOpenSessionId === card.sessionId}
               onSegmentsOpenChange={(open) => handleSegmentsOpenChange(card.sessionId, open)}
               onOpenSchedule={onOpenSchedule}
+              showProgramName={showProgramName}
             />
           ))}
         </div>
@@ -735,12 +838,18 @@ export function HostPortalV2SessionsView({
                 {group.cards.length === 1 ? '1 session' : `${group.cards.length} sessions`}
               </span>
             </div>
-            {renderCardsGrid(group.cards)}
+            {renderCardsGrid(group.cards, false)}
           </section>
         ))}
       </div>
     );
   }
 
-  return <div className="py-4 md:py-6">{renderCardsGrid(cards)}</div>;
+  // Flat sessions grid: the program eyebrow only earns its space when the grid
+  // mixes program NAMES. Compared by name, not id — orgs like coppermine create
+  // one program record per session, all identically named, and repeating that
+  // name on every card is noise (the sport label shows instead).
+  const mixesPrograms =
+    new Set(cards.map((card) => card.programName.trim().toLowerCase())).size > 1;
+  return <div className="py-4 md:py-6">{renderCardsGrid(cards, mixesPrograms)}</div>;
 }

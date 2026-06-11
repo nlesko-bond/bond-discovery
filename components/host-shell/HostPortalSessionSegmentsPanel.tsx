@@ -1,23 +1,40 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { CalendarDays, ExternalLink } from 'lucide-react';
 import type { DiscoveryConfig } from '@/types';
 import type {
   IHostPortalSegmentRow,
   IHostPortalSessionCardModel,
 } from '@/lib/host-shell/session-card-model';
+import { trimSegmentDisplayName } from '@/lib/host-shell/session-card-model';
 import { cn } from '@/lib/utils';
+
+export interface IHostPortalSegmentsPanelActions {
+  accentColor: string;
+  registerUrl?: string;
+  registerDisabled?: boolean;
+  linkTarget?: string;
+  linkRel?: string;
+  /** data-bond-* attributes for the register link (partner GTM contract). */
+  analyticsAttributes?: Record<string, string>;
+  onRegisterClick?: () => void;
+  onOpenSchedule?: () => void;
+}
 
 interface IHostPortalSessionSegmentsPanelProps {
   card: IHostPortalSessionCardModel;
   config: DiscoveryConfig;
   variant?: 'inline' | 'standalone';
+  /** Session-level register / view-schedule actions rendered under the segment list. */
+  actions?: IHostPortalSegmentsPanelActions;
 }
 
 export function HostPortalSessionSegmentsPanel({
   card,
   config,
   variant = 'standalone',
+  actions,
 }: IHostPortalSessionSegmentsPanelProps) {
   const [loadedSegments, setLoadedSegments] = useState<IHostPortalSegmentRow[]>(card.segments);
   const [segmentsLoading, setSegmentsLoading] = useState(false);
@@ -69,6 +86,10 @@ export function HostPortalSessionSegmentsPanel({
     config.slug,
   ]);
 
+  const showActions = Boolean(
+    actions && (actions.registerUrl || actions.onOpenSchedule),
+  );
+
   return (
     <div
       className={cn(
@@ -87,22 +108,68 @@ export function HostPortalSessionSegmentsPanel({
         <p className="text-sm text-red-600">{segmentsError}</p>
       )}
       {!segmentsLoading && !segmentsError && loadedSegments.length > 0 && (
-        <ul className="space-y-2">
+        <ul className="space-y-1.5">
           {loadedSegments.map((segment) => (
             <li
               key={segment.id}
-              className="rounded-lg border border-gray-100 bg-white px-3 py-2.5 text-sm text-gray-800"
+              className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 bg-white px-3 py-2"
             >
-              <span className="font-medium">{segment.name}</span>
-              {segment.dateRange && (
-                <span className="mt-0.5 block text-xs text-gray-500">{segment.dateRange}</span>
-              )}
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-medium text-gray-900">
+                  {trimSegmentDisplayName(segment.name, card)}
+                </span>
+                {segment.dateRange && (
+                  <span className="mt-0.5 block text-xs text-gray-500">{segment.dateRange}</span>
+                )}
+              </span>
             </li>
           ))}
         </ul>
       )}
       {!segmentsLoading && !segmentsError && loadedSegments.length === 0 && (
         <p className="text-sm text-gray-500">No segments listed for this session.</p>
+      )}
+
+      {showActions && actions && (
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-gray-200 pt-3">
+          {actions.onOpenSchedule ? (
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 underline-offset-2 hover:underline"
+              onClick={actions.onOpenSchedule}
+            >
+              <CalendarDays size={13} aria-hidden />
+              View schedule
+            </button>
+          ) : (
+            <span />
+          )}
+          {actions.registerUrl && (
+            <a
+              href={actions.registerUrl}
+              target={actions.linkTarget}
+              rel={actions.linkRel}
+              {...actions.analyticsAttributes}
+              className={cn(
+                'inline-flex min-h-[36px] items-center justify-center gap-1.5 rounded-lg px-4 text-[13px] font-semibold text-white transition-opacity hover:opacity-90',
+                actions.registerDisabled && 'pointer-events-none cursor-not-allowed opacity-60',
+              )}
+              style={{
+                backgroundColor: actions.registerDisabled ? '#9CA3AF' : actions.accentColor,
+              }}
+              aria-disabled={actions.registerDisabled}
+              onClick={() => {
+                if (actions.registerDisabled) {
+                  return;
+                }
+                actions.onRegisterClick?.();
+              }}
+            >
+              {actions.registerDisabled ? 'Closed' : 'Register'}
+              <ExternalLink size={13} aria-hidden />
+            </a>
+          )}
+        </div>
       )}
     </div>
   );
