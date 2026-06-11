@@ -58,7 +58,7 @@ export function resolveMemberPricingStyle(raw: unknown): MemberPricingStyle {
  * variant; anything else falls back to 'classic' (the existing session card).
  */
 export function resolvePortalCardStyle(raw: unknown): PortalCardStyle {
-  if (raw === 'classic' || raw === 'stacked' || raw === 'rows') {
+  if (raw === 'classic' || raw === 'stacked' || raw === 'rows' || raw === 'list') {
     return raw;
   }
   return 'classic';
@@ -512,7 +512,10 @@ export function applyPortalV2PreviewOverrides(
       : undefined;
   const cardStyleRaw = firstParam(searchParams.portalCardStyle);
   const cardStyleParam =
-    cardStyleRaw === 'classic' || cardStyleRaw === 'stacked' || cardStyleRaw === 'rows'
+    cardStyleRaw === 'classic' ||
+    cardStyleRaw === 'stacked' ||
+    cardStyleRaw === 'rows' ||
+    cardStyleRaw === 'list'
       ? cardStyleRaw
       : undefined;
 

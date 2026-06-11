@@ -28,7 +28,9 @@
   <div class="wrap">
     <div id="bond-mount" data-bond-host data-bond-slug="coppermine"></div>
   </div>
-  <div id="log"><b>harness log</b><br/></div>
+  <!-- Debug log is hidden by default so demo links look like a real partner page;
+       add ?log=1 to the URL to watch postMessages + dataLayer pushes (GA4 wiring). -->
+  <div id="log" hidden><b>harness log</b> <a href="#" id="log-close" style="float:right;color:#9fe1cb">✕</a><br/></div>
 
   <script>
     (function () {
@@ -38,6 +40,11 @@
       mount.setAttribute('data-bond-slug', slug);
 
       var logEl = document.getElementById('log');
+      if (params.get('log') === '1') logEl.hidden = false;
+      document.getElementById('log-close').addEventListener('click', function (e) {
+        e.preventDefault();
+        logEl.hidden = true;
+      });
       function log(msg, cls) {
         var d = document.createElement('div');
         if (cls) d.className = cls;

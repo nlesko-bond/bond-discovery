@@ -23,7 +23,9 @@ import {
   resolvePortalCardStyle,
   resolvePortalDisplayMode,
 } from '@/lib/host-shell/portal-v2';
-import { HostPortalLayoutEnum } from '@/types';
+import { HostPortalLayoutEnum, PortalSessionLayoutEnum } from '@/types';
+import { HostPortalSessionsListView } from '../list/HostPortalSessionsListView';
+import { isPortalSessionLayoutToggleAllowed } from '@/lib/host-shell/portal-session-layout';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { HostPortalScheduleTab } from '../HostPortalScheduleTab';
 import { useHostPortalEmbedResize } from '../useHostPortalEmbedResize';
@@ -70,6 +72,8 @@ export function HostPortalV2Page({
   );
 
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
+  // Only used by the 'list' card style (the mirrored v1 sessions-list shell).
+  const [listSessionLayout, setListSessionLayout] = useState(PortalSessionLayoutEnum.LIST);
   const [filters, setFilters] = useState<DiscoveryFilters>(() => ({
     search: (searchParams.search as string) || '',
     programIds: searchParams.programIds
@@ -187,7 +191,9 @@ export function HostPortalV2Page({
   });
 
   useEffect(() => {
-    if (eventsFetched || viewMode !== 'schedule') {
+    // 'list' style needs events eagerly — its rows render per-session time
+    // chips from the events feed (same behavior as the v1 sessions-list shell).
+    if (eventsFetched || (viewMode !== 'schedule' && cardStyle !== 'list')) {
       return;
     }
 
@@ -237,7 +243,7 @@ export function HostPortalV2Page({
       });
 
     return () => abortController.abort();
-  }, [viewMode, eventsFetched, config.slug]);
+  }, [viewMode, eventsFetched, config.slug, cardStyle]);
 
   const loadMoreEvents = useCallback(() => {
     if (loadingMore || apiEvents.length >= totalServerEvents) {
@@ -354,6 +360,59 @@ export function HostPortalV2Page({
     },
     [pathname, router, currentSearchString, viewMode],
   );
+
+  // 'list' card style mirrors the original sessions-list portal exactly: the
+  // v1 HostPortalSessionsListView (hero banner, facility/age filter bar,
+  // colored-rail rows with time chips) replaces the v2 header + filter bar.
+  if (cardStyle === 'list') {
+    return (
+      <div
+        ref={embedRootRef}
+        className={cn('bg-gray-50', !isEmbedded && 'min-h-screen')}
+        style={{ fontFamily: config.branding.fontFamily || 'inherit' }}
+      >
+        <GoogleTagManager gtmId={config.gtmId} pageSlug={config.slug} />
+        <main className="pb-8">
+          <HostPortalSessionsListView
+            cards={sessionCards}
+            config={config}
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            filterOptions={filterOptions}
+            apiEvents={apiEvents}
+            eventsFetched={eventsFetched}
+            viewMode={viewMode}
+            sessionLayout={listSessionLayout}
+            onSessionLayoutChange={setListSessionLayout}
+            showSessionLayoutToggle={isPortalSessionLayoutToggleAllowed(config)}
+            onOpenSchedule={showScheduleTab ? openScheduleForSession : undefined}
+            onBackToSessions={() => handleViewModeChange('programs')}
+            scheduleContent={
+              <HostPortalScheduleTab
+                schedule={scheduleData}
+                config={config}
+                scheduleThemeStyle={scheduleThemeStyle}
+                isLoading={eventsLoading}
+                error={eventsError}
+                totalEvents={filteredEvents.length}
+                totalServerEvents={totalServerEvents}
+                onLoadMore={loadMoreEvents}
+                loadingMore={loadingMore}
+                hasMultipleFacilities={filterOptions.hasMultipleFacilities}
+                filters={config.features.showScheduleTableDateFilters ? filters : undefined}
+                onScheduleFiltersChange={
+                  config.features.showScheduleTableDateFilters ? handleFiltersChange : undefined
+                }
+                searchParams={searchParams}
+                programs={initialPrograms}
+                linkTarget={linkTarget}
+              />
+            }
+          />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div

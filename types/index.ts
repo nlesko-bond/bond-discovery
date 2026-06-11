@@ -388,7 +388,7 @@ export type PortalTemplate = 'current' | 'v2';
 export type MemberPricingStyle = 'inline' | 'badge' | 'stacked';
 
 /** Session-card presentation on the v2 sessions path. Default 'classic' (existing card). */
-export type PortalCardStyle = 'classic' | 'stacked' | 'rows';
+export type PortalCardStyle = 'classic' | 'stacked' | 'rows' | 'list';
 
 /**
  * v2 display mode: 'sessions' renders a flat session-card view, 'programs' groups
