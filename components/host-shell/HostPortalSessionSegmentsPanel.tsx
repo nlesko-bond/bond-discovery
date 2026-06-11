@@ -26,6 +26,8 @@ interface IHostPortalSessionSegmentsPanelProps {
   card: IHostPortalSessionCardModel;
   config: DiscoveryConfig;
   variant?: 'inline' | 'standalone';
+  /** 'grid' lays segment rows out in responsive columns (full-width breakout). */
+  layout?: 'stack' | 'grid';
   /** Session-level register / view-schedule actions rendered under the segment list. */
   actions?: IHostPortalSegmentsPanelActions;
 }
@@ -34,6 +36,7 @@ export function HostPortalSessionSegmentsPanel({
   card,
   config,
   variant = 'standalone',
+  layout = 'stack',
   actions,
 }: IHostPortalSessionSegmentsPanelProps) {
   const [loadedSegments, setLoadedSegments] = useState<IHostPortalSegmentRow[]>(card.segments);
@@ -102,13 +105,25 @@ export function HostPortalSessionSegmentsPanel({
       {!isInline && (
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Segments</p>
       )}
+      {layout === 'grid' && (
+        // Detached full-width breakout — name which session this panel belongs to.
+        <p className="mb-2 text-[13px] font-semibold text-gray-800">
+          {card.name} <span className="font-normal text-gray-500">· segments</span>
+        </p>
+      )}
 
       {segmentsLoading && <p className="text-sm text-gray-500">Loading segments...</p>}
       {!segmentsLoading && segmentsError && (
         <p className="text-sm text-red-600">{segmentsError}</p>
       )}
       {!segmentsLoading && !segmentsError && loadedSegments.length > 0 && (
-        <ul className="space-y-1.5">
+        <ul
+          className={cn(
+            layout === 'grid'
+              ? 'grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3'
+              : 'space-y-1.5',
+          )}
+        >
           {loadedSegments.map((segment) => (
             <li
               key={segment.id}

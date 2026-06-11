@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Calendar, ChevronDown, ChevronUp, Clock, ExternalLink } from 'lucide-react';
 import type { DiscoveryConfig, DiscoveryFilters, PortalCardStyle } from '@/types';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
@@ -152,60 +152,39 @@ function VariableScheduleLine({
 
 interface ISegmentsToggleProps {
   card: IHostPortalSessionCardModel;
-  config: DiscoveryConfig;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   accentColor: string;
-  panelActions?: IHostPortalSegmentsPanelActions;
 }
 
-/** "{n} segments" chip expanding the existing segments panel inline. */
-function SegmentsChip({
-  card,
-  config,
-  open,
-  onOpenChange,
-  accentColor,
-  panelActions,
-}: ISegmentsToggleProps) {
+/**
+ * "{n} segments" toggle chip. The panel itself renders OUTSIDE the card as a
+ * full-width grid breakout row — cards keep uniform heights and siblings
+ * never stretch when one expands.
+ */
+function SegmentsChip({ card, open, onOpenChange, accentColor }: ISegmentsToggleProps) {
   return (
-    <div>
-      <button
-        type="button"
-        data-testid="portal-v2-segments-chip"
-        className={cn(
-          'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors',
-          !open && 'hover:brightness-95',
-        )}
-        style={{
-          backgroundColor: open ? accentColor : `${accentColor}14`,
-          color: open ? '#ffffff' : accentColor,
-        }}
-        aria-expanded={open}
-        onClick={() => onOpenChange(!open)}
-      >
-        {segmentsChipLabel(card)}
-        {open ? (
-          <ChevronUp size={13} className="shrink-0" aria-hidden />
-        ) : (
-          <ChevronDown size={13} className="shrink-0" aria-hidden />
-        )}
-      </button>
-      <HostPortalV2Collapse open={open}>
-        {open && (
-          // Bounded + scrollable so an open panel nudges the row instead of
-          // tripling its height (rows share a track height in the grid).
-          <div className="max-h-[280px] overflow-y-auto overscroll-contain">
-            <HostPortalSessionSegmentsPanel
-              card={card}
-              config={config}
-              variant="inline"
-              actions={panelActions}
-            />
-          </div>
-        )}
-      </HostPortalV2Collapse>
-    </div>
+    <button
+      type="button"
+      data-testid="portal-v2-segments-chip"
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors',
+        !open && 'hover:brightness-95',
+      )}
+      style={{
+        backgroundColor: open ? accentColor : `${accentColor}14`,
+        color: open ? '#ffffff' : accentColor,
+      }}
+      aria-expanded={open}
+      onClick={() => onOpenChange(!open)}
+    >
+      {segmentsChipLabel(card)}
+      {open ? (
+        <ChevronUp size={13} className="shrink-0" aria-hidden />
+      ) : (
+        <ChevronDown size={13} className="shrink-0" aria-hidden />
+      )}
+    </button>
   );
 }
 
@@ -272,15 +251,6 @@ export function HostPortalV2StackedSessionCard({
     productId: card.registerProductId,
   });
 
-  // Segments have no register URLs of their own and the card footer already has
-  // the session Register — the panel only adds the View-schedule affordance.
-  const panelActions: IHostPortalSegmentsPanelActions = {
-    accentColor,
-    onOpenSchedule: onOpenSchedule
-      ? () => onOpenSchedule(card.programId, card.sessionId)
-      : undefined,
-  };
-
   return (
     <article
       data-testid="portal-v2-card"
@@ -341,11 +311,9 @@ export function HostPortalV2StackedSessionCard({
           {hasSegmentDetail(card) ? (
             <SegmentsChip
               card={card}
-              config={config}
               open={segmentsOpen}
               onOpenChange={onSegmentsOpenChange}
               accentColor={accentColor}
-              panelActions={panelActions}
             />
           ) : (
             <VariableScheduleLine card={card} config={config} onOpenSchedule={onOpenSchedule} />
@@ -757,6 +725,115 @@ function groupCardsByProgram(cards: IHostPortalSessionCardModel[]): IProgramGrou
   return groups;
 }
 
+interface IStackedGridProps {
+  cards: IHostPortalSessionCardModel[];
+  config: DiscoveryConfig;
+  accentColor: string;
+  hideRegistrationLinks: boolean;
+  cardMinWidthPx: number;
+  showProgramName: boolean;
+  segmentsOpenSessionId: string | null;
+  onSegmentsOpenChange: (sessionId: string, open: boolean) => void;
+  onOpenSchedule?: (programId: string, sessionId: string) => void;
+}
+
+/**
+ * Stacked-card grid with a full-width BREAKOUT segments panel: cards stretch
+ * to uniform row heights, and the expanded panel renders as its own
+ * `col-span-full` grid item after the expanded card's row — so opening
+ * segments never stretches sibling cards. Column count is measured from the
+ * rendered grid (the template is auto-fill, so it isn't knowable statically).
+ */
+function HostPortalV2StackedGrid({
+  cards,
+  config,
+  accentColor,
+  hideRegistrationLinks,
+  cardMinWidthPx,
+  showProgramName,
+  segmentsOpenSessionId,
+  onSegmentsOpenChange,
+  onOpenSchedule,
+}: IStackedGridProps) {
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [columnCount, setColumnCount] = useState(1);
+
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    const update = () => {
+      const tracks = getComputedStyle(grid)
+        .gridTemplateColumns.split(' ')
+        .filter(Boolean).length;
+      setColumnCount(tracks || 1);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(grid);
+    return () => observer.disconnect();
+  }, []);
+
+  const stackedMinPx = Math.max(cardMinWidthPx, 300);
+  const openIndex = cards.findIndex((card) => card.sessionId === segmentsOpenSessionId);
+  const openCard = openIndex >= 0 ? cards[openIndex] : null;
+  // The breakout slots in after the LAST card of the expanded card's row so
+  // auto-placement never leaves a hole in the row above it.
+  const breakoutAfterIndex =
+    openIndex >= 0
+      ? Math.min(
+          (Math.floor(openIndex / columnCount) + 1) * columnCount - 1,
+          cards.length - 1,
+        )
+      : -1;
+
+  return (
+    <div
+      ref={gridRef}
+      className="grid grid-cols-1 gap-3 sm:gap-4 sm:[grid-template-columns:var(--v2-grid-cols)]"
+      style={
+        {
+          '--v2-grid-cols': `repeat(auto-fill, minmax(min(100%, max(${stackedMinPx}px, calc(33.333% - 1rem))), 1fr))`,
+        } as React.CSSProperties
+      }
+    >
+      {cards.map((card, index) => (
+        <React.Fragment key={card.sessionId}>
+          <HostPortalV2StackedSessionCard
+            card={card}
+            config={config}
+            accentColor={accentColor}
+            hideRegistrationLinks={hideRegistrationLinks}
+            segmentsOpen={segmentsOpenSessionId === card.sessionId}
+            onSegmentsOpenChange={(open) => onSegmentsOpenChange(card.sessionId, open)}
+            onOpenSchedule={onOpenSchedule}
+            showProgramName={showProgramName}
+          />
+          {index === breakoutAfterIndex && openCard && (
+            <div className="col-span-full" data-testid="portal-v2-segments-breakout">
+              <HostPortalV2Collapse open>
+                <HostPortalSessionSegmentsPanel
+                  card={openCard}
+                  config={config}
+                  variant="inline"
+                  layout="grid"
+                  actions={{
+                    accentColor,
+                    onOpenSchedule: onOpenSchedule
+                      ? () => onOpenSchedule(openCard.programId, openCard.sessionId)
+                      : undefined,
+                  }}
+                />
+              </HostPortalV2Collapse>
+            </div>
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
 interface IHostPortalV2SessionsViewProps {
   cards: IHostPortalSessionCardModel[];
   /** Unfiltered card set anchoring per-card accent colors (stable under filtering). */
@@ -822,34 +899,18 @@ export function HostPortalV2SessionsView({
       );
     }
     if (cardStyle === 'stacked') {
-      // ≥300px cards, never more than 3 across (the 33% floor wins on wide
-      // screens). Cards stretch to uniform row height (footers pin via
-      // mt-auto); the segments panel is height-capped so expansion only
-      // nudges the row.
-      const stackedMinPx = Math.max(cardMinWidthPx, 300);
       return (
-        <div
-          className="grid grid-cols-1 gap-3 sm:gap-4 sm:[grid-template-columns:var(--v2-grid-cols)]"
-          style={
-            {
-              '--v2-grid-cols': `repeat(auto-fill, minmax(min(100%, max(${stackedMinPx}px, calc(33.333% - 1rem))), 1fr))`,
-            } as React.CSSProperties
-          }
-        >
-          {groupCards.map((card) => (
-            <HostPortalV2StackedSessionCard
-              key={card.sessionId}
-              card={card}
-              config={config}
-              accentColor={accentColor}
-              hideRegistrationLinks={hideRegistrationLinks}
-              segmentsOpen={segmentsOpenSessionId === card.sessionId}
-              onSegmentsOpenChange={(open) => handleSegmentsOpenChange(card.sessionId, open)}
-              onOpenSchedule={onOpenSchedule}
-              showProgramName={showProgramName}
-            />
-          ))}
-        </div>
+        <HostPortalV2StackedGrid
+          cards={groupCards}
+          config={config}
+          accentColor={accentColor}
+          hideRegistrationLinks={hideRegistrationLinks}
+          cardMinWidthPx={cardMinWidthPx}
+          showProgramName={showProgramName}
+          segmentsOpenSessionId={segmentsOpenSessionId}
+          onSegmentsOpenChange={handleSegmentsOpenChange}
+          onOpenSchedule={onOpenSchedule}
+        />
       );
     }
     // 'classic': the existing session card, reused (full feature parity by

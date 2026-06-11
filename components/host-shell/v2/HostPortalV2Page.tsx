@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { LayoutGrid, Calendar } from 'lucide-react';
+import { LayoutGrid, Calendar, ArrowLeft } from 'lucide-react';
 import type { DiscoveryConfig, DiscoveryFilters, Program, ViewMode } from '@/types';
 import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
@@ -515,7 +515,19 @@ export function HostPortalV2Page({
 
       <main className="mx-auto max-w-7xl px-3 pb-8 sm:px-4">
         {viewMode === 'schedule' ? (
-          <HostPortalScheduleTab
+          <>
+            {showProgramsTab && (
+              <button
+                type="button"
+                data-testid="portal-v2-back-button"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-[13px] font-semibold text-gray-700 ring-1 ring-gray-200 transition-colors hover:bg-gray-50"
+                onClick={() => handleViewModeChange('programs')}
+              >
+                <ArrowLeft size={15} aria-hidden />
+                {displayMode === 'sessions' ? 'Back to sessions' : 'Back to programs'}
+              </button>
+            )}
+            <HostPortalScheduleTab
             schedule={scheduleData}
             config={config}
             scheduleThemeStyle={scheduleThemeStyle}
@@ -534,6 +546,7 @@ export function HostPortalV2Page({
             programs={initialPrograms}
             linkTarget={linkTarget}
           />
+          </>
         ) : !hasAnyCards ? (
           <HostPortalV2ZeroEventsState companyName={config.branding.companyName} />
         ) : sessionCards.length === 0 ? (
