@@ -193,12 +193,16 @@ function SegmentsChip({
       </button>
       <HostPortalV2Collapse open={open}>
         {open && (
-          <HostPortalSessionSegmentsPanel
-            card={card}
-            config={config}
-            variant="inline"
-            actions={panelActions}
-          />
+          // Bounded + scrollable so an open panel nudges the row instead of
+          // tripling its height (rows share a track height in the grid).
+          <div className="max-h-[280px] overflow-y-auto overscroll-contain">
+            <HostPortalSessionSegmentsPanel
+              card={card}
+              config={config}
+              variant="inline"
+              actions={panelActions}
+            />
+          </div>
         )}
       </HostPortalV2Collapse>
     </div>
@@ -281,11 +285,11 @@ export function HostPortalV2StackedSessionCard({
     <article
       data-testid="portal-v2-card"
       data-card-style="stacked"
-      className="group flex flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-gray-200 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:ring-gray-300"
+      className="group flex h-full flex-col rounded-2xl bg-white ring-1 ring-gray-200 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:ring-gray-300"
     >
       {/* Tinted sport-glyph band — the card's primary visual (the API has no session images). */}
       <div
-        className="flex items-center justify-between gap-3 px-4 py-3"
+        className="flex items-center justify-between gap-3 rounded-t-2xl px-4 py-3"
         style={{ backgroundColor: tint.panelBackground }}
       >
         <span className="flex min-w-0 items-center gap-2.5">
@@ -819,11 +823,13 @@ export function HostPortalV2SessionsView({
     }
     if (cardStyle === 'stacked') {
       // ≥300px cards, never more than 3 across (the 33% floor wins on wide
-      // screens); items-start keeps an expanded card from stretching siblings.
+      // screens). Cards stretch to uniform row height (footers pin via
+      // mt-auto); the segments panel is height-capped so expansion only
+      // nudges the row.
       const stackedMinPx = Math.max(cardMinWidthPx, 300);
       return (
         <div
-          className="grid grid-cols-1 items-start gap-3 sm:gap-4 sm:[grid-template-columns:var(--v2-grid-cols)]"
+          className="grid grid-cols-1 gap-3 sm:gap-4 sm:[grid-template-columns:var(--v2-grid-cols)]"
           style={
             {
               '--v2-grid-cols': `repeat(auto-fill, minmax(min(100%, max(${stackedMinPx}px, calc(33.333% - 1rem))), 1fr))`,
@@ -849,9 +855,9 @@ export function HostPortalV2SessionsView({
     // 'classic': the existing session card, reused (full feature parity by
     // construction); wrapped so v2 tooling/tests can target cards uniformly.
     return (
-      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
+      <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
         {groupCards.map((card) => (
-          <div key={card.sessionId} data-testid="portal-v2-card" data-card-style="classic">
+          <div key={card.sessionId} data-testid="portal-v2-card" data-card-style="classic" className="h-full">
             <HostPortalSessionCard
               card={card}
               config={config}
