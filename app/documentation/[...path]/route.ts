@@ -4,7 +4,7 @@ import { getActiveDocumentationPageByPath } from '@/lib/documentation-pages';
 const HTTP_NOT_FOUND_STATUS = 404;
 
 const DOCUMENTATION_HTML_CSP = [
-  'sandbox allow-scripts allow-popups allow-forms allow-downloads',
+  'sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-downloads',
   "default-src 'self' https: data: blob:",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
   "style-src 'self' 'unsafe-inline' https:",
