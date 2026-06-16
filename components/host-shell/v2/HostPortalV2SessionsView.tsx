@@ -17,6 +17,10 @@ import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
 import { getBondRegisterLinkAnalyticsAttributes } from '@/lib/host-shell/registration-analytics';
 import { resolvePortalScheduleLinkTarget } from '@/lib/host-shell/portal-schedule-events';
+import {
+  formatHostPortalSessionDescription,
+  hasHostPortalSessionDescription,
+} from '@/lib/host-shell/portal-session-description';
 import { HostPortalSessionCard } from '../HostPortalSessionCard';
 import {
   HostPortalSessionSegmentsPanel,
@@ -24,8 +28,12 @@ import {
 } from '../HostPortalSessionSegmentsPanel';
 import { HostPortalSportIcon } from '../HostPortalSportIcon';
 import { HostPortalV2Collapse } from './ui/HostPortalV2Collapse';
+import { HostPortalV2TieredPricingLine } from './HostPortalV2TieredPricingLine';
 
 const CLOSED_REGISTER_BACKGROUND = '#9CA3AF';
+const ROW_SPOTS_COLUMN_WIDTH_PX = 88;
+const ROW_ACTION_COLUMN_WIDTH_PX = 210;
+const ROW_CHEVRON_COLUMN_WIDTH_PX = 20;
 
 const AVAILABILITY_PILL_STYLES: Record<string, { background: string; color: string }> = {
   open: { background: '#dcfce7', color: '#166534' },
@@ -98,12 +106,15 @@ function hasSegmentDetail(card: IHostPortalSessionCardModel): boolean {
   return card.isSegmented || card.segments.length > 0;
 }
 
+function hasExpandableRowDetail(card: IHostPortalSessionCardModel): boolean {
+  return hasSegmentDetail(card) || hasHostPortalSessionDescription(card.description, card.longDescription);
+}
+
 function segmentsChipLabel(card: IHostPortalSessionCardModel): string {
   if (card.segments.length > 0) {
     return card.segments.length === 1 ? '1 segment' : `${card.segments.length} segments`;
   }
-  // isSegmented without inline segment rows — the panel lazy-loads them.
-  return 'View segments';
+  return 'More info';
 }
 
 interface IScheduleAffordanceProps {
@@ -405,6 +416,9 @@ export function HostPortalV2StackedSessionCard({
               <p className="text-lg font-bold leading-tight tabular-nums text-gray-900">
                 {priceLabel}
               </p>
+              {card.tieredPricingLabel && (
+                <HostPortalV2TieredPricingLine label={card.tieredPricingLabel} />
+              )}
               {memberPricing.memberPriceLabel && (
                 <p
                   className="text-[11px] font-semibold leading-tight"
@@ -455,14 +469,14 @@ interface ISessionRowProps {
 }
 
 function rowGridTemplate(columns: PortalV2SessionRowColumn[]): string {
-  // Fixed action width + a trailing chevron slot keep header and row cells
-  // aligned (an `auto` action column shifts with its content per row).
   const cells = columns.map((column) => {
-    if (column === 'event') return 'minmax(0, 2fr)';
-    if (column === 'action') return '210px';
+    if (column === 'event') return 'minmax(0, 2.5fr)';
+    if (column === 'spots') return `minmax(${ROW_SPOTS_COLUMN_WIDTH_PX}px, max-content)`;
+    if (column === 'action') return `${ROW_ACTION_COLUMN_WIDTH_PX}px`;
+    if (column === 'date') return 'minmax(0, 1.1fr)';
     return 'minmax(0, 1fr)';
   });
-  return [...cells, '20px'].join(' ');
+  return [...cells, `${ROW_CHEVRON_COLUMN_WIDTH_PX}px`].join(' ');
 }
 
 function HostPortalV2SessionRow({
@@ -515,32 +529,14 @@ function HostPortalV2SessionRow({
         );
       case 'event':
         return (
-          <div data-portal-v2-cell="event" className="min-w-0">
-            <p className="truncate text-sm font-semibold text-gray-900">
+          <div data-portal-v2-cell="event" className="min-w-0 sm:col-span-1">
+            <p className="break-words text-sm font-semibold leading-snug text-gray-900 sm:line-clamp-2">
               {card.name || card.programName}
             </p>
             {ageGenderLine && <p className="mt-0.5 text-xs text-gray-500">{ageGenderLine}</p>}
-            {hasSegmentDetail(card) ? (
-              <span className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="text-xs text-gray-400" data-testid="portal-v2-segments-chip">
-                  {segmentsChipLabel(card)}
-                </span>
-                {scheduleTabEnabled && onOpenSchedule && (
-                  <button
-                    type="button"
-                    data-testid="portal-v2-view-schedule"
-                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onOpenSchedule(card.programId, card.sessionId);
-                    }}
-                  >
-                    <Clock size={12} aria-hidden />
-                    View schedule
-                  </button>
-                )}
-              </span>
-            ) : (
+            {expandable ? (
+              <p className="mt-1 text-xs text-gray-400 sm:sr-only">Tap row for more info</p>
+            ) : hasSegmentDetail(card) ? null : (
               <div className="mt-1">
                 <VariableScheduleLine
                   card={card}
@@ -550,17 +546,31 @@ function HostPortalV2SessionRow({
                 />
               </div>
             )}
+            {expandable && scheduleTabEnabled && onOpenSchedule && hasSegmentDetail(card) && (
+              <button
+                type="button"
+                data-testid="portal-v2-view-schedule"
+                className="mt-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onOpenSchedule(card.programId, card.sessionId);
+                }}
+              >
+                <Clock size={12} aria-hidden />
+                View schedule
+              </button>
+            )}
           </div>
         );
       case 'program':
         return (
-          <p data-portal-v2-cell="program" className="truncate text-sm text-gray-600">
+          <p data-portal-v2-cell="program" className="break-words text-sm text-gray-600">
             {card.programName}
           </p>
         );
       case 'location':
         return (
-          <p data-portal-v2-cell="location" className="truncate text-sm text-gray-600">
+          <p data-portal-v2-cell="location" className="break-words text-sm text-gray-600">
             {card.facilityName || '—'}
           </p>
         );
@@ -577,11 +587,14 @@ function HostPortalV2SessionRow({
         );
       case 'action':
         return (
-          <div data-portal-v2-cell="action" className="flex items-center justify-end gap-3">
+          <div data-portal-v2-cell="action" className="flex flex-col items-end justify-center gap-1">
             {collapsedPriceLabel && (
               <span className="text-sm font-semibold tabular-nums text-gray-900">
                 {collapsedPriceLabel}
               </span>
+            )}
+            {card.tieredPricingLabel && (
+              <HostPortalV2TieredPricingLine label={card.tieredPricingLabel} />
             )}
             {!hideRegistrationLinks && card.registerUrl && (
               <a
@@ -612,16 +625,20 @@ function HostPortalV2SessionRow({
     }
   };
 
-  const expandable = hasSegmentDetail(card);
+  const expandable = hasExpandableRowDetail(card);
+  const descriptionSections = formatHostPortalSessionDescription(
+    card.description,
+    card.longDescription,
+  );
   const toggleSegments = () => onSegmentsOpenChange(!segmentsOpen);
 
   return (
     <div data-testid="portal-v2-card" data-card-style="rows" className="bg-white">
-      {/* The whole row toggles the segments panel (links stopPropagation). */}
       <div
         role={expandable ? 'button' : undefined}
         tabIndex={expandable ? 0 : undefined}
         aria-expanded={expandable ? segmentsOpen : undefined}
+        aria-label={expandable ? `${card.name || card.programName}. More info` : undefined}
         onClick={expandable ? toggleSegments : undefined}
         onKeyDown={
           expandable
@@ -656,13 +673,30 @@ function HostPortalV2SessionRow({
       </div>
       <HostPortalV2Collapse open={segmentsOpen && expandable}>
         {segmentsOpen && expandable && (
-          <div className="px-3 pb-3 sm:px-4">
-            <HostPortalSessionSegmentsPanel
-              card={card}
-              config={config}
-              variant="inline"
-              layout="grid"
-            />
+          <div className="space-y-3 px-3 pb-3 sm:px-4" data-testid="portal-v2-row-expanded">
+            {descriptionSections && (
+              <div className="text-sm leading-relaxed text-gray-600">
+                {descriptionSections.lead && (
+                  <p className="font-medium text-gray-800">{descriptionSections.lead}</p>
+                )}
+                {descriptionSections.body && (
+                  <p className={descriptionSections.lead ? 'mt-1' : undefined}>
+                    {descriptionSections.body}
+                  </p>
+                )}
+              </div>
+            )}
+            {descriptionSections && hasSegmentDetail(card) && (
+              <hr className="border-gray-200" />
+            )}
+            {hasSegmentDetail(card) && (
+              <HostPortalSessionSegmentsPanel
+                card={card}
+                config={config}
+                variant="inline"
+                layout="grid"
+              />
+            )}
           </div>
         )}
       </HostPortalV2Collapse>

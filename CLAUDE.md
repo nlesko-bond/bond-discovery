@@ -2,7 +2,7 @@
 
 ## What this is
 
-Bond Discovery renders sports-program **discovery pages** for Bond Sports customers. A partner site adds one script tag (the **host kit**, `public/bond-host/v1.js`) and a `data-bond-host` div; the kit mounts an iframe to `/portal/{slug}`, sizes it via postMessage, opens checkout in a new tab on the partner's own URL, and forwards Bond checkout conversion events into the partner's GTM `dataLayer`. Page configs live in Supabase (`discovery_pages`), edited via the `/admin` UI. Event data comes from the Bond Public API through a cron-warmed KV cache so live pages never wait on Bond. (A legacy **embed kit** — `public/embed-kit/v1.js`, `/embed/{slug}`, `/api/embed/*` — is still deployed but DEPRECATED; new integrations use the host kit.)
+Bond Discovery renders sports-program **discovery pages** for Bond Sports customers. A partner site adds one script tag (the **host kit**, `public/bond-host/v1.js`) and a `data-bond-host` div; the kit mounts an iframe to `/portal/{slug}`, sizes it via postMessage, opens checkout in a new tab on the partner's own URL, and forwards Bond checkout conversion events into the partner's GTM `dataLayer`. Page configs live in Supabase (`discovery_pages`), edited via the `/admin` UI. Event data comes from the Bond Public API through a cron-warmed KV cache so live pages never wait on Bond. The legacy embed kit has been removed; `/embed/{slug}` redirects to `/{slug}`.
 
 ## Commands
 
@@ -22,7 +22,7 @@ npm run check:env    # report which env vars are set (never prints values)
 |---|---|
 | `public/bond-host/v1.js` | The host kit — live on partner sites. ES5, no build step, no bundler. |
 | `app/portal/[slug]/` + `components/host-shell/` | Discovery UI rendered inside the partner iframe |
-| `app/[slug]/`, `app/embed/[slug]/` | Direct-link page; deprecated embed-kit page |
+| `app/[slug]/` | Direct-link discovery page |
 | `app/api/events/route.ts` | Public events API (precomputed fast path + full-pipeline fallback) |
 | `lib/cache.ts` | KV/memory cache, key formats, SWR helpers, invalidation |
 | `app/api/cron/warm-discovery/route.ts` + `lib/discovery-warm.ts` | Cron warm pipeline (scope-grouped, empty-write guard) |

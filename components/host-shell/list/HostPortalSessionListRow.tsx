@@ -16,6 +16,7 @@ import { HostPortalSessionInfoDialog } from './HostPortalSessionInfoDialog';
 import { resolvePortalScheduleLinkTarget } from '@/lib/host-shell/portal-schedule-events';
 import { getBondRegisterLinkAnalyticsAttributes } from '@/lib/host-shell/registration-analytics';
 import { HostPortalSportIcon } from '../HostPortalSportIcon';
+import { HostPortalV2TieredPricingLine } from '../v2/HostPortalV2TieredPricingLine';
 import { cn } from '@/lib/utils';
 
 const CLOSED_REGISTER_BACKGROUND = '#9CA3AF';
@@ -435,6 +436,9 @@ export function HostPortalSessionListRow({
                       {card.startingPriceLabel}
                     </span>
                   </p>
+                )}
+                {card.tieredPricingLabel && (
+                  <HostPortalV2TieredPricingLine label={card.tieredPricingLabel} />
                 )}
                 {showSessionRegister && (
                   <a

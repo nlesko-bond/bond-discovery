@@ -7,6 +7,7 @@ import {
   getGenderLabel,
 } from '@/lib/utils';
 import { computeSessionWeekCount } from '@/lib/host-shell/portal-list-layout';
+import { resolveSessionTieredPricingLabel } from '@/lib/host-shell/portal-tiered-pricing';
 
 export interface IHostPortalProductRow {
   id: string;
@@ -50,6 +51,8 @@ export interface IHostPortalSessionCardModel {
   registerProductId?: string;
   hasMultipleRegisterOptions: boolean;
   startingPriceLabel?: string;
+  /** Display-only early-bird / late-fee copy when showTieredSessionPricing is enabled. */
+  tieredPricingLabel?: string;
   isSegmented: boolean;
   organizationId?: string;
   startDate?: string;
@@ -280,6 +283,7 @@ export function buildHostPortalSessionCards(
 ): IHostPortalSessionCardModel[] {
   const showAgeGender = config.features.showAgeGender !== false;
   const showPricing = config.features.showPricing !== false;
+  const showTieredSessionPricing = config.features.showTieredSessionPricing === true;
   const customRegistrationUrl = config.features.customRegistrationUrl;
   const cards: IHostPortalSessionCardModel[] = [];
 
@@ -294,9 +298,14 @@ export function buildHostPortalSessionCards(
       const ageMax = session.maxAge ?? session.ageMax ?? program.ageMax;
       const gender = session.gender;
 
-      const products = getProductsFromSession(session).map((product) =>
+      const sessionProducts = getProductsFromSession(session);
+      const products = sessionProducts.map((product) =>
         mapProductRow(product, baseLink, registerDisabled, customRegistrationUrl),
       );
+      const tieredPricingLabel =
+        showPricing && showTieredSessionPricing
+          ? resolveSessionTieredPricingLabel(sessionProducts)
+          : undefined;
       const registerAction = resolveSessionRegisterAction(
         products,
         baseLink,
@@ -338,6 +347,7 @@ export function buildHostPortalSessionCards(
         isClosed,
         isRegistrationOpen: !registerDisabled,
         startingPriceLabel: showPricing ? resolveStartingPriceLabel(products) : undefined,
+        tieredPricingLabel,
         isSegmented: Boolean(session.isSegmented),
         organizationId: program.organizationId,
         segments: mapSegmentRows(getSegmentsFromSession(session)),

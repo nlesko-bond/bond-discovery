@@ -158,9 +158,15 @@ export function resolvePortalV2SessionRowColumns(
     return true;
   });
 
-  const deduped = columns.filter(
+  let deduped = columns.filter(
     (column, index) => columns.indexOf(column) === index,
   );
+
+  const displayMode = resolvePortalDisplayMode(config.features.portalDisplayMode);
+  if (displayMode === 'sessions') {
+    deduped = deduped.filter((column) => column !== 'program');
+  }
+
   return deduped.includes('event') ? deduped : ['event', ...deduped];
 }
 

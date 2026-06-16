@@ -404,7 +404,16 @@ export function PageEditorProgramsSection({
 
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
         <div className="text-sm font-medium text-gray-900">Table columns</div>
-        <p className="mt-1 text-xs text-gray-500">Controls which columns appear in schedule table view. Default: all columns.</p>
+        <p className="mt-1 text-xs text-gray-500">
+          Controls schedule table columns and, when the portal uses the V2 rows card style,
+          session-level row columns (time and space are ignored at session level).
+        </p>
+        {config.features.portalTemplate === 'v2' && config.features.portalCardStyle === 'rows' && (
+          <p className="mt-2 rounded-md border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs text-indigo-900">
+            Rows layout: uncheck Program when sessions are shown flat (e.g. Coppermine). Session
+            name is always shown.
+          </p>
+        )}
         <div className="mt-3 grid grid-cols-2 gap-2">
           {TABLE_COLUMNS.map((column) => (
             <label key={column.id} className="flex items-center gap-2 text-sm text-gray-700">

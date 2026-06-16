@@ -42,7 +42,7 @@ admin-auth bypass (`ADMIN_AUTH_BYPASS=true`, development only).
 |---|---|
 | `/{slug}` | Direct-link discovery page |
 | `/portal/{slug}` | Discovery UI rendered inside the partner-site iframe (host kit) |
-| `/embed/{slug}` | **Deprecated** embed-kit page (pending removal) |
+| `/embed/{slug}` | **Retired** — permanent redirect to `/{slug}` |
 | `/admin` | Page management (NextAuth Google + `ADMIN_ALLOWED_EMAILS`) |
 | `/api/events`, `/api/programs`, `/api/schedule` | Public data APIs (cached) |
 | `/api/cron/warm-discovery` | Cache warm cron (every 15 min, `CRON_SECRET`-gated) |

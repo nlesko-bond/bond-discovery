@@ -1,6 +1,6 @@
 # Bond on your website — integration guide
 
-One-time setup to show Bond **programs** and **registration** on your domain (e.g. Webflow). Bond analytics run inside Bond iframes. This guide does not change your existing `discovery.bondsports.co/{slug}` direct link. The host kit described here is the **supported** integration path; the legacy in-page embed kit (`embed-kit/v1.js`) is **deprecated, pending removal** — do not use it for new setups.
+One-time setup to show Bond **programs** and **registration** on your domain (e.g. Webflow). Bond analytics run inside Bond iframes. This guide does not change your existing `discovery.bondsports.co/{slug}` direct link. The **host kit** (`bond-host/v1.js`) is the only supported integration path; the legacy embed kit has been retired.
 
 **Also read:** [Analytics (discovery + checkout)](./analytics-discovery-and-host-shell.md) · [Portal UI roadmap](./portal-session-first-design-spec.md)
 
@@ -152,7 +152,7 @@ Do **not** use scripts that read inside the Bond iframe DOM (cross-origin).
 | Item | Status |
 |------|-----------|
 | `discovery.bondsports.co/{slug}` | Direct link — unchanged |
-| Embed kit `embed-kit/v1.js` | **Deprecated** — still live for existing pages, pending removal; migrate to the host kit |
+| Embed kit `embed-kit/v1.js` | **Retired** — use the host kit; `/embed/{slug}` redirects to `/{slug}` |
 | Cloudflare pretty URLs | Optional later |
 
 ---

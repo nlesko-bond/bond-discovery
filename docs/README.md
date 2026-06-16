@@ -19,12 +19,9 @@ Agent/contributor onboarding lives at the repo root: [`CLAUDE.md`](../CLAUDE.md)
 | [partner-host-integration.md](./partner-host-integration.md) | Partners / Webflow — host kit (`bond-host/v1.js`) setup |
 | [analytics-discovery-and-host-shell.md](./analytics-discovery-and-host-shell.md) | Engineering + analytics — events, GTM, internal tracking |
 
-> **Embed kit is deprecated.** The legacy in-page embed kit
-> (`public/embed-kit/v1.js`, `/embed/{slug}`, `/api/embed/*`) is still
-> deployed but pending removal (plan 007). New integrations must use the host
-> kit per [partner-host-integration.md](./partner-host-integration.md). The
-> old operator guide is [`public/docs/webflow-embed-kit.md`](../public/docs/webflow-embed-kit.md)
-> (banner-marked deprecated).
+> **Embed kit retired.** The legacy in-page embed kit has been removed; use the
+> [host kit](./partner-host-integration.md). `/embed/{slug}` redirects to the
+> public discovery page for bookmarked URLs.
 
 ## Design / roadmap
 

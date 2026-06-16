@@ -32,7 +32,7 @@ function MetaChipOnColor({ icon, label }: { icon: ReactNode; label: string }) {
       <span className="flex h-4 w-4 shrink-0 items-center justify-center text-white/90">
         {icon}
       </span>
-      <span className="truncate">{label}</span>
+      <span className="break-words">{label}</span>
     </span>
   );
 }

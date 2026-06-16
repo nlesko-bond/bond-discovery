@@ -37,6 +37,21 @@ const nextConfig = {
   },
   
   // Headers for caching and security
+  async redirects() {
+    return [
+      {
+        source: '/embed/memberships/:slug',
+        destination: '/memberships/:slug',
+        permanent: true,
+      },
+      {
+        source: '/embed/:slug',
+        destination: '/:slug',
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     return [
       // Discovery pages - cache with revalidation
@@ -68,24 +83,6 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: 'frame-ancestors *',
-          },
-          {
-            key: 'Cache-Control',
-            value: 'public, s-maxage=300, stale-while-revalidate=600',
-          },
-        ],
-      },
-      // Embed pages - allow iframe embedding
-      {
-        source: '/embed/:path*',
-        headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'ALLOWALL',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: "frame-ancestors *",
           },
           {
             key: 'Cache-Control',

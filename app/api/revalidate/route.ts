@@ -40,7 +40,6 @@ export async function GET(request: Request) {
       
       // Revalidate the specific page paths
       revalidatePath(`/${slug}`);
-      revalidatePath(`/embed/${slug}`);
       
       return NextResponse.json({ 
         success: true, 

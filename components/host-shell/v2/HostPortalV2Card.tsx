@@ -16,6 +16,7 @@ import { bondAnalytics } from '@/lib/analytics';
 import { getBondRegisterLinkAnalyticsAttributes } from '@/lib/host-shell/registration-analytics';
 import { resolvePortalScheduleLinkTarget } from '@/lib/host-shell/portal-schedule-events';
 import { HostPortalSportIcon } from '../HostPortalSportIcon';
+import { HostPortalV2TieredPricingLine } from './HostPortalV2TieredPricingLine';
 
 const CLOSED_REGISTER_BACKGROUND = '#9CA3AF';
 
@@ -203,6 +204,9 @@ export function HostPortalV2Card({
               </p>
             )}
           </div>
+        )}
+        {card.tieredPricingLabel && (
+          <HostPortalV2TieredPricingLine label={card.tieredPricingLabel} />
         )}
 
         {detailsOpen && (

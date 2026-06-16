@@ -13,6 +13,7 @@ import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
 import { getBondRegisterLinkAnalyticsAttributes } from '@/lib/host-shell/registration-analytics';
 import { resolvePortalScheduleLinkTarget } from '@/lib/host-shell/portal-schedule-events';
+import { HostPortalV2TieredPricingLine } from './v2/HostPortalV2TieredPricingLine';
 
 const CLOSED_REGISTER_BACKGROUND = '#9CA3AF';
 
@@ -114,6 +115,9 @@ export function HostPortalSessionCard({
           <p className="text-base font-bold tabular-nums" style={{ color: primaryColor }}>
             {collapsedPriceLabel}
           </p>
+        )}
+        {card.tieredPricingLabel && (
+          <HostPortalV2TieredPricingLine label={card.tieredPricingLabel} />
         )}
         {showPricingOptions && !pricingOpen && (
           <button

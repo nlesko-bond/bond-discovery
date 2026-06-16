@@ -345,7 +345,7 @@ describe('rows style — tableColumns-driven session rows', () => {
   }
 
   it('renders session-level cells in the configured column order (time dropped, never fabricated)', () => {
-    const { container } = renderRows([makeMultiSegmentCard()]);
+    const { container } = renderRows([makeMultiSegmentCard()], makeConfig({ portalDisplayMode: 'programs' }));
     const row = screen.getByTestId('portal-v2-card');
     expect(row).toHaveAttribute('data-card-style', 'rows');
     const cells = Array.from(row.querySelectorAll('[data-portal-v2-cell]')).map((cell) =>
@@ -369,16 +369,41 @@ describe('rows style — tableColumns-driven session rows', () => {
     expect(container.textContent).not.toMatch(CLOCK_TIME_PATTERN);
   });
 
-  it('expands the existing segments panel beneath the row', () => {
-    renderRows([makeMultiSegmentCard()]);
-    const chip = screen.getByTestId('portal-v2-segments-chip');
-    expect(chip).toHaveTextContent('3 segments');
-    fireEvent.click(chip);
+  it('drops the program column in portal sessions display mode', () => {
+    renderRows([makeMultiSegmentCard()], makeConfig({ portalDisplayMode: 'sessions' }));
+    const cells = Array.from(
+      screen.getByTestId('portal-v2-card').querySelectorAll('[data-portal-v2-cell]'),
+    ).map((cell) => cell.getAttribute('data-portal-v2-cell'));
+    expect(cells).not.toContain('program');
+  });
+
+  it('expands description and segments when the row is clicked', () => {
+    renderRows([
+      makeMultiSegmentCard({
+        description: 'Skills-focused fall session for all levels.',
+      }),
+    ]);
+    expect(screen.queryByText('Skills-focused fall session for all levels.')).not.toBeInTheDocument();
+    expect(screen.queryByText(/view segments/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /fall rec soccer\. more info/i }));
+    expect(screen.getByTestId('portal-v2-row-expanded')).toBeInTheDocument();
+    expect(screen.getByText('Skills-focused fall session for all levels.')).toBeInTheDocument();
     expect(screen.getByText('September block')).toBeInTheDocument();
     expect(screen.getByLabelText('Segments for Fall Rec Soccer')).toBeInTheDocument();
   });
 
-  it('shows the variable-schedule affordance for non-segmented sessions', () => {
+  it('shows tiered pricing in the action column when present on the card model', () => {
+    renderRows([
+      makeMultiSegmentCard({
+        tieredPricingLabel: 'Early bird $99 until Sep 15, 2026',
+      }),
+    ]);
+    expect(screen.getByTestId('portal-v2-tiered-pricing')).toHaveTextContent(
+      'Early bird $99 until Sep 15, 2026',
+    );
+  });
+
+  it('shows the variable-schedule affordance for non-segmented sessions without detail', () => {
     renderRows([makeVariableScheduleCard()]);
     expect(screen.getByTestId('portal-v2-variable-schedule')).toHaveTextContent(
       'Variable schedule',

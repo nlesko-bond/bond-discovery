@@ -27,10 +27,11 @@ pipeline writes only).
 | 004 | Trim discovery GTM events to page_view + register clicks | P2 | M | 003 | DONE |
 | 005 | True staging environment (Vercel + Supabase + KV + cron) | P1 | M | — | DONE |
 | 006 | Caching hardening: warm-on-create, dedupe drift files, invalidation coverage, programs SWR | P2 | M | 002 | DONE |
-| 007 | Remove the embed kit safely | P2 | M | 002, 005 | BLOCKED (needs operator: embed-kit traffic evidence from Vercel logs) |
+| 007 | Remove the embed kit safely | P2 | M | 002, 005 | DONE |
 | 008 | Admin settings UI restructure (9 sections → 5) | P2 | M–L | 001, 007 | DONE |
 | 009 | Discovery page templates — visual upgrade, mobile-first | P2 | L | 005, 007 | BUILT — in operator preview review (v2 behind portalTemplate flag) |
 | 010 | Production-readiness sweep + docs consolidation | P3 | M | 001–009 | DONE |
+| 011 | Build "Bond Labs" — zero-config internal hosting + API platform (NEW repo `bond-labs`, labs.bondsports.co) | P1 | L | — (operator prerequisites listed in plan) | DEPLOYED + EXTENDED — live behind SSO with landing redesign, Bondy mascot, ⌘K palette, drag-drop deploy, reactions/badges/awards, dark mode + WCAG AA, deploy versioning + rollback, public/private sites (fail-closed), MCP server + /connect editor integrations, Friends of the Lab. Migrations 001–003 applied. Remaining: Snowflake creds (Phase D env-gated), npm publish of @bondsports/labs, LABS_RO before company-wide launch |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with rationale)
 
@@ -43,6 +44,7 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - 008 requires 001 (don't polish an unauthenticated admin) and coordinates with 007 (Embed section removal — whoever runs first does it).
 - 009 requires 005 and ideally 007 (do the visual work once); it is the largest and most user-visible plan — staging screenshots + operator approval before production.
 - 010 runs last and documents what actually shipped.
+- 011 is independent of 001–010 and touches nothing in bond-discovery except this index. It creates a NEW repo (`bond-labs`, separate Vercel project + Supabase project, domain labs.bondsports.co) modeled on Shopify's internal "Quick" platform; bond-discovery is only the pattern source (auth, supabase, KV, check-env, host-kit versioning, bond-* design tokens). Its operator prerequisites (domain, OAuth client, Supabase project, Anthropic key, Snowflake read-only role) are listed in the plan and gate its phases, not the other plans.
 
 ## Key audit findings behind these plans (evidence verified by direct read)
 
@@ -69,5 +71,5 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - Confirm production Vercel env vars exist for Supabase before plan 005 removes the hardcoded fallbacks (its STOP condition covers this).
 - Confirm `CRON_SECRET` is set in production Vercel before plan 002's fail-closed auth merges.
 - Rotate the Supabase anon key after an RLS policy review (key is in git history).
-- Provide embed-kit traffic evidence (Vercel logs) for plan 007's usage gate.
+- Provide embed-kit traffic evidence (Vercel logs) for plan 007's usage gate. *(Plan 007 completed — operator approved removal; legacy `/embed/*` redirects remain in `next.config.js`.)*
 - Approve staging screenshots before plan 009 ships to production.

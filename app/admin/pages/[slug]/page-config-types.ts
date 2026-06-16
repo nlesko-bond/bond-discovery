@@ -78,6 +78,7 @@ export interface IPageConfig {
     memberPricingStyle?: MemberPricingStyle;
     portalCardStyle?: PortalCardStyle;
     portalDisplayMode?: PortalDisplayMode;
+    showTieredSessionPricing?: boolean;
     discoveryCacheEnabled?: boolean;
     availabilityCacheTtl?: number;
     discoveryRefreshPolicy?: '5min' | '15min' | '30min' | '60min';

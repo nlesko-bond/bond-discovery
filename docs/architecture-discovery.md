@@ -4,9 +4,8 @@ How a partner page turns into a rendered, cached, measured discovery experience.
 Every TTL and key format below is cited from code — when you change
 `lib/cache.ts`, grep this doc for the old value.
 
-> Status note: the legacy **embed kit** (`public/embed-kit/v1.js`, `/embed/{slug}`,
-> `/api/embed/*`) is **deprecated, pending removal** (plan 007 not yet executed).
-> The host kit is the supported path for all new integrations.
+> Status note: the legacy **embed kit** has been **removed** (plan 007). `/embed/{slug}`
+> URLs redirect to `/{slug}`; use the **host kit** for all new integrations.
 
 ## Request flow
 

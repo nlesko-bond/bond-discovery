@@ -91,7 +91,7 @@ export function buildHostBootstrapPayload(
     checkoutLandingPath: host.checkoutLandingPath,
     paths: {
       portalDiscoveryUrl: `${discoveryOrigin}/portal/${encodeURIComponent(config.slug)}`,
-      discoveryBootstrapUrl: `${discoveryOrigin}/api/embed/bootstrap?slug=${encodeURIComponent(config.slug)}`,
+      discoveryBootstrapUrl: `${discoveryOrigin}/api/host/bootstrap?slug=${encodeURIComponent(config.slug)}`,
       hostBootstrapUrl: `${discoveryOrigin}/api/host/bootstrap?slug=${encodeURIComponent(config.slug)}`,
     },
     branding: {

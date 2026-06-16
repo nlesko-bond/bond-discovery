@@ -188,4 +188,18 @@ describe('resolvePortalV2SessionRowColumns', () => {
       'action',
     ]);
   });
+
+  it('drops program when portalDisplayMode is sessions', () => {
+    const config = makeConfig({
+      tableColumns: coppermineColumns,
+      portalDisplayMode: 'sessions',
+    });
+    expect(resolvePortalV2SessionRowColumns(config)).toEqual([
+      'date',
+      'event',
+      'location',
+      'spots',
+      'action',
+    ]);
+  });
 });

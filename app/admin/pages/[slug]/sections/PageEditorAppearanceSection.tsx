@@ -594,6 +594,33 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
               </div>
             )}
             {config.features.portalTemplate === 'v2' && (
+              <label className="flex items-start gap-3 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 rounded border-gray-300"
+                  checked={config.features.showTieredSessionPricing === true}
+                  onChange={(event) =>
+                    setConfig({
+                      ...config,
+                      features: {
+                        ...config.features,
+                        showTieredSessionPricing: event.target.checked,
+                      },
+                    })
+                  }
+                />
+                <span>
+                  <span className="font-medium text-gray-900">
+                    Show early bird / late fee pricing on sessions
+                  </span>
+                  <span className="mt-1 block text-xs text-gray-500">
+                    When the API returns tiered product prices, session cards and rows show a
+                    short label (e.g. early bird rate until a date).
+                  </span>
+                </span>
+              </label>
+            )}
+            {config.features.portalTemplate === 'v2' && (
               <div>
                 <label className="label">Member price style (temporary)</label>
                 <select

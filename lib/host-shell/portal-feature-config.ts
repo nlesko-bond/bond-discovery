@@ -152,6 +152,7 @@ export function normalizePortalFeatureFields(
   | 'memberPricingStyle'
   | 'portalCardStyle'
   | 'portalDisplayMode'
+  | 'showTieredSessionPricing'
 > {
   const hostPortalLayout = resolveHostPortalLayout(features);
   const portalTemplate = resolvePortalTemplate(features);
@@ -159,6 +160,11 @@ export function normalizePortalFeatureFields(
   const memberPricingStyle = resolveMemberPricingStyle(features);
   const portalCardStyle = resolvePortalCardStyle(features);
   const portalDisplayMode = resolvePortalDisplayMode(features);
+  const showTieredSessionPricing = resolveOptionalBoolean(
+    features,
+    'showTieredSessionPricing',
+    'show_tiered_session_pricing',
+  );
   const portalAccentSource = resolvePortalAccentSource(features);
   const portalSessionLayoutDefault = resolvePortalSessionLayoutDefault(features);
   const allowPortalSessionLayoutToggle = resolveOptionalBoolean(
@@ -195,6 +201,7 @@ export function normalizePortalFeatureFields(
     ...(memberPricingStyle !== undefined && { memberPricingStyle }),
     ...(portalCardStyle !== undefined && { portalCardStyle }),
     ...(portalDisplayMode !== undefined && { portalDisplayMode }),
+    ...(showTieredSessionPricing !== undefined && { showTieredSessionPricing }),
   };
 }
 

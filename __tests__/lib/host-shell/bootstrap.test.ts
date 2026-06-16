@@ -34,5 +34,9 @@ describe('buildHostBootstrapPayload', () => {
       'https://discovery.test/portal/test-page',
     );
     expect(payload.slug).toBe('test-page');
+    expect(payload.paths.hostBootstrapUrl).toBe(
+      'https://discovery.test/api/host/bootstrap?slug=test-page',
+    );
+    expect(payload.paths.discoveryBootstrapUrl).toBe(payload.paths.hostBootstrapUrl);
   });
 });

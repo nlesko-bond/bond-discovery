@@ -1,5 +1,8 @@
 import type { DiscoveryConfig } from '@/types';
 
+// Named for the retired embed kit but load-bearing: validates cross-origin browser
+// access to /api/events for host-kit and direct integrations via embedAllowedOrigins.
+
 export interface IEmbedKitCorsHeaderOptions {
   /**
    * When the browser `Origin` is not on `embedAllowedOrigins`, still echo that

@@ -521,6 +521,8 @@ export interface FeatureConfig {
   portalCardStyle?: PortalCardStyle;
   /** v2 programs-vs-sessions display mode. Default 'auto' (sessions when one program). */
   portalDisplayMode?: PortalDisplayMode;
+  /** When true, show early-bird / late-fee pricing labels on session cards and rows. */
+  showTieredSessionPricing?: boolean;
   /** Layout for iframe-free embed kit (`/embed-kit/v1`) */
   embedPortalTemplate?: BondEmbedPortalTemplate;
   /** When set, browser `Origin` must match one entry for embed-kit CORS */

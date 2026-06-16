@@ -107,5 +107,3 @@ export default async function MembershipPage({ params }: PageProps) {
     />
   );
 }
-
-export { emptyPageData };
