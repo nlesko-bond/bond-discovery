@@ -4,8 +4,32 @@ export interface ISessionDescriptionSections {
 }
 
 function normalizeDescriptionText(value?: string): string | undefined {
-  const trimmed = value?.trim();
+  const trimmed = decodeBasicHtmlEntities(value?.trim() ?? '');
   return trimmed || undefined;
+}
+
+const BASIC_HTML_ENTITY_PATTERN =
+  /&(?:amp|ndash|mdash|lt|gt|quot|apos|nbsp|#39|#x2013|#8211);/gi;
+
+const BASIC_HTML_ENTITY_VALUES: Record<string, string> = {
+  '&amp;': '&',
+  '&ndash;': '–',
+  '&mdash;': '—',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&apos;': "'",
+  '&#39;': "'",
+  '&nbsp;': ' ',
+  '&#8211;': '–',
+  '&#x2013;': '–',
+};
+
+function decodeBasicHtmlEntities(value: string): string {
+  return value.replace(BASIC_HTML_ENTITY_PATTERN, (entity) => {
+    const normalized = entity.toLowerCase();
+    return BASIC_HTML_ENTITY_VALUES[normalized] ?? entity;
+  });
 }
 
 export function hasHostPortalSessionDescription(

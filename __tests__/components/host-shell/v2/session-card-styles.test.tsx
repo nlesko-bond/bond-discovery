@@ -387,6 +387,7 @@ describe('rows style — tableColumns-driven session rows', () => {
     expect(screen.queryByText(/view segments/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /fall rec soccer\. more info/i }));
     expect(screen.getByTestId('portal-v2-row-expanded')).toBeInTheDocument();
+    expect(screen.getByTestId('portal-v2-row-description')).toBeInTheDocument();
     expect(screen.getByText('Skills-focused fall session for all levels.')).toBeInTheDocument();
     expect(screen.getByText('September block')).toBeInTheDocument();
     expect(screen.getByLabelText('Segments for Fall Rec Soccer')).toBeInTheDocument();

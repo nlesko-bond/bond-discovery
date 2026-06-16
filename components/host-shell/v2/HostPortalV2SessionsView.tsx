@@ -26,6 +26,7 @@ import {
   HostPortalSessionSegmentsPanel,
   type IHostPortalSegmentsPanelActions,
 } from '../HostPortalSessionSegmentsPanel';
+import { HostPortalV2RowDescriptionPanel } from './HostPortalV2RowDescriptionPanel';
 import { HostPortalSportIcon } from '../HostPortalSportIcon';
 import { HostPortalV2Collapse } from './ui/HostPortalV2Collapse';
 import { HostPortalV2TieredPricingLine } from './HostPortalV2TieredPricingLine';
@@ -675,19 +676,7 @@ function HostPortalV2SessionRow({
         {segmentsOpen && expandable && (
           <div className="space-y-3 px-3 pb-3 sm:px-4" data-testid="portal-v2-row-expanded">
             {descriptionSections && (
-              <div className="text-sm leading-relaxed text-gray-600">
-                {descriptionSections.lead && (
-                  <p className="font-medium text-gray-800">{descriptionSections.lead}</p>
-                )}
-                {descriptionSections.body && (
-                  <p className={descriptionSections.lead ? 'mt-1' : undefined}>
-                    {descriptionSections.body}
-                  </p>
-                )}
-              </div>
-            )}
-            {descriptionSections && hasSegmentDetail(card) && (
-              <hr className="border-gray-200" />
+              <HostPortalV2RowDescriptionPanel card={card} sections={descriptionSections} />
             )}
             {hasSegmentDetail(card) && (
               <HostPortalSessionSegmentsPanel

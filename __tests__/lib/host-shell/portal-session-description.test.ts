@@ -38,4 +38,10 @@ describe('formatHostPortalSessionDescription', () => {
       body: 'Intro with additional paragraphs',
     });
   });
+
+  it('decodes common HTML entities in description text', () => {
+    expect(formatHostPortalSessionDescription(undefined, 'Ages 3&ndash;6 welcome')).toEqual({
+      body: 'Ages 3–6 welcome',
+    });
+  });
 });
