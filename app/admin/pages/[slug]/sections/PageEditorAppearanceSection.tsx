@@ -1,18 +1,98 @@
 'use client';
 
 import {
-  PortalSessionLayoutEnum,
   type MemberPricingStyle,
-  type PortalCardStyle,
   type PortalDisplayMode,
   type PortalRowColumn,
-  type PortalRowExpandMode,
-  type PortalTemplate,
 } from '@/types';
 import { PortalSessionsBrandingControls } from '../components/PortalSessionsBrandingControls';
 import { SurfaceBadge } from '../components/SurfaceBadge';
 import { PORTAL_ROW_COLUMNS } from '../page-config-types';
-import type { IPageEditorSectionProps } from '../page-config-types';
+import type { IPageConfig, IPageEditorSectionProps } from '../page-config-types';
+
+type PortalView = 'rows' | 'stacked' | 'classic' | 'list' | 'legacy';
+
+function derivePortalView(config: IPageConfig): PortalView {
+  if (config.features.portalTemplate === 'v2') {
+    const style = config.features.portalCardStyle;
+    if (style === 'rows') return 'rows';
+    if (style === 'stacked') return 'stacked';
+    if (style === 'list') return 'list';
+    return 'classic';
+  }
+  return 'legacy';
+}
+
+function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
+  const base = {
+    ...config,
+    features: {
+      ...config.features,
+      portalSessionLayoutDefault: undefined,
+      allowPortalSessionLayoutToggle: undefined,
+    },
+  };
+  switch (view) {
+    case 'rows':
+      return {
+        ...base,
+        features: {
+          ...base.features,
+          hostPortalLayout: 'sessions_list' as const,
+          portalTemplate: 'v2' as const,
+          portalCardStyle: 'rows' as const,
+        },
+      };
+    case 'stacked':
+      return {
+        ...base,
+        features: {
+          ...base.features,
+          hostPortalLayout: 'sessions_list' as const,
+          portalTemplate: 'v2' as const,
+          portalCardStyle: 'stacked' as const,
+          portalRowColumns: undefined,
+          portalRowExpandMode: undefined,
+        },
+      };
+    case 'classic':
+      return {
+        ...base,
+        features: {
+          ...base.features,
+          hostPortalLayout: 'sessions_list' as const,
+          portalTemplate: 'v2' as const,
+          portalCardStyle: undefined,
+          portalRowColumns: undefined,
+          portalRowExpandMode: undefined,
+        },
+      };
+    case 'list':
+      return {
+        ...base,
+        features: {
+          ...base.features,
+          hostPortalLayout: 'sessions_list' as const,
+          portalTemplate: 'v2' as const,
+          portalCardStyle: 'list' as const,
+          portalRowColumns: undefined,
+          portalRowExpandMode: undefined,
+        },
+      };
+    case 'legacy':
+      return {
+        ...base,
+        features: {
+          ...base.features,
+          hostPortalLayout: 'legacy_programs' as const,
+          portalTemplate: undefined,
+          portalCardStyle: undefined,
+          portalRowColumns: undefined,
+          portalRowExpandMode: undefined,
+        },
+      };
+  }
+}
 
 export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSectionProps) {
   return (
@@ -399,413 +479,325 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
       </div>
 
       <div>
-        <h3 className="mb-1 font-semibold text-gray-900">Portal overrides</h3>
+        <h3 className="mb-1 font-semibold text-gray-900">Portal view</h3>
         <p className="mb-4 text-sm text-gray-600">
-          Layout and branding that apply only to{' '}
-          <code className="rounded bg-gray-100 px-1 text-xs">/portal/&#123;slug&#125;</code>. Public
-          /&#123;slug&#125; and embeds are unchanged.
+          Layout for{' '}
+          <code className="rounded bg-gray-100 px-1 text-xs">/portal/&#123;slug&#125;</code>.
+          Public <code className="rounded bg-gray-100 px-1 text-xs">/&#123;slug&#125;</code> and
+          embeds use the same setting.
         </p>
         <div className="space-y-4">
-          <div>
-            <label className="label">Portal discovery layout</label>
-            <select
-              className="input"
-              value={config.features.hostPortalLayout || 'legacy_programs'}
-              onChange={(event) =>
-                setConfig({
-                  ...config,
-                  features: {
-                    ...config.features,
-                    hostPortalLayout: event.target.value as
-                      | 'legacy_programs'
-                      | 'sessions_first'
-                      | 'sessions_list',
-                  },
-                })
-              }
-            >
-              <option value="legacy_programs">Legacy (program cards) — default</option>
-              <option value="sessions_first">Sessions first (grid cards)</option>
-              <option value="sessions_list">Sessions list (hero + rows)</option>
-            </select>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {(
+              [
+                {
+                  id: 'rows' as const,
+                  label: 'Rows',
+                  desc: 'Table-style rows with expand panels',
+                  preview: 'portalCardStyle=rows',
+                },
+                {
+                  id: 'stacked' as const,
+                  label: 'Stacked cards',
+                  desc: 'Modern grid cards with segment chip',
+                  preview: 'portalCardStyle=stacked',
+                },
+                {
+                  id: 'classic' as const,
+                  label: 'Classic cards',
+                  desc: 'Original session card grid',
+                  preview: 'portalCardStyle=classic',
+                },
+                {
+                  id: 'list' as const,
+                  label: 'List',
+                  desc: 'Compact hero-friendly list',
+                  preview: 'portalCardStyle=list',
+                },
+              ] satisfies Array<{ id: PortalView; label: string; desc: string; preview: string }>
+            ).map((view) => {
+              const isActive = derivePortalView(config) === view.id;
+              return (
+                <button
+                  key={view.id}
+                  type="button"
+                  onClick={() => setConfig(applyPortalView(config, view.id))}
+                  className={`rounded-xl border p-4 text-left transition-all ${
+                    isActive
+                      ? 'border-indigo-400 bg-indigo-50 shadow-sm ring-1 ring-indigo-300'
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                  }`}
+                >
+                  <p className={`text-sm font-semibold ${isActive ? 'text-indigo-700' : 'text-gray-900'}`}>
+                    {view.label}
+                    {view.id === 'rows' && (
+                      <span className="ml-2 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-600">
+                        New
+                      </span>
+                    )}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">{view.desc}</p>
+                  <p className="mt-2 truncate font-mono text-[10px] text-gray-400">
+                    ?portalTemplate=v2&amp;{view.preview}
+                  </p>
+                </button>
+              );
+            })}
           </div>
 
-          {(config.features.hostPortalLayout === 'sessions_list' ||
-            config.features.hostPortalLayout === 'sessions_first') && (
-            <div className="space-y-4 rounded-lg border border-gray-200 p-4">
-              <h4 className="text-sm font-semibold text-gray-900">Session list vs grid</h4>
-              <p className="text-xs text-gray-500">
-                Default presentation on the portal sessions shell. When the visitor toggle is
-                enabled, list/grid icons appear in the filter bar.
-              </p>
+          {derivePortalView(config) === 'legacy' && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              This page is using the legacy program cards layout. Select a view above to upgrade.
+            </div>
+          )}
+
+          {derivePortalView(config) !== 'legacy' && (
+            <button
+              type="button"
+              onClick={() => setConfig(applyPortalView(config, 'legacy'))}
+              className="text-xs text-gray-400 underline-offset-2 hover:text-gray-600 hover:underline"
+            >
+              Switch to legacy layout
+            </button>
+          )}
+
+          {derivePortalView(config) === 'rows' && (
+            <div className="space-y-4 rounded-lg border border-indigo-100 bg-indigo-50/40 p-4">
+              <h5 className="text-sm font-semibold text-gray-900">Rows configuration</h5>
+
               <div>
-                <label className="label">Default session view</label>
+                <label className="label">Row type</label>
+                <div className="space-y-2">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-indigo-200 bg-white p-3 text-sm shadow-sm">
+                    <input
+                      type="radio"
+                      className="mt-0.5"
+                      name="portalRowExpandMode"
+                      value="sessions"
+                      checked={
+                        !config.features.portalRowExpandMode ||
+                        config.features.portalRowExpandMode === 'sessions'
+                      }
+                      onChange={() =>
+                        setConfig({
+                          ...config,
+                          features: { ...config.features, portalRowExpandMode: undefined },
+                        })
+                      }
+                    />
+                    <span>
+                      <span className="font-medium text-gray-900">Sessions</span>
+                      <span className="mt-0.5 block text-xs text-gray-500">
+                        Each row is a session. Clicking expands to show schedule options (time
+                        slots and availability).
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex cursor-not-allowed items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm opacity-50">
+                    <input
+                      type="radio"
+                      className="mt-0.5"
+                      name="portalRowExpandMode"
+                      value="programs"
+                      disabled
+                    />
+                    <span>
+                      <span className="font-medium text-gray-500">
+                        Programs{' '}
+                        <span className="text-xs font-normal text-gray-400">— coming soon</span>
+                      </span>
+                      <span className="mt-0.5 block text-xs text-gray-400">
+                        Each row is a program. Clicking expands to show its sessions.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="label">Content grouping</label>
                 <select
                   className="input"
-                  value={
-                    config.features.portalSessionLayoutDefault ||
-                    (config.features.hostPortalLayout === 'sessions_first' ? 'grid' : 'list')
-                  }
-                  onChange={(event) =>
+                  value={config.features.portalDisplayMode || 'auto'}
+                  onChange={(event) => {
+                    const value = event.target.value as PortalDisplayMode;
                     setConfig({
                       ...config,
                       features: {
                         ...config.features,
-                        portalSessionLayoutDefault: event.target.value as 'list' | 'grid',
+                        portalDisplayMode: value === 'auto' ? undefined : value,
                       },
-                    })
-                  }
+                    });
+                  }}
                 >
-                  <option value={PortalSessionLayoutEnum.LIST}>List rows (hero-friendly)</option>
-                  <option value={PortalSessionLayoutEnum.GRID}>Grid cards</option>
+                  <option value="auto">Auto — flat when one program, grouped when many</option>
+                  <option value="sessions">Flat — all sessions in a single list</option>
+                  <option value="programs">
+                    Grouped — sessions organized under program headings
+                  </option>
                 </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Grouped hides the Program column (the heading already shows it).
+                </p>
               </div>
+
+              <div>
+                <label className="label">Columns</label>
+                <p className="mb-3 text-xs text-gray-500">
+                  Choose which columns appear. Session is always shown.
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {PORTAL_ROW_COLUMNS.map((col) => {
+                    const activeColumns: PortalRowColumn[] =
+                      config.features.portalRowColumns ?? PORTAL_ROW_COLUMNS.map((c) => c.id);
+                    const isChecked = activeColumns.includes(col.id);
+                    const isRequired = col.id === 'event';
+                    return (
+                      <label
+                        key={col.id}
+                        className={`flex items-start gap-3 rounded-lg border p-3 text-sm ${
+                          isRequired
+                            ? 'cursor-default border-gray-200 bg-gray-50 opacity-60'
+                            : 'cursor-pointer border-gray-200 bg-white hover:border-indigo-200'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-0.5 rounded border-gray-300"
+                          checked={isChecked}
+                          disabled={isRequired}
+                          onChange={(event) => {
+                            const next = event.target.checked
+                              ? [...activeColumns, col.id]
+                              : activeColumns.filter((c) => c !== col.id);
+                            const ordered = PORTAL_ROW_COLUMNS.map((c) => c.id).filter((c) =>
+                              next.includes(c),
+                            );
+                            setConfig({
+                              ...config,
+                              features: {
+                                ...config.features,
+                                portalRowColumns:
+                                  ordered.length === PORTAL_ROW_COLUMNS.length
+                                    ? undefined
+                                    : ordered,
+                              },
+                            });
+                          }}
+                        />
+                        <span>
+                          <span className="font-medium text-gray-900">{col.label}</span>
+                          <span className="mt-0.5 block text-xs text-gray-500">
+                            {col.hint}
+                            {isRequired && ' (always shown)'}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
               <label className="flex items-start gap-3 text-sm text-gray-700">
                 <input
                   type="checkbox"
                   className="mt-0.5 rounded border-gray-300"
-                  checked={config.features.allowPortalSessionLayoutToggle === true}
+                  checked={config.features.showTieredSessionPricing === true}
                   onChange={(event) =>
                     setConfig({
                       ...config,
                       features: {
                         ...config.features,
-                        allowPortalSessionLayoutToggle: event.target.checked,
+                        showTieredSessionPricing: event.target.checked,
                       },
                     })
                   }
                 />
                 <span>
                   <span className="font-medium text-gray-900">
-                    Allow visitors to switch list / grid
+                    Show early bird / late fee pricing
                   </span>
                   <span className="mt-1 block text-xs text-gray-500">
-                    Default: off. Hero banner appears only in list view.
+                    When the API returns tiered prices, rows show a short label (e.g. &quot;early
+                    bird until a date&quot;).
                   </span>
                 </span>
               </label>
             </div>
           )}
 
-          <div className="space-y-4 rounded-lg border border-gray-200 p-4">
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900">Discovery template</h4>
-              <p className="mt-1 text-xs text-gray-500">
-                Applies to /portal/&#123;slug&#125; and the public /&#123;slug&#125; page.
-                &quot;Current&quot; keeps existing rendering unchanged.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {derivePortalView(config) !== 'legacy' && derivePortalView(config) !== 'rows' && (
+            <div className="space-y-4">
               <div>
-                <label className="label">Template</label>
+                <label className="label">Content grouping</label>
                 <select
                   className="input"
-                  value={config.features.portalTemplate || 'current'}
+                  value={config.features.portalDisplayMode || 'auto'}
                   onChange={(event) => {
-                    const value = event.target.value as PortalTemplate;
+                    const value = event.target.value as PortalDisplayMode;
                     setConfig({
                       ...config,
                       features: {
                         ...config.features,
-                        portalTemplate: value === 'current' ? undefined : value,
+                        portalDisplayMode: value === 'auto' ? undefined : value,
                       },
                     });
                   }}
                 >
-                  <option value="current">Current</option>
-                  <option value="v2">V2 (redesigned)</option>
+                  <option value="auto">Auto — sessions when the page has one program</option>
+                  <option value="sessions">Flat — all sessions in a single list</option>
+                  <option value="programs">Grouped — sessions organized under program headings</option>
                 </select>
               </div>
-              {config.features.portalTemplate === 'v2' && (
-                <div>
-                  <label className="label">Card style / view</label>
-                  <select
-                    className="input"
-                    value={config.features.portalCardStyle || 'classic'}
-                    onChange={(event) => {
-                      const value = event.target.value as PortalCardStyle;
-                      setConfig({
-                        ...config,
-                        features: {
-                          ...config.features,
-                          portalCardStyle: value === 'classic' ? undefined : value,
-                          portalRowColumns:
-                            value !== 'rows' ? undefined : config.features.portalRowColumns,
-                          portalRowExpandMode:
-                            value !== 'rows' ? undefined : config.features.portalRowExpandMode,
-                        },
-                      });
-                    }}
-                  >
-                    <option value="classic">Cards — classic session card grid</option>
-                    <option value="stacked">Stacked — modern card with segment chip</option>
-                    <option value="rows">Rows — dense table-style rows with expand</option>
-                    <option value="list">List — compact hero-friendly list rows</option>
-                  </select>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Preview without saving:{' '}
-                    <code className="rounded bg-gray-100 px-1">?portalTemplate=v2&amp;portalCardStyle=rows</code>
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {config.features.portalTemplate === 'v2' &&
-              config.features.portalCardStyle === 'rows' && (
-                <div className="space-y-4 rounded-lg border border-indigo-100 bg-indigo-50/40 p-4">
-                  <h5 className="text-sm font-semibold text-gray-900">Rows configuration</h5>
-
-                  <div>
-                    <label className="label">Row type</label>
-                    <div className="space-y-2">
-                      <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-indigo-200 bg-white p-3 text-sm shadow-sm">
-                        <input
-                          type="radio"
-                          className="mt-0.5"
-                          name="portalRowExpandMode"
-                          value="sessions"
-                          checked={
-                            !config.features.portalRowExpandMode ||
-                            config.features.portalRowExpandMode === 'sessions'
-                          }
-                          onChange={() =>
-                            setConfig({
-                              ...config,
-                              features: {
-                                ...config.features,
-                                portalRowExpandMode: undefined,
-                              },
-                            })
-                          }
-                        />
-                        <span>
-                          <span className="font-medium text-gray-900">Sessions</span>
-                          <span className="mt-0.5 block text-xs text-gray-500">
-                            Each row is a session. Clicking expands to show schedule options
-                            (available time slots and availability).
-                          </span>
-                        </span>
-                      </label>
-                      <label className="flex cursor-not-allowed items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm opacity-50">
-                        <input
-                          type="radio"
-                          className="mt-0.5"
-                          name="portalRowExpandMode"
-                          value="programs"
-                          disabled
-                        />
-                        <span>
-                          <span className="font-medium text-gray-500">
-                            Programs{' '}
-                            <span className="text-xs font-normal text-gray-400">— coming soon</span>
-                          </span>
-                          <span className="mt-0.5 block text-xs text-gray-400">
-                            Each row is a program. Clicking expands to show its sessions.
-                          </span>
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="label">Content grouping</label>
-                    <select
-                      className="input"
-                      value={config.features.portalDisplayMode || 'auto'}
-                      onChange={(event) => {
-                        const value = event.target.value as PortalDisplayMode;
-                        setConfig({
-                          ...config,
-                          features: {
-                            ...config.features,
-                            portalDisplayMode: value === 'auto' ? undefined : value,
-                          },
-                        });
-                      }}
-                    >
-                      <option value="auto">
-                        Auto — flat when one program, grouped when many
-                      </option>
-                      <option value="sessions">Flat — all sessions in a single list</option>
-                      <option value="programs">
-                        Grouped — sessions organized under program headings
-                      </option>
-                    </select>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Grouped hides the Program column (the heading already shows it).
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="label">Columns</label>
-                    <p className="mb-3 text-xs text-gray-500">
-                      Choose which columns appear in the rows view. Session is always shown.
-                    </p>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      {PORTAL_ROW_COLUMNS.map((col) => {
-                        const activeColumns: PortalRowColumn[] =
-                          config.features.portalRowColumns ??
-                          PORTAL_ROW_COLUMNS.map((c) => c.id);
-                        const isChecked = activeColumns.includes(col.id);
-                        const isRequired = col.id === 'event';
-                        return (
-                          <label
-                            key={col.id}
-                            className={`flex items-start gap-3 rounded-lg border p-3 text-sm ${
-                              isRequired
-                                ? 'cursor-default border-gray-200 bg-gray-50 opacity-60'
-                                : 'cursor-pointer border-gray-200 bg-white hover:border-indigo-200'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              className="mt-0.5 rounded border-gray-300"
-                              checked={isChecked}
-                              disabled={isRequired}
-                              onChange={(event) => {
-                                const next = event.target.checked
-                                  ? [...activeColumns, col.id]
-                                  : activeColumns.filter((c) => c !== col.id);
-                                const ordered = PORTAL_ROW_COLUMNS.map((c) => c.id).filter(
-                                  (c) => next.includes(c),
-                                );
-                                const allOn =
-                                  ordered.length === PORTAL_ROW_COLUMNS.length;
-                                setConfig({
-                                  ...config,
-                                  features: {
-                                    ...config.features,
-                                    portalRowColumns: allOn ? undefined : ordered,
-                                  },
-                                });
-                              }}
-                            />
-                            <span>
-                              <span className="font-medium text-gray-900">{col.label}</span>
-                              <span className="mt-0.5 block text-xs text-gray-500">
-                                {col.hint}
-                                {isRequired && ' (always shown)'}
-                              </span>
-                            </span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <label className="flex items-start gap-3 text-sm text-gray-700">
-                    <input
-                      type="checkbox"
-                      className="mt-0.5 rounded border-gray-300"
-                      checked={config.features.showTieredSessionPricing === true}
-                      onChange={(event) =>
-                        setConfig({
-                          ...config,
-                          features: {
-                            ...config.features,
-                            showTieredSessionPricing: event.target.checked,
-                          },
-                        })
-                      }
-                    />
-                    <span>
-                      <span className="font-medium text-gray-900">
-                        Show early bird / late fee pricing
-                      </span>
-                      <span className="mt-1 block text-xs text-gray-500">
-                        When the API returns tiered product prices, rows show a short label
-                        (e.g. &quot;early bird until a date&quot;).
-                      </span>
-                    </span>
-                  </label>
-                </div>
-              )}
-
-            {config.features.portalTemplate === 'v2' &&
-              config.features.portalCardStyle !== 'rows' && (
-                <div>
-                  <label className="label">Content grouping</label>
-                  <select
-                    className="input"
-                    value={config.features.portalDisplayMode || 'auto'}
-                    onChange={(event) => {
-                      const value = event.target.value as PortalDisplayMode;
-                      setConfig({
-                        ...config,
-                        features: {
-                          ...config.features,
-                          portalDisplayMode: value === 'auto' ? undefined : value,
-                        },
-                      });
-                    }}
-                  >
-                    <option value="auto">Auto — sessions when the page has one program</option>
-                    <option value="sessions">Sessions — flat session cards</option>
-                    <option value="programs">Programs — sessions grouped by program</option>
-                  </select>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Auto keeps single-program pages as a clean session list and groups
-                    multi-program pages by program.
-                  </p>
-                </div>
-              )}
-
-            {config.features.portalTemplate === 'v2' &&
-              config.features.portalCardStyle !== 'rows' && (
-                <label className="flex items-start gap-3 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    className="mt-0.5 rounded border-gray-300"
-                    checked={config.features.showTieredSessionPricing === true}
-                    onChange={(event) =>
-                      setConfig({
-                        ...config,
-                        features: {
-                          ...config.features,
-                          showTieredSessionPricing: event.target.checked,
-                        },
-                      })
-                    }
-                  />
-                  <span>
-                    <span className="font-medium text-gray-900">
-                      Show early bird / late fee pricing on sessions
-                    </span>
-                    <span className="mt-1 block text-xs text-gray-500">
-                      When the API returns tiered product prices, session cards show a
-                      short label (e.g. early bird rate until a date).
-                    </span>
-                  </span>
-                </label>
-              )}
-
-            {config.features.portalTemplate === 'v2' && (
-              <div>
-                <label className="label">Member price style (temporary)</label>
-                <select
-                  className="input"
-                  value={config.features.memberPricingStyle || 'inline'}
+              <label className="flex items-start gap-3 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 rounded border-gray-300"
+                  checked={config.features.showTieredSessionPricing === true}
                   onChange={(event) =>
                     setConfig({
                       ...config,
                       features: {
                         ...config.features,
-                        memberPricingStyle: event.target.value as MemberPricingStyle,
+                        showTieredSessionPricing: event.target.checked,
                       },
                     })
                   }
-                >
-                  <option value="inline">Inline — From $30 · $24 members</option>
-                  <option value="badge">Badge — From $30 [Members $24]</option>
-                  <option value="stacked">Stacked — second line under price</option>
-                </select>
-                <p className="mt-1 text-xs text-gray-500">
-                  Compare on a preview URL:
-                  ?portalTemplate=v2&amp;memberPricingStyle=badge&amp;portalCardMinWidth=280
-                </p>
-              </div>
-            )}
-          </div>
+                />
+                <span>
+                  <span className="font-medium text-gray-900">
+                    Show early bird / late fee pricing
+                  </span>
+                  <span className="mt-1 block text-xs text-gray-500">
+                    When the API returns tiered prices, session cards show a short pricing label.
+                  </span>
+                </span>
+              </label>
+            </div>
+          )}
+
+          {derivePortalView(config) !== 'legacy' && (
+            <div>
+              <label className="label">Member price style</label>
+              <select
+                className="input"
+                value={config.features.memberPricingStyle || 'inline'}
+                onChange={(event) =>
+                  setConfig({
+                    ...config,
+                    features: {
+                      ...config.features,
+                      memberPricingStyle: event.target.value as MemberPricingStyle,
+                    },
+                  })
+                }
+              >
+                <option value="inline">Inline — From $30 · $24 members</option>
+                <option value="badge">Badge — From $30 [Members $24]</option>
+                <option value="stacked">Stacked — second line under price</option>
+              </select>
+            </div>
+          )}
 
           <PortalSessionsBrandingControls config={config} setConfig={setConfig} />
         </div>
