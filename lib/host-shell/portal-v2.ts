@@ -3,6 +3,7 @@ import type {
   MemberPricingStyle,
   PortalCardStyle,
   PortalDisplayMode,
+  PortalRowColumn,
   PortalTemplate,
   Program,
   ScheduleTableColumn,
@@ -91,26 +92,21 @@ export function resolveEffectivePortalDisplayMode(
 }
 
 // ---------------------------------------------------------------------------
-// 'rows' card style — session-level columns from the page's tableColumns
+// 'rows' card style — session-level columns
 // ---------------------------------------------------------------------------
 
 /**
  * Columns the 'rows' card style can honor. Only columns that map to
  * SESSION-LEVEL data qualify: 'time' and 'space' are event-level (a session may
- * span multiple segments / variable schedules) and are intentionally dropped —
- * rendering a single weekly timeslot for a session would fabricate data.
+ * span multiple segments / variable schedules) and are intentionally dropped.
+ *
+ * Mirrors PortalRowColumn from types/index.ts — kept as a local alias for
+ * backwards compatibility with call sites that reference PortalV2SessionRowColumn.
  */
-export type PortalV2SessionRowColumn =
-  | 'date'
-  | 'event'
-  | 'program'
-  | 'location'
-  | 'spots'
-  | 'action';
+export type PortalV2SessionRowColumn = PortalRowColumn;
 
-const DEFAULT_ROW_COLUMNS: ScheduleTableColumn[] = [
+const DEFAULT_ROW_COLUMNS: PortalRowColumn[] = [
   'date',
-  'time',
   'event',
   'program',
   'location',
@@ -132,27 +128,36 @@ function isSessionLevelRowColumn(
 }
 
 /**
- * Resolves the page's configured tableColumns (order preserved) into the
- * session-level columns the 'rows' style renders. Honors showAvailability
- * (spots) and hideRegistrationLinks/showPricing (action). 'event' (the session
- * name) is always present so a row is never anonymous.
+ * Resolves the columns the 'rows' card style renders.
+ *
+ * Priority:
+ * 1. `features.portalRowColumns` — dedicated rows column config set via admin Rows panel.
+ * 2. `features.tableColumns` filtered to session-level — legacy fallback so existing
+ *    pages that were configured via the schedule table columns keep working unchanged.
+ * 3. DEFAULT_ROW_COLUMNS — all session-level columns when nothing is configured.
+ *
+ * Always forces 'event' (session name) to be present so no row is anonymous.
+ * Respects showAvailability (spots) and hideRegistrationLinks/showPricing (action).
  */
 export function resolvePortalV2SessionRowColumns(
   config: DiscoveryConfig,
 ): PortalV2SessionRowColumn[] {
-  const configured = config.features.tableColumns?.length
-    ? config.features.tableColumns
-    : DEFAULT_ROW_COLUMNS;
+  const portalRowColumns = config.features.portalRowColumns;
+  const configured: PortalV2SessionRowColumn[] = portalRowColumns?.length
+    ? portalRowColumns
+    : (config.features.tableColumns?.length
+        ? config.features.tableColumns.filter(isSessionLevelRowColumn)
+        : DEFAULT_ROW_COLUMNS);
+
   const showAvailability = config.features.showAvailability !== false;
   const showPricing = config.features.showPricing !== false;
   const hideRegistrationLinks = config.features.hideRegistrationLinks === true;
 
-  const columns = configured.filter(isSessionLevelRowColumn).filter((column) => {
+  const columns = configured.filter((column) => {
     if (column === 'spots') {
       return showAvailability;
     }
     if (column === 'action') {
-      // Action cell holds price + register; keep it if either is allowed.
       return !hideRegistrationLinks || showPricing;
     }
     return true;

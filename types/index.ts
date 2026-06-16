@@ -397,6 +397,20 @@ export type PortalCardStyle = 'classic' | 'stacked' | 'rows' | 'list';
  */
 export type PortalDisplayMode = 'programs' | 'sessions' | 'auto';
 
+/**
+ * Session-level columns available in the v2 rows card style.
+ * Separate from ScheduleTableColumn (which covers the schedule/list table and includes
+ * event-level columns like 'time' and 'space' that don't apply to session rows).
+ */
+export type PortalRowColumn = 'date' | 'event' | 'program' | 'location' | 'spots' | 'action';
+
+/**
+ * What a clicked row expands to show.
+ * 'sessions': each row is a session, expanding shows segment schedule options.
+ * 'programs': each row is a program, expanding shows its sessions (future).
+ */
+export type PortalRowExpandMode = 'sessions' | 'programs';
+
 export enum HostPortalLayoutEnum {
   LEGACY_PROGRAMS = 'legacy_programs',
   SESSIONS_FIRST = 'sessions_first',
@@ -521,6 +535,16 @@ export interface FeatureConfig {
   portalCardStyle?: PortalCardStyle;
   /** v2 programs-vs-sessions display mode. Default 'auto' (sessions when one program). */
   portalDisplayMode?: PortalDisplayMode;
+  /**
+   * Columns to show in the v2 rows card style. Independent of tableColumns (schedule table).
+   * When unset, all session-level columns are shown.
+   */
+  portalRowColumns?: PortalRowColumn[];
+  /**
+   * What clicking a row expands to show. Default 'sessions' (session rows expand to
+   * show segment schedule options). 'programs' is reserved for a future program-rows mode.
+   */
+  portalRowExpandMode?: PortalRowExpandMode;
   /** When true, show early-bird / late-fee pricing labels on session cards and rows. */
   showTieredSessionPricing?: boolean;
   /** Layout for iframe-free embed kit (`/embed-kit/v1`) */

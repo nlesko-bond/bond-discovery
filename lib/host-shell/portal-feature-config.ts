@@ -6,6 +6,8 @@ import {
   type MemberPricingStyle,
   type PortalCardStyle,
   type PortalDisplayMode,
+  type PortalRowColumn,
+  type PortalRowExpandMode,
   type PortalTemplate,
 } from '@/types';
 
@@ -133,6 +135,38 @@ function resolveOptionalTrimmedString(
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+const VALID_PORTAL_ROW_COLUMNS = new Set<PortalRowColumn>([
+  'date',
+  'event',
+  'program',
+  'location',
+  'spots',
+  'action',
+]);
+
+function resolvePortalRowColumns(
+  features: Record<string, unknown>,
+): PortalRowColumn[] | undefined {
+  const raw = features.portalRowColumns ?? features.portal_row_columns;
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return undefined;
+  }
+  const valid = raw.filter((item): item is PortalRowColumn =>
+    VALID_PORTAL_ROW_COLUMNS.has(item as PortalRowColumn),
+  );
+  return valid.length > 0 ? valid : undefined;
+}
+
+function resolvePortalRowExpandMode(
+  features: Record<string, unknown>,
+): PortalRowExpandMode | undefined {
+  const raw = features.portalRowExpandMode ?? features.portal_row_expand_mode;
+  if (raw === 'sessions' || raw === 'programs') {
+    return raw;
+  }
+  return undefined;
+}
+
 /**
  * Normalizes portal-only feature flags from discovery_pages.features JSON.
  */
@@ -152,6 +186,8 @@ export function normalizePortalFeatureFields(
   | 'memberPricingStyle'
   | 'portalCardStyle'
   | 'portalDisplayMode'
+  | 'portalRowColumns'
+  | 'portalRowExpandMode'
   | 'showTieredSessionPricing'
 > {
   const hostPortalLayout = resolveHostPortalLayout(features);
@@ -160,6 +196,8 @@ export function normalizePortalFeatureFields(
   const memberPricingStyle = resolveMemberPricingStyle(features);
   const portalCardStyle = resolvePortalCardStyle(features);
   const portalDisplayMode = resolvePortalDisplayMode(features);
+  const portalRowColumns = resolvePortalRowColumns(features);
+  const portalRowExpandMode = resolvePortalRowExpandMode(features);
   const showTieredSessionPricing = resolveOptionalBoolean(
     features,
     'showTieredSessionPricing',
@@ -201,6 +239,8 @@ export function normalizePortalFeatureFields(
     ...(memberPricingStyle !== undefined && { memberPricingStyle }),
     ...(portalCardStyle !== undefined && { portalCardStyle }),
     ...(portalDisplayMode !== undefined && { portalDisplayMode }),
+    ...(portalRowColumns !== undefined && { portalRowColumns }),
+    ...(portalRowExpandMode !== undefined && { portalRowExpandMode }),
     ...(showTieredSessionPricing !== undefined && { showTieredSessionPricing }),
   };
 }

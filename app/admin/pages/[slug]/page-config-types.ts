@@ -3,6 +3,8 @@ import type {
   MemberPricingStyle,
   PortalCardStyle,
   PortalDisplayMode,
+  PortalRowColumn,
+  PortalRowExpandMode,
   PortalTemplate,
 } from '@/types';
 import type { BondEnv } from '@/lib/bond-env';
@@ -78,6 +80,8 @@ export interface IPageConfig {
     memberPricingStyle?: MemberPricingStyle;
     portalCardStyle?: PortalCardStyle;
     portalDisplayMode?: PortalDisplayMode;
+    portalRowColumns?: PortalRowColumn[];
+    portalRowExpandMode?: PortalRowExpandMode;
     showTieredSessionPricing?: boolean;
     discoveryCacheEnabled?: boolean;
     availabilityCacheTtl?: number;
@@ -175,3 +179,16 @@ export const TABLE_COLUMNS = [
   { id: 'spots', label: 'Spots' },
   { id: 'action', label: 'Action' },
 ] as const;
+
+export const PORTAL_ROW_COLUMNS: ReadonlyArray<{
+  id: PortalRowColumn;
+  label: string;
+  hint: string;
+}> = [
+  { id: 'date', label: 'Date', hint: 'Session date range and week count' },
+  { id: 'event', label: 'Session', hint: 'Session name, age range (always shown)' },
+  { id: 'program', label: 'Program', hint: 'Program / activity name' },
+  { id: 'location', label: 'Location', hint: 'Facility name' },
+  { id: 'spots', label: 'Availability', hint: 'Open / limited / full pill' },
+  { id: 'action', label: 'Price & Register', hint: 'Starting price and Register button' },
+];

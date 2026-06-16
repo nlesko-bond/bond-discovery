@@ -12,6 +12,7 @@ import {
   resolveMemberPricingStyle,
   resolvePortalCardMinWidth,
   resolvePortalTemplate,
+  resolvePortalV2SessionRowColumns,
   resolveV2Availability,
   V2_CARD_MIN_WIDTH_DEFAULT_CARDS_PX,
   V2_CARD_MIN_WIDTH_DEFAULT_LIST_PX,
@@ -271,5 +272,63 @@ describe('applyPortalV2PreviewOverrides', () => {
     });
     expect(next.features.portalTemplate).toBe('v2');
     expect(next.features.portalCardMinWidth).toBeUndefined();
+  });
+});
+
+describe('resolvePortalV2SessionRowColumns', () => {
+  it('returns all session-level columns by default', () => {
+    const config = makeConfig({ portalTemplate: 'v2', portalCardStyle: 'rows' });
+    const cols = resolvePortalV2SessionRowColumns(config);
+    expect(cols).toContain('date');
+    expect(cols).toContain('event');
+    expect(cols).toContain('program');
+    expect(cols).toContain('location');
+    expect(cols).toContain('spots');
+    expect(cols).toContain('action');
+    expect(cols).not.toContain('time');
+    expect(cols).not.toContain('space');
+  });
+
+  it('uses portalRowColumns when set, ignoring tableColumns', () => {
+    const config = makeConfig({
+      portalRowColumns: ['date', 'event', 'location', 'action'],
+      tableColumns: ['date', 'time', 'event', 'program', 'location', 'space', 'spots', 'action'],
+    });
+    const cols = resolvePortalV2SessionRowColumns(config);
+    expect(cols).toEqual(['date', 'event', 'location', 'action']);
+    expect(cols).not.toContain('program');
+    expect(cols).not.toContain('spots');
+  });
+
+  it('falls back to session-level tableColumns when portalRowColumns is unset', () => {
+    const config = makeConfig({
+      tableColumns: ['date', 'time', 'event', 'location', 'spots', 'action'],
+    });
+    const cols = resolvePortalV2SessionRowColumns(config);
+    expect(cols).toContain('date');
+    expect(cols).toContain('event');
+    expect(cols).toContain('location');
+    expect(cols).not.toContain('time');
+    expect(cols).not.toContain('program');
+  });
+
+  it('always forces event to be present', () => {
+    const config = makeConfig({
+      portalRowColumns: ['date', 'location'],
+    });
+    const cols = resolvePortalV2SessionRowColumns(config);
+    expect(cols).toContain('event');
+  });
+
+  it('hides spots when showAvailability is false', () => {
+    const config = makeConfig({ showAvailability: false });
+    const cols = resolvePortalV2SessionRowColumns(config);
+    expect(cols).not.toContain('spots');
+  });
+
+  it('removes program column in sessions display mode', () => {
+    const config = makeConfig({ portalDisplayMode: 'sessions' });
+    const cols = resolvePortalV2SessionRowColumns(config);
+    expect(cols).not.toContain('program');
   });
 });
