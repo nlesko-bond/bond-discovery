@@ -36,6 +36,32 @@ const CLOSED_REGISTER_BACKGROUND = '#9CA3AF';
 const ROW_SPOTS_COLUMN_WIDTH_PX = 88;
 const ROW_ACTION_COLUMN_WIDTH_PX = 210;
 const ROW_CHEVRON_COLUMN_WIDTH_PX = 20;
+const PORTAL_V2_ROW_DESKTOP_MIN_WIDTH_PX = 640;
+
+function readPortalV2RowLayoutMode(): 'mobile' | 'desktop' {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return 'desktop';
+  }
+  return window.matchMedia(`(min-width: ${PORTAL_V2_ROW_DESKTOP_MIN_WIDTH_PX}px)`).matches
+    ? 'desktop'
+    : 'mobile';
+}
+
+function usePortalV2RowLayoutMode(): 'mobile' | 'desktop' {
+  const [layoutMode, setLayoutMode] = useState<'mobile' | 'desktop'>(readPortalV2RowLayoutMode);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(`(min-width: ${PORTAL_V2_ROW_DESKTOP_MIN_WIDTH_PX}px)`);
+    const syncLayoutMode = () => {
+      setLayoutMode(mediaQuery.matches ? 'desktop' : 'mobile');
+    };
+    syncLayoutMode();
+    mediaQuery.addEventListener('change', syncLayoutMode);
+    return () => mediaQuery.removeEventListener('change', syncLayoutMode);
+  }, []);
+
+  return layoutMode;
+}
 
 const AVAILABILITY_PILL_STYLES: Record<string, { background: string; color: string }> = {
   open: { background: '#dcfce7', color: '#166534' },
@@ -517,10 +543,118 @@ function HostPortalV2SessionRow({
     productId: card.registerProductId,
   });
 
-  const renderCell = (column: PortalV2SessionRowColumn) => {
+  const expandable = hasExpandableRowDetail(card);
+  const descriptionSections = formatHostPortalSessionDescription(
+    card.description,
+    card.longDescription,
+  );
+  const toggleSegments = () => onSegmentsOpenChange(!segmentsOpen);
+  const layoutMode = usePortalV2RowLayoutMode();
+
+  useEffect(() => {
+    notifyPortalEmbedContentChange();
+  }, [layoutMode]);
+
+  const showDate = columns.includes('date');
+  const showEvent = columns.includes('event');
+  const showProgram = columns.includes('program');
+  const showLocation = columns.includes('location');
+  const showSpots = columns.includes('spots');
+  const showAction = columns.includes('action');
+  const sessionTitle = card.name || card.programName;
+  const showProgramSubtitle =
+    showProgram && Boolean(card.programName) && card.programName !== sessionTitle;
+
+  const availabilityPill = (
+    <span
+      data-testid="portal-v2-availability"
+      className="inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-medium"
+      style={{ backgroundColor: pillStyle.background, color: pillStyle.color }}
+    >
+      {availability.label}
+    </span>
+  );
+
+  const expandChevron = expandable ? (
+    <ChevronDown
+      size={18}
+      className={cn(
+        'shrink-0 text-gray-400 transition-transform duration-200',
+        segmentsOpen && 'rotate-180',
+      )}
+      aria-hidden
+    />
+  ) : null;
+
+  const registerButton = !hideRegistrationLinks && card.registerUrl && showAction && (
+    <a
+      href={card.registerUrl}
+      target={linkTarget}
+      rel={linkRel}
+      {...registerAnalyticsAttributes}
+      className={cn(
+        'inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl px-5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90',
+        card.isClosed && 'pointer-events-none cursor-not-allowed opacity-60',
+      )}
+      style={{
+        backgroundColor: card.isClosed ? CLOSED_REGISTER_BACKGROUND : accentColor,
+      }}
+      aria-disabled={card.isClosed}
+      onClick={(event) => {
+        event.stopPropagation();
+        trackRegisterClick(config, card, card.registerProductId);
+      }}
+    >
+      {card.isClosed ? 'Closed' : 'Register'}
+    </a>
+  );
+
+  const priceBlock = collapsedPriceLabel && (
+    <div className="min-w-0">
+      <p className="text-lg font-bold tabular-nums leading-tight text-gray-900">
+        {collapsedPriceLabel}
+      </p>
+      {card.tieredPricingLabel && (
+        <HostPortalV2TieredPricingLine label={card.tieredPricingLabel} />
+      )}
+    </div>
+  );
+
+  const viewScheduleButton =
+    scheduleTabEnabled && onOpenSchedule && hasSegmentDetail(card) ? (
+      <button
+        type="button"
+        data-testid="portal-v2-view-schedule"
+        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg px-3 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpenSchedule(card.programId, card.sessionId);
+        }}
+      >
+        <Clock size={14} aria-hidden />
+        View schedule
+      </button>
+    ) : null;
+
+  const rowToggleProps = expandable
+    ? {
+        role: 'button' as const,
+        tabIndex: 0,
+        'aria-expanded': segmentsOpen,
+        'aria-label': `${sessionTitle}. More info`,
+        onClick: toggleSegments,
+        onKeyDown: (event: React.KeyboardEvent) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggleSegments();
+          }
+        },
+      }
+    : {};
+
+  const renderDesktopCell = (column: PortalV2SessionRowColumn) => {
     switch (column) {
       case 'date':
-        // Session-level date span only — a session has no single weekly timeslot.
         return (
           <div data-portal-v2-cell="date">
             <p className="text-sm text-gray-700">{card.dateRange || '—'}</p>
@@ -531,14 +665,12 @@ function HostPortalV2SessionRow({
         );
       case 'event':
         return (
-          <div data-portal-v2-cell="event" className="min-w-0 sm:col-span-1">
+          <div data-portal-v2-cell="event" className="min-w-0">
             <p className="break-words text-sm font-semibold leading-snug text-gray-900 sm:line-clamp-2">
-              {card.name || card.programName}
+              {sessionTitle}
             </p>
             {ageGenderLine && <p className="mt-0.5 text-xs text-gray-500">{ageGenderLine}</p>}
-            {expandable ? (
-              <p className="mt-1 text-xs text-gray-400 sm:sr-only">Tap row for more info</p>
-            ) : hasSegmentDetail(card) ? null : (
+            {!expandable && !hasSegmentDetail(card) && (
               <div className="mt-1">
                 <VariableScheduleLine
                   card={card}
@@ -577,16 +709,7 @@ function HostPortalV2SessionRow({
           </p>
         );
       case 'spots':
-        return (
-          <span
-            data-portal-v2-cell="spots"
-            data-testid="portal-v2-availability"
-            className="inline-flex w-fit rounded-full px-2 py-0.5 text-[11px] font-medium"
-            style={{ backgroundColor: pillStyle.background, color: pillStyle.color }}
-          >
-            {availability.label}
-          </span>
-        );
+        return <div data-portal-v2-cell="spots">{availabilityPill}</div>;
       case 'action':
         return (
           <div data-portal-v2-cell="action" className="flex flex-col items-end justify-center gap-1">
@@ -598,28 +721,7 @@ function HostPortalV2SessionRow({
             {card.tieredPricingLabel && (
               <HostPortalV2TieredPricingLine label={card.tieredPricingLabel} />
             )}
-            {!hideRegistrationLinks && card.registerUrl && (
-              <a
-                href={card.registerUrl}
-                target={linkTarget}
-                rel={linkRel}
-                {...registerAnalyticsAttributes}
-                className={cn(
-                  'inline-flex min-h-[36px] items-center justify-center rounded-lg px-3.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90',
-                  card.isClosed && 'pointer-events-none cursor-not-allowed opacity-60',
-                )}
-                style={{
-                  backgroundColor: card.isClosed ? CLOSED_REGISTER_BACKGROUND : accentColor,
-                }}
-                aria-disabled={card.isClosed}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  trackRegisterClick(config, card, card.registerProductId);
-                }}
-              >
-                {card.isClosed ? 'Closed' : 'Register'}
-              </a>
-            )}
+            {registerButton}
           </div>
         );
       default:
@@ -627,52 +729,118 @@ function HostPortalV2SessionRow({
     }
   };
 
-  const expandable = hasExpandableRowDetail(card);
-  const descriptionSections = formatHostPortalSessionDescription(
-    card.description,
-    card.longDescription,
-  );
-  const toggleSegments = () => onSegmentsOpenChange(!segmentsOpen);
+  const mobileMetaParts = [
+    ageGenderLine,
+    showLocation && card.facilityName ? card.facilityName : undefined,
+  ].filter((part): part is string => Boolean(part));
 
   return (
-    <div data-testid="portal-v2-card" data-card-style="rows" className="bg-white">
+    <div
+      data-testid="portal-v2-card"
+      data-card-style="rows"
+      className="bg-white max-sm:overflow-hidden max-sm:rounded-xl max-sm:shadow-sm max-sm:ring-1 max-sm:ring-gray-200"
+    >
+      {layoutMode === 'mobile' && (
       <div
-        role={expandable ? 'button' : undefined}
-        tabIndex={expandable ? 0 : undefined}
-        aria-expanded={expandable ? segmentsOpen : undefined}
-        aria-label={expandable ? `${card.name || card.programName}. More info` : undefined}
-        onClick={expandable ? toggleSegments : undefined}
-        onKeyDown={
-          expandable
-            ? (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  toggleSegments();
-                }
-              }
-            : undefined
-        }
+        {...rowToggleProps}
+        data-portal-v2-layout="mobile"
         className={cn(
-          'flex flex-col gap-2 px-3 py-3 transition-colors sm:grid sm:items-center sm:gap-3 sm:px-4 sm:[grid-template-columns:var(--v2-row-cols)]',
+          'flex flex-col gap-3 px-4 py-4',
+          expandable && 'cursor-pointer active:bg-gray-50',
+        )}
+      >
+        {(showDate || showSpots || expandable) && (
+          <div className="flex items-start justify-between gap-3">
+            {showDate ? (
+              <div data-portal-v2-cell="date" className="min-w-0">
+                <p className="text-sm font-medium text-gray-900">{card.dateRange || '—'}</p>
+                {card.weekCountLabel && (
+                  <p className="text-xs text-gray-500">{card.weekCountLabel}</p>
+                )}
+              </div>
+            ) : (
+              <span />
+            )}
+            <div className="flex shrink-0 items-center gap-2">
+              {showSpots && <div data-portal-v2-cell="spots">{availabilityPill}</div>}
+              {expandChevron}
+            </div>
+          </div>
+        )}
+
+        {showEvent && (
+          <div data-portal-v2-cell="event" className="min-w-0">
+            <p className="text-base font-semibold leading-snug text-gray-900">{sessionTitle}</p>
+            {mobileMetaParts.length > 0 && (
+              <p className="mt-1 text-sm text-gray-600">
+                {mobileMetaParts.map((part, index) => (
+                  <span key={part}>
+                    {index > 0 && ' · '}
+                    {showLocation && part === card.facilityName ? (
+                      <span data-portal-v2-cell="location">{part}</span>
+                    ) : (
+                      part
+                    )}
+                  </span>
+                ))}
+              </p>
+            )}
+            {showProgramSubtitle && (
+              <p
+                data-portal-v2-cell="program"
+                className="mt-1 text-xs font-medium uppercase tracking-wide text-gray-500"
+              >
+                {card.programName}
+              </p>
+            )}
+            {!expandable && !hasSegmentDetail(card) && (
+              <div className="mt-2">
+                <VariableScheduleLine
+                  card={card}
+                  config={config}
+                  onOpenSchedule={onOpenSchedule}
+                  compact
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {expandable && viewScheduleButton && (
+          <div className="flex flex-wrap items-center gap-2">{viewScheduleButton}</div>
+        )}
+
+        {showAction && (priceBlock || registerButton) && (
+          <div
+            data-portal-v2-cell="action"
+            className="flex items-end justify-between gap-3 border-t border-gray-100 pt-3"
+          >
+            {priceBlock ?? <span />}
+            {registerButton}
+          </div>
+        )}
+      </div>
+      )}
+
+      {layoutMode === 'desktop' && (
+      <div
+        {...rowToggleProps}
+        data-portal-v2-layout="desktop"
+        className={cn(
+          'grid items-center gap-3 px-4 py-3 [grid-template-columns:var(--v2-row-cols)]',
           expandable && 'cursor-pointer hover:bg-gray-50',
         )}
         style={{ '--v2-row-cols': rowGridTemplate(columns) } as React.CSSProperties}
       >
         {columns.map((column) => (
-          <div key={column}>{renderCell(column)}</div>
+          <div key={column}>{renderDesktopCell(column)}</div>
         ))}
-        <span className="hidden justify-self-end sm:block" aria-hidden>
-          {expandable && (
-            <ChevronDown
-              size={16}
-              className={cn(
-                'text-gray-400 transition-transform duration-200',
-                segmentsOpen && 'rotate-180',
-              )}
-            />
-          )}
+        <span className="justify-self-end" aria-hidden>
+          {expandChevron}
         </span>
       </div>
+      )}
+
       <HostPortalV2Collapse open={segmentsOpen && expandable}>
         {segmentsOpen && expandable && (
           <div className="space-y-3 px-3 pb-3 sm:px-4" data-testid="portal-v2-row-expanded">
@@ -718,7 +886,7 @@ export function HostPortalV2SessionRowsList({
 
   return (
     <div
-      className="overflow-hidden rounded-xl bg-white ring-1 ring-gray-200"
+      className="max-sm:space-y-3 sm:overflow-hidden sm:rounded-xl sm:bg-white sm:ring-1 sm:ring-gray-200"
       data-testid="portal-v2-rows"
     >
       <div
@@ -739,7 +907,7 @@ export function HostPortalV2SessionRowsList({
         ))}
         <span />
       </div>
-      <div className="divide-y divide-gray-100">
+      <div className="max-sm:space-y-3 sm:divide-y sm:divide-gray-100">
         {cards.map((card) => (
           <HostPortalV2SessionRow
             key={card.sessionId}

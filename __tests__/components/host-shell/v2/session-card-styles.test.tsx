@@ -326,6 +326,20 @@ describe('stacked card — admin toggles', () => {
 });
 
 describe('rows style — tableColumns-driven session rows', () => {
+  function mockRowLayoutViewport(isDesktop: boolean) {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      configurable: true,
+      value: (query: string) => ({
+        matches: isDesktop && query.includes('min-width'),
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }),
+    });
+  }
+
   function renderRows(
     cards: IHostPortalSessionCardModel[],
     config = makeConfig(),
@@ -344,13 +358,19 @@ describe('rows style — tableColumns-driven session rows', () => {
     );
   }
 
+  beforeEach(() => {
+    mockRowLayoutViewport(true);
+  });
+
   it('renders session-level cells in the configured column order (time dropped, never fabricated)', () => {
     const { container } = renderRows([makeMultiSegmentCard()], makeConfig({ portalDisplayMode: 'programs' }));
     const row = screen.getByTestId('portal-v2-card');
     expect(row).toHaveAttribute('data-card-style', 'rows');
-    const cells = Array.from(row.querySelectorAll('[data-portal-v2-cell]')).map((cell) =>
-      cell.getAttribute('data-portal-v2-cell'),
-    );
+    const desktopLayout = row.querySelector('[data-portal-v2-layout="desktop"]');
+    expect(desktopLayout).not.toBeNull();
+    const cells = Array.from(
+      desktopLayout!.querySelectorAll('[data-portal-v2-cell]'),
+    ).map((cell) => cell.getAttribute('data-portal-v2-cell'));
     expect(cells).toEqual(['date', 'event', 'program', 'location', 'spots', 'action']);
 
     expect(within(row).getByText('Sep 8 - Nov 24, 2026')).toBeInTheDocument();
@@ -372,7 +392,10 @@ describe('rows style — tableColumns-driven session rows', () => {
   it('drops the program column in portal sessions display mode', () => {
     renderRows([makeMultiSegmentCard()], makeConfig({ portalDisplayMode: 'sessions' }));
     const cells = Array.from(
-      screen.getByTestId('portal-v2-card').querySelectorAll('[data-portal-v2-cell]'),
+      screen
+        .getByTestId('portal-v2-card')
+        .querySelector('[data-portal-v2-layout="desktop"]')!
+        .querySelectorAll('[data-portal-v2-cell]'),
     ).map((cell) => cell.getAttribute('data-portal-v2-cell'));
     expect(cells).not.toContain('program');
   });
@@ -409,6 +432,17 @@ describe('rows style — tableColumns-driven session rows', () => {
     expect(screen.getByTestId('portal-v2-variable-schedule')).toHaveTextContent(
       'Variable schedule',
     );
+  });
+
+  it('renders a compact mobile card with footer price and register', () => {
+    mockRowLayoutViewport(false);
+    renderRows([makeMultiSegmentCard()]);
+    const row = screen.getByTestId('portal-v2-card');
+    const mobileLayout = row.querySelector('[data-portal-v2-layout="mobile"]');
+    expect(mobileLayout).not.toBeNull();
+    expect(screen.queryByText(/tap row for more info/i)).not.toBeInTheDocument();
+    expect(within(mobileLayout as HTMLElement).getByText('Fall Rec Soccer')).toBeInTheDocument();
+    expect(within(mobileLayout as HTMLElement).getByRole('link', { name: /register/i })).toBeInTheDocument();
   });
 });
 
