@@ -28,7 +28,9 @@ describe('public documentation route', () => {
     expect(response.status).toBe(200);
     expect(await response.text()).toBe(trustedHtml);
     expect(response.headers.get('Content-Type')).toBe('text/html; charset=utf-8');
-    expect(response.headers.get('Content-Security-Policy')).toContain('sandbox allow-scripts');
+    expect(response.headers.get('Content-Security-Policy')).toContain(
+      'sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox',
+    );
     expect(response.headers.get('Cache-Control')).toBe('public, max-age=0, must-revalidate');
     expect(mockGetActiveDocumentationPageByPath).toHaveBeenCalledWith('apis');
   });

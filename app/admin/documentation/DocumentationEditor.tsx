@@ -397,7 +397,7 @@ export function DocumentationEditor({ pageId }: DocumentationEditorProps) {
               ref={previewFrameRef}
               title="Documentation preview"
               srcDoc={previewHtml}
-              sandbox="allow-scripts allow-popups allow-forms allow-downloads"
+              sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-downloads"
               className={`${PREVIEW_HEIGHT_CLASS} w-full rounded-b-xl bg-white`}
             />
           </div>
