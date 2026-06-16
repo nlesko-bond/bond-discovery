@@ -27,7 +27,8 @@ import {
   HostPortalSessionSegmentsPanel,
   type IHostPortalSegmentsPanelActions,
 } from '../HostPortalSessionSegmentsPanel';
-import { HostPortalV2RowDescriptionPanel } from './HostPortalV2RowDescriptionPanel';
+import { HostPortalV2RowExpandedPanel } from './HostPortalV2RowExpandedPanel';
+import { usePortalV2RowLayoutMode } from './usePortalV2RowLayoutMode';
 import { HostPortalSportIcon } from '../HostPortalSportIcon';
 import { HostPortalV2Collapse } from './ui/HostPortalV2Collapse';
 import { HostPortalV2TieredPricingLine } from './HostPortalV2TieredPricingLine';
@@ -36,32 +37,6 @@ const CLOSED_REGISTER_BACKGROUND = '#9CA3AF';
 const ROW_SPOTS_COLUMN_WIDTH_PX = 88;
 const ROW_ACTION_COLUMN_WIDTH_PX = 210;
 const ROW_CHEVRON_COLUMN_WIDTH_PX = 20;
-const PORTAL_V2_ROW_DESKTOP_MIN_WIDTH_PX = 640;
-
-function readPortalV2RowLayoutMode(): 'mobile' | 'desktop' {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return 'desktop';
-  }
-  return window.matchMedia(`(min-width: ${PORTAL_V2_ROW_DESKTOP_MIN_WIDTH_PX}px)`).matches
-    ? 'desktop'
-    : 'mobile';
-}
-
-function usePortalV2RowLayoutMode(): 'mobile' | 'desktop' {
-  const [layoutMode, setLayoutMode] = useState<'mobile' | 'desktop'>(readPortalV2RowLayoutMode);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia(`(min-width: ${PORTAL_V2_ROW_DESKTOP_MIN_WIDTH_PX}px)`);
-    const syncLayoutMode = () => {
-      setLayoutMode(mediaQuery.matches ? 'desktop' : 'mobile');
-    };
-    syncLayoutMode();
-    mediaQuery.addEventListener('change', syncLayoutMode);
-    return () => mediaQuery.removeEventListener('change', syncLayoutMode);
-  }, []);
-
-  return layoutMode;
-}
 
 const AVAILABILITY_PILL_STYLES: Record<string, { background: string; color: string }> = {
   open: { background: '#dcfce7', color: '#166534' },
@@ -738,7 +713,10 @@ function HostPortalV2SessionRow({
     <div
       data-testid="portal-v2-card"
       data-card-style="rows"
-      className="bg-white max-sm:overflow-hidden max-sm:rounded-xl max-sm:shadow-sm max-sm:ring-1 max-sm:ring-gray-200"
+      className={cn(
+        'bg-white max-sm:overflow-hidden max-sm:rounded-xl max-sm:shadow-sm max-sm:ring-1 max-sm:ring-gray-200',
+        segmentsOpen && expandable && 'max-sm:ring-gray-300 max-sm:shadow-md',
+      )}
     >
       {layoutMode === 'mobile' && (
       <div
@@ -747,6 +725,7 @@ function HostPortalV2SessionRow({
         className={cn(
           'flex flex-col gap-3 px-4 py-4',
           expandable && 'cursor-pointer active:bg-gray-50',
+          segmentsOpen && expandable && 'bg-gray-50/80',
         )}
       >
         {(showDate || showSpots || expandable) && (
@@ -829,6 +808,7 @@ function HostPortalV2SessionRow({
         className={cn(
           'grid items-center gap-3 px-4 py-3 [grid-template-columns:var(--v2-row-cols)]',
           expandable && 'cursor-pointer hover:bg-gray-50',
+          segmentsOpen && expandable && 'bg-gray-50/80',
         )}
         style={{ '--v2-row-cols': rowGridTemplate(columns) } as React.CSSProperties}
       >
@@ -843,19 +823,12 @@ function HostPortalV2SessionRow({
 
       <HostPortalV2Collapse open={segmentsOpen && expandable}>
         {segmentsOpen && expandable && (
-          <div className="space-y-3 px-3 pb-3 sm:px-4" data-testid="portal-v2-row-expanded">
-            {descriptionSections && (
-              <HostPortalV2RowDescriptionPanel card={card} sections={descriptionSections} />
-            )}
-            {hasSegmentDetail(card) && (
-              <HostPortalSessionSegmentsPanel
-                card={card}
-                config={config}
-                variant="inline"
-                layout="grid"
-              />
-            )}
-          </div>
+          <HostPortalV2RowExpandedPanel
+            card={card}
+            config={config}
+            descriptionSections={descriptionSections}
+            showSegmentSchedule={hasSegmentDetail(card)}
+          />
         )}
       </HostPortalV2Collapse>
     </div>

@@ -1,3 +1,4 @@
+import type { PortalSegmentAvailabilityKindEnum } from '@/lib/host-shell/portal-segment-availability';
 import type { DiscoveryConfig, Product, Program, Segment, Session } from '@/types';
 import {
   buildRegistrationUrl,
@@ -27,6 +28,17 @@ export interface IHostPortalSegmentRow {
   dateRange?: string;
   startDate?: string;
   endDate?: string;
+  scheduleLabel?: string;
+  facilityName?: string;
+  spaceName?: string;
+  spotsRemaining?: number;
+  maxParticipants?: number;
+  currentParticipants?: number;
+  isWaitlistEnabled?: boolean;
+  availabilityKind?: PortalSegmentAvailabilityKindEnum;
+  availabilityLabel?: string;
+  priceLabel?: string;
+  registrationWindowStatus?: string;
 }
 
 export interface IHostPortalSessionCardModel {
@@ -47,6 +59,8 @@ export interface IHostPortalSessionCardModel {
   availabilityStatus?: string;
   isClosed: boolean;
   isRegistrationOpen: boolean;
+  registrationWindowStatus?: string;
+  waitlistEnabled?: boolean;
   registerUrl?: string;
   registerProductId?: string;
   hasMultipleRegisterOptions: boolean;
@@ -125,10 +139,17 @@ function getSessionsFromProgram(program: Program): Session[] {
   return [];
 }
 
-export function mapSegmentRow(segment: Segment): IHostPortalSegmentRow {
+export function mapSegmentRow(
+  segment: Segment,
+  displayContext?: Pick<IHostPortalSessionCardModel, 'name' | 'programName'>,
+): IHostPortalSegmentRow {
+  const segmentName = segment.name?.trim() || 'Segment';
   return {
     id: segment.id,
-    name: segment.name?.trim() || 'Segment',
+    name: segmentName,
+    scheduleLabel: displayContext
+      ? trimSegmentDisplayName(segmentName, displayContext)
+      : segmentName,
     startDate: segment.startDate,
     endDate: segment.endDate,
     dateRange:
@@ -138,8 +159,11 @@ export function mapSegmentRow(segment: Segment): IHostPortalSegmentRow {
   };
 }
 
-export function mapSegmentRows(segments: Segment[]): IHostPortalSegmentRow[] {
-  return segments.map(mapSegmentRow);
+export function mapSegmentRows(
+  segments: Segment[],
+  displayContext?: Pick<IHostPortalSessionCardModel, 'name' | 'programName'>,
+): IHostPortalSegmentRow[] {
+  return segments.map((segment) => mapSegmentRow(segment, displayContext));
 }
 
 /** Lowercase alphanumerics only, so "FALL@ Sports" matches "FALL @ Sports". */
@@ -346,11 +370,18 @@ export function buildHostPortalSessionCards(
         availabilityStatus,
         isClosed,
         isRegistrationOpen: !registerDisabled,
+        registrationWindowStatus:
+          session.registrationWindowStatus ??
+          (registerDisabled ? 'closed' : 'open'),
+        waitlistEnabled: session.waitlistEnabled ?? session.isWaitlistEnabled,
         startingPriceLabel: showPricing ? resolveStartingPriceLabel(products) : undefined,
         tieredPricingLabel,
         isSegmented: Boolean(session.isSegmented),
         organizationId: program.organizationId,
-        segments: mapSegmentRows(getSegmentsFromSession(session)),
+        segments: mapSegmentRows(getSegmentsFromSession(session), {
+          name: session.name ?? '',
+          programName: program.name,
+        }),
         products,
         imageUrl: program.mainMedia?.url || program.imageUrl || undefined,
         spotsRemaining: session.spotsRemaining,

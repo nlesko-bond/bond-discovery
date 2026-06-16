@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { DiscoveryConfig, DiscoveryFilters } from '@/types';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
@@ -360,6 +360,17 @@ describe('rows style — tableColumns-driven session rows', () => {
 
   beforeEach(() => {
     mockRowLayoutViewport(true);
+    class MockResizeObserver {
+      observe = vi.fn((element: Element) => {
+        Object.defineProperty(element, 'clientWidth', {
+          configurable: true,
+          value: 800,
+        });
+      });
+      disconnect = vi.fn();
+      unobserve = vi.fn();
+    }
+    vi.stubGlobal('ResizeObserver', MockResizeObserver);
   });
 
   it('renders session-level cells in the configured column order (time dropped, never fabricated)', () => {
@@ -409,11 +420,18 @@ describe('rows style — tableColumns-driven session rows', () => {
     expect(screen.queryByText('Skills-focused fall session for all levels.')).not.toBeInTheDocument();
     expect(screen.queryByText(/view segments/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /fall rec soccer\. more info/i }));
-    expect(screen.getByTestId('portal-v2-row-expanded')).toBeInTheDocument();
+    const expanded = screen.getByTestId('portal-v2-row-expanded');
+    expect(expanded).toBeInTheDocument();
+    expect(expanded.querySelector('table')).toBeNull();
     expect(screen.getByTestId('portal-v2-row-description')).toBeInTheDocument();
     expect(screen.getByText('Skills-focused fall session for all levels.')).toBeInTheDocument();
     expect(screen.getByText('September block')).toBeInTheDocument();
-    expect(screen.getByLabelText('Segments for Fall Rec Soccer')).toBeInTheDocument();
+    expect(screen.getByTestId('portal-v2-row-meta-tags')).toBeInTheDocument();
+    expect(screen.getByTestId('portal-v2-row-location')).toHaveTextContent('Coppermine Arena');
+    expect(screen.getByTestId('portal-v2-schedule-option-list')).toBeInTheDocument();
+    const scheduleSection = screen.getByLabelText('Schedule options for Fall Rec Soccer');
+    expect(scheduleSection).toBeInTheDocument();
+    expect(scheduleSection.querySelector('table')).toBeNull();
   });
 
   it('shows tiered pricing in the action column when present on the card model', () => {
@@ -463,7 +481,7 @@ describe('classic style and display-mode grouping', () => {
     const card = screen.getByTestId('portal-v2-card');
     expect(card).toHaveAttribute('data-card-style', 'classic');
     // Signature affordances of the existing card component.
-    expect(screen.getByRole('button', { name: /view segments/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /view schedule options/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /register/i })).toHaveAttribute(
       'data-bond-program-id',
       'p1',

@@ -225,7 +225,7 @@ export function HostPortalSessionCard({
               onClick={() => onSegmentsOpenChange(!segmentsOpen)}
               aria-expanded={segmentsOpen}
             >
-              <span>{segmentsOpen ? 'Hide segments' : 'View segments'}</span>
+              <span>{segmentsOpen ? 'Hide schedule options' : 'View schedule options'}</span>
               {segmentsOpen ? (
                 <ChevronUp size={16} className="shrink-0 text-gray-500" />
               ) : (
