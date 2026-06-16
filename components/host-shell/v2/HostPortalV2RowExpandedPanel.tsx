@@ -40,10 +40,10 @@ function buildAgeTag(ageMin?: number, ageMax?: number, ageRange?: string): strin
 }
 
 const PROGRAM_TYPE_LABELS: Record<string, string> = {
-  class: 'Classes',
+  class: 'Class',
   clinic: 'Clinic',
   camp: 'Camp',
-  lesson: 'Lessons',
+  lesson: 'Lesson',
   league: 'League',
   tournament: 'Tournament',
   club_team: 'Club Team',
