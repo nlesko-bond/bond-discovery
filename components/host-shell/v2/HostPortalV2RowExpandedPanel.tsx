@@ -204,8 +204,13 @@ export function HostPortalV2RowExpandedPanel({
               </ul>
             )}
 
+            {descriptionSections?.lead && (
+              <p className="mt-4 text-[13px] font-medium leading-relaxed text-gray-800">
+                {descriptionSections.lead}
+              </p>
+            )}
             {descriptionSections?.body && (
-              <p className="mt-4 whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">
+              <p className={`whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700${descriptionSections?.lead ? ' mt-2' : ' mt-4'}`}>
                 {descriptionSections.body}
               </p>
             )}
