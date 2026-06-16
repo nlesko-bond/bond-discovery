@@ -39,13 +39,31 @@ function buildAgeTag(ageMin?: number, ageMax?: number, ageRange?: string): strin
   return undefined;
 }
 
+const PROGRAM_TYPE_LABELS: Record<string, string> = {
+  class: 'Classes',
+  clinic: 'Clinic',
+  camp: 'Camp',
+  lesson: 'Lessons',
+  league: 'League',
+  tournament: 'Tournament',
+  club_team: 'Club Team',
+  drop_in: 'Drop-in',
+  rental: 'Rental',
+};
+
 function resolveExpandedMetaTags(
   card: IHostPortalSessionCardModel,
   showAgeGender: boolean,
 ): string[] {
   const sessionTitle = card.name || card.programName;
   const sportLabel = card.sport ? getSportLabel(card.sport) : undefined;
-  const categoryTag = sportLabel ? `${sportLabel} Classes` : undefined;
+  const programTypeLabel = card.programType
+    ? PROGRAM_TYPE_LABELS[card.programType]
+    : undefined;
+  const categoryTag =
+    sportLabel && programTypeLabel
+      ? `${sportLabel} ${programTypeLabel}`
+      : sportLabel ?? programTypeLabel;
 
   return [
     showAgeGender ? buildAgeTag(card.ageMin, card.ageMax, card.ageRange) : undefined,
