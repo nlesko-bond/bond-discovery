@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import {
+  bindPortalEmbedParentScrollForward,
   isBondHostRequestResizeMessage,
   isPortalEmbedFrame,
   lockPortalEmbedDocumentScroll,
@@ -39,6 +40,7 @@ export function useHostPortalEmbedResize(
     let resizeTimeout: ReturnType<typeof setTimeout>;
     let animationResizeTimeout: ReturnType<typeof setTimeout>;
     const unlockScroll = lockPortalEmbedDocumentScroll();
+    const unbindParentScrollForward = bindPortalEmbedParentScrollForward();
 
     const sendHeight = () => {
       clearTimeout(resizeTimeout);
@@ -95,6 +97,7 @@ export function useHostPortalEmbedResize(
       window.removeEventListener('message', onMessage);
       window.removeEventListener(PORTAL_EMBED_CONTENT_CHANGE_EVENT, onContentChange);
       unlockScroll();
+      unbindParentScrollForward();
     };
   }, [slug, ...remeasureKeys]);
 

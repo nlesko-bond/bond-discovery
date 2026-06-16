@@ -15,6 +15,7 @@
   var MSG_CHROME_OFFSET = 'bond:chrome-offset';
   var MSG_REQUEST_CHROME_OFFSET = 'bond:request-chrome-offset';
   var MSG_REQUEST_RESIZE = 'bond:request-resize';
+  var MSG_SCROLL = 'bond:scroll';
   var MSG_GTM_EVENT = 'BOND_GTM_EVENT';
   var EMBED_CHROME_QUERY_PARAM = 'embedChromePx';
   var CHECKOUT_QUERY_PARAM = 'bondPath';
@@ -238,6 +239,14 @@
     }
     if (data.type === MSG_GTM_EVENT) {
       this.forwardGtmEvent(data, event.origin);
+      return;
+    }
+    if (data.type === MSG_SCROLL) {
+      var deltaY = typeof data.deltaY === 'number' ? data.deltaY : 0;
+      var deltaX = typeof data.deltaX === 'number' ? data.deltaX : 0;
+      if (deltaY !== 0 || deltaX !== 0) {
+        window.scrollBy({ top: deltaY, left: deltaX, behavior: 'auto' });
+      }
       return;
     }
     if (

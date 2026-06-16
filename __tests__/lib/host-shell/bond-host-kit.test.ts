@@ -147,4 +147,11 @@ describe('bond-host kit BOND_GTM_EVENT forwarding', () => {
     expect(iframe.getAttribute('scrolling')).toBe('no');
     expect(iframe.style.overflow).toBe('hidden');
   });
+
+  it('scrolls the partner page when the discovery iframe posts bond:scroll', () => {
+    const scrollBy = vi.spyOn(window, 'scrollBy').mockImplementation(() => undefined);
+    sendMessage({ type: 'bond:scroll', deltaY: 80, deltaX: 0 }, DISCOVERY_ORIGIN);
+    expect(scrollBy).toHaveBeenCalledWith({ top: 80, left: 0, behavior: 'auto' });
+    scrollBy.mockRestore();
+  });
 });
