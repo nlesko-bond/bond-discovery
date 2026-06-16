@@ -156,8 +156,9 @@
     var iframe = document.createElement('iframe');
     iframe.setAttribute('title', 'Programs');
     iframe.setAttribute('data-bond-discovery-iframe', '1');
+    iframe.setAttribute('scrolling', 'no');
     iframe.style.cssText =
-      'width:100%;border:0;display:block;min-height:' + MIN_IFRAME_HEIGHT_PX + 'px';
+      'width:100%;border:0;display:block;overflow:hidden;min-height:' + MIN_IFRAME_HEIGHT_PX + 'px';
     this.applyDiscoveryIframeChrome(iframe);
     iframe.src = boot.paths.portalDiscoveryUrl;
     iframe.addEventListener('load', function () {

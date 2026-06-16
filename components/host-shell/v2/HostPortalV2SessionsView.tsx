@@ -21,6 +21,7 @@ import {
   formatHostPortalSessionDescription,
   hasHostPortalSessionDescription,
 } from '@/lib/host-shell/portal-session-description';
+import { notifyPortalEmbedContentChange } from '@/lib/host-shell/embed-resize';
 import { HostPortalSessionCard } from '../HostPortalSessionCard';
 import {
   HostPortalSessionSegmentsPanel,
@@ -927,6 +928,10 @@ export function HostPortalV2SessionsView({
   const handleSegmentsOpenChange = (sessionId: string, open: boolean) => {
     setSegmentsOpenSessionId(open ? sessionId : null);
   };
+
+  useEffect(() => {
+    notifyPortalEmbedContentChange();
+  }, [segmentsOpenSessionId]);
 
   const renderCardsGrid = (
     groupCards: IHostPortalSessionCardModel[],

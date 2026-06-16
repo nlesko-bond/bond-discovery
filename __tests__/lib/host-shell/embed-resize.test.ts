@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   isBondHostRequestResizeMessage,
   measurePortalEmbedContentHeight,
+  notifyPortalEmbedContentChange,
+  PORTAL_EMBED_CONTENT_CHANGE_EVENT,
 } from '@/lib/host-shell/embed-resize';
 
 describe('isBondHostRequestResizeMessage', () => {
@@ -23,5 +25,23 @@ describe('measurePortalEmbedContentHeight', () => {
       configurable: true,
     });
     expect(measurePortalEmbedContentHeight(root)).toBeGreaterThanOrEqual(420);
+  });
+});
+
+describe('notifyPortalEmbedContentChange', () => {
+  it('dispatches a remeasure event when embedded', () => {
+    const frameSpy = vi.spyOn(window, 'self', 'get').mockReturnValue({} as Window & typeof globalThis);
+    const topSpy = vi.spyOn(window, 'top', 'get').mockReturnValue(window);
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+
+    notifyPortalEmbedContentChange();
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ type: PORTAL_EMBED_CONTENT_CHANGE_EVENT }),
+    );
+
+    frameSpy.mockRestore();
+    topSpy.mockRestore();
+    dispatchSpy.mockRestore();
   });
 });

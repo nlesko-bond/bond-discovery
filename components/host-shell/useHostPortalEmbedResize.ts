@@ -4,11 +4,14 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import {
   isBondHostRequestResizeMessage,
   isPortalEmbedFrame,
+  lockPortalEmbedDocumentScroll,
   measurePortalEmbedContentHeight,
+  PORTAL_EMBED_CONTENT_CHANGE_EVENT,
 } from '@/lib/host-shell/embed-resize';
 
 const IFRAME_RESIZE_DEBOUNCE_MS = 100;
 const IFRAME_INITIAL_RESIZE_DELAY_MS = 500;
+const IFRAME_COLLAPSE_ANIMATION_RESIZE_DELAY_MS = 250;
 
 interface IUseHostPortalEmbedResizeOptions {
   slug: string;
@@ -34,10 +37,13 @@ export function useHostPortalEmbedResize(
     }
 
     let resizeTimeout: ReturnType<typeof setTimeout>;
+    let animationResizeTimeout: ReturnType<typeof setTimeout>;
+    const unlockScroll = lockPortalEmbedDocumentScroll();
 
     const sendHeight = () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
+        window.scrollTo(0, 0);
         window.parent.postMessage(
           {
             type: 'discovery-resize',
@@ -49,13 +55,22 @@ export function useHostPortalEmbedResize(
       }, IFRAME_RESIZE_DEBOUNCE_MS);
     };
 
+    const sendHeightAfterAnimation = () => {
+      clearTimeout(animationResizeTimeout);
+      animationResizeTimeout = setTimeout(sendHeight, IFRAME_COLLAPSE_ANIMATION_RESIZE_DELAY_MS);
+    };
+
     const onMessage = (event: MessageEvent) => {
       if (isBondHostRequestResizeMessage(event.data)) {
         sendHeight();
       }
     };
 
-    window.scrollTo(0, 0);
+    const onContentChange = () => {
+      sendHeight();
+      sendHeightAfterAnimation();
+    };
+
     sendHeight();
     const initialResizeTimer = setTimeout(sendHeight, IFRAME_INITIAL_RESIZE_DELAY_MS);
 
@@ -65,15 +80,21 @@ export function useHostPortalEmbedResize(
       resizeObserver.observe(root);
     }
     resizeObserver.observe(document.body);
+    resizeObserver.observe(document.documentElement);
+
     window.addEventListener('resize', sendHeight);
     window.addEventListener('message', onMessage);
+    window.addEventListener(PORTAL_EMBED_CONTENT_CHANGE_EVENT, onContentChange);
 
     return () => {
       clearTimeout(resizeTimeout);
+      clearTimeout(animationResizeTimeout);
       clearTimeout(initialResizeTimer);
       resizeObserver.disconnect();
       window.removeEventListener('resize', sendHeight);
       window.removeEventListener('message', onMessage);
+      window.removeEventListener(PORTAL_EMBED_CONTENT_CHANGE_EVENT, onContentChange);
+      unlockScroll();
     };
   }, [slug, ...remeasureKeys]);
 

@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, type ReactNode } from 'react';
+import { useCallback, type ReactNode, type TransitionEvent } from 'react';
+import { notifyPortalEmbedContentChange } from '@/lib/host-shell/embed-resize';
 import { cn } from '@/lib/utils';
 
 interface IHostPortalV2CollapseProps {
@@ -47,11 +48,18 @@ export function HostPortalV2Collapse({
     [open],
   );
 
+  const handleTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
+    if (event.propertyName === 'grid-template-rows') {
+      notifyPortalEmbedContentChange();
+    }
+  };
+
   return (
     <div
       id={id}
       ref={inertRef}
       aria-hidden={!open}
+      onTransitionEnd={handleTransitionEnd}
       className={cn(
         'grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none',
         open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',

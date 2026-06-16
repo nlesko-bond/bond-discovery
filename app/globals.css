@@ -20,6 +20,12 @@
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
   }
+
+  html.bond-portal-embed,
+  html.bond-portal-embed body {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
 }
 
 @layer components {

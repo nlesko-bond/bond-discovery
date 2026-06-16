@@ -141,4 +141,10 @@ describe('bond-host kit BOND_GTM_EVENT forwarding', () => {
     sendMessage({ type: 'bond:resize', height: 900 }, DISCOVERY_ORIGIN);
     expect(getActiveIframe().style.height).toBe('900px');
   });
+
+  it('mounts discovery iframe without internal scrolling', () => {
+    const iframe = getActiveIframe();
+    expect(iframe.getAttribute('scrolling')).toBe('no');
+    expect(iframe.style.overflow).toBe('hidden');
+  });
 });
