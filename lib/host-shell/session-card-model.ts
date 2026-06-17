@@ -101,11 +101,11 @@ export function isSessionClosedByAvailabilityStatus(
  * when ALL of its prices are $0 AND the product name contains the word "comp".
  * Remove this function once the API excludes these products upstream.
  */
-function isCompedProduct(product: Product): boolean {
+export function isCompedProduct(product: Product): boolean {
   const nameContainsComp = /\bcomp(ed)?\b/i.test(product.name);
   if (!nameContainsComp) return false;
   if (!product.prices?.length) return false;
-  return product.prices.every((p) => p.price === 0);
+  return product.prices.every((p) => (p.price ?? 0) === 0);
 }
 
 function getProductsFromSession(session: Session): Product[] {

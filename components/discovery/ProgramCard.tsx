@@ -15,6 +15,7 @@ import {
   Star
 } from 'lucide-react';
 import { Program, Session, Product, DiscoveryConfig } from '@/types';
+import { isCompedProduct } from '@/lib/host-shell/session-card-model';
 import { 
   formatPrice, 
   formatDateRange, 
@@ -347,7 +348,7 @@ function SessionCard({
   // Auto-expand pricing if there's only one session (autoExpandPricing=true)
   const [showPricing, setShowPricing] = useState(autoExpandPricing);
   const availability = getAvailabilityInfo(session.spotsRemaining, session.maxParticipants || session.capacity);
-  const products = session.products || [];
+  const products = (session.products || []).filter((p) => !isCompedProduct(p));
   
   // Dynamic colors from config
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
