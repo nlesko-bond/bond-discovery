@@ -599,7 +599,7 @@ function getPricingInfo(sessions: Session[]): PricingInfo {
   let hasMemberPricing = false;
 
   sessions.forEach(session => {
-    (session.products || []).forEach(product => {
+    (session.products || []).filter((p) => !isCompedProduct(p)).forEach(product => {
       const isMember = product.isMemberProduct;
       
       product.prices.forEach(price => {
