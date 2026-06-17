@@ -95,6 +95,19 @@ export function isSessionClosedByAvailabilityStatus(
   );
 }
 
+/**
+ * Temporary workaround: filter out comp/comped products that the Bond API should
+ * not be returning for consumer-facing discovery. A product is treated as comped
+ * when ALL of its prices are $0 AND the product name contains the word "comp".
+ * Remove this function once the API excludes these products upstream.
+ */
+function isCompedProduct(product: Product): boolean {
+  const nameContainsComp = /\bcomp(ed)?\b/i.test(product.name);
+  if (!nameContainsComp) return false;
+  if (!product.prices?.length) return false;
+  return product.prices.every((p) => p.price === 0);
+}
+
 function getProductsFromSession(session: Session): Product[] {
   const products = session.products;
   if (!products) {
@@ -323,7 +336,9 @@ export function buildHostPortalSessionCards(
       const ageMax = session.maxAge ?? session.ageMax ?? program.ageMax;
       const gender = session.gender;
 
-      const sessionProducts = getProductsFromSession(session);
+      const sessionProducts = getProductsFromSession(session).filter(
+        (p) => !isCompedProduct(p),
+      );
       const products = sessionProducts.map((product) =>
         mapProductRow(product, baseLink, registerDisabled, customRegistrationUrl),
       );
