@@ -142,6 +142,7 @@ const VALID_PORTAL_ROW_COLUMNS = new Set<PortalRowColumn>([
   'location',
   'spots',
   'action',
+  'schedule',
 ]);
 
 function resolvePortalRowColumns(

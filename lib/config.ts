@@ -1,4 +1,5 @@
 import { cache as reactCache } from 'react';
+import { revalidatePath } from 'next/cache';
 
 // React's `cache` exists in Next.js' server runtime, but not in the plain
 // React 18 client build used by the test environment — fall back to identity.
@@ -408,7 +409,19 @@ export async function updatePageConfig(slug: string, updates: Partial<DiscoveryC
     }
     await Promise.all(invalidations);
   }
-  
+
+  const nextSlugForRevalidate = updateData.slug || slug;
+  try {
+    revalidatePath(`/${nextSlugForRevalidate}`);
+    revalidatePath(`/portal/${nextSlugForRevalidate}`);
+    if (updateData.slug && updateData.slug !== slug) {
+      revalidatePath(`/${slug}`);
+      revalidatePath(`/portal/${slug}`);
+    }
+  } catch {
+    // revalidatePath requires Next.js request context — no-op outside it (e.g. tests).
+  }
+
   // Fetch the updated record using admin client
   // Use the new slug if it was changed, otherwise use the original
   const fetchSlug = updateData.slug || slug;
