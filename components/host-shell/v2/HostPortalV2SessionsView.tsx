@@ -52,7 +52,7 @@ const ROW_COLUMN_LABELS: Record<PortalV2SessionRowColumn, string> = {
   location: 'Location',
   spots: 'Availability',
   action: '',
-  schedule: '',
+  schedule: 'Schedule',
 };
 
 interface ITrackedSession {
@@ -472,7 +472,7 @@ interface ISessionRowProps {
   onOpenSchedule?: (programId: string, sessionId: string) => void;
 }
 
-const ROW_SCHEDULE_COLUMN_WIDTH_PX = 120;
+const ROW_SCHEDULE_COLUMN_WIDTH_PX = 130;
 
 function rowGridTemplate(columns: PortalV2SessionRowColumn[]): string {
   const cells = columns.map((column) => {
@@ -706,7 +706,9 @@ function HostPortalV2SessionRow({
         return <div data-portal-v2-cell="spots">{availabilityPill}</div>;
       case 'schedule':
         return (
-          <div data-portal-v2-cell="schedule">{viewScheduleButton}</div>
+          <div data-portal-v2-cell="schedule" className="flex items-center">
+            {viewScheduleButton}
+          </div>
         );
       case 'action':
         return (
