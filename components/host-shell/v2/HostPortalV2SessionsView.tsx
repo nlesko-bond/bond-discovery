@@ -52,6 +52,7 @@ const ROW_COLUMN_LABELS: Record<PortalV2SessionRowColumn, string> = {
   location: 'Location',
   spots: 'Availability',
   action: '',
+  schedule: '',
 };
 
 interface ITrackedSession {
@@ -471,12 +472,15 @@ interface ISessionRowProps {
   onOpenSchedule?: (programId: string, sessionId: string) => void;
 }
 
+const ROW_SCHEDULE_COLUMN_WIDTH_PX = 148;
+
 function rowGridTemplate(columns: PortalV2SessionRowColumn[]): string {
   const cells = columns.map((column) => {
     if (column === 'event') return 'minmax(0, 2.5fr)';
     if (column === 'spots') return `minmax(${ROW_SPOTS_COLUMN_WIDTH_PX}px, max-content)`;
     if (column === 'action') return `${ROW_ACTION_COLUMN_WIDTH_PX}px`;
     if (column === 'date') return 'minmax(0, 1.1fr)';
+    if (column === 'schedule') return `${ROW_SCHEDULE_COLUMN_WIDTH_PX}px`;
     return 'minmax(0, 1fr)';
   });
   return [...cells, `${ROW_CHEVRON_COLUMN_WIDTH_PX}px`].join(' ');
@@ -638,7 +642,8 @@ function HostPortalV2SessionRow({
             )}
           </div>
         );
-      case 'event':
+      case 'event': {
+        const scheduleColumnActive = columns.includes('schedule');
         return (
           <div data-portal-v2-cell="event" className="min-w-0">
             <p className="break-words text-sm font-semibold leading-snug text-gray-900 sm:line-clamp-2">
@@ -655,7 +660,7 @@ function HostPortalV2SessionRow({
                 />
               </div>
             )}
-            {expandable && scheduleTabEnabled && onOpenSchedule && hasSegmentDetail(card) && (
+            {expandable && !scheduleColumnActive && scheduleTabEnabled && onOpenSchedule && hasSegmentDetail(card) && (
               <button
                 type="button"
                 data-testid="portal-v2-view-schedule"
@@ -669,8 +674,22 @@ function HostPortalV2SessionRow({
                 View schedule
               </button>
             )}
+            {expandable && scheduleColumnActive && (
+              <button
+                type="button"
+                data-testid="portal-v2-more-info"
+                className="mt-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggleSegments();
+                }}
+              >
+                More info
+              </button>
+            )}
           </div>
         );
+      }
       case 'program':
         return (
           <p data-portal-v2-cell="program" className="break-words text-sm text-gray-600">
@@ -685,6 +704,10 @@ function HostPortalV2SessionRow({
         );
       case 'spots':
         return <div data-portal-v2-cell="spots">{availabilityPill}</div>;
+      case 'schedule':
+        return (
+          <div data-portal-v2-cell="schedule">{viewScheduleButton}</div>
+        );
       case 'action':
         return (
           <div data-portal-v2-cell="action" className="flex flex-col items-end justify-center gap-1">

@@ -191,4 +191,5 @@ export const PORTAL_ROW_COLUMNS: ReadonlyArray<{
   { id: 'location', label: 'Location', hint: 'Facility name' },
   { id: 'spots', label: 'Availability', hint: 'Open / limited / full pill' },
   { id: 'action', label: 'Price & Register', hint: 'Starting price and Register button' },
+  { id: 'schedule', label: 'Schedule link', hint: 'View schedule button as a column; moves it out of the session cell' },
 ];

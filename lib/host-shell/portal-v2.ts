@@ -116,7 +116,7 @@ const DEFAULT_ROW_COLUMNS: PortalRowColumn[] = [
 
 function isSessionLevelRowColumn(
   column: ScheduleTableColumn,
-): column is PortalV2SessionRowColumn {
+): column is Extract<PortalRowColumn, ScheduleTableColumn> {
   return (
     column === 'date' ||
     column === 'event' ||

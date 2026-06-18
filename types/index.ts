@@ -402,7 +402,7 @@ export type PortalDisplayMode = 'programs' | 'sessions' | 'auto';
  * Separate from ScheduleTableColumn (which covers the schedule/list table and includes
  * event-level columns like 'time' and 'space' that don't apply to session rows).
  */
-export type PortalRowColumn = 'date' | 'event' | 'program' | 'location' | 'spots' | 'action';
+export type PortalRowColumn = 'date' | 'event' | 'program' | 'location' | 'spots' | 'action' | 'schedule';
 
 /**
  * What a clicked row expands to show.
