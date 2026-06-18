@@ -1183,7 +1183,8 @@ function EventCard({
   const isRegistrationClosed = event.registrationWindowStatus === 'closed' || event.registrationWindowStatus === 'ended';
   const isRegistrationNotYetOpen = event.registrationWindowStatus === 'not_opened_yet';
   const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
-  const isWaitlistJoinable = Boolean(event.isWaitlistEnabled && isFull && isRegistrationOpen);
+  const waitlistEnabled = config.features.showWaitlist !== false;
+  const isWaitlistJoinable = Boolean(waitlistEnabled && event.isWaitlistEnabled && isFull && isRegistrationOpen);
 
   // Get start time - try multiple sources
   const startTimeStr = formatTime(event.startTime, event.timezone) || formatTime(event.date, event.timezone) || '';
@@ -1288,8 +1289,7 @@ function EventCard({
                 }
               </span>
             )}
-            {/* Waitlist indicator */}
-            {event.isWaitlistEnabled && (
+            {waitlistEnabled && event.isWaitlistEnabled && (
               <span className="flex items-center gap-1 text-xs text-purple-600">
                 <Users size={12} />
                 Waitlist
@@ -1393,7 +1393,8 @@ function EventDetailModal({
   const isRegistrationNotYetOpen = event.registrationWindowStatus === 'not_opened_yet';
   const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
   const isFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 0;
-  const isWaitlistJoinable = Boolean(event.isWaitlistEnabled && isFull && isRegistrationOpen);
+  const waitlistEnabled = config.features.showWaitlist !== false;
+  const isWaitlistJoinable = Boolean(waitlistEnabled && event.isWaitlistEnabled && isFull && isRegistrationOpen);
   
   // Close on escape key
   useEffect(() => {
@@ -1852,7 +1853,8 @@ function TableView({
               const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
               const isFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 0;
               const isAlmostFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 5 && !isFull;
-              const isWaitlistJoinable = Boolean(event.isWaitlistEnabled && isFull && isRegistrationOpen);
+              const waitlistEnabled = config.features.showWaitlist !== false;
+              const isWaitlistJoinable = Boolean(waitlistEnabled && event.isWaitlistEnabled && isFull && isRegistrationOpen);
               const eventPrimary =
                 event.title || event.sessionName || event.programName;
               const { home: leagueHome, away: leagueAway } = parseHomeAwayFromEventTitle(
@@ -2021,7 +2023,7 @@ function TableView({
                               {isRegistrationNotYetOpen && (
                                 <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded">Coming Soon</span>
                               )}
-                              {event.isWaitlistEnabled && (
+                              {waitlistEnabled && event.isWaitlistEnabled && (
                                 <span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-600 rounded flex items-center gap-0.5">
                                   <Users size={10} />Waitlist
                                 </span>

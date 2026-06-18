@@ -646,56 +646,101 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
                 <p className="mb-3 text-xs text-gray-500">
                   Choose which columns appear. Session is always shown.
                 </p>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {PORTAL_ROW_COLUMNS.map((col) => {
-                    const activeColumns: PortalRowColumn[] =
-                      config.features.portalRowColumns ?? PORTAL_ROW_COLUMNS.map((c) => c.id);
-                    const isChecked = activeColumns.includes(col.id);
-                    const isRequired = col.id === 'event';
-                    return (
-                      <label
-                        key={col.id}
-                        className={`flex items-start gap-3 rounded-lg border p-3 text-sm ${
-                          isRequired
-                            ? 'cursor-default border-gray-200 bg-gray-50 opacity-60'
-                            : 'cursor-pointer border-gray-200 bg-white hover:border-indigo-200'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          className="mt-0.5 rounded border-gray-300"
-                          checked={isChecked}
-                          disabled={isRequired}
-                          onChange={(event) => {
-                            const next = event.target.checked
-                              ? [...activeColumns, col.id]
-                              : activeColumns.filter((c) => c !== col.id);
-                            const ordered = PORTAL_ROW_COLUMNS.map((c) => c.id).filter((c) =>
-                              next.includes(c),
-                            );
-                            setConfig({
-                              ...config,
-                              features: {
-                                ...config.features,
-                                portalRowColumns:
-                                  ordered.length === PORTAL_ROW_COLUMNS.length
-                                    ? undefined
-                                    : ordered,
-                              },
-                            });
-                          }}
-                        />
-                        <span>
-                          <span className="font-medium text-gray-900">{col.label}</span>
-                          <span className="mt-0.5 block text-xs text-gray-500">
-                            {col.hint}
-                            {isRequired && ' (always shown)'}
-                          </span>
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
+                {(() => {
+                  const canonicalIds = PORTAL_ROW_COLUMNS.map((c) => c.id);
+                  const saved = config.features.portalRowColumns ?? canonicalIds;
+                  const displayOrder: PortalRowColumn[] = [
+                    ...saved.filter((c) => canonicalIds.includes(c)),
+                    ...canonicalIds.filter((c) => !saved.includes(c)),
+                  ];
+                  const colMeta = Object.fromEntries(
+                    PORTAL_ROW_COLUMNS.map((c) => [c.id, c]),
+                  ) as Record<PortalRowColumn, (typeof PORTAL_ROW_COLUMNS)[number]>;
+
+                  function saveColumns(next: PortalRowColumn[]) {
+                    setConfig({
+                      ...config,
+                      features: {
+                        ...config.features,
+                        portalRowColumns:
+                          next.join(',') === canonicalIds.join(',') ? undefined : next,
+                      },
+                    });
+                  }
+
+                  return (
+                    <div className="space-y-1">
+                      {displayOrder.map((id, idx) => {
+                        const col = colMeta[id];
+                        const isChecked = saved.includes(id);
+                        const isRequired = id === 'event';
+                        const checkedOrder = displayOrder.filter((c) => saved.includes(c));
+                        const checkedIdx = checkedOrder.indexOf(id);
+                        const canMoveUp = isChecked && checkedIdx > 0;
+                        const canMoveDown = isChecked && checkedIdx < checkedOrder.length - 1;
+
+                        function move(direction: 'up' | 'down') {
+                          const newOrder = [...checkedOrder];
+                          const swap = direction === 'up' ? checkedIdx - 1 : checkedIdx + 1;
+                          [newOrder[checkedIdx], newOrder[swap]] = [newOrder[swap], newOrder[checkedIdx]];
+                          const unchecked = displayOrder.filter((c) => !saved.includes(c));
+                          saveColumns([...newOrder, ...unchecked]);
+                        }
+
+                        return (
+                          <div
+                            key={id}
+                            className={`flex items-center gap-2 rounded-lg border p-2.5 text-sm ${
+                              isRequired
+                                ? 'border-gray-200 bg-gray-50 opacity-60'
+                                : 'border-gray-200 bg-white'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="rounded border-gray-300"
+                              checked={isChecked}
+                              disabled={isRequired}
+                              onChange={(e) => {
+                                const next = e.target.checked
+                                  ? [...checkedOrder, id]
+                                  : checkedOrder.filter((c) => c !== id);
+                                const unchecked = displayOrder.filter((c) => !next.includes(c));
+                                saveColumns([...next, ...unchecked]);
+                              }}
+                            />
+                            <span className="flex-1">
+                              <span className="font-medium text-gray-900">{col.label}</span>
+                              <span className="ml-2 text-xs text-gray-500">{col.hint}</span>
+                            </span>
+                            {isChecked && !isRequired && (
+                              <span className="flex gap-0.5">
+                                <button
+                                  type="button"
+                                  disabled={!canMoveUp}
+                                  onClick={() => move('up')}
+                                  className="rounded px-1 py-0.5 text-xs text-gray-400 hover:bg-gray-100 disabled:opacity-30"
+                                  aria-label={`Move ${col.label} up`}
+                                >
+                                  ↑
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={!canMoveDown}
+                                  onClick={() => move('down')}
+                                  className="rounded px-1 py-0.5 text-xs text-gray-400 hover:bg-gray-100 disabled:opacity-30"
+                                  aria-label={`Move ${col.label} down`}
+                                >
+                                  ↓
+                                </button>
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
 
               <label className="flex items-start gap-3 text-sm text-gray-700">

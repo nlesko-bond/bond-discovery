@@ -96,6 +96,7 @@ export interface IPageConfig {
     persistFiltersInLocalStorage?: boolean;
     spaceColumnLabel?: string;
     showLeagueScheduleTableAndExport?: boolean;
+    showWaitlist?: boolean;
   };
   defaultParams?: Record<string, string>;
   cacheTtl?: number;

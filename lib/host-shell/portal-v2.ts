@@ -114,20 +114,6 @@ const DEFAULT_ROW_COLUMNS: PortalRowColumn[] = [
   'action',
 ];
 
-const CANONICAL_ROW_COLUMN_ORDER: PortalRowColumn[] = [
-  'date',
-  'event',
-  'program',
-  'schedule',
-  'location',
-  'spots',
-  'action',
-];
-
-function sortColumnsCanonically(columns: PortalRowColumn[]): PortalRowColumn[] {
-  const set = new Set(columns);
-  return CANONICAL_ROW_COLUMN_ORDER.filter((c) => set.has(c));
-}
 
 function isSessionLevelRowColumn(
   column: ScheduleTableColumn,
@@ -159,7 +145,7 @@ export function resolvePortalV2SessionRowColumns(
 ): PortalV2SessionRowColumn[] {
   const portalRowColumns = config.features.portalRowColumns;
   const configured: PortalV2SessionRowColumn[] = portalRowColumns?.length
-    ? sortColumnsCanonically(portalRowColumns)
+    ? portalRowColumns
     : (config.features.tableColumns?.length
         ? config.features.tableColumns.filter(isSessionLevelRowColumn)
         : DEFAULT_ROW_COLUMNS);

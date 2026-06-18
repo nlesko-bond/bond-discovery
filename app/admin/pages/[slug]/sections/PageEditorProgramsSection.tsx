@@ -330,12 +330,14 @@ export function PageEditorProgramsSection({
               { key: 'showRegisterIcon', label: 'Show icon on Register buttons', defaultOn: true },
               { key: 'allowViewToggle', label: 'Allow switching between Programs and Schedule view' },
               { key: 'showTableView', label: 'Show Table view option on desktop' },
+              { key: 'showWaitlist', label: 'Show waitlist badges and Join Waitlist button on schedule', defaultOn: true },
             ] as const
           ).map((option) => {
             const checked =
               option.key === 'showSearch' ||
               option.key === 'showShareButton' ||
-              option.key === 'showRegisterIcon'
+              option.key === 'showRegisterIcon' ||
+              option.key === 'showWaitlist'
                 ? config.features[option.key] !== false
                 : Boolean(config.features[option.key]);
             return (

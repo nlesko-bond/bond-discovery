@@ -547,6 +547,8 @@ export interface FeatureConfig {
   portalRowExpandMode?: PortalRowExpandMode;
   /** When true, show early-bird / late-fee pricing labels on session cards and rows. */
   showTieredSessionPricing?: boolean;
+  /** Show waitlist badges and Join Waitlist CTAs on the schedule tab (default true) */
+  showWaitlist?: boolean;
   /** Layout for iframe-free embed kit (`/embed-kit/v1`) */
   embedPortalTemplate?: BondEmbedPortalTemplate;
   /** When set, browser `Origin` must match one entry for embed-kit CORS */
