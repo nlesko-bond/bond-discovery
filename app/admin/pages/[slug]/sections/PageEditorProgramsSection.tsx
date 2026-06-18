@@ -331,13 +331,15 @@ export function PageEditorProgramsSection({
               { key: 'allowViewToggle', label: 'Allow switching between Programs and Schedule view' },
               { key: 'showTableView', label: 'Show Table view option on desktop' },
               { key: 'showWaitlist', label: 'Show waitlist badges and Join Waitlist button on schedule', defaultOn: true },
+              { key: 'showScheduleEventType', label: 'Show event type tag on schedule (e.g. Drop-in, Class)', defaultOn: true },
             ] as const
           ).map((option) => {
             const checked =
               option.key === 'showSearch' ||
               option.key === 'showShareButton' ||
               option.key === 'showRegisterIcon' ||
-              option.key === 'showWaitlist'
+              option.key === 'showWaitlist' ||
+              option.key === 'showScheduleEventType'
                 ? config.features[option.key] !== false
                 : Boolean(config.features[option.key]);
             return (

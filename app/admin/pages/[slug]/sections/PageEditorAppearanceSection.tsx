@@ -648,16 +648,17 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
                 </p>
                 {(() => {
                   const canonicalIds = PORTAL_ROW_COLUMNS.map((c) => c.id);
-                  const saved = config.features.portalRowColumns ?? canonicalIds;
-                  const displayOrder: PortalRowColumn[] = [
-                    ...saved.filter((c) => canonicalIds.includes(c)),
-                    ...canonicalIds.filter((c) => !saved.includes(c)),
-                  ];
+                  const activeColumns: PortalRowColumn[] =
+                    config.features.portalRowColumns ?? canonicalIds;
+                  const inactiveColumns = canonicalIds.filter(
+                    (c) => !activeColumns.includes(c),
+                  );
+                  const displayOrder: PortalRowColumn[] = [...activeColumns, ...inactiveColumns];
                   const colMeta = Object.fromEntries(
                     PORTAL_ROW_COLUMNS.map((c) => [c.id, c]),
                   ) as Record<PortalRowColumn, (typeof PORTAL_ROW_COLUMNS)[number]>;
 
-                  function saveColumns(next: PortalRowColumn[]) {
+                  function saveActiveColumns(next: PortalRowColumn[]) {
                     setConfig({
                       ...config,
                       features: {
@@ -670,22 +671,13 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
 
                   return (
                     <div className="space-y-1">
-                      {displayOrder.map((id, idx) => {
+                      {displayOrder.map((id) => {
                         const col = colMeta[id];
-                        const isChecked = saved.includes(id);
+                        const isChecked = activeColumns.includes(id);
                         const isRequired = id === 'event';
-                        const checkedOrder = displayOrder.filter((c) => saved.includes(c));
-                        const checkedIdx = checkedOrder.indexOf(id);
-                        const canMoveUp = isChecked && checkedIdx > 0;
-                        const canMoveDown = isChecked && checkedIdx < checkedOrder.length - 1;
-
-                        function move(direction: 'up' | 'down') {
-                          const newOrder = [...checkedOrder];
-                          const swap = direction === 'up' ? checkedIdx - 1 : checkedIdx + 1;
-                          [newOrder[checkedIdx], newOrder[swap]] = [newOrder[swap], newOrder[checkedIdx]];
-                          const unchecked = displayOrder.filter((c) => !saved.includes(c));
-                          saveColumns([...newOrder, ...unchecked]);
-                        }
+                        const activeIdx = activeColumns.indexOf(id);
+                        const canMoveUp = isChecked && activeIdx > 0;
+                        const canMoveDown = isChecked && activeIdx < activeColumns.length - 1;
 
                         return (
                           <div
@@ -693,7 +685,9 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
                             className={`flex items-center gap-2 rounded-lg border p-2.5 text-sm ${
                               isRequired
                                 ? 'border-gray-200 bg-gray-50 opacity-60'
-                                : 'border-gray-200 bg-white'
+                                : isChecked
+                                  ? 'border-gray-200 bg-white'
+                                  : 'border-dashed border-gray-200 bg-gray-50 text-gray-400'
                             }`}
                           >
                             <input
@@ -703,14 +697,13 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
                               disabled={isRequired}
                               onChange={(e) => {
                                 const next = e.target.checked
-                                  ? [...checkedOrder, id]
-                                  : checkedOrder.filter((c) => c !== id);
-                                const unchecked = displayOrder.filter((c) => !next.includes(c));
-                                saveColumns([...next, ...unchecked]);
+                                  ? [...activeColumns, id]
+                                  : activeColumns.filter((c) => c !== id);
+                                saveActiveColumns(next);
                               }}
                             />
                             <span className="flex-1">
-                              <span className="font-medium text-gray-900">{col.label}</span>
+                              <span className="font-medium">{col.label}</span>
                               <span className="ml-2 text-xs text-gray-500">{col.hint}</span>
                             </span>
                             {isChecked && !isRequired && (
@@ -718,7 +711,14 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
                                 <button
                                   type="button"
                                   disabled={!canMoveUp}
-                                  onClick={() => move('up')}
+                                  onClick={() => {
+                                    const newOrder = [...activeColumns];
+                                    [newOrder[activeIdx - 1], newOrder[activeIdx]] = [
+                                      newOrder[activeIdx],
+                                      newOrder[activeIdx - 1],
+                                    ];
+                                    saveActiveColumns(newOrder);
+                                  }}
                                   className="rounded px-1 py-0.5 text-xs text-gray-400 hover:bg-gray-100 disabled:opacity-30"
                                   aria-label={`Move ${col.label} up`}
                                 >
@@ -727,7 +727,14 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
                                 <button
                                   type="button"
                                   disabled={!canMoveDown}
-                                  onClick={() => move('down')}
+                                  onClick={() => {
+                                    const newOrder = [...activeColumns];
+                                    [newOrder[activeIdx], newOrder[activeIdx + 1]] = [
+                                      newOrder[activeIdx + 1],
+                                      newOrder[activeIdx],
+                                    ];
+                                    saveActiveColumns(newOrder);
+                                  }}
                                   className="rounded px-1 py-0.5 text-xs text-gray-400 hover:bg-gray-100 disabled:opacity-30"
                                   aria-label={`Move ${col.label} down`}
                                 >

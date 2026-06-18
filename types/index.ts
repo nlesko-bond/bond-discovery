@@ -549,6 +549,8 @@ export interface FeatureConfig {
   showTieredSessionPricing?: boolean;
   /** Show waitlist badges and Join Waitlist CTAs on the schedule tab (default true) */
   showWaitlist?: boolean;
+  /** Show program type tag (e.g. Drop-in, Class) on schedule events (default true) */
+  showScheduleEventType?: boolean;
   /** Layout for iframe-free embed kit (`/embed-kit/v1`) */
   embedPortalTemplate?: BondEmbedPortalTemplate;
   /** When set, browser `Origin` must match one entry for embed-kit CORS */

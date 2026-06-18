@@ -1184,6 +1184,7 @@ function EventCard({
   const isRegistrationNotYetOpen = event.registrationWindowStatus === 'not_opened_yet';
   const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
   const waitlistEnabled = config.features.showWaitlist !== false;
+  const showEventType = config.features.showScheduleEventType !== false;
   const isWaitlistJoinable = Boolean(waitlistEnabled && event.isWaitlistEnabled && isFull && isRegistrationOpen);
 
   // Get start time - try multiple sources
@@ -1267,8 +1268,7 @@ function EventCard({
 
           {/* Details row - show space name (most specific) or facility name */}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-            {/* Program type pill */}
-            {event.programType && (
+            {showEventType && event.programType && (
               <span 
                 className="text-xs font-medium px-2 py-0.5 rounded-full"
                 style={{ 
@@ -1394,6 +1394,7 @@ function EventDetailModal({
   const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
   const isFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 0;
   const waitlistEnabled = config.features.showWaitlist !== false;
+  const showEventType = config.features.showScheduleEventType !== false;
   const isWaitlistJoinable = Boolean(waitlistEnabled && event.isWaitlistEnabled && isFull && isRegistrationOpen);
   
   // Close on escape key
@@ -1452,7 +1453,7 @@ function EventDetailModal({
                     {getSportLabel(event.sport)}
                   </span>
                 )}
-                {event.programType && (
+                {showEventType && event.programType && (
                   <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full">
                     {getProgramTypeLabel(event.programType)}
                   </span>
@@ -1854,6 +1855,7 @@ function TableView({
               const isFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 0;
               const isAlmostFull = event.spotsRemaining !== undefined && event.spotsRemaining <= 5 && !isFull;
               const waitlistEnabled = config.features.showWaitlist !== false;
+              const showEventType = config.features.showScheduleEventType !== false;
               const isWaitlistJoinable = Boolean(waitlistEnabled && event.isWaitlistEnabled && isFull && isRegistrationOpen);
               const eventPrimary =
                 event.title || event.sessionName || event.programName;
@@ -2041,7 +2043,7 @@ function TableView({
                           >
                             {event.programName}
                           </div>
-                          {event.programType && (
+                          {showEventType && event.programType && (
                             <span 
                               className="text-xs px-1.5 py-0.5 rounded mt-0.5 inline-block print:hidden"
                               style={{ backgroundColor: `${secondaryColor}15`, color: secondaryColor }}

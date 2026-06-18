@@ -97,6 +97,7 @@ export interface IPageConfig {
     spaceColumnLabel?: string;
     showLeagueScheduleTableAndExport?: boolean;
     showWaitlist?: boolean;
+    showScheduleEventType?: boolean;
   };
   defaultParams?: Record<string, string>;
   cacheTtl?: number;
