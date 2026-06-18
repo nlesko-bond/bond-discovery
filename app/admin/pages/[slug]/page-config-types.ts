@@ -188,8 +188,8 @@ export const PORTAL_ROW_COLUMNS: ReadonlyArray<{
   { id: 'date', label: 'Date', hint: 'Session date range and week count' },
   { id: 'event', label: 'Session', hint: 'Session name, age range (always shown)' },
   { id: 'program', label: 'Program', hint: 'Program / activity name' },
+  { id: 'schedule', label: 'Schedule link', hint: 'View schedule button as a column between session and location' },
   { id: 'location', label: 'Location', hint: 'Facility name' },
   { id: 'spots', label: 'Availability', hint: 'Open / limited / full pill' },
   { id: 'action', label: 'Price & Register', hint: 'Starting price and Register button' },
-  { id: 'schedule', label: 'Schedule link', hint: 'View schedule button as a column; moves it out of the session cell' },
 ];

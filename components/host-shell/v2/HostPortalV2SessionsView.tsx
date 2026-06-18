@@ -472,7 +472,7 @@ interface ISessionRowProps {
   onOpenSchedule?: (programId: string, sessionId: string) => void;
 }
 
-const ROW_SCHEDULE_COLUMN_WIDTH_PX = 148;
+const ROW_SCHEDULE_COLUMN_WIDTH_PX = 120;
 
 function rowGridTemplate(columns: PortalV2SessionRowColumn[]): string {
   const cells = columns.map((column) => {
@@ -604,13 +604,13 @@ function HostPortalV2SessionRow({
       <button
         type="button"
         data-testid="portal-v2-view-schedule"
-        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg px-3 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
+        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
         onClick={(event) => {
           event.stopPropagation();
           onOpenSchedule(card.programId, card.sessionId);
         }}
       >
-        <Clock size={14} aria-hidden />
+        <Clock size={12} aria-hidden />
         View schedule
       </button>
     ) : null;
