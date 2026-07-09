@@ -73,7 +73,7 @@ Discovery/
 
 ### Page A — Programs (`/discovery/programs`)
 
-Add **Embed** element. If your site has a **fixed header** on this page, set nav offset (measure header height in px):
+Add **Embed** element. Default (no offset attributes) is **auto-measure**: the kit measures the page's own in-flow chrome at runtime. Only set an explicit offset when the site has a **fixed/sticky nav that overlays content** (auto-measure cannot detect overlays — measure the nav height in px):
 
 ```html
 <div
@@ -87,7 +87,8 @@ Add **Embed** element. If your site has a **fixed header** on this page, set nav
 
 | Attribute | Purpose |
 |-----------|---------|
-| `data-bond-chrome-offset-px` | Desktop: `margin-top` on iframe so content clears fixed nav |
+| *(none — default)* | Auto-measure. Checkout iframe fits the viewport below the embed's actual on-page position (re-measured on load/resize; 480px floor; reserves ≤50% of viewport). In-flow headers need nothing. |
+| `data-bond-chrome-offset-px` | Explicit desktop value — always wins, disables auto-measure. Programs iframe: `margin-top` to clear a fixed nav. Checkout iframe: `calc(100dvh - Npx)`. |
 | `data-bond-chrome-offset-px-mobile` | Optional mobile override (≤767px). Use when mobile nav height differs. |
 
 **Webflow layout rules (programs page):**
@@ -101,18 +102,17 @@ Replace `YOUR_SLUG` with admin page slug.
 
 ### Page B — Register (`/discovery/register`)
 
-Same embed, plus nav offset (measure your header height in px):
+Same embed. Default (no attributes) auto-fits the checkout iframe below the page's in-flow chrome so Bond's footer is visible without scrolling:
 
 ```html
 <div
   data-bond-host
   data-bond-slug="YOUR_SLUG"
   data-bond-discovery-base="https://discovery.bondsports.co"
-  data-bond-chrome-offset-px="80"
 ></div>
 ```
 
-`data-bond-chrome-offset-px` sets checkout iframe height to `calc(100dvh - 80px)` so Bond’s footer is not hidden under your nav.
+Fixed/sticky nav overlaying content? Add `data-bond-chrome-offset-px="80"` (nav height in px) — checkout iframe height becomes `calc(100dvh - 80px)` so Bond’s footer is not hidden under the nav.
 
 ---
 
