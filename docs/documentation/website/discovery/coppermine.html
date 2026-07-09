@@ -34,42 +34,46 @@
 <div class="wrap">
   <p class="eyebrow">Coppermine × Bond Sports</p>
   <h1>Adding a program page to gocoppermine.com</h1>
-  <p class="lede">How to add a new sport page (soccer, lacrosse, …) that shows live Bond programs and takes registrations — about 5 minutes per page in WordPress.</p>
+  <p class="lede">How to add a new sport page (lacrosse, dance, …) that shows live Bond programs and takes registrations — about 5 minutes per page in WordPress.</p>
 
-  <h2>Already set up — don't touch</h2>
+  <h2>Already set up!</h2>
   <table>
     <tr><th>Bond script</th><td>Installed site-wide via the <strong>WPCode</strong> plugin ("Bond Discovery host kit" snippet). Powers every Bond page.</td></tr>
     <tr><th>All-programs page</th><td><code>/discovery/programs</code> — shows every program. In WordPress it's the page titled <strong>"Programs (Bond)"</strong>.</td></tr>
+    <tr><th>Soccer page</th><td><code>/discovery/programs/soccer</code> — the first sport page. <strong>Duplicate this one</strong> to add each new sport (steps below).</td></tr>
     <tr><th>Register page</th><td><code>/discovery/register</code> — checkout opens here in a new tab. One register page serves all program pages; never create a second one.</td></tr>
     <tr><th>Search engines</th><td>All <code>/discovery/…</code> pages are hidden from Google for now (a WPCode snippet). Bond will remove this at launch.</td></tr>
   </table>
 
   <h2>Add a new sport page</h2>
 
-  <div class="callout"><strong>Before you start:</strong> ask Bond (nicole.lesko@bondsports.co) to create the sport's Bond page. Bond replies with the sport's <strong>embed slug</strong> — e.g. <code>coppermine-soccer</code>. You need it for step 4.</div>
+  <div class="callout"><strong>Before you start:</strong> ask Bond (charlie.lynch@bondsports.co) to create the sport's Bond page. Bond replies with the sport's <strong>embed slug</strong> — e.g. <code>coppermine-lacrosse</code>. You need it for step 4.</div>
 
-  <div class="step"><div class="num">1</div><p>In wp-admin: <strong>Pages → Add Page</strong>. Title = the sport name, e.g. <strong>Soccer</strong>.</p></div>
-  <div class="step"><div class="num">2</div><p>In the right-hand panel: <strong>Parent → "Programs (Bond)"</strong> — the one with "(Bond)" in the name, not the old Programs page.</p></div>
-  <div class="step"><div class="num">3</div><p>Click the <strong>Slug</strong> row and confirm the full URL reads <code>gocoppermine.com/discovery/programs/soccer/</code>. If it shows <code>/coppermine/programs/…</code>, the parent is wrong — go back to step 2.</p></div>
-  <div class="step"><div class="num">4</div><p>In the page body, add a <strong>Custom HTML</strong> block and paste the snippet below. Change only the slug to the one Bond sent you.</p></div>
+  <p>The easiest way is to duplicate the existing Soccer page — the copy inherits the right parent, URL structure, and embed code automatically:</p>
+
+  <div class="step"><div class="num">1</div><p>In wp-admin: <strong>Pages</strong> → find <strong>Soccer</strong> (under Programs (Bond)) → hover it → click <strong>New Draft</strong>. That makes a copy and opens it for editing.</p></div>
+  <div class="step"><div class="num">2</div><p>Change the title from "Soccer" to the new sport, e.g. <strong>Lacrosse</strong>.</p></div>
+  <div class="step"><div class="num">3</div><p>Click the <strong>Slug</strong> row in the right-hand panel and change it to the sport name, e.g. <code>lacrosse</code> (the copy starts as something like <code>soccer-2</code>). Confirm the full URL reads <code>gocoppermine.com/discovery/programs/lacrosse/</code>.</p></div>
+  <div class="step"><div class="num">4</div><p>Click the <strong>Custom HTML</strong> block in the page body and change one thing: the <code>data-bond-slug</code> value — replace it with the slug Bond sent you (e.g. <code>coppermine-lacrosse</code>). Everything else stays as-is.</p></div>
+  <div class="step"><div class="num">5</div><p><strong>Publish</strong> the page.</p></div>
+  <div class="step"><div class="num">6</div><p>In the black toolbar at the top: <strong>Delete Cache → Clear All Cache</strong> (WP Fastest Cache). Required after every change.</p></div>
+  <div class="step"><div class="num">7</div><p>Open the page on the live site. It should show only that sport's programs, and clicking <strong>Register</strong> should open checkout in a new tab.</p></div>
+
+  <p><strong>Building a page from scratch instead?</strong> Create a page with <strong>Parent → "Programs (Bond)"</strong> (the one with "(Bond)" in the name, not the old Programs page), then add a <strong>Custom HTML</strong> block with this snippet — change only the slug:</p>
 
   <button class="copy" type="button" onclick="var t=document.getElementById('snip').innerText;navigator.clipboard.writeText(t);this.textContent='Copied!';var b=this;setTimeout(function(){b.textContent='Copy';},1500);">Copy</button>
   <pre id="snip"><code>&lt;div
   data-bond-host
-  data-bond-slug="coppermine-soccer"
+  data-bond-slug="coppermine-lacrosse"
   data-bond-discovery-base="https://discovery.bondsports.co"
 &gt;&lt;/div&gt;</code></pre>
-
-  <div class="step"><div class="num">5</div><p><strong>Publish</strong> the page.</p></div>
-  <div class="step"><div class="num">6</div><p>In the black toolbar at the top: <strong>Delete Cache → Clear All Cache</strong> (WP Fastest Cache). Required after every change.</p></div>
-  <div class="step"><div class="num">7</div><p>Open the page on the live site. It should show only that sport's programs, and clicking <strong>Register</strong> should open checkout in a new tab.</p></div>
 
   <h2>If something looks wrong</h2>
   <table>
     <tr><th>Old or missing content</th><td>Clear the cache (step 6), then hard-refresh the browser (Cmd/Ctrl + Shift + R).</td></tr>
     <tr><th>Embed area is empty</th><td>Make sure the page is <em>published</em> (editor previews don't run scripts). If it's empty only before accepting the cookie banner, tell Bond — the consent tool may be blocking the script.</td></tr>
     <tr><th>Register lands on the homepage</th><td>Path mismatch between the site and Bond's settings — contact Bond, don't change pages.</td></tr>
-    <tr><th>Wrong programs showing</th><td>The slug in the Custom HTML block doesn't match the sport — check step 4.</td></tr>
+    <tr><th>Wrong programs showing</th><td>The <code>data-bond-slug</code> in the Custom HTML block doesn't match the sport — check step 4.</td></tr>
   </table>
 
   <footer>Questions or a new sport to add? Email <a href="mailto:nicole.lesko@bondsports.co">nicole.lesko@bondsports.co</a> · Bond Sports</footer>
