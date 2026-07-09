@@ -9,7 +9,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const DISCOVERY_ORIGIN = 'https://discovery.bond.example';
 const CONSUMER_ORIGIN = 'https://consumer.bond.example';
@@ -153,5 +153,73 @@ describe('bond-host kit BOND_GTM_EVENT forwarding', () => {
     sendMessage({ type: 'bond:scroll', deltaY: 80, deltaX: 0 }, DISCOVERY_ORIGIN);
     expect(scrollBy).toHaveBeenCalledWith({ top: 80, left: 0, behavior: 'auto' });
     scrollBy.mockRestore();
+  });
+});
+
+describe('bond-host kit checkout iframe sizing', () => {
+  async function mountCheckout(mountAttrs: Record<string, string> = {}) {
+    window.history.replaceState(
+      null,
+      '',
+      '/discovery/register?bondPath=' + encodeURIComponent('/activity/checkout?productId=1'),
+    );
+    const mount = document.createElement('div');
+    Object.entries(mountAttrs).forEach(([k, v]) => mount.setAttribute(k, v));
+    document.body.appendChild(mount);
+    const bondHost = (win as Record<string, unknown>).BondHost as {
+      init: (options: Record<string, unknown>) => Promise<void>;
+    };
+    await bondHost.init({ mount, slug: 'test-club', discoveryBase: DISCOVERY_ORIGIN });
+    await waitForIframe(mount);
+    const iframe = mount.querySelector<HTMLIFrameElement>(
+      'iframe[data-bond-checkout-iframe="1"]',
+    );
+    if (!iframe) throw new Error('checkout iframe not mounted');
+    return { mount, iframe };
+  }
+
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+    document
+      .querySelectorAll('iframe[data-bond-checkout-iframe="1"]')
+      .forEach((el) => el.parentElement?.remove());
+  });
+
+  it('auto-fits checkout height to the viewport below the mount when no offset attr is set', async () => {
+    const { mount, iframe } = await mountCheckout();
+    // jsdom: mount rect top is 0, innerHeight defaults to 768 → fills the viewport.
+    vi.spyOn(mount, 'getBoundingClientRect').mockReturnValue({
+      top: 200,
+    } as DOMRect);
+    window.dispatchEvent(new Event('resize'));
+    expect(iframe.style.height).toBe(`${window.innerHeight - 200}px`);
+  });
+
+  it('caps the reserved chrome at half the viewport and enforces the min height', async () => {
+    const { mount, iframe } = await mountCheckout();
+    vi.spyOn(mount, 'getBoundingClientRect').mockReturnValue({
+      top: window.innerHeight * 2,
+    } as DOMRect);
+    window.dispatchEvent(new Event('resize'));
+    const reserved = Math.round(window.innerHeight * 0.5);
+    expect(iframe.style.height).toBe(
+      `${Math.max(window.innerHeight - reserved, 480)}px`,
+    );
+  });
+
+  it('keeps the legacy calc(100dvh - offset) sizing when the offset attr is set', async () => {
+    const { iframe } = await mountCheckout({ 'data-bond-chrome-offset-px': '80' });
+    expect(iframe.style.height).toBe('calc(100dvh - 80px)');
+    window.dispatchEvent(new Event('resize'));
+    expect(iframe.style.height).toBe('calc(100dvh - 80px)');
+  });
+
+  it('stops auto-fitting once the checkout posts its own bond:resize height', async () => {
+    const { mount, iframe } = await mountCheckout();
+    sendMessage({ type: 'bond:resize', height: 1200 }, CONSUMER_ORIGIN);
+    expect(iframe.style.height).toBe('1200px');
+    vi.spyOn(mount, 'getBoundingClientRect').mockReturnValue({ top: 100 } as DOMRect);
+    window.dispatchEvent(new Event('resize'));
+    expect(iframe.style.height).toBe('1200px');
   });
 });

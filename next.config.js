@@ -100,6 +100,17 @@ const nextConfig = {
           },
         ],
       },
+      // Host kit - unversioned URL live on partner sites; must pick up fixes quickly.
+      // Declared after the static-assets rule so this Cache-Control wins for /bond-host/*.
+      {
+        source: '/bond-host/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=300, s-maxage=300, stale-while-revalidate=86400',
+          },
+        ],
+      },
     ];
   },
 };

@@ -80,6 +80,11 @@
     }
   }
 
+  // Max share of the viewport we reserve for partner chrome above the checkout iframe.
+  // In-flow headers taller than this leave too little room for checkout; past the cap the
+  // visitor scrolls the remainder like any page.
+  var CHECKOUT_AUTO_FIT_MAX_CHROME_RATIO = 0.5;
+
   function partnerOrigin(boot) {
     if (boot.partnerPublicOrigin) {
       return boot.partnerPublicOrigin.replace(/\/$/, '');
@@ -98,6 +103,7 @@
     this.chromeOffsetPx = options.chromeOffsetPx || 0;
     this.bootstrap = null;
     this.activeIframe = null;
+    this.checkoutAutoFit = false;
   }
 
   BondHostShell.prototype.fetchBootstrap = function () {
@@ -148,6 +154,7 @@
     window.addEventListener('resize', function () {
       self.syncChromeOffsetFromMount();
       self.requestDiscoveryResize();
+      self.fitCheckoutIframe();
     });
   };
 
@@ -178,6 +185,7 @@
 
   BondHostShell.prototype.mountCheckout = function (path, search) {
     var boot = this.bootstrap;
+    var self = this;
     var src = boot.consumerOrigin.replace(/\/$/, '') + path + (search || '');
     var iframe = document.createElement('iframe');
     iframe.setAttribute('title', 'Registration');
@@ -189,6 +197,45 @@
     this.mount.style.overflow = 'hidden';
     this.mount.textContent = '';
     this.mount.appendChild(iframe);
+    if (this.chromeOffsetPx === 0) {
+      // No explicit nav offset configured: fit the iframe under whatever in-flow chrome
+      // (header, notification bars) sits above the mount, so the checkout footer is
+      // visible without scrolling. Re-measure after late layout shifts and on resize.
+      this.checkoutAutoFit = true;
+      this.fitCheckoutIframe();
+      iframe.addEventListener('load', function () {
+        self.fitCheckoutIframe();
+      });
+      setTimeout(function () {
+        self.fitCheckoutIframe();
+      }, 300);
+      setTimeout(function () {
+        self.fitCheckoutIframe();
+      }, 1500);
+    }
+  };
+
+  BondHostShell.prototype.fitCheckoutIframe = function () {
+    if (
+      !this.checkoutAutoFit ||
+      !this.activeIframe ||
+      this.activeIframe.getAttribute('data-bond-checkout-iframe') !== '1' ||
+      !this.mount
+    ) {
+      return;
+    }
+    var viewportHeight = window.innerHeight;
+    if (!viewportHeight) return;
+    var scrollY = window.pageYOffset || 0;
+    var mountDocTop = 0;
+    try {
+      mountDocTop = this.mount.getBoundingClientRect().top + scrollY;
+    } catch (e) {
+      return;
+    }
+    var maxChrome = Math.round(viewportHeight * CHECKOUT_AUTO_FIT_MAX_CHROME_RATIO);
+    var reserved = Math.max(0, Math.min(mountDocTop, maxChrome));
+    setIframeHeight(this.activeIframe, viewportHeight - reserved);
   };
 
   BondHostShell.prototype.openRegistrationTab = function (path, search) {
@@ -256,6 +303,7 @@
       var height = data.height;
       if (this.activeIframe && this.activeIframe.getAttribute('data-bond-checkout-iframe') === '1') {
         height = height + this.chromeOffsetPx;
+        this.checkoutAutoFit = false; // checkout reports its own height; stop viewport fitting
       }
       setIframeHeight(this.activeIframe, height);
     }
