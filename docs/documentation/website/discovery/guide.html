@@ -493,8 +493,6 @@
   <span class="tok-attr">data-bond-host</span>
   <span class="tok-attr">data-bond-slug</span>=<span class="tok-val">"YOUR_SLUG"</span>
   <span class="tok-attr">data-bond-discovery-base</span>=<span class="tok-val">"https://discovery.bondsports.co"</span>
-  <span class="tok-attr">data-bond-chrome-offset-px</span>=<span class="tok-val">"80"</span>
-  <span class="tok-attr">data-bond-chrome-offset-px-mobile</span>=<span class="tok-val">"64"</span>
 <span class="tok-tag">&gt;&lt;/div&gt;</span></pre>
       </div>
 
@@ -508,13 +506,12 @@
   <span class="tok-attr">data-bond-host</span>
   <span class="tok-attr">data-bond-slug</span>=<span class="tok-val">"YOUR_SLUG"</span>
   <span class="tok-attr">data-bond-discovery-base</span>=<span class="tok-val">"https://discovery.bondsports.co"</span>
-  <span class="tok-attr">data-bond-chrome-offset-px</span>=<span class="tok-val">"80"</span>
 <span class="tok-tag">&gt;&lt;/div&gt;</span></pre>
       </div>
 
       <div class="callout warning">
         <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-        <p>The offset numbers match your fixed header height. Bond will confirm the right values for desktop and mobile.</p>
+        <p>Sizing is automatic: the embed measures your page's header at load time and fits itself. Only if your site has a <strong>fixed or sticky nav that floats over content</strong>, add <code>data-bond-chrome-offset-px="80"</code> (your nav height in px; optional <code>data-bond-chrome-offset-px-mobile</code> for mobile). Bond will confirm the right values.</p>
       </div>
 
       <h3 class="subsection-title">Site footer — Bond embed script</h3>
@@ -611,9 +608,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&amp;l='+l:'';j.async=true;j.src=
         <h3 class="subsection-title">Layout tips</h3>
         <ul class="tips">
           <li>Put the embed as high on the page as possible.</li>
-          <li>If content starts too low, lower <code>data-bond-chrome-offset-px</code>.</li>
-          <li>If your header covers the embed, increase the offset.</li>
-          <li>Use <code>data-bond-chrome-offset-px-mobile</code> when mobile header height differs.</li>
+          <li>Sizing is automatic by default — no offset attributes needed for normal (in-flow) headers.</li>
+          <li>If a fixed/sticky nav covers the embed, add <code>data-bond-chrome-offset-px</code> (nav height in px).</li>
+          <li>Use <code>data-bond-chrome-offset-px-mobile</code> when the mobile nav height differs.</li>
         </ul>
       </div>
 
@@ -672,12 +669,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&amp;l='+l:'';j.async=true;j.src=
 
       <details class="problem-card">
         <summary class="problem-summary"><span class="problem-tag">Issue</span>Too much blank space above the embed<svg class="problem-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-        <div class="problem-fix">Lower <code>data-bond-chrome-offset-px</code> or remove extra top padding above the embed.</div>
+        <div class="problem-fix">Remove extra top padding above the embed. If you set <code>data-bond-chrome-offset-px</code> manually, lower or remove it (sizing is automatic without it).</div>
       </details>
 
       <details class="problem-card">
         <summary class="problem-summary"><span class="problem-tag">Issue</span>Header covers the Bond page<svg class="problem-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-        <div class="problem-fix">Increase <code>data-bond-chrome-offset-px</code>. On mobile only, adjust <code>data-bond-chrome-offset-px-mobile</code>.</div>
+        <div class="problem-fix">Your nav is fixed/sticky — add or increase <code>data-bond-chrome-offset-px</code> (nav height in px). On mobile only, adjust <code>data-bond-chrome-offset-px-mobile</code>.</div>
       </details>
 
       <details class="problem-card">

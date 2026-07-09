@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Coppermine × Bond — Adding Program Pages</title>
+<style>
+  :root { --brand:#af602d; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#fafaf9; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  .wrap { max-width:760px; margin:0 auto; padding:48px 24px 96px; }
+  .eyebrow { color:var(--brand); font-weight:600; text-transform:uppercase; letter-spacing:.08em; font-size:13px; margin:0 0 8px; }
+  h1 { font-size:32px; line-height:1.2; margin:0 0 12px; }
+  .lede { color:var(--muted); font-size:18px; margin:0 0 40px; }
+  h2 { font-size:22px; margin:48px 0 12px; padding-top:24px; border-top:1px solid var(--line); }
+  table { width:100%; border-collapse:collapse; font-size:15px; }
+  th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; white-space:nowrap; }
+  code { background:#f3f0ec; border:1px solid var(--line); border-radius:4px; padding:1px 6px; font-size:14px; }
+  pre { background:#241d18; color:#f5ede4; border-radius:8px; padding:16px; overflow-x:auto; font-size:14px; line-height:1.5; }
+  pre code { background:none; border:none; color:inherit; padding:0; }
+  .step { display:flex; gap:14px; margin:14px 0; }
+  .num { flex:0 0 28px; height:28px; border-radius:50%; background:var(--brand); color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; }
+  .step p { margin:2px 0 0; }
+  .callout { background:#fdf3ec; border:1px solid #ecd3bf; border-radius:8px; padding:14px 16px; margin:20px 0; font-size:15px; }
+  .callout strong { color:var(--brand); }
+  .copy { float:right; margin-top:-4px; background:var(--brand); color:#fff; border:none; border-radius:6px; padding:6px 14px; font-size:13px; font-weight:600; cursor:pointer; }
+  .copy:active { opacity:.8; }
+  footer { margin-top:56px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Coppermine × Bond Sports</p>
+  <h1>Adding a program page to gocoppermine.com</h1>
+  <p class="lede">How to add a new sport page (soccer, lacrosse, …) that shows live Bond programs and takes registrations — about 5 minutes per page in WordPress.</p>
+
+  <h2>Already set up — don't touch</h2>
+  <table>
+    <tr><th>Bond script</th><td>Installed site-wide via the <strong>WPCode</strong> plugin ("Bond Discovery host kit" snippet). Powers every Bond page.</td></tr>
+    <tr><th>All-programs page</th><td><code>/discovery/programs</code> — shows every program. In WordPress it's the page titled <strong>"Programs (Bond)"</strong>.</td></tr>
+    <tr><th>Register page</th><td><code>/discovery/register</code> — checkout opens here in a new tab. One register page serves all program pages; never create a second one.</td></tr>
+    <tr><th>Search engines</th><td>All <code>/discovery/…</code> pages are hidden from Google for now (a WPCode snippet). Bond will remove this at launch.</td></tr>
+  </table>
+
+  <h2>Add a new sport page</h2>
+
+  <div class="callout"><strong>Before you start:</strong> ask Bond (nicole.lesko@bondsports.co) to create the sport's Bond page. Bond replies with the sport's <strong>embed slug</strong> — e.g. <code>coppermine-soccer</code>. You need it for step 4.</div>
+
+  <div class="step"><div class="num">1</div><p>In wp-admin: <strong>Pages → Add Page</strong>. Title = the sport name, e.g. <strong>Soccer</strong>.</p></div>
+  <div class="step"><div class="num">2</div><p>In the right-hand panel: <strong>Parent → "Programs (Bond)"</strong> — the one with "(Bond)" in the name, not the old Programs page.</p></div>
+  <div class="step"><div class="num">3</div><p>Click the <strong>Slug</strong> row and confirm the full URL reads <code>gocoppermine.com/discovery/programs/soccer/</code>. If it shows <code>/coppermine/programs/…</code>, the parent is wrong — go back to step 2.</p></div>
+  <div class="step"><div class="num">4</div><p>In the page body, add a <strong>Custom HTML</strong> block and paste the snippet below. Change only the slug to the one Bond sent you.</p></div>
+
+  <button class="copy" type="button" onclick="var t=document.getElementById('snip').innerText;navigator.clipboard.writeText(t);this.textContent='Copied!';var b=this;setTimeout(function(){b.textContent='Copy';},1500);">Copy</button>
+  <pre id="snip"><code>&lt;div
+  data-bond-host
+  data-bond-slug="coppermine-soccer"
+  data-bond-discovery-base="https://discovery.bondsports.co"
+&gt;&lt;/div&gt;</code></pre>
+
+  <div class="step"><div class="num">5</div><p><strong>Publish</strong> the page.</p></div>
+  <div class="step"><div class="num">6</div><p>In the black toolbar at the top: <strong>Delete Cache → Clear All Cache</strong> (WP Fastest Cache). Required after every change.</p></div>
+  <div class="step"><div class="num">7</div><p>Open the page on the live site. It should show only that sport's programs, and clicking <strong>Register</strong> should open checkout in a new tab.</p></div>
+
+  <h2>If something looks wrong</h2>
+  <table>
+    <tr><th>Old or missing content</th><td>Clear the cache (step 6), then hard-refresh the browser (Cmd/Ctrl + Shift + R).</td></tr>
+    <tr><th>Embed area is empty</th><td>Make sure the page is <em>published</em> (editor previews don't run scripts). If it's empty only before accepting the cookie banner, tell Bond — the consent tool may be blocking the script.</td></tr>
+    <tr><th>Register lands on the homepage</th><td>Path mismatch between the site and Bond's settings — contact Bond, don't change pages.</td></tr>
+    <tr><th>Wrong programs showing</th><td>The slug in the Custom HTML block doesn't match the sport — check step 4.</td></tr>
+  </table>
+
+  <footer>Questions or a new sport to add? Email <a href="mailto:nicole.lesko@bondsports.co">nicole.lesko@bondsports.co</a> · Bond Sports</footer>
+</div>
+</body>
+</html>
