@@ -19,6 +19,7 @@
   var MSG_GTM_EVENT = 'BOND_GTM_EVENT';
   var EMBED_CHROME_QUERY_PARAM = 'embedChromePx';
   var CHECKOUT_QUERY_PARAM = 'bondPath';
+  var OPEN_TAB_DEDUPE_MS = 1000;
 
   function getScriptOrigin() {
     var scripts = document.getElementsByTagName('script');
@@ -249,7 +250,26 @@
       CHECKOUT_QUERY_PARAM +
       '=' +
       encodeURIComponent(bondPath);
-    window.open(url, '_blank', 'noopener,noreferrer');
+    var now = new Date().getTime();
+    if (
+      this.lastOpenedTabUrl === url &&
+      typeof this.lastOpenedTabAt === 'number' &&
+      now - this.lastOpenedTabAt < OPEN_TAB_DEDUPE_MS
+    ) {
+      return; // duplicate open request (double-delivered message / double click)
+    }
+    this.lastOpenedTabUrl = url;
+    this.lastOpenedTabAt = now;
+    // No features string: Firefox treats 'noopener' in windowFeatures as a popup
+    // request and can open an extra window/tab. Sever opener manually instead.
+    var opened = window.open(url, '_blank');
+    if (opened) {
+      try {
+        opened.opener = null;
+      } catch (e) {
+        /* cross-origin guard */
+      }
+    }
   };
 
   BondHostShell.prototype.parseBondPathQuery = function (raw) {

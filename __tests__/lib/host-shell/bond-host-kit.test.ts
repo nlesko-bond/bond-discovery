@@ -156,6 +156,35 @@ describe('bond-host kit BOND_GTM_EVENT forwarding', () => {
   });
 });
 
+describe('bond-host kit register tab opening', () => {
+  it('opens exactly one tab per open_tab message, without a features string, and severs opener', () => {
+    const openedWindow = { opener: {} as unknown };
+    const open = vi
+      .spyOn(window, 'open')
+      .mockReturnValue(openedWindow as unknown as Window);
+
+    sendMessage({ type: 'bond:open_tab', path: '/activity/x', search: '?productId=1' }, DISCOVERY_ORIGIN);
+
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(open).toHaveBeenCalledWith(
+      'https://partner.example/programs/register?bondPath=' +
+        encodeURIComponent('/activity/x?productId=1'),
+      '_blank',
+    );
+    expect(openedWindow.opener).toBeNull();
+
+    // Same URL again immediately (double-delivered message / Firefox double-fire) → deduped.
+    sendMessage({ type: 'bond:open_tab', path: '/activity/x', search: '?productId=1' }, DISCOVERY_ORIGIN);
+    expect(open).toHaveBeenCalledTimes(1);
+
+    // A different registration path is a legitimate new tab.
+    sendMessage({ type: 'bond:open_tab', path: '/activity/y', search: '' }, DISCOVERY_ORIGIN);
+    expect(open).toHaveBeenCalledTimes(2);
+
+    open.mockRestore();
+  });
+});
+
 describe('bond-host kit checkout iframe sizing', () => {
   async function mountCheckout(mountAttrs: Record<string, string> = {}) {
     window.history.replaceState(
