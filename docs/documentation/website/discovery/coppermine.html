@@ -25,6 +25,13 @@
   .step p { margin:2px 0 0; }
   .callout { background:#fdf3ec; border:1px solid #ecd3bf; border-radius:8px; padding:14px 16px; margin:20px 0; font-size:15px; }
   .callout strong { color:var(--brand); }
+  details.bond { background:#fff; border:1px solid var(--line); border-radius:8px; padding:0; margin:20px 0; }
+  details.bond summary { cursor:pointer; padding:12px 16px; font-weight:600; color:var(--muted); font-size:15px; list-style:none; }
+  details.bond summary::before { content:"▸ "; color:var(--brand); }
+  details.bond[open] summary::before { content:"▾ "; }
+  details.bond .inner { padding:0 16px 16px; border-top:1px solid var(--line); }
+  details.bond .inner ol { margin:12px 0 4px; padding-left:20px; }
+  details.bond .inner li { margin:8px 0; font-size:15px; }
   .copy { float:right; margin-top:-4px; background:var(--brand); color:#fff; border:none; border-radius:6px; padding:6px 14px; font-size:13px; font-weight:600; cursor:pointer; }
   .copy:active { opacity:.8; }
   footer { margin-top:56px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:14px; }
@@ -48,6 +55,22 @@
   <h2>Add a new sport page</h2>
 
   <div class="callout"><strong>Before you start:</strong> ask Bond (charlie.lynch@bondsports.co) to create the sport's Bond page. Bond replies with the sport's <strong>embed slug</strong> — e.g. <code>coppermine-lacrosse</code>. You need it for step 4.</div>
+
+  <details class="bond">
+    <summary>For Bond staff — what "create the sport's Bond page" involves</summary>
+    <div class="inner">
+      <p>In Bond Discovery admin (<code>/admin/pages</code>), each sport gets its own filtered discovery page. Duplicate an existing sport page (e.g. <code>coppermine-soccer</code>) so branding, host-shell, and analytics settings carry over, then adjust:</p>
+      <ol>
+        <li><strong>Duplicate</strong> the sport page closest to the new one. The copy is created inactive as <code>…-copy</code>.</li>
+        <li><strong>Page section:</strong> change the <strong>URL Slug</strong> to <code>coppermine-&lt;sport&gt;</code> (this is the embed slug you send back to the web team) and the page <strong>name</strong> to match, e.g. "Coppermine — Lacrosse".</li>
+        <li><strong>Programs section → Program filtering:</strong> keep <strong>"Include specific programs only"</strong> and replace the program IDs with the new sport's program ID(s) from Bond. This is what scopes the page to one sport — remember to add new IDs here when the org adds programs next season.</li>
+        <li><strong>Appearance section → Partner site integration:</strong> change <strong>Programs page path (org site)</strong> to the new WordPress page path, e.g. <code>/discovery/programs/lacrosse</code>. Leave <strong>Partner site URL</strong> (<code>https://www.gocoppermine.com</code>) and <strong>Checkout page path</strong> (<code>/discovery/register</code>) unchanged — every sport shares the one register page.</li>
+        <li><strong>Registration section → Analytics:</strong> confirm the GTM ID carried over (<code>GTM-MBSS85VZ</code>).</li>
+        <li>Mark the page <strong>Active</strong> and <strong>Save</strong> — saving warms the cache.</li>
+        <li>Sanity check <code>https://discovery.bondsports.co/portal/coppermine-&lt;sport&gt;</code> shows only that sport, then send the slug to the web team.</li>
+      </ol>
+    </div>
+  </details>
 
   <p>The easiest way is to duplicate the existing Soccer page — the copy inherits the right parent, URL structure, and embed code automatically:</p>
 
