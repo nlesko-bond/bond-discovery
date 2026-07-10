@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo, useRef, useEffect } from 'react';
-import { Clock, MapPin, Users, ExternalLink, Ticket } from 'lucide-react';
+import { Clock, MapPin, Users, ExternalLink, Ticket, Trophy } from 'lucide-react';
 import { CalendarEvent, DiscoveryConfig } from '@/types';
 import { formatTime, buildRegistrationUrl, cn, getHourInTimezone, getMinutesInTimezone } from '@/lib/utils';
 import { eventShowsRedeemPass, getPunchPassRedeemUrl, trackRedeemPassClick } from '@/lib/schedule-redeem';
+import { eventShowsStandingsLink, getLeagueStandingsUrl } from '@/lib/schedule-standings';
 import { format, parseISO, isSameDay, isToday } from 'date-fns';
 
 interface DayViewProps {
@@ -259,6 +260,19 @@ function EventCard({
               title="Register"
             >
               <ExternalLink size={14} />
+            </a>
+          )}
+          {eventShowsStandingsLink(event, config) && (
+            <a
+              href={getLeagueStandingsUrl(event.linkSEO)}
+              target={linkTarget}
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="p-2 rounded-lg border-2 transition-all hover:opacity-90"
+              style={{ color: secondaryColor, borderColor: secondaryColor, backgroundColor: `${secondaryColor}12` }}
+              title="Standings"
+            >
+              <Trophy size={14} />
             </a>
           )}
           {eventShowsRedeemPass(event, config) && (

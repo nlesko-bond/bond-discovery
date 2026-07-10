@@ -520,6 +520,12 @@ export interface FeatureConfig {
    */
   showLeagueScheduleTableAndExport?: boolean;
   /**
+   * When true, league events in the schedule show a Standings link to the Bond
+   * consumer season page's competition tab (derived from the event's linkSEO).
+   * Default off — opt in per page in admin.
+   */
+  showLeagueStandingsLink?: boolean;
+  /**
    * Redesigned discovery template (plan 009). Only 'v2' changes rendering;
    * absent/'current'/unknown values keep the existing templates byte-identical.
    */

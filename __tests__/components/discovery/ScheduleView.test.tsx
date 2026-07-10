@@ -498,6 +498,70 @@ describe('ScheduleView', () => {
     });
   });
 
+  describe('Standings Links', () => {
+    const leagueSeasonLinkSEO =
+      'https://bondsports.co/activity/programs/CO_ED-adult-SOCCER/11537/season/Wednesday%202026-05/129092';
+    const leagueEvent = {
+      ...mockCalendarEvent,
+      programType: 'league' as const,
+      linkSEO: leagueSeasonLinkSEO,
+    };
+    const configWithStandings = {
+      ...mockConfig,
+      features: { ...mockConfig.features, showLeagueStandingsLink: true },
+    };
+
+    it('shows a Standings link for league events when the feature is enabled', () => {
+      const scheduleWithEvent = {
+        ...mockWeekSchedule,
+        days: [{ ...mockDaySchedule, events: [leagueEvent] }],
+      };
+      render(
+        <ScheduleView
+          schedule={[scheduleWithEvent]}
+          config={configWithStandings}
+        />
+      );
+
+      const standingsLink = screen.getByRole('link', { name: /Standings/i });
+      expect(standingsLink).toHaveAttribute(
+        'href',
+        `${leagueSeasonLinkSEO}/competition?tab=standings`
+      );
+      expect(standingsLink).toHaveAttribute('target', '_blank');
+    });
+
+    it('hides the Standings link when the feature is disabled', () => {
+      const scheduleWithEvent = {
+        ...mockWeekSchedule,
+        days: [{ ...mockDaySchedule, events: [leagueEvent] }],
+      };
+      render(
+        <ScheduleView
+          schedule={[scheduleWithEvent]}
+          config={mockConfig}
+        />
+      );
+
+      expect(screen.queryByRole('link', { name: /Standings/i })).not.toBeInTheDocument();
+    });
+
+    it('hides the Standings link for non-league events', () => {
+      const scheduleWithEvent = {
+        ...mockWeekSchedule,
+        days: [{ ...mockDaySchedule, events: [mockCalendarEvent] }],
+      };
+      render(
+        <ScheduleView
+          schedule={[scheduleWithEvent]}
+          config={configWithStandings}
+        />
+      );
+
+      expect(screen.queryByRole('link', { name: /Standings/i })).not.toBeInTheDocument();
+    });
+  });
+
   describe('Analytics Tracking', () => {
     it('tracks GTM click_register on register click', () => {
       const scheduleWithEvent = {

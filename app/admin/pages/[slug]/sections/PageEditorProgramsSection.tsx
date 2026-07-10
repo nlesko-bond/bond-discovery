@@ -384,6 +384,30 @@ export function PageEditorProgramsSection({
             </span>
           </label>
 
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              className="mt-1 rounded border-gray-300"
+              checked={config.features.showLeagueStandingsLink || false}
+              onChange={(event) =>
+                setConfig({
+                  ...config,
+                  features: {
+                    ...config.features,
+                    showLeagueStandingsLink: event.target.checked,
+                  },
+                })
+              }
+            />
+            <span>
+              <span className="font-medium">Show league standings link</span>
+              <p className="mt-0.5 text-xs text-gray-500">
+                League events in the schedule get a Standings link that opens the Bond season
+                standings page, next to Register.
+              </p>
+            </span>
+          </label>
+
           <label className="flex items-center gap-2 pt-2 text-sm text-gray-700">
             <input
               type="checkbox"

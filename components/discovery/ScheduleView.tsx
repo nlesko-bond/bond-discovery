@@ -23,12 +23,14 @@ import {
   Table2,
   ChevronDown,
   ChevronUp,
-  Ticket
+  Ticket,
+  Trophy
 } from 'lucide-react';
 import { WeekSchedule, DaySchedule, CalendarEvent, DiscoveryConfig, DiscoveryFilters } from '@/types';
 import { formatDate, formatTime, formatPrice, getSportLabel, getProgramTypeLabel, buildRegistrationUrl, cn } from '@/lib/utils';
 import { bondAnalytics } from '@/lib/analytics';
 import { eventShowsRedeemPass, getPunchPassRedeemUrl, trackRedeemPassClick } from '@/lib/schedule-redeem';
+import { eventShowsStandingsLink, getLeagueStandingsUrl } from '@/lib/schedule-standings';
 import { format, parseISO, startOfMonth, addMonths, subMonths, isToday, isSameDay } from 'date-fns';
 import { DayView, WeekGridView, MonthView } from './calendar';
 import { ScheduleTableFilterBar } from './ScheduleTableFilterBar';
@@ -1336,6 +1338,18 @@ function EventCard({
                   {isRegistrationUnavailable ? 'Learn More' : (isWaitlistJoinable ? 'Join Waitlist' : 'Register')} {config.features.showRegisterIcon !== false && <ExternalLink size={12} />}
                 </a>
               )}
+              {eventShowsStandingsLink(event, config) && (
+                <a
+                  href={getLeagueStandingsUrl(event.linkSEO)}
+                  target={linkTarget}
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 font-medium hover:opacity-80"
+                  style={{ color: secondaryColor }}
+                >
+                  Standings <Trophy size={12} />
+                </a>
+              )}
               {eventShowsRedeemPass(event, config) && (
                 <a
                   href={getPunchPassRedeemUrl(config)}
@@ -1571,7 +1585,7 @@ function EventDetailModal({
         </div>
 
         {/* Footer */}
-        {(!hideRegistrationLinks && event.linkSEO) || eventShowsRedeemPass(event, config) ? (
+        {(!hideRegistrationLinks && event.linkSEO) || eventShowsStandingsLink(event, config) || eventShowsRedeemPass(event, config) ? (
           <div className="p-4 border-t border-gray-200 bg-white flex flex-col sm:flex-row gap-2">
             {!hideRegistrationLinks && event.linkSEO && (
               <a 
@@ -1602,6 +1616,18 @@ function EventDetailModal({
                 }}
               >
                 {isRegistrationUnavailable ? 'Learn More' : (isWaitlistJoinable ? 'Join Waitlist' : 'Register Now')} {config.features.showRegisterIcon !== false && <ExternalLink size={16} />}
+              </a>
+            )}
+            {eventShowsStandingsLink(event, config) && (
+              <a
+                href={getLeagueStandingsUrl(event.linkSEO)}
+                target={linkTarget}
+                rel="noopener noreferrer"
+                className="flex-1 min-w-0 py-3.5 font-semibold rounded-xl flex items-center justify-center gap-2 border-2 hover:opacity-90 transition-opacity"
+                style={{ color: secondaryColor, borderColor: secondaryColor, backgroundColor: `${secondaryColor}08` }}
+              >
+                <Trophy size={18} />
+                Standings
               </a>
             )}
             {eventShowsRedeemPass(event, config) && (
@@ -1685,15 +1711,16 @@ function TableView({
   const spaceColumnLabel = config.features.spaceColumnLabel?.trim() || 'Space';
   const showSpotsColumn = tableColumns.includes('spots') && config.features.showAvailability;
   const punchPassFeatureOn = config.features.showPunchPassRedeemButton === true;
+  const standingsFeatureOn = config.features.showLeagueStandingsLink === true;
   const showActionColumn =
     tableColumns.includes('action') &&
-    (!hideRegistrationLinks || punchPassFeatureOn);
+    (!hideRegistrationLinks || punchPassFeatureOn || standingsFeatureOn);
 
   const leagueMode = Boolean(leagueTableMode);
   const leagueShowActionColumn =
     leagueMode &&
     tableColumns.includes('action') &&
-    (!hideRegistrationLinks || punchPassFeatureOn);
+    (!hideRegistrationLinks || punchPassFeatureOn || standingsFeatureOn);
   
   // Sort events by date + time
   const sortedEvents = useMemo(() => {
@@ -1915,7 +1942,7 @@ function TableView({
                       {leagueShowActionColumn && (
                         <td className="min-w-0 px-1.5 sm:px-4 py-2 sm:py-3 print:hidden">
                           <div className="flex flex-col gap-1.5 w-full min-w-0 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                            <div className="flex justify-stretch sm:flex-1 sm:justify-start min-w-0">
+                            <div className="flex justify-stretch gap-1.5 sm:flex-1 sm:justify-start min-w-0">
                               {eventShowsRedeemPass(event, config) && (
                                 <a
                                   href={getPunchPassRedeemUrl(config)}
@@ -1930,6 +1957,19 @@ function TableView({
                                 >
                                   <Ticket size={12} className="shrink-0" />
                                   Redeem
+                                </a>
+                              )}
+                              {eventShowsStandingsLink(event, config) && (
+                                <a
+                                  href={getLeagueStandingsUrl(event.linkSEO)}
+                                  target={linkTarget}
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg border print:hidden hover:opacity-90 w-full sm:w-auto"
+                                  style={{ color: secondaryColor, borderColor: `${secondaryColor}66`, backgroundColor: `${secondaryColor}0d` }}
+                                >
+                                  <Trophy size={12} className="shrink-0" />
+                                  Standings
                                 </a>
                               )}
                             </div>
@@ -2121,7 +2161,7 @@ function TableView({
                       {showActionColumn && (
                         <td className="min-w-0 px-1.5 sm:px-4 py-2 sm:py-3 print:hidden">
                           <div className="flex flex-col gap-1.5 w-full min-w-0 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                            <div className="flex justify-stretch sm:flex-1 sm:justify-start min-w-0">
+                            <div className="flex justify-stretch gap-1.5 sm:flex-1 sm:justify-start min-w-0">
                               {eventShowsRedeemPass(event, config) && (
                                 <a
                                   href={getPunchPassRedeemUrl(config)}
@@ -2136,6 +2176,19 @@ function TableView({
                                 >
                                   <Ticket size={12} className="shrink-0" />
                                   Redeem
+                                </a>
+                              )}
+                              {eventShowsStandingsLink(event, config) && (
+                                <a
+                                  href={getLeagueStandingsUrl(event.linkSEO)}
+                                  target={linkTarget}
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg border print:hidden hover:opacity-90 w-full sm:w-auto"
+                                  style={{ color: secondaryColor, borderColor: `${secondaryColor}66`, backgroundColor: `${secondaryColor}0d` }}
+                                >
+                                  <Trophy size={12} className="shrink-0" />
+                                  Standings
                                 </a>
                               )}
                             </div>
