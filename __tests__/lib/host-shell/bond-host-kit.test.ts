@@ -55,14 +55,27 @@ async function waitForIframe(mount: HTMLElement) {
   throw new Error('kit did not mount the discovery iframe');
 }
 
+const fetchMock = vi.fn(async () => ({
+  ok: true,
+  json: async () => bootstrap,
+}));
+
+function getBondHost() {
+  return (win as Record<string, unknown>).BondHost as {
+    init: (options: Record<string, unknown>) => Promise<void>;
+  };
+}
+
+async function waitFor(predicate: () => boolean, timeoutMs = 4000) {
+  const start = Date.now();
+  while (!predicate()) {
+    if (Date.now() - start > timeoutMs) throw new Error('waitFor timed out');
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+}
+
 beforeAll(async () => {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async () => ({
-      ok: true,
-      json: async () => bootstrap,
-    })),
-  );
+  vi.stubGlobal('fetch', fetchMock);
 
   const source = fs.readFileSync(
     path.resolve(__dirname, '../../../public/bond-host/v1.js'),
@@ -250,5 +263,99 @@ describe('bond-host kit checkout iframe sizing', () => {
     vi.spyOn(mount, 'getBoundingClientRect').mockReturnValue({ top: 100 } as DOMRect);
     window.dispatchEvent(new Event('resize'));
     expect(iframe.style.height).toBe('1200px');
+  });
+});
+
+describe('bond-host kit bondPath validation', () => {
+  const mounts: HTMLElement[] = [];
+
+  async function initWithBondPath(bondPath: string) {
+    window.history.replaceState(
+      null,
+      '',
+      '/discovery/register?bondPath=' + encodeURIComponent(bondPath),
+    );
+    const mount = document.createElement('div');
+    document.body.appendChild(mount);
+    mounts.push(mount);
+    await getBondHost().init({ mount, slug: 'test-club', discoveryBase: DISCOVERY_ORIGIN });
+    await waitForIframe(mount);
+    return mount;
+  }
+
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+    mounts.splice(0).forEach((el) => el.remove());
+  });
+
+  it('mounts checkout on the consumer origin for a normal absolute path', async () => {
+    const mount = await initWithBondPath('/activity/checkout?productId=1');
+    const iframe = mount.querySelector<HTMLIFrameElement>(
+      'iframe[data-bond-checkout-iframe="1"]',
+    );
+    expect(iframe?.src).toBe(CONSUMER_ORIGIN + '/activity/checkout?productId=1');
+  });
+
+  // Each of these, appended to consumerOrigin, would (or could) resolve to a
+  // foreign host — e.g. 'https://consumer.bond.example.evil.com'. The kit must
+  // refuse them and fall back to the discovery page.
+  [
+    '.evil.com/checkout',
+    '@evil.com/checkout',
+    ':8080@evil.com/checkout',
+    '//evil.com/checkout',
+    '/\\evil.com/checkout',
+    'https://evil.com/checkout',
+  ].forEach((bad) => {
+    it(`rejects non-same-origin bondPath ${JSON.stringify(bad)}`, async () => {
+      const mount = await initWithBondPath(bad);
+      expect(mount.querySelector('iframe[data-bond-checkout-iframe="1"]')).toBeNull();
+      expect(mount.querySelector('iframe[data-bond-discovery-iframe="1"]')).not.toBeNull();
+    });
+  });
+});
+
+describe('bond-host kit bootstrap retry', () => {
+  const mounts: HTMLElement[] = [];
+
+  function initMount() {
+    const mount = document.createElement('div');
+    document.body.appendChild(mount);
+    mounts.push(mount);
+    getBondHost().init({ mount, slug: 'test-club', discoveryBase: DISCOVERY_ORIGIN });
+    return mount;
+  }
+
+  beforeEach(() => {
+    fetchMock.mockClear();
+  });
+
+  afterEach(() => {
+    mounts.splice(0).forEach((el) => el.remove());
+  });
+
+  it('retries once after a network error and still mounts', async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError('network failure'));
+    const mount = initMount();
+    await waitFor(() => mount.querySelector('iframe[data-bond-discovery-iframe="1"]') !== null);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries once after a 5xx response and still mounts', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 503 } as unknown as Awaited<
+      ReturnType<typeof fetchMock>
+    >);
+    const mount = initMount();
+    await waitFor(() => mount.querySelector('iframe[data-bond-discovery-iframe="1"]') !== null);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry a 404 and shows the fallback message', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 404 } as unknown as Awaited<
+      ReturnType<typeof fetchMock>
+    >);
+    const mount = initMount();
+    await waitFor(() => mount.textContent === 'Programs could not be loaded.');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

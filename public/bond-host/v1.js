@@ -20,6 +20,7 @@
   var EMBED_CHROME_QUERY_PARAM = 'embedChromePx';
   var CHECKOUT_QUERY_PARAM = 'bondPath';
   var OPEN_TAB_DEDUPE_MS = 1000;
+  var BOOTSTRAP_RETRY_DELAY_MS = 800;
 
   function getScriptOrigin() {
     var scripts = document.getElementsByTagName('script');
@@ -111,9 +112,23 @@
     var self = this;
     var url =
       self.discoveryBase + '/api/host/bootstrap?slug=' + encodeURIComponent(self.slug);
-    return fetch(url).then(function (r) {
-      if (!r.ok) throw new Error('Host bootstrap failed: ' + r.status);
-      return r.json();
+    function attempt() {
+      return fetch(url).then(function (r) {
+        if (!r.ok) {
+          var err = new Error('Host bootstrap failed: ' + r.status);
+          // 4xx (bad slug, blocked origin) won't change on retry; network
+          // errors and 5xx are transient, so those get one more attempt.
+          err.bondRetryable = r.status >= 500;
+          throw err;
+        }
+        return r.json();
+      });
+    }
+    return attempt().catch(function (err) {
+      if (err && err.bondRetryable === false) throw err;
+      return new Promise(function (resolve) {
+        setTimeout(resolve, BOOTSTRAP_RETRY_DELAY_MS);
+      }).then(attempt);
     });
   };
 
@@ -277,10 +292,15 @@
     try {
       var decoded = decodeURIComponent(raw);
       var q = decoded.indexOf('?');
-      if (q === -1) {
-        return { path: decoded, search: '' };
+      var path = q === -1 ? decoded : decoded.slice(0, q);
+      var search = q === -1 ? '' : decoded.slice(q);
+      // Only same-origin absolute paths: appended to consumerOrigin, so a value not
+      // anchored with a single '/' (e.g. '.evil.com/x', '@evil.com', '//evil.com')
+      // could re-point the checkout iframe at a foreign host.
+      if (path.charAt(0) !== '/' || path.charAt(1) === '/' || path.indexOf('\\') !== -1) {
+        return null;
       }
-      return { path: decoded.slice(0, q), search: decoded.slice(q) };
+      return { path: path, search: search };
     } catch (e) {
       return null;
     }
