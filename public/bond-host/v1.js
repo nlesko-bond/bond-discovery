@@ -12,13 +12,11 @@
   // Logged-out checkout redirects to the login page, which posts no messages at
   // all and clips (~700px card, centered, unreachable overflow) inside a shorter
   // iframe. The floor is dropped — restoring viewport-fit so the checkout's
-  // sticky footer stays visible — on the post-login load event or on any message
-  // from the checkout app (the login page provably sends none), and a real
-  // bond:resize always overrides.
+  // sticky footer stays visible — on the first message from the checkout app
+  // (e.g. begin_checkout; the login page provably sends none), and a real
+  // bond:resize always overrides. Iframe load events are NOT a drop signal:
+  // the redirect TO the login page is itself a hard navigation.
   var CHECKOUT_FALLBACK_MIN_HEIGHT_PX = 780;
-  // Ignore extra load events fired right after insertion (about:blank quirk in
-  // some browsers); a real post-login return can't happen this fast.
-  var CHECKOUT_FLOOR_MIN_ACTIVE_MS = 2500;
   var MOBILE_CHROME_MAX_WIDTH_PX = 767;
   var MSG_OPEN_TAB = 'bond:open_tab';
   var MSG_RESIZE = 'bond:resize';
@@ -223,19 +221,6 @@
     iframe.src = src;
     this.activeIframe = iframe;
     this.checkoutFloorActive = true;
-    this.checkoutMountedAt = new Date().getTime();
-    this.checkoutLoadCount = 0;
-    iframe.addEventListener('load', function () {
-      self.checkoutLoadCount += 1;
-      // Second document load = post-login hard navigation back to the checkout;
-      // restore viewport-fit so the sticky checkout footer is visible again.
-      if (
-        self.checkoutLoadCount >= 2 &&
-        new Date().getTime() - self.checkoutMountedAt > CHECKOUT_FLOOR_MIN_ACTIVE_MS
-      ) {
-        self.dropCheckoutFloor();
-      }
-    });
     this.mount.style.overflow = 'hidden';
     this.mount.textContent = '';
     this.mount.appendChild(iframe);
@@ -351,14 +336,20 @@
     if (!boot) return;
     var allowed = [boot.discoveryOrigin, boot.consumerOrigin];
     if (allowed.indexOf(event.origin) === -1) return;
-    // Any message from the checkout app means the real checkout (not the silent
-    // login page) is rendering — stop holding the login-height floor.
-    if (event.origin === boot.consumerOrigin) {
-      this.dropCheckoutFloor();
-    }
     if (!event.data || typeof event.data !== 'object') return;
 
     var data = event.data;
+    // A typed Bond message from the checkout app means the real checkout UI is
+    // rendering — stop holding the login-height floor. Must be typed: the login
+    // page emits untyped SDK broadcasts from the same origin, but never bond:*
+    // or BOND_GTM_EVENT messages.
+    if (
+      event.origin === boot.consumerOrigin &&
+      typeof data.type === 'string' &&
+      (data.type.indexOf('bond:') === 0 || data.type === MSG_GTM_EVENT)
+    ) {
+      this.dropCheckoutFloor();
+    }
     if (data.type === MSG_OPEN_TAB && typeof data.path === 'string') {
       this.openRegistrationTab(data.path, data.search || '');
       return;

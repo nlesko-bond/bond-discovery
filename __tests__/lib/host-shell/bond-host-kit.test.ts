@@ -288,39 +288,40 @@ describe('bond-host kit checkout iframe sizing', () => {
     expect(iframe.style.minHeight).toBe('600px');
   });
 
-  it('drops the floor on the second iframe load (post-login return) and re-fits', async () => {
+  it('keeps the floor across iframe load events (redirect to login is a hard navigation)', async () => {
     const { iframe } = await mountCheckout();
-    window.dispatchEvent(new Event('resize'));
-    expect(iframe.style.height).toBe('780px'); // login floor active (768 viewport)
     iframe.dispatchEvent(new Event('load'));
-    // The kit reads new Date().getTime(); jump the clock past the 2.5s guard.
-    const realGetTime = Date.prototype.getTime;
-    vi.spyOn(Date.prototype, 'getTime').mockImplementation(function (this: Date) {
-      return realGetTime.call(this) + 10_000;
-    });
-    try {
-      iframe.dispatchEvent(new Event('load'));
-      // viewport-fit restored: jsdom innerHeight 768, mount top 0 → 768px
-      expect(iframe.style.height).toBe('768px');
-    } finally {
-      vi.mocked(Date.prototype.getTime).mockRestore();
-    }
-  });
-
-  it('keeps the floor when a second load fires immediately (about:blank double-fire)', async () => {
-    const { iframe } = await mountCheckout();
     iframe.dispatchEvent(new Event('load'));
     iframe.dispatchEvent(new Event('load'));
     window.dispatchEvent(new Event('resize'));
     expect(iframe.style.height).toBe('780px');
   });
 
-  it('drops the floor on any consumer-origin message (checkout is rendering)', async () => {
+  it('drops the floor on a typed bond:* message from the checkout origin', async () => {
     const { iframe } = await mountCheckout();
     window.dispatchEvent(new Event('resize'));
     expect(iframe.style.height).toBe('780px');
     sendMessage({ type: 'bond:something-else' }, CONSUMER_ORIGIN);
     expect(iframe.style.height).toBe('768px');
+  });
+
+  it('drops the floor on a BOND_GTM_EVENT from the checkout origin', async () => {
+    const { iframe } = await mountCheckout();
+    window.dispatchEvent(new Event('resize'));
+    sendMessage(
+      { type: 'BOND_GTM_EVENT', dataLayerEvent: { event: 'begin_checkout' } },
+      CONSUMER_ORIGIN,
+    );
+    expect(iframe.style.height).toBe('768px');
+  });
+
+  it('keeps the floor on untyped consumer-origin messages (login-page SDK noise)', async () => {
+    const { iframe } = await mountCheckout();
+    sendMessage({ foo: 'bar' }, CONSUMER_ORIGIN);
+    sendMessage('some-string', CONSUMER_ORIGIN);
+    sendMessage({ type: 42 }, CONSUMER_ORIGIN);
+    window.dispatchEvent(new Event('resize'));
+    expect(iframe.style.height).toBe('780px');
   });
 
   it('does not drop the floor on discovery-origin messages', async () => {
