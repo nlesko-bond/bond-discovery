@@ -251,17 +251,18 @@ describe('bond-host kit checkout iframe sizing', () => {
     }
   });
 
-  it('never fits the checkout below the 780px fallback floor (logged-out login page)', async () => {
-    // jsdom viewport is 768px; any reserved chrome would fit below 780 → floor wins.
+  it('fits to the viewport minus chrome on the default (short) jsdom viewport', async () => {
+    // Registration contract: the fitted height wins even when small, so the
+    // checkout's sticky footer is visible without scrolling the partner page.
     const { mount, iframe } = await mountCheckout();
     vi.spyOn(mount, 'getBoundingClientRect').mockReturnValue({
       top: 200,
     } as DOMRect);
     window.dispatchEvent(new Event('resize'));
-    expect(iframe.style.height).toBe('780px');
+    expect(iframe.style.height).toBe(`${window.innerHeight - 200}px`);
   });
 
-  it('caps the reserved chrome at half the viewport, still floored at 780px', async () => {
+  it('caps the reserved chrome at half the viewport and enforces the min height', async () => {
     const { mount, iframe } = await mountCheckout();
     vi.spyOn(mount, 'getBoundingClientRect').mockReturnValue({
       top: window.innerHeight * 2,
@@ -269,74 +270,23 @@ describe('bond-host kit checkout iframe sizing', () => {
     window.dispatchEvent(new Event('resize'));
     const reserved = Math.round(window.innerHeight * 0.5);
     expect(iframe.style.height).toBe(
-      `${Math.max(window.innerHeight - reserved, 780)}px`,
+      `${Math.max(window.innerHeight - reserved, 480)}px`,
     );
   });
 
-  it('keeps the legacy calc(100dvh - offset) sizing with a 780px min-height floor', async () => {
+  it('keeps the legacy calc(100dvh - offset) sizing when the offset attr is set', async () => {
     const { iframe } = await mountCheckout({ 'data-bond-chrome-offset-px': '80' });
     expect(iframe.style.height).toBe('calc(100dvh - 80px)');
-    expect(iframe.style.minHeight).toBe('780px');
+    expect(iframe.style.minHeight).toBe('calc(100dvh - 80px)');
     window.dispatchEvent(new Event('resize'));
     expect(iframe.style.height).toBe('calc(100dvh - 80px)');
   });
 
-  it('a real bond:resize below the floor overrides it (checkout reports exact height)', async () => {
+  it('a bond:resize from the checkout sets the exact reported height', async () => {
     const { iframe } = await mountCheckout();
     sendMessage({ type: 'bond:resize', height: 600 }, CONSUMER_ORIGIN);
     expect(iframe.style.height).toBe('600px');
     expect(iframe.style.minHeight).toBe('600px');
-  });
-
-  it('keeps the floor across iframe load events (redirect to login is a hard navigation)', async () => {
-    const { iframe } = await mountCheckout();
-    iframe.dispatchEvent(new Event('load'));
-    iframe.dispatchEvent(new Event('load'));
-    iframe.dispatchEvent(new Event('load'));
-    window.dispatchEvent(new Event('resize'));
-    expect(iframe.style.height).toBe('780px');
-  });
-
-  it('drops the floor on a typed bond:* message from the checkout origin', async () => {
-    const { iframe } = await mountCheckout();
-    window.dispatchEvent(new Event('resize'));
-    expect(iframe.style.height).toBe('780px');
-    sendMessage({ type: 'bond:something-else' }, CONSUMER_ORIGIN);
-    expect(iframe.style.height).toBe('768px');
-  });
-
-  it('drops the floor on a BOND_GTM_EVENT from the checkout origin', async () => {
-    const { iframe } = await mountCheckout();
-    window.dispatchEvent(new Event('resize'));
-    sendMessage(
-      { type: 'BOND_GTM_EVENT', dataLayerEvent: { event: 'begin_checkout' } },
-      CONSUMER_ORIGIN,
-    );
-    expect(iframe.style.height).toBe('768px');
-  });
-
-  it('keeps the floor on untyped consumer-origin messages (login-page SDK noise)', async () => {
-    const { iframe } = await mountCheckout();
-    sendMessage({ foo: 'bar' }, CONSUMER_ORIGIN);
-    sendMessage('some-string', CONSUMER_ORIGIN);
-    sendMessage({ type: 42 }, CONSUMER_ORIGIN);
-    window.dispatchEvent(new Event('resize'));
-    expect(iframe.style.height).toBe('780px');
-  });
-
-  it('does not drop the floor on discovery-origin messages', async () => {
-    const { iframe } = await mountCheckout();
-    window.dispatchEvent(new Event('resize'));
-    sendMessage({ type: 'bond:something-else' }, DISCOVERY_ORIGIN);
-    window.dispatchEvent(new Event('resize'));
-    expect(iframe.style.height).toBe('780px');
-  });
-
-  it('retires the min-height floor on the offset path once the checkout messages', async () => {
-    const { iframe } = await mountCheckout({ 'data-bond-chrome-offset-px': '80' });
-    expect(iframe.style.minHeight).toBe('780px');
-    sendMessage({ type: 'bond:something-else' }, CONSUMER_ORIGIN);
-    expect(iframe.style.minHeight).toBe('calc(100dvh - 80px)');
   });
 
   it('stops auto-fitting once the checkout posts its own bond:resize height', async () => {

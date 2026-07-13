@@ -8,15 +8,13 @@
   'use strict';
 
   var MIN_IFRAME_HEIGHT_PX = 480;
-  // Floor for checkout iframes while the Bond login page may be showing.
-  // Logged-out checkout redirects to the login page, which posts no messages at
-  // all and clips (~700px card, centered, unreachable overflow) inside a shorter
-  // iframe. The floor is dropped — restoring viewport-fit so the checkout's
-  // sticky footer stays visible — on the first message from the checkout app
-  // (e.g. begin_checkout; the login page provably sends none), and a real
-  // bond:resize always overrides. Iframe load events are NOT a drop signal:
-  // the redirect TO the login page is itself a hard navigation.
-  var CHECKOUT_FALLBACK_MIN_HEIGHT_PX = 780;
+  // NOTE on the logged-out login page: it renders a ~700px centered card that
+  // clips inside the viewport-fitted checkout iframe. Do NOT fix that with a
+  // taller kit-side floor — the login page and an idle checkout are
+  // indistinguishable from the parent (no bond:resize from either, untyped SDK
+  // noise from both, redirects fire load events), and every floor heuristic
+  // shipped in July 2026 broke the registration fit for some cohort. The fix
+  // belongs in the consumer app: post bond:resize from the login view.
   var MOBILE_CHROME_MAX_WIDTH_PX = 767;
   var MSG_OPEN_TAB = 'bond:open_tab';
   var MSG_RESIZE = 'bond:resize';
@@ -84,12 +82,11 @@
     if (!iframe) return;
     if (chromeOffsetPx > 0) {
       iframe.style.height = 'calc(100dvh - ' + chromeOffsetPx + 'px)';
+      iframe.style.minHeight = 'calc(100dvh - ' + chromeOffsetPx + 'px)';
     } else {
       iframe.style.height = '100dvh';
+      iframe.style.minHeight = '100dvh';
     }
-    // min-height floor keeps the login page fully renderable on short viewports;
-    // the browser resolves the taller of the two.
-    iframe.style.minHeight = CHECKOUT_FALLBACK_MIN_HEIGHT_PX + 'px';
   }
 
   // Max share of the viewport we reserve for partner chrome above the checkout iframe.
@@ -220,7 +217,6 @@
     applyCheckoutFallbackHeight(iframe, this.chromeOffsetPx);
     iframe.src = src;
     this.activeIframe = iframe;
-    this.checkoutFloorActive = true;
     this.mount.style.overflow = 'hidden';
     this.mount.textContent = '';
     this.mount.appendChild(iframe);
@@ -262,21 +258,7 @@
     }
     var maxChrome = Math.round(viewportHeight * CHECKOUT_AUTO_FIT_MAX_CHROME_RATIO);
     var reserved = Math.max(0, Math.min(mountDocTop, maxChrome));
-    var floor = this.checkoutFloorActive ? CHECKOUT_FALLBACK_MIN_HEIGHT_PX : 0;
-    setIframeHeight(this.activeIframe, Math.max(viewportHeight - reserved, floor));
-  };
-
-  BondHostShell.prototype.dropCheckoutFloor = function () {
-    if (!this.checkoutFloorActive) return;
-    this.checkoutFloorActive = false;
-    var iframe = this.activeIframe;
-    if (!iframe || iframe.getAttribute('data-bond-checkout-iframe') !== '1') return;
-    if (this.checkoutAutoFit) {
-      this.fitCheckoutIframe();
-    } else if (iframe.style.height) {
-      // Offset/dvh fallback path: retire the login floor, mirror height again.
-      iframe.style.minHeight = iframe.style.height;
-    }
+    setIframeHeight(this.activeIframe, viewportHeight - reserved);
   };
 
   BondHostShell.prototype.openRegistrationTab = function (path, search) {
@@ -339,17 +321,6 @@
     if (!event.data || typeof event.data !== 'object') return;
 
     var data = event.data;
-    // A typed Bond message from the checkout app means the real checkout UI is
-    // rendering — stop holding the login-height floor. Must be typed: the login
-    // page emits untyped SDK broadcasts from the same origin, but never bond:*
-    // or BOND_GTM_EVENT messages.
-    if (
-      event.origin === boot.consumerOrigin &&
-      typeof data.type === 'string' &&
-      (data.type.indexOf('bond:') === 0 || data.type === MSG_GTM_EVENT)
-    ) {
-      this.dropCheckoutFloor();
-    }
     if (data.type === MSG_OPEN_TAB && typeof data.path === 'string') {
       this.openRegistrationTab(data.path, data.search || '');
       return;
