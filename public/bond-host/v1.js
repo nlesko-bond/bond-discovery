@@ -8,6 +8,11 @@
   'use strict';
 
   var MIN_IFRAME_HEIGHT_PX = 480;
+  // Pre-resize floor for checkout iframes only. Logged-out checkout redirects to
+  // the Bond login page, which never posts bond:resize and clips (~700px card,
+  // centered, unreachable overflow) inside a shorter iframe. A real bond:resize
+  // still overrides this once the checkout view reports its height.
+  var CHECKOUT_FALLBACK_MIN_HEIGHT_PX = 780;
   var MOBILE_CHROME_MAX_WIDTH_PX = 767;
   var MSG_OPEN_TAB = 'bond:open_tab';
   var MSG_RESIZE = 'bond:resize';
@@ -75,11 +80,12 @@
     if (!iframe) return;
     if (chromeOffsetPx > 0) {
       iframe.style.height = 'calc(100dvh - ' + chromeOffsetPx + 'px)';
-      iframe.style.minHeight = 'calc(100dvh - ' + chromeOffsetPx + 'px)';
     } else {
       iframe.style.height = '100dvh';
-      iframe.style.minHeight = '100dvh';
     }
+    // min-height floor keeps the login page fully renderable on short viewports;
+    // the browser resolves the taller of the two.
+    iframe.style.minHeight = CHECKOUT_FALLBACK_MIN_HEIGHT_PX + 'px';
   }
 
   // Max share of the viewport we reserve for partner chrome above the checkout iframe.
@@ -251,7 +257,10 @@
     }
     var maxChrome = Math.round(viewportHeight * CHECKOUT_AUTO_FIT_MAX_CHROME_RATIO);
     var reserved = Math.max(0, Math.min(mountDocTop, maxChrome));
-    setIframeHeight(this.activeIframe, viewportHeight - reserved);
+    setIframeHeight(
+      this.activeIframe,
+      Math.max(viewportHeight - reserved, CHECKOUT_FALLBACK_MIN_HEIGHT_PX),
+    );
   };
 
   BondHostShell.prototype.openRegistrationTab = function (path, search) {

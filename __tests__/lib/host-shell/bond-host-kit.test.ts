@@ -227,17 +227,41 @@ describe('bond-host kit checkout iframe sizing', () => {
       .forEach((el) => el.parentElement?.remove());
   });
 
+  function stubInnerHeight(px: number) {
+    Object.defineProperty(window, 'innerHeight', {
+      value: px,
+      configurable: true,
+      writable: true,
+    });
+  }
+
   it('auto-fits checkout height to the viewport below the mount when no offset attr is set', async () => {
+    // Tall viewport so the fitted height sits above the checkout fallback floor
+    // and the reserve math itself is what's asserted.
+    stubInnerHeight(1400);
+    try {
+      const { mount, iframe } = await mountCheckout();
+      vi.spyOn(mount, 'getBoundingClientRect').mockReturnValue({
+        top: 200,
+      } as DOMRect);
+      window.dispatchEvent(new Event('resize'));
+      expect(iframe.style.height).toBe('1200px');
+    } finally {
+      stubInnerHeight(768);
+    }
+  });
+
+  it('never fits the checkout below the 780px fallback floor (logged-out login page)', async () => {
+    // jsdom viewport is 768px; any reserved chrome would fit below 780 → floor wins.
     const { mount, iframe } = await mountCheckout();
-    // jsdom: mount rect top is 0, innerHeight defaults to 768 → fills the viewport.
     vi.spyOn(mount, 'getBoundingClientRect').mockReturnValue({
       top: 200,
     } as DOMRect);
     window.dispatchEvent(new Event('resize'));
-    expect(iframe.style.height).toBe(`${window.innerHeight - 200}px`);
+    expect(iframe.style.height).toBe('780px');
   });
 
-  it('caps the reserved chrome at half the viewport and enforces the min height', async () => {
+  it('caps the reserved chrome at half the viewport, still floored at 780px', async () => {
     const { mount, iframe } = await mountCheckout();
     vi.spyOn(mount, 'getBoundingClientRect').mockReturnValue({
       top: window.innerHeight * 2,
@@ -245,15 +269,23 @@ describe('bond-host kit checkout iframe sizing', () => {
     window.dispatchEvent(new Event('resize'));
     const reserved = Math.round(window.innerHeight * 0.5);
     expect(iframe.style.height).toBe(
-      `${Math.max(window.innerHeight - reserved, 480)}px`,
+      `${Math.max(window.innerHeight - reserved, 780)}px`,
     );
   });
 
-  it('keeps the legacy calc(100dvh - offset) sizing when the offset attr is set', async () => {
+  it('keeps the legacy calc(100dvh - offset) sizing with a 780px min-height floor', async () => {
     const { iframe } = await mountCheckout({ 'data-bond-chrome-offset-px': '80' });
     expect(iframe.style.height).toBe('calc(100dvh - 80px)');
+    expect(iframe.style.minHeight).toBe('780px');
     window.dispatchEvent(new Event('resize'));
     expect(iframe.style.height).toBe('calc(100dvh - 80px)');
+  });
+
+  it('a real bond:resize below the floor overrides it (checkout reports exact height)', async () => {
+    const { iframe } = await mountCheckout();
+    sendMessage({ type: 'bond:resize', height: 600 }, CONSUMER_ORIGIN);
+    expect(iframe.style.height).toBe('600px');
+    expect(iframe.style.minHeight).toBe('600px');
   });
 
   it('stops auto-fitting once the checkout posts its own bond:resize height', async () => {
