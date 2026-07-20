@@ -245,6 +245,56 @@ export function HostPortalV2Page({
     return () => abortController.abort();
   }, [viewMode, eventsFetched, config.slug, cardStyle]);
 
+  // Precomputed `full` can be stale on capacity; refresh from Bond via
+  // mode=availability (same overlay contract as DiscoveryPage). SSR only
+  // paints cached availability, so this is what makes spots live.
+  const eventsCount = apiEvents.length;
+  const availabilityRefreshEnabled = config.features.discoveryCacheEnabled !== false;
+  useEffect(() => {
+    if (!availabilityRefreshEnabled || eventsCount === 0) return;
+
+    const controller = new AbortController();
+    const params = new URLSearchParams();
+    params.set('slug', config.slug);
+    params.set('mode', 'availability');
+
+    fetch(`/api/events?${params.toString()}`, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Availability API error: ${res.status}`);
+        return res.json();
+      })
+      .then((payload) => {
+        if (!payload?.data || !Array.isArray(payload.data)) return;
+        const byId = new Map<string, any>();
+        payload.data.forEach((item: any) => byId.set(String(item.id), item));
+
+        setApiEvents((prev) =>
+          prev.map((event) => {
+            const a = byId.get(String(event.id));
+            if (!a) return event;
+            return {
+              ...event,
+              ...(a.spotsRemaining !== undefined ? { spotsRemaining: a.spotsRemaining } : {}),
+              ...(a.maxParticipants !== undefined ? { maxParticipants: a.maxParticipants } : {}),
+              ...(a.currentParticipants !== undefined
+                ? { currentParticipants: a.currentParticipants }
+                : {}),
+              ...(a.isWaitlistEnabled !== undefined
+                ? { isWaitlistEnabled: a.isWaitlistEnabled }
+                : {}),
+              ...(a.waitlistCount !== undefined ? { waitlistCount: a.waitlistCount } : {}),
+            };
+          }),
+        );
+      })
+      .catch((error) => {
+        if (controller.signal.aborted || error?.name === 'AbortError') return;
+        console.error('Availability refresh error:', error);
+      });
+
+    return () => controller.abort();
+  }, [availabilityRefreshEnabled, config.slug, eventsCount]);
+
   const loadMoreEvents = useCallback(() => {
     if (loadingMore || apiEvents.length >= totalServerEvents) {
       return;

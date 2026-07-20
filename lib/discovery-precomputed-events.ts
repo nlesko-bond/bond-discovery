@@ -1,6 +1,6 @@
 import { cacheGet, discoveryResponseCacheKey } from '@/lib/cache';
 import { filterDiscoveryEventsByPageConfig } from '@/lib/discovery-program-scope';
-import { getAvailabilityMap, mergeAvailabilityIntoEvents } from '@/lib/availability-cache';
+import { getCachedAvailabilityMap, mergeAvailabilityIntoEvents } from '@/lib/availability-cache';
 import type { DiscoveryConfig } from '@/types';
 
 interface IPrecomputedDiscoveryPayload {
@@ -38,7 +38,10 @@ export async function getPrecomputedDiscoveryEvents(
     );
 
     try {
-      const availabilityById = await getAvailabilityMap(slug);
+      // Cached-only on purpose: a cold availability miss must not block SSR
+      // on the full Bond crawl. The client's mode=availability refresh
+      // overlays live capacity right after first paint.
+      const availabilityById = await getCachedAvailabilityMap(slug);
       if (availabilityById.size > 0) {
         events = mergeAvailabilityIntoEvents(events, availabilityById);
       }

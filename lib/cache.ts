@@ -11,6 +11,7 @@ const STALE_GRACE_FACTOR = 2; // Serve stale data up to 2x TTL while revalidatin
 
 interface CacheOptions {
   ttl?: number; // Time to live in seconds
+  staleTtl?: number; // Lifetime in seconds of the SWR stale shadow key (default: ttl * STALE_GRACE_FACTOR)
   tags?: string[]; // Cache tags for invalidation
 }
 
@@ -349,7 +350,7 @@ export async function cachedSWR<T>(
           const fresh = await fetcher();
           const ttl = options.ttl || DEFAULT_TTL;
           await cacheSet(key, fresh, options);
-          await cacheSet(staleKey, fresh, { ttl: ttl * STALE_GRACE_FACTOR });
+          await cacheSet(staleKey, fresh, { ttl: options.staleTtl ?? ttl * STALE_GRACE_FACTOR });
         } catch (err) {
           console.error(`[cachedSWR] background refresh failed for ${key}:`, err);
         } finally {
@@ -366,7 +367,23 @@ export async function cachedSWR<T>(
     const fresh = await fetcher();
     const ttl = options.ttl || DEFAULT_TTL;
     // Also populate the stale shadow key for future SWR
-    await cacheSet(staleKey, fresh, { ttl: ttl * STALE_GRACE_FACTOR });
+    await cacheSet(staleKey, fresh, { ttl: options.staleTtl ?? ttl * STALE_GRACE_FACTOR });
     return fresh;
   }, options);
+}
+
+/**
+ * Read-only companion to cachedSWR: returns the cached value (fresh, or the
+ * stale shadow) without ever fetching. Total miss returns null.
+ *
+ * For render paths that must not block on the slow fallback pipeline — the
+ * caller is responsible for having some other request (client refresh, cron)
+ * repopulate the key via cachedSWR.
+ */
+export async function cachedSWRPeek<T>(key: string): Promise<T | null> {
+  const cachedValue = await cacheGet<T>(key);
+  if (cachedValue !== null) {
+    return cachedValue;
+  }
+  return cacheGet<T>(`swr:${key}`);
 }

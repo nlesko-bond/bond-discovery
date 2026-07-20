@@ -156,6 +156,58 @@ describe('lib/cache (memory fallback)', () => {
     });
   });
 
+  describe('cachedSWRPeek()', () => {
+    it('returns the fresh value when the primary key is set', async () => {
+      const cache = await loadCache();
+      await cache.cacheSet('peek-fresh', 'fresh', { ttl: 60 });
+      expect(await cache.cachedSWRPeek('peek-fresh')).toBe('fresh');
+    });
+
+    it('falls back to the stale shadow key when the primary is missing', async () => {
+      const cache = await loadCache();
+      await cache.cacheSet('swr:peek-stale', 'stale', { ttl: 600 });
+      expect(await cache.cachedSWRPeek('peek-stale')).toBe('stale');
+    });
+
+    it('returns null on a total miss and never fetches anything', async () => {
+      const cache = await loadCache();
+      expect(await cache.cachedSWRPeek('peek-cold')).toBeNull();
+    });
+  });
+
+  describe('cachedSWR() staleTtl option', () => {
+    it('keeps the shadow key alive for staleTtl seconds after a cold fetch', async () => {
+      vi.useFakeTimers();
+      const cache = await loadCache();
+      const fetcher = vi.fn().mockResolvedValue('v1');
+
+      await cache.cachedSWR('long-stale', fetcher, { ttl: 60, staleTtl: 1800 });
+
+      // Past the primary TTL and the default 2x grace, but within staleTtl:
+      // the shadow key must still be readable.
+      vi.advanceTimersByTime(130_000);
+      expect(await cache.cacheGet('long-stale')).toBeNull();
+      expect(await cache.cachedSWRPeek('long-stale')).toBe('v1');
+
+      // Past staleTtl: gone.
+      vi.advanceTimersByTime(1800_000);
+      expect(await cache.cachedSWRPeek('long-stale')).toBeNull();
+    });
+
+    it('applies staleTtl to the shadow write of a background refresh', async () => {
+      vi.useFakeTimers();
+      const cache = await loadCache();
+      await cache.cacheSet('swr:bg', 'old', { ttl: 600 });
+
+      const fetcher = vi.fn().mockResolvedValue('new');
+      await cache.cachedSWR('bg', fetcher, { ttl: 60, staleTtl: 1800 });
+      await vi.advanceTimersByTimeAsync(0); // flush the background refresh
+
+      vi.advanceTimersByTime(130_000); // past ttl and 2x grace
+      expect(await cache.cachedSWRPeek('bg')).toBe('new');
+    });
+  });
+
   describe('shouldRefreshDiscovery() / markDiscoveryRefreshed()', () => {
     it('returns true with no marker, false right after marking, true after 5min policy elapses', async () => {
       vi.useFakeTimers();

@@ -10,8 +10,10 @@
  *
  * Default TTL is 180s (3 min) per the "spotsLeft ideally fresh within 2-5 min"
  * product requirement. Per-slug override via `features.availabilityCacheTtl`.
- * Stale shadow key lives 2x TTL (default 360s / 6 min) as a safety net if Bond
- * is down; see `cachedSWR` in lib/cache.ts.
+ * The stale shadow key lives 30 min (AVAILABILITY_STALE_TTL_SECONDS): SSR
+ * peeks at it so first paint always has recent-ish capacity without waiting
+ * on Bond; the client-side `mode=availability` refresh corrects it to live
+ * values right after load. See `cachedSWR` / `cachedSWRPeek` in lib/cache.ts.
  *
  * This cache lives in Upstash KV server-side only. It does NOT write to any
  * browser storage (localStorage / sessionStorage / cookies) and therefore has
@@ -19,7 +21,7 @@
  * the browser-storage flag that does have those implications.
  */
 
-import { cachedSWR } from './cache';
+import { cachedSWR, cachedSWRPeek } from './cache';
 import {
   getDiscoveryEvents,
   type AvailabilityDiscoveryEvent,
@@ -29,6 +31,15 @@ import { getConfigBySlug } from './config';
 import { DEFAULT_BOND_ENV, type BondEnv } from './bond-env';
 
 const DEFAULT_AVAIL_TTL_SECONDS = 180;
+
+/**
+ * Stale shadow lifetime. Deliberately much longer than the freshness TTL:
+ * stale capacity is only ever *painted* (SSR peek / SWR serve-stale) and is
+ * corrected by the client's `mode=availability` refresh moments later, so a
+ * wide window here buys instant first paint on quiet pages without changing
+ * how fresh the data users end up seeing.
+ */
+const AVAILABILITY_STALE_TTL_SECONDS = 30 * 60;
 
 function availabilityCacheKey(slug: string, bondEnv: BondEnv): string {
   return `discovery:availability-swr:${bondEnv}:${slug}`;
@@ -82,7 +93,7 @@ export async function getAvailabilityPayload(
         const result = await getDiscoveryEvents({ slug, mode: 'availability' });
         return result.payload;
       },
-      { ttl: ttlSeconds },
+      { ttl: ttlSeconds, staleTtl: AVAILABILITY_STALE_TTL_SECONDS },
     );
   } catch (error) {
     console.error('[availability-cache] SWR fetch failed', { slug, error });
@@ -91,19 +102,33 @@ export async function getAvailabilityPayload(
 }
 
 /**
- * Return a `Map<eventId, availabilityFields>` for fast overlay merges onto
- * precomputed full event lists. Empty map on cache miss + Bond failure so
- * callers never crash — they just serve the precomputed (possibly stale)
- * capacity until Bond recovers.
+ * Cached-only variant for SSR: returns whatever availability is in KV (fresh
+ * or stale, up to AVAILABILITY_STALE_TTL_SECONDS old) and NEVER fetches from
+ * Bond. A cold miss returns an empty map, meaning the page renders with the
+ * precomputed payload's capacity numbers and the client-side
+ * `mode=availability` refresh overlays live values right after load.
+ *
+ * This exists because the synchronous cold fetch is a full Bond catalog crawl
+ * (tens of seconds for large orgs) — it must never run inside a page render.
  */
-export async function getAvailabilityMap(
+export async function getCachedAvailabilityMap(
   slug: string,
 ): Promise<Map<string, AvailabilityDiscoveryEvent>> {
-  const payload = await getAvailabilityPayload(slug);
   const map = new Map<string, AvailabilityDiscoveryEvent>();
-  if (!payload?.data) return map;
-  for (const item of payload.data as AvailabilityDiscoveryEvent[]) {
-    map.set(String(item.id), item);
+  try {
+    const { ttlSeconds, bondEnv } = await resolveAvailabilitySettings(slug);
+    // ttl 0 means "never cache" — there is nothing to peek at by design.
+    if (ttlSeconds === 0) return map;
+
+    const payload = await cachedSWRPeek<DiscoveryEventsPayload>(
+      availabilityCacheKey(slug, bondEnv),
+    );
+    if (!payload?.data) return map;
+    for (const item of payload.data as AvailabilityDiscoveryEvent[]) {
+      map.set(String(item.id), item);
+    }
+  } catch (error) {
+    console.error('[availability-cache] cached-only read failed', { slug, error });
   }
   return map;
 }
