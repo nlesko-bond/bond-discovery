@@ -93,8 +93,13 @@ export default function TvMonitorScreen({
 
   const enabledAds = ads.filter((slot) => slot.enabled);
   const headerAd = header.sponsorAdId ? enabledAds.find((slot) => slot.id === header.sponsorAdId) : undefined;
-  const zoneAds = (placement: TvMonitorAdSlot['placement']) =>
-    enabledAds.filter((slot) => slot.placement === placement && slot.id !== header.sponsorAdId);
+  const zoneAds = (placement: TvMonitorAdSlot['placement'], fullHeight?: boolean) =>
+    enabledAds.filter(
+      (slot) =>
+        slot.placement === placement &&
+        slot.id !== header.sponsorAdId &&
+        (placement === 'left' || placement === 'right' ? slot.fullHeight === Boolean(fullHeight) : true),
+    );
 
   const spaces = schedule?.spaces ?? [];
   const compactColumns = enabledAds.some((slot) => slot.placement === 'left' || slot.placement === 'right');
@@ -135,8 +140,16 @@ export default function TvMonitorScreen({
         </>
       )}
 
-      {/* Positioned wrapper keeps content painting above the absolute bg layers. */}
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+      {/* Positioned wrapper keeps content painting above the absolute bg layers.
+          Full-height rails sit outside the header/banner column, spanning top to bottom. */}
+      <div className="relative z-10 flex min-h-0 flex-1">
+        {zoneAds('left', true).map((slot) => (
+          <div key={slot.id} className="h-full shrink-0" style={{ width: adSlotSize(slot) }}>
+            <TvAdSlotView slot={slot} previewMode={previewMode} />
+          </div>
+        ))}
+
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
 
       {zoneAds('top').map((slot) => (
         <div key={slot.id} className="w-full shrink-0" style={{ height: adSlotSize(slot) }}>
@@ -214,6 +227,13 @@ export default function TvMonitorScreen({
         </div>
       ))}
 
+        </div>
+
+        {zoneAds('right', true).map((slot) => (
+          <div key={slot.id} className="h-full shrink-0" style={{ width: adSlotSize(slot) }}>
+            <TvAdSlotView slot={slot} previewMode={previewMode} />
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -52,6 +52,7 @@ function newAdSlot(): TvMonitorAdSlot {
     sizeMode: 'pixels',
     sizePx: 150,
     sizePercent: 20,
+    fullHeight: false,
     backgroundColor: 'transparent',
     assets: [],
   };
@@ -84,18 +85,46 @@ function estimateAdPixels(slot: TvMonitorAdSlot, config: TvMonitorConfig): { w: 
   const others = config.ads.filter((s) => s.enabled && s.id !== slot.id);
   const topH = others.filter((s) => s.placement === 'top').reduce((sum, s) => sum + bannerHeight(s), 0);
   const bottomH = others.filter((s) => s.placement === 'bottom').reduce((sum, s) => sum + bannerHeight(s), 0);
+  // Full-height rails carve width off the header/banner column.
+  const fullRailW = config.ads
+    .filter((s) => s.enabled && s.fullHeight && (s.placement === 'left' || s.placement === 'right') && s.id !== slot.id)
+    .reduce((sum, s) => sum + railWidth(s), 0);
 
   switch (slot.placement) {
     case 'left':
     case 'right':
-      return { w: Math.round(railWidth(slot)), h: Math.round(base.h - headerH - topH - bottomH) };
+      return {
+        w: Math.round(railWidth(slot)),
+        h: slot.fullHeight ? base.h : Math.round(base.h - headerH - topH - bottomH),
+      };
     case 'top':
     case 'bottom':
-      return { w: base.w, h: Math.round(bannerHeight(slot)) };
+      return { w: Math.round(base.w - fullRailW), h: Math.round(bannerHeight(slot)) };
     case 'header':
     default:
       return { w: Math.round(slot.sizePx * 2.5), h: slot.sizePx };
   }
+}
+
+/** Human-friendly aspect ratio, e.g. 640×960 → "2:3 (portrait)". */
+function friendlyRatio(w: number, h: number): string {
+  if (w <= 0 || h <= 0) return '';
+  const target = w / h;
+  const candidates: [number, number][] = [
+    [1, 1], [4, 3], [3, 4], [3, 2], [2, 3], [16, 9], [9, 16], [21, 9], [2, 1], [1, 2], [3, 1], [4, 1], [5, 1], [6, 1], [8, 1], [10, 1],
+  ];
+  let best = candidates[0];
+  let bestDiff = Infinity;
+  for (const [cw, ch] of candidates) {
+    const diff = Math.abs(cw / ch - target);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      best = [cw, ch];
+    }
+  }
+  const shape = target < 0.95 ? ', portrait' : target > 1.05 ? ', landscape' : '';
+  const approx = bestDiff / target > 0.05 ? '~' : '';
+  return `${approx}${best[0]}:${best[1]}${shape}`;
 }
 
 /**
@@ -492,14 +521,21 @@ export default function MonitorEditor({
                       </Field>
                     )}
                   </div>
+                  {(slot.placement === 'left' || slot.placement === 'right') && (
+                    <Toggle
+                      label="Full height — span the whole screen, header beside it"
+                      checked={slot.fullHeight}
+                      onChange={(v) => patchAd(slot.id, { fullHeight: v })}
+                    />
+                  )}
                   {(() => {
                     const px = estimateAdPixels(slot, config);
                     return (
-                      <p className="text-xs text-gray-500">
-                        Renders at ≈ <strong>{px.w} × {px.h} px</strong> on a{' '}
-                        {config.screenRatio === '9:16' ? 'portrait' : '1080p'} TV
-                        {slot.placement === 'header' ? ' (width flexes to the media)' : ''} — size your artwork
-                        accordingly.
+                      <p className="rounded-md bg-blue-50 px-2 py-1.5 text-xs text-gray-600">
+                        Design artwork at <strong>{px.w} × {px.h} px</strong> (aspect {friendlyRatio(px.w, px.h)})
+                        {slot.placement === 'header' ? ' — width flexes to the media' : ''}. That size or larger is
+                        ideal; “Fill” crops other shapes to cover the slot, “Fit” shows the whole image with empty
+                        edges.
                       </p>
                     );
                   })()}
