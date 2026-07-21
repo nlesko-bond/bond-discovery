@@ -169,6 +169,8 @@ export default function TvScheduleGrid({
   const nameSize = compact || grouped.length > 3 ? 'text-2xl' : 'text-4xl';
   const eventNameSize = compact || grouped.length > 3 ? 'text-xl' : 'text-2xl';
   const timeSize = compact || grouped.length > 3 ? 'text-base' : 'text-xl';
+  const notesSize =
+    settings.notesSize === 'large' ? 'text-2xl' : settings.notesSize === 'medium' ? 'text-lg' : 'text-sm';
 
   return (
     <div
@@ -241,7 +243,7 @@ export default function TvScheduleGrid({
                       </div>
                       {settings.showNotes && event.notes && !event.isPrivate && (
                         <div
-                          className="mt-1 line-clamp-3 text-sm italic"
+                          className={`mt-1 line-clamp-3 italic leading-snug ${notesSize}`}
                           style={{ color: 'var(--tv-accent)' }}
                         >
                           {event.notes}
