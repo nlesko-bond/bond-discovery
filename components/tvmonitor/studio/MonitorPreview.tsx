@@ -5,7 +5,7 @@ import TvMonitorScreen from '@/components/tvmonitor/TvMonitorScreen';
 import type { TvMonitorConfig, TvMonitorSchedulePayload } from '@/types/tvmonitor';
 
 /** Base render resolution per screen ratio; the preview scales it to fit. */
-const BASE_SIZES: Record<string, { w: number; h: number }> = {
+export const BASE_SIZES: Record<string, { w: number; h: number }> = {
   fill: { w: 1920, h: 1080 },
   '16:9': { w: 1920, h: 1080 },
   '4:3': { w: 1440, h: 1080 },

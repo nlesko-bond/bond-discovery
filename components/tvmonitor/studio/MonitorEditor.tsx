@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ExternalLink, Plus, Trash2 } from 'lucide-react';
-import MonitorPreview from '@/components/tvmonitor/studio/MonitorPreview';
+import { ArrowLeft, Copy, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import MonitorPreview, { BASE_SIZES } from '@/components/tvmonitor/studio/MonitorPreview';
+import MediaInput from '@/components/tvmonitor/studio/MediaInput';
 import { ColorInput, Field, NumberInput, SectionCard, Select, TextInput, Toggle } from '@/components/tvmonitor/studio/fields';
 import { TV_DESIGN_PRESETS } from '@/lib/tvmonitor-templates';
 import type {
@@ -69,6 +70,35 @@ function newAdAsset(): TvMonitorAdAsset {
 type SaveState = 'clean' | 'dirty' | 'saving' | 'saved' | 'error';
 
 /**
+ * Estimated on-screen pixels for an ad slot at the page's TV resolution —
+ * shown next to each slot so people size their artwork correctly.
+ */
+function estimateAdPixels(slot: TvMonitorAdSlot, config: TvMonitorConfig): { w: number; h: number } {
+  const base = BASE_SIZES[config.screenRatio] ?? BASE_SIZES.fill;
+  const bannerHeight = (s: TvMonitorAdSlot) =>
+    s.sizeMode === 'ratio' ? (base.h * s.sizePercent) / 100 : s.sizePx;
+  const railWidth = (s: TvMonitorAdSlot) =>
+    s.sizeMode === 'ratio' ? (base.w * s.sizePercent) / 100 : s.sizePx;
+
+  const headerH = config.header.enabled ? 130 : 0;
+  const others = config.ads.filter((s) => s.enabled && s.id !== slot.id);
+  const topH = others.filter((s) => s.placement === 'top').reduce((sum, s) => sum + bannerHeight(s), 0);
+  const bottomH = others.filter((s) => s.placement === 'bottom').reduce((sum, s) => sum + bannerHeight(s), 0);
+
+  switch (slot.placement) {
+    case 'left':
+    case 'right':
+      return { w: Math.round(railWidth(slot)), h: Math.round(base.h - headerH - topH - bottomH) };
+    case 'top':
+    case 'bottom':
+      return { w: base.w, h: Math.round(bannerHeight(slot)) };
+    case 'header':
+    default:
+      return { w: Math.round(slot.sizePx * 2.5), h: slot.sizePx };
+  }
+}
+
+/**
  * The full TV Monitor builder: block settings on the left, a live to-scale
  * preview on the right. Used by both the Bond admin (/admin/tvmonitor) and
  * the org-scoped external studio (/tvmonitor/studio).
@@ -91,8 +121,16 @@ export default function MonitorEditor({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ facilityName: string; spaces: TvMonitorSpace[] } | null>(null);
   const [resourceInput, setResourceInput] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const liveUrl = `/tvmonitor/${page.slug}`;
+  const fullLiveUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}${liveUrl}`;
+
+  async function copyLiveUrl() {
+    await navigator.clipboard.writeText(fullLiveUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   function patchConfig(updates: Partial<TvMonitorConfig>) {
     setConfig((prev) => ({ ...prev, ...updates }));
@@ -178,19 +216,19 @@ export default function MonitorEditor({
             <ArrowLeft size={16} /> All monitors
           </Link>
           <h1 className="text-xl font-bold text-gray-900">{name}</h1>
-          <a
-            href={liveUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1 text-sm text-toca-navy hover:underline"
-          >
-            Open live page <ExternalLink size={14} />
-          </a>
         </div>
         <div className="flex items-center gap-3">
           {saveState === 'dirty' && <span className="text-sm text-amber-600">Unsaved changes</span>}
           {saveState === 'saved' && <span className="text-sm text-green-600">Saved</span>}
           {saveState === 'error' && <span className="text-sm text-red-600">{errorMessage}</span>}
+          <a
+            href={liveUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <ExternalLink size={14} /> Open live page
+          </a>
           <button
             onClick={handleSave}
             disabled={saveState === 'saving' || saveState === 'clean'}
@@ -209,7 +247,16 @@ export default function MonitorEditor({
               <TextInput value={name} onChange={(e) => { setName(e.target.value); setSaveState('dirty'); }} />
             </Field>
             <Field label="Page URL" hint="Share this URL — open it fullscreen on the TV's browser.">
-              <TextInput value={`${typeof window !== 'undefined' ? window.location.origin : ''}${liveUrl}`} readOnly />
+              <div className="flex gap-2">
+                <TextInput value={fullLiveUrl} readOnly />
+                <button
+                  type="button"
+                  onClick={copyLiveUrl}
+                  className="flex shrink-0 items-center gap-1 rounded-lg border border-gray-300 px-3 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  <Copy size={14} /> {copied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
             </Field>
             <Toggle label="Page is live" checked={isActive} onChange={(v) => { setIsActive(v); setSaveState('dirty'); }} />
             <Field label="Screen shape">
@@ -278,8 +325,13 @@ export default function MonitorEditor({
                 )}
                 <Toggle label="Show logo" checked={config.header.showLogo} onChange={(v) => patchHeader({ showLogo: v })} />
                 {config.header.showLogo && (
-                  <Field label="Logo URL" hint="PNG with transparency looks best.">
-                    <TextInput value={config.header.logoUrl ?? ''} onChange={(e) => patchHeader({ logoUrl: e.target.value || null })} placeholder="https://…/logo.png" />
+                  <Field label="Logo" hint="Upload a file or paste a URL — PNG with transparency looks best.">
+                    <MediaInput
+                      value={config.header.logoUrl ?? ''}
+                      onChange={(url) => patchHeader({ logoUrl: url || null })}
+                      accept="image"
+                      placeholder="https://…/logo.png"
+                    />
                   </Field>
                 )}
                 <Toggle label="Show clock" checked={config.header.showClock} onChange={(v) => patchHeader({ showClock: v })} />
@@ -440,6 +492,17 @@ export default function MonitorEditor({
                       </Field>
                     )}
                   </div>
+                  {(() => {
+                    const px = estimateAdPixels(slot, config);
+                    return (
+                      <p className="text-xs text-gray-500">
+                        Renders at ≈ <strong>{px.w} × {px.h} px</strong> on a{' '}
+                        {config.screenRatio === '9:16' ? 'portrait' : '1080p'} TV
+                        {slot.placement === 'header' ? ' (width flexes to the media)' : ''} — size your artwork
+                        accordingly.
+                      </p>
+                    );
+                  })()}
                   {slot.assets.map((asset, assetIndex) => (
                     <div key={asset.id} className="rounded-md bg-gray-50 p-2">
                       <div className="mb-1 flex items-center justify-between">
@@ -453,12 +516,15 @@ export default function MonitorEditor({
                         </button>
                       </div>
                       <div className="space-y-2">
-                        <TextInput
+                        <MediaInput
                           value={asset.src}
-                          placeholder="https://…/poster.png or …/promo.mp4"
-                          onChange={(e) =>
+                          accept="media"
+                          placeholder="https://…/poster.png or …/promo.mp4 — or upload"
+                          onChange={(url, kind) =>
                             patchAd(slot.id, {
-                              assets: slot.assets.map((a) => (a.id === asset.id ? { ...a, src: e.target.value } : a)),
+                              assets: slot.assets.map((a) =>
+                                a.id === asset.id ? { ...a, src: url, type: kind ?? a.type } : a,
+                              ),
                             })
                           }
                         />
