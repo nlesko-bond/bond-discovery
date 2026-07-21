@@ -107,6 +107,8 @@ export interface TvMonitorAdSlot {
   sizePx: number;
   /** Rail width / banner height as % of the screen when sizeMode = 'ratio' (5–60). */
   sizePercent: number;
+  /** Left/right rails only: span the full screen height, pushing the header/banners beside the rail (like a full-height sponsor poster). */
+  fullHeight: boolean;
   backgroundColor: string;
   /** Rotation pool; a single asset just stays on screen. */
   assets: TvMonitorAdAsset[];

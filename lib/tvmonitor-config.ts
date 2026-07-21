@@ -75,6 +75,7 @@ function normalizeAdSlot(raw: unknown, index: number): TvMonitorAdSlot | null {
     sizeMode: rec.sizeMode === 'ratio' ? 'ratio' : 'pixels',
     sizePx: asNumber(rec.sizePx, 150, 40, 1200),
     sizePercent: asNumber(rec.sizePercent, 20, 5, 60),
+    fullHeight: asBool(rec.fullHeight, false) && (placement === 'left' || placement === 'right'),
     backgroundColor: asString(rec.backgroundColor, 'transparent'),
     assets: rawAssets
       .map((asset, i) => normalizeAdAsset(asset, i))

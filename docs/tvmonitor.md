@@ -49,7 +49,7 @@ Building blocks inside `config`:
 |---|---|
 | `header` | logo, title, live clock, date, schedule QR, waiver QR, optional sponsor ad slot |
 | `schedule` | resource (space) IDs (≤6 columns), hours ahead (1–24), show notes / maintenance / private events, labels, auto-scroll (speed 1–5, synchronized vs independent, pause) |
-| `ads[]` | fixed placements: left/right rail, top/bottom banner, in-header; sized by pixels or % of screen; each rotates image/video assets by URL with per-asset duration. JS ad tags are a planned future asset type. |
+| `ads[]` | fixed placements: left/right rail (optionally full screen height, header beside it), top/bottom banner, in-header; sized by pixels or % of screen; each rotates image/video assets by URL with per-asset duration. The builder shows each slot's rendered px + aspect ratio. JS ad tags are a planned future asset type. |
 | `design` | dark/light presets, Google font, font/secondary/accent colors, background gradient (color 1 → color 2), optional background image with adjustable color-overlay strength, card colors |
 | `screenRatio` | `fill` (default) or 16:9 / 4:3 / 21:9 / 9:16 letterboxed |
 

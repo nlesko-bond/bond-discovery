@@ -60,6 +60,17 @@ describe('normalizeTvMonitorConfig', () => {
     expect(config.ads[0].assets[0].type).toBe('video');
   });
 
+  it('only side rails can be full height', () => {
+    const config = normalizeTvMonitorConfig({
+      ads: [
+        { id: 'rail', placement: 'left', fullHeight: true, assets: [] },
+        { id: 'banner', placement: 'bottom', fullHeight: true, assets: [] },
+      ],
+    });
+    expect(config.ads.find((s) => s.id === 'rail')?.fullHeight).toBe(true);
+    expect(config.ads.find((s) => s.id === 'banner')?.fullHeight).toBe(false);
+  });
+
   it('clears sponsorAdId when it points at a missing ad slot', () => {
     const kept = normalizeTvMonitorConfig({
       header: { sponsorAdId: 'ad-1' },
