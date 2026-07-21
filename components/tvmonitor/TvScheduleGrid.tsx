@@ -243,10 +243,16 @@ export default function TvScheduleGrid({
                       </div>
                       {settings.showNotes && event.notes && !event.isPrivate && (
                         <div
-                          className={`mt-1 line-clamp-3 italic leading-snug ${notesSize}`}
-                          style={{ color: 'var(--tv-accent)' }}
+                          className={`mt-1 line-clamp-4 whitespace-pre-line leading-snug ${notesSize}`}
+                          style={{
+                            color: settings.notesColor || 'var(--tv-accent)',
+                            fontStyle: settings.notesItalic ? 'italic' : 'normal',
+                            fontWeight: settings.notesBold ? 700 : 400,
+                          }}
                         >
-                          {event.notes}
+                          {/* Bond returns real newlines (e.g. one locker room per line);
+                              render them, but collapse blank lines to save TV space. */}
+                          {event.notes.replace(/\n{2,}/g, '\n').trim()}
                         </div>
                       )}
                       {event.children.map((child) => {
