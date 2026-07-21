@@ -13,9 +13,19 @@ export default function AccessGrantsPanel() {
   const [grants, setGrants] = useState<ITvMonitorAccessGrant[]>([]);
   const [label, setLabel] = useState('');
   const [orgId, setOrgId] = useState(0);
-  const [newLink, setNewLink] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  function grantLink(token: string): string {
+    return `${window.location.origin}/tvmonitor/studio?key=${token}`;
+  }
+
+  async function copyGrantLink(grant: ITvMonitorAccessGrant) {
+    if (!grant.token) return;
+    await navigator.clipboard.writeText(grantLink(grant.token));
+    setCopiedId(grant.id);
+    setTimeout(() => setCopiedId((current) => (current === grant.id ? null : current)), 2000);
+  }
 
   async function fetchGrants() {
     const res = await fetch('/api/admin/tvmonitor/access', { cache: 'no-store' });
@@ -32,7 +42,6 @@ export default function AccessGrantsPanel() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setNewLink(null);
     const res = await fetch('/api/admin/tvmonitor/access', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -43,8 +52,17 @@ export default function AccessGrantsPanel() {
       setError(data.error || 'Failed to create access link');
       return;
     }
-    setNewLink(data.url);
     setLabel('');
+    // Copy the fresh link right away; it also stays copyable from the list below.
+    if (data.url) {
+      try {
+        await navigator.clipboard.writeText(data.url);
+        setCopiedId(data.grant?.id ?? null);
+        setTimeout(() => setCopiedId(null), 2000);
+      } catch {
+        // Clipboard can fail without focus — the list copy button still works.
+      }
+    }
     void fetchGrants();
   }
 
@@ -52,13 +70,6 @@ export default function AccessGrantsPanel() {
     if (!confirm('Revoke this access link? The person will lose builder access immediately.')) return;
     await fetch(`/api/admin/tvmonitor/access/${id}`, { method: 'DELETE' });
     void fetchGrants();
-  }
-
-  async function copyLink() {
-    if (!newLink) return;
-    await navigator.clipboard.writeText(newLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   }
 
   const activeGrants = grants.filter((g) => !g.revoked_at);
@@ -90,20 +101,6 @@ export default function AccessGrantsPanel() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {newLink && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
-          <p className="mb-2 text-sm font-medium text-amber-800">
-            Copy this link now — it won&apos;t be shown again.
-          </p>
-          <div className="flex gap-2">
-            <TextInput value={newLink} readOnly className="bg-white font-mono text-xs" />
-            <button onClick={copyLink} type="button" className="flex items-center gap-1 rounded-lg border border-amber-400 px-3 text-sm text-amber-800 hover:bg-amber-100">
-              <Copy size={14} /> {copied ? 'Copied' : 'Copy'}
-            </button>
-          </div>
-        </div>
-      )}
-
       {activeGrants.length > 0 ? (
         <ul className="divide-y divide-gray-100">
           {activeGrants.map((grant) => (
@@ -120,12 +117,26 @@ export default function AccessGrantsPanel() {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => handleRevoke(grant.id)}
-                className="flex shrink-0 items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs text-gray-500 hover:border-red-300 hover:text-red-600"
-              >
-                <Trash2 size={12} /> Revoke
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                {grant.token ? (
+                  <button
+                    onClick={() => copyGrantLink(grant)}
+                    className="flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:border-toca-navy hover:text-toca-navy"
+                  >
+                    <Copy size={12} /> {copiedId === grant.id ? 'Copied' : 'Copy link'}
+                  </button>
+                ) : (
+                  <span className="text-xs text-gray-400" title="Created before links were stored — revoke and create a new one to get a copyable link.">
+                    link not stored
+                  </span>
+                )}
+                <button
+                  onClick={() => handleRevoke(grant.id)}
+                  className="flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs text-gray-500 hover:border-red-300 hover:text-red-600"
+                >
+                  <Trash2 size={12} /> Revoke
+                </button>
+              </div>
             </li>
           ))}
         </ul>

@@ -18,6 +18,8 @@ export const TV_DESIGN_PRESETS: Record<'dark' | 'light', TvMonitorDesign> = {
     bgColor2: '#0a1626',
     cardBg: 'rgba(255, 255, 255, 0.06)',
     cardBorder: 'rgba(255, 255, 255, 0.12)',
+    bgImageUrl: null,
+    bgImageOverlayOpacity: 80,
   },
   light: {
     theme: 'light',
@@ -29,6 +31,8 @@ export const TV_DESIGN_PRESETS: Record<'dark' | 'light', TvMonitorDesign> = {
     bgColor2: '#eef2f6',
     cardBg: '#ffffff',
     cardBorder: 'rgba(0, 0, 0, 0.08)',
+    bgImageUrl: null,
+    bgImageOverlayOpacity: 80,
   },
 };
 
