@@ -29,8 +29,13 @@ TV browser ──poll every refreshSeconds──▶ GET /api/tvmonitor/{slug}/sc
   org+facility+spaces+hours scope), never one per TV.
 - The poll response includes the **config**, so builder edits (colors, ads, toggles)
   go live on screen within one refresh interval — no TV-side reload needed.
-- Fetch failures keep the last good payload on screen; the page hard-reloads once a
-  day to pick up deploys and shed memory.
+- Fetch failures keep the last good payload on screen.
+- **Deploys reach unattended TVs automatically**: every build inlines a
+  deployment fingerprint (`NEXT_PUBLIC_TVMONITOR_BUILD`, from
+  `VERCEL_GIT_COMMIT_SHA`) into both the page and the schedule API. TVs compare
+  the two on every poll and self-reload (jittered 0–90s) when they differ — new
+  code is on every screen within ~2 minutes of a production deploy. A daily
+  hard reload remains as a memory/safety net.
 - This endpoint is the same one the official Bond monitor screens use. It is *not*
   the discovery Public API (`lib/bond-client.ts`) and does not touch
   `discovery:response:{slug}` or any discovery cache invariants.

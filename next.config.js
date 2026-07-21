@@ -34,6 +34,10 @@ const nextConfig = {
   // Environment variables exposed to the browser
   env: {
     NEXT_PUBLIC_APP_NAME: 'Bond Discovery',
+    // Deployment fingerprint, inlined into client + server of the SAME build.
+    // TV monitor pages compare theirs against the API's on every poll and
+    // self-reload when a new deploy lands (see TvMonitorDisplay).
+    NEXT_PUBLIC_TVMONITOR_BUILD: (process.env.VERCEL_GIT_COMMIT_SHA || 'dev').slice(0, 12),
   },
   
   // Headers for caching and security
