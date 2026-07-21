@@ -21,7 +21,17 @@ const RATIO_VALUES: Record<string, number | undefined> = {
   fill: undefined,
 };
 
-function TvClock({ showClock, showDate, compact }: { showClock: boolean; showDate: boolean; compact: boolean }) {
+function TvClock({
+  showClock,
+  showDate,
+  compact,
+  align = 'end',
+}: {
+  showClock: boolean;
+  showDate: boolean;
+  compact: boolean;
+  align?: 'end' | 'center';
+}) {
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     setNow(new Date());
@@ -31,9 +41,12 @@ function TvClock({ showClock, showDate, compact }: { showClock: boolean; showDat
 
   if (!showClock && !showDate) return null;
   return (
-    <div className="flex flex-col items-end">
+    <div className={`flex flex-col ${align === 'center' ? 'items-center' : 'items-end'}`}>
       {showClock && (
-        <div className={`${compact ? 'text-4xl' : 'text-5xl'} font-bold tabular-nums leading-none`}>
+        <div
+          className={`${compact ? 'text-4xl' : 'text-5xl'} font-bold tabular-nums leading-none`}
+          style={align === 'center' ? { color: 'var(--tv-accent)' } : undefined}
+        >
           {now
             ? now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })
             : '--:--'}
@@ -41,8 +54,8 @@ function TvClock({ showClock, showDate, compact }: { showClock: boolean; showDat
       )}
       {showDate && (
         <div
-          className={`mt-1 uppercase tracking-widest ${compact ? 'text-xs' : 'text-sm'}`}
-          style={{ color: 'var(--tv-secondary)' }}
+          className={`mt-1 uppercase tracking-widest ${compact ? 'text-xs' : 'text-sm'} ${align === 'center' ? 'italic font-semibold' : ''}`}
+          style={{ color: align === 'center' ? 'var(--tv-font-color)' : 'var(--tv-secondary)' }}
         >
           {now ? now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : ''}
         </div>
@@ -160,7 +173,52 @@ export default function TvMonitorScreen({
         </div>
       ))}
 
-      {header.enabled && (
+      {header.enabled && header.layout === 'centered' && (
+        <header
+          className={`flex shrink-0 items-center justify-between ${compactColumns ? 'gap-4 px-5 py-3' : 'gap-6 px-8 py-4'}`}
+        >
+          {/* Left: sponsor + QRs. */}
+          <div className={`flex flex-1 items-center ${compactColumns ? 'gap-4' : 'gap-6'}`}>
+            {headerAd && (
+              <div className="shrink-0" style={{ height: adSlotSize(headerAd) }}>
+                <TvAdSlotView slot={headerAd} previewMode={previewMode} headerMode />
+              </div>
+            )}
+            {header.scheduleQr.enabled && header.scheduleQr.url && (
+              <TvQr url={header.scheduleQr.url} label={header.scheduleQr.label} compact={compactColumns} />
+            )}
+            {header.waiverQr.enabled && header.waiverQr.url && (
+              <TvQr url={header.waiverQr.url} label={header.waiverQr.label} compact={compactColumns} />
+            )}
+          </div>
+
+          {/* Center: big clock + date. */}
+          <TvClock showClock={header.showClock} showDate={header.showDate} compact={compactColumns} align="center" />
+
+          {/* Right: facility logo. */}
+          <div className="flex flex-1 items-center justify-end">
+            {header.showLogo && header.logoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element -- partner logo, remote by design
+              <img
+                src={header.logoUrl}
+                alt=""
+                className="shrink-0 object-contain"
+                style={{ height: header.logoHeightPx, maxWidth: header.logoHeightPx * 3.5 }}
+              />
+            )}
+            {header.showLogo && !header.logoUrl && previewMode && (
+              <div
+                className="flex w-28 items-center justify-center rounded-lg border-2 border-dashed text-xs"
+                style={{ borderColor: 'var(--tv-card-border)', color: 'var(--tv-secondary)', height: header.logoHeightPx }}
+              >
+                Logo
+              </div>
+            )}
+          </div>
+        </header>
+      )}
+
+      {header.enabled && header.layout === 'inline' && (
         <header
           className={`flex shrink-0 flex-wrap items-center justify-between border-b ${compactColumns ? 'gap-4 px-5 py-3' : 'gap-6 px-8 py-4'}`}
           style={{ borderColor: 'var(--tv-card-border)' }}
@@ -219,14 +277,32 @@ export default function TvMonitorScreen({
           </div>
         ))}
 
-        <main className="min-h-0 min-w-0 flex-1 px-8 py-5">
-          {scheduleBlock.enabled ? (
-            <TvScheduleGrid spaces={spaces} settings={scheduleBlock} compact={compactColumns} />
-          ) : previewMode ? (
-            <div className="flex h-full items-center justify-center text-xl" style={{ color: 'var(--tv-secondary)' }}>
-              Schedule block is turned off
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col px-8 py-4">
+          {header.enabled && header.layout === 'centered' && header.showTitle && (
+            <div
+              className={`mb-4 shrink-0 rounded px-4 py-2 text-center font-extrabold uppercase tracking-wide ${compactColumns ? 'text-3xl' : 'text-4xl'}`}
+              style={{ background: 'var(--tv-accent)', color: 'var(--tv-font-color)' }}
+            >
+              {header.title}
             </div>
-          ) : null}
+          )}
+          <div className="min-h-0 flex-1">
+            {scheduleBlock.enabled ? (
+              <TvScheduleGrid
+                spaces={spaces}
+                settings={scheduleBlock}
+                compact={compactColumns}
+                // Single rink under a title banner: the banner IS the column header.
+                hideSpaceNames={
+                  header.enabled && header.layout === 'centered' && header.showTitle && spaces.length <= 1
+                }
+              />
+            ) : previewMode ? (
+              <div className="flex h-full items-center justify-center text-xl" style={{ color: 'var(--tv-secondary)' }}>
+                Schedule block is turned off
+              </div>
+            ) : null}
+          </div>
         </main>
 
         {zoneAds('right').map((slot) => (

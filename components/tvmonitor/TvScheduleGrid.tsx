@@ -59,10 +59,13 @@ export default function TvScheduleGrid({
   spaces,
   settings,
   compact,
+  hideSpaceNames = false,
 }: {
   spaces: TvMonitorSpace[];
   settings: TvMonitorScheduleBlock;
   compact?: boolean;
+  /** Hide per-column space-name headers (e.g. when a title banner already names the rink). */
+  hideSpaceNames?: boolean;
 }) {
   const columnRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const [now, setNow] = useState<Date | null>(null);
@@ -174,9 +177,11 @@ export default function TvScheduleGrid({
     >
       {grouped.map(({ space, events }) => (
         <div key={space.id} className="flex min-h-0 flex-col">
-          <div className="mb-3 border-b-2 pb-2" style={{ borderColor: 'var(--tv-accent)' }}>
-            <h2 className={`${nameSize} truncate font-bold`}>{space.name}</h2>
-          </div>
+          {!hideSpaceNames && (
+            <div className="mb-3 border-b-2 pb-2" style={{ borderColor: 'var(--tv-accent)' }}>
+              <h2 className={`${nameSize} truncate font-bold`}>{space.name}</h2>
+            </div>
+          )}
           <div className="relative min-h-0 flex-1">
             <div
               ref={(el) => {
