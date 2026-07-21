@@ -37,19 +37,30 @@ export function hashAccessToken(token: string): string {
 // ---------------------------------------------------------------------------
 
 export interface TvStudioSession {
-  grantId: string;
+  /** 'user' = named magic-link user (tvmonitor_users); 'grant' = legacy access link (tvmonitor_access). */
+  kind: 'user' | 'grant';
+  id: string;
   organizationIds: number[];
+  /** Set for user sessions. */
+  email?: string;
 }
 
-function signSession(secret: string, grantId: string, orgIds: number[], expSeconds: number): string {
-  return createHmac('sha256', secret).update(`${grantId}:${orgIds.join(',')}:${expSeconds}`).digest('hex');
+function signSession(secret: string, kind: string, id: string, orgIds: number[], expSeconds: number): string {
+  return createHmac('sha256', secret).update(`${kind}:${id}:${orgIds.join(',')}:${expSeconds}`).digest('hex');
 }
 
 export function createStudioCookieValue(session: TvStudioSession): { value: string; maxAgeSeconds: number } {
   const secret = getTvMonitorAccessSecret();
   const exp = Math.floor(Date.now() / 1000) + COOKIE_MAX_AGE_SECONDS;
-  const sig = signSession(secret, session.grantId, session.organizationIds, exp);
-  const payload = JSON.stringify({ g: session.grantId, o: session.organizationIds, exp, sig });
+  const sig = signSession(secret, session.kind, session.id, session.organizationIds, exp);
+  const payload = JSON.stringify({
+    k: session.kind,
+    i: session.id,
+    o: session.organizationIds,
+    e: session.email,
+    exp,
+    sig,
+  });
   return {
     value: Buffer.from(payload, 'utf8').toString('base64url'),
     maxAgeSeconds: COOKIE_MAX_AGE_SECONDS,
@@ -69,16 +80,27 @@ export function verifyStudioCookie(raw: string | undefined): TvStudioSession | n
     const parsed: unknown = JSON.parse(json);
     if (!parsed || typeof parsed !== 'object') return null;
     const rec = parsed as Record<string, unknown>;
-    if (typeof rec.g !== 'string' || !Array.isArray(rec.o) || typeof rec.exp !== 'number' || typeof rec.sig !== 'string') {
+    if (
+      (rec.k !== 'user' && rec.k !== 'grant') ||
+      typeof rec.i !== 'string' ||
+      !Array.isArray(rec.o) ||
+      typeof rec.exp !== 'number' ||
+      typeof rec.sig !== 'string'
+    ) {
       return null;
     }
     if (rec.exp < Math.floor(Date.now() / 1000)) return null;
     const orgIds = rec.o.map((n) => Number(n)).filter((n) => Number.isFinite(n));
-    const expectedHex = signSession(secret, rec.g, orgIds, rec.exp);
+    const expectedHex = signSession(secret, rec.k, rec.i, orgIds, rec.exp);
     const a = Buffer.from(rec.sig, 'hex');
     const b = Buffer.from(expectedHex, 'hex');
     if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-    return { grantId: rec.g, organizationIds: orgIds };
+    return {
+      kind: rec.k,
+      id: rec.i,
+      organizationIds: orgIds,
+      email: typeof rec.e === 'string' ? rec.e : undefined,
+    };
   } catch {
     return null;
   }
@@ -180,18 +202,35 @@ export async function resolveAccessToken(token: string): Promise<ITvMonitorAcces
 }
 
 /**
- * Re-validates a cookie session against the database (grant still exists and
- * is not revoked). Used by studio API routes so revocation takes effect
- * without waiting for cookie expiry.
+ * Re-validates a cookie session against the database so revocation (and, for
+ * users, org-membership changes) take effect without waiting for cookie
+ * expiry. User sessions return the CURRENT org list from the database.
  */
 export async function requireStudioSession(rawCookie: string | undefined): Promise<TvStudioSession | null> {
   const session = verifyStudioCookie(rawCookie);
   if (!session) return null;
   const db = getSupabaseAdmin();
+
+  if (session.kind === 'user') {
+    const { data, error } = await db
+      .from('tvmonitor_users')
+      .select('id, email, organization_ids, revoked_at')
+      .eq('id', session.id)
+      .maybeSingle();
+    if (error || !data) return null;
+    const row = data as Record<string, unknown>;
+    if (row.revoked_at != null) return null;
+    const orgIds = Array.isArray(row.organization_ids)
+      ? row.organization_ids.map((n) => Number(n)).filter((n) => Number.isFinite(n))
+      : [];
+    if (!orgIds.length) return null;
+    return { kind: 'user', id: session.id, organizationIds: orgIds, email: String(row.email) };
+  }
+
   const { data, error } = await db
     .from('tvmonitor_access')
     .select('id, revoked_at')
-    .eq('id', session.grantId)
+    .eq('id', session.id)
     .maybeSingle();
   if (error || !data) return null;
   if ((data as Record<string, unknown>).revoked_at != null) return null;

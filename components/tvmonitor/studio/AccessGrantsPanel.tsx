@@ -76,8 +76,8 @@ export default function AccessGrantsPanel() {
 
   return (
     <SectionCard
-      title="Builder access links"
-      subtitle="Give someone outside Bond access to build monitors for their organization. Anyone with the link can edit that org's monitors — treat it like a password."
+      title="Legacy access links"
+      subtitle="Older shareable org links — anyone holding one can edit that org's monitors. Prefer adding people as Studio users (above); use these only when a personal email login isn't practical."
     >
       <form onSubmit={handleCreate} className="flex flex-wrap items-end gap-2">
         <div className="min-w-[200px] flex-1">
