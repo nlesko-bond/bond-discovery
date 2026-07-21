@@ -101,19 +101,42 @@ export default function TvMonitorScreen({
 
   const ratio = RATIO_VALUES[config.screenRatio];
 
+  const gradient = `linear-gradient(160deg, ${design.bgColor1} 0%, ${design.bgColor2} 100%)`;
+
   const screen = (
     <div
-      className="flex h-full w-full flex-col overflow-hidden"
+      className="relative flex h-full w-full flex-col overflow-hidden"
       style={{
         ...cssVars,
         color: design.fontColor,
         fontFamily: `'${design.fontFamily}', system-ui, sans-serif`,
-        background: `linear-gradient(160deg, ${design.bgColor1} 0%, ${design.bgColor2} 100%)`,
+        background: design.bgImageUrl ? design.bgColor2 : gradient,
       }}
     >
       {/* eslint-disable-next-line @next/next/no-page-custom-font -- per-config runtime font */}
       <link rel="stylesheet" href={fontHref} />
       <style>{`.tv-ad-fade { animation: tvAdFade 0.6s ease; } @keyframes tvAdFade { from { opacity: 0; } to { opacity: 1; } }`}</style>
+
+      {design.bgImageUrl && (
+        <>
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage: `url(${design.bgImageUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+          {/* Color gradient over the photo keeps schedule text readable. */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{ background: gradient, opacity: design.bgImageOverlayOpacity / 100 }}
+          />
+        </>
+      )}
+
+      {/* Positioned wrapper keeps content painting above the absolute bg layers. */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
 
       {zoneAds('top').map((slot) => (
         <div key={slot.id} className="w-full shrink-0" style={{ height: adSlotSize(slot) }}>
@@ -190,6 +213,8 @@ export default function TvMonitorScreen({
           <TvAdSlotView slot={slot} previewMode={previewMode} />
         </div>
       ))}
+
+      </div>
     </div>
   );
 

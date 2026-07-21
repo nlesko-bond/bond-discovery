@@ -50,7 +50,7 @@ Building blocks inside `config`:
 | `header` | logo, title, live clock, date, schedule QR, waiver QR, optional sponsor ad slot |
 | `schedule` | resource (space) IDs (≤6 columns), hours ahead (1–24), show notes / maintenance / private events, labels, auto-scroll (speed 1–5, synchronized vs independent, pause) |
 | `ads[]` | fixed placements: left/right rail, top/bottom banner, in-header; sized by pixels or % of screen; each rotates image/video assets by URL with per-asset duration. JS ad tags are a planned future asset type. |
-| `design` | dark/light presets, Google font, font/secondary/accent colors, background gradient (color 1 → color 2), card colors |
+| `design` | dark/light presets, Google font, font/secondary/accent colors, background gradient (color 1 → color 2), optional background image with adjustable color-overlay strength, card colors |
 | `screenRatio` | `fill` (default) or 16:9 / 4:3 / 21:9 / 9:16 letterboxed |
 
 Templates (`lib/tvmonitor-templates.ts`): **Classic Board** (no ads),
@@ -71,9 +71,12 @@ uploads are namespaced by org (`org-{id}/…`).
 
 - **Bond admins**: existing NextAuth Google flow (`requireAdmin()`), full access.
 - **External builders**: `tvmonitor_access` grants. An admin creates a link per
-  person+org in `/admin/tvmonitor`; the raw token is shown once and only its sha256
-  hash is stored. Opening `/tvmonitor/studio?key=…` exchanges it for a 30-day signed
-  httpOnly cookie (`lib/tvmonitor-access.ts`, HMAC via `TVMONITOR_ACCESS_SECRET`).
+  person+org in `/admin/tvmonitor`. The raw token is stored (migration 016) so
+  admins can re-copy a builder's link from the grants list at any time; sign-in
+  lookups still match on the sha256 `token_hash`, and the table is only reachable
+  through admin-gated routes. Opening `/tvmonitor/studio?key=…` exchanges the
+  token for a 30-day signed httpOnly cookie (`lib/tvmonitor-access.ts`, HMAC via
+  `TVMONITOR_ACCESS_SECRET`).
   Studio API routes re-check the grant in the DB on every call, so revoking a link
   cuts access immediately. Studio users only see/edit/create pages for their org and
   cannot re-home a page to another org. Opening an access link **always replaces**

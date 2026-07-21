@@ -29,6 +29,10 @@ export interface TvMonitorDesign {
   bgColor1: string;
   /** Page background gradient end. */
   bgColor2: string;
+  /** Optional full-screen background image (e.g. arena photo); gradient overlays it. */
+  bgImageUrl: string | null;
+  /** How strongly the color gradient covers the background image (0–100, higher = darker/more color). */
+  bgImageOverlayOpacity: number;
   /** Event card background. */
   cardBg: string;
   /** Event card border. */
@@ -132,11 +136,17 @@ export interface ITvMonitorPage {
   updated_at: string;
 }
 
-/** Org-scoped builder access link (raw token never stored — hash only). */
+/**
+ * Org-scoped builder access link. The raw token is stored (admin-gated,
+ * service-role-only table) so Bond admins can re-copy the link; sign-in
+ * lookups still go through the sha256 hash. Grants created before token
+ * storage have token = null.
+ */
 export interface ITvMonitorAccessGrant {
   id: string;
   organization_id: number;
   label: string;
+  token: string | null;
   created_by: string | null;
   created_at: string;
   revoked_at: string | null;

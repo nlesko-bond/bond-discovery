@@ -122,6 +122,8 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
       accentColor: asString(design.accentColor, themePreset.accentColor),
       bgColor1: asString(design.bgColor1, themePreset.bgColor1),
       bgColor2: asString(design.bgColor2, themePreset.bgColor2),
+      bgImageUrl: asNullableString(design.bgImageUrl),
+      bgImageOverlayOpacity: asNumber(design.bgImageOverlayOpacity, 80, 0, 100),
       cardBg: asString(design.cardBg, themePreset.cardBg),
       cardBorder: asString(design.cardBorder, themePreset.cardBorder),
     },

@@ -93,6 +93,7 @@ function rowToGrant(row: Record<string, unknown>): ITvMonitorAccessGrant {
     id: String(row.id),
     organization_id: Number(row.organization_id),
     label: String(row.label),
+    token: typeof row.token === 'string' && row.token.length > 0 ? row.token : null,
     created_by: row.created_by != null ? String(row.created_by) : null,
     created_at: String(row.created_at),
     revoked_at: row.revoked_at != null ? String(row.revoked_at) : null,
@@ -127,6 +128,8 @@ export async function createTvMonitorAccessGrant(input: {
       organization_id: organizationId,
       label: input.label.trim(),
       token_hash: hashAccessToken(token),
+      // Raw token kept so admins can re-copy the link (admin-gated table).
+      token,
       created_by: input.created_by ?? null,
     })
     .select()

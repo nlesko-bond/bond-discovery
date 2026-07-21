@@ -617,6 +617,27 @@ export default function MonitorEditor({
             <Field label="Background color 2" hint="Same as color 1 for a solid background; different for a gradient.">
               <ColorInput value={config.design.bgColor2} onChange={(v) => patchDesign({ bgColor2: v })} />
             </Field>
+            <Field label="Background image (optional)" hint="E.g. an arena photo. The colors above overlay it to keep text readable.">
+              <MediaInput
+                value={config.design.bgImageUrl ?? ''}
+                onChange={(url) => patchDesign({ bgImageUrl: url || null })}
+                accept="image"
+                placeholder="https://…/arena.jpg — or upload"
+              />
+            </Field>
+            {config.design.bgImageUrl && (
+              <Field label={`Color overlay strength: ${config.design.bgImageOverlayOpacity}%`} hint="Lower shows more photo; higher keeps text crisper.">
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={config.design.bgImageOverlayOpacity}
+                  onChange={(e) => patchDesign({ bgImageOverlayOpacity: Number(e.target.value) })}
+                  className="w-full accent-toca-navy"
+                />
+              </Field>
+            )}
             <Field label="Event card background">
               <ColorInput value={config.design.cardBg} onChange={(v) => patchDesign({ cardBg: v })} />
             </Field>
