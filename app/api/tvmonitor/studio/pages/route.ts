@@ -25,7 +25,11 @@ export async function POST(request: NextRequest) {
     if (!session.organizationIds.includes(organizationId)) {
       return NextResponse.json({ error: 'You do not have access to that organization' }, { status: 403 });
     }
-    const page = await createTvMonitorPage({ ...body, organization_id: organizationId, created_by: 'studio' });
+    const page = await createTvMonitorPage({
+      ...body,
+      organization_id: organizationId,
+      created_by: session.email ?? 'studio',
+    });
     return NextResponse.json({ page }, { status: 201 });
   } catch (error) {
     console.error('[TvMonitorStudio/Pages] POST error:', error);

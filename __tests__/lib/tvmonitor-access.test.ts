@@ -29,17 +29,36 @@ describe('studio session cookie', () => {
     vi.stubEnv('TVMONITOR_ACCESS_SECRET', 'test-secret');
   });
 
-  it('round-trips a valid session', () => {
-    const { value, maxAgeSeconds } = createStudioCookieValue({ grantId: 'g-1', organizationIds: [61, 99] });
+  it('round-trips a valid grant session', () => {
+    const { value, maxAgeSeconds } = createStudioCookieValue({ kind: 'grant', id: 'g-1', organizationIds: [61, 99] });
     expect(maxAgeSeconds).toBeGreaterThan(0);
     const session = verifyStudioCookie(value);
-    expect(session).toEqual({ grantId: 'g-1', organizationIds: [61, 99] });
+    expect(session).toEqual({ kind: 'grant', id: 'g-1', organizationIds: [61, 99], email: undefined });
+  });
+
+  it('round-trips a valid user session with email', () => {
+    const { value } = createStudioCookieValue({
+      kind: 'user',
+      id: 'u-1',
+      organizationIds: [725],
+      email: 'brian@hatfieldice.com',
+    });
+    const session = verifyStudioCookie(value);
+    expect(session).toEqual({ kind: 'user', id: 'u-1', organizationIds: [725], email: 'brian@hatfieldice.com' });
   });
 
   it('rejects a tampered payload', () => {
-    const { value } = createStudioCookieValue({ grantId: 'g-1', organizationIds: [61] });
+    const { value } = createStudioCookieValue({ kind: 'grant', id: 'g-1', organizationIds: [61] });
     const json = JSON.parse(Buffer.from(value, 'base64url').toString('utf8'));
     json.o = [61, 12345]; // grant self more orgs
+    const forged = Buffer.from(JSON.stringify(json), 'utf8').toString('base64url');
+    expect(verifyStudioCookie(forged)).toBeNull();
+  });
+
+  it('rejects kind-swapping (grant session forged into user session)', () => {
+    const { value } = createStudioCookieValue({ kind: 'grant', id: 'x-1', organizationIds: [61] });
+    const json = JSON.parse(Buffer.from(value, 'base64url').toString('utf8'));
+    json.k = 'user';
     const forged = Buffer.from(JSON.stringify(json), 'utf8').toString('base64url');
     expect(verifyStudioCookie(forged)).toBeNull();
   });
@@ -51,7 +70,7 @@ describe('studio session cookie', () => {
   });
 
   it('rejects cookies signed with a different secret', () => {
-    const { value } = createStudioCookieValue({ grantId: 'g-1', organizationIds: [61] });
+    const { value } = createStudioCookieValue({ kind: 'grant', id: 'g-1', organizationIds: [61] });
     vi.stubEnv('TVMONITOR_ACCESS_SECRET', 'rotated-secret');
     expect(verifyStudioCookie(value)).toBeNull();
   });

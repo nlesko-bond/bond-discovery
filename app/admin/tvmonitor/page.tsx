@@ -1,6 +1,7 @@
 'use client';
 
 import MonitorList from '@/components/tvmonitor/studio/MonitorList';
+import StudioUsersPanel from '@/components/tvmonitor/studio/StudioUsersPanel';
 import AccessGrantsPanel from '@/components/tvmonitor/studio/AccessGrantsPanel';
 
 export default function AdminTvMonitorPage() {
@@ -14,6 +15,7 @@ export default function AdminTvMonitorPage() {
         </p>
       </div>
       <MonitorList apiBase="/api/admin/tvmonitor" editorBasePath="/admin/tvmonitor" allowedOrgIds={null} />
+      <StudioUsersPanel />
       <AccessGrantsPanel />
     </div>
   );

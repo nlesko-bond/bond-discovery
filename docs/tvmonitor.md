@@ -70,13 +70,22 @@ uploads are namespaced by org (`org-{id}/…`).
 ## Access model
 
 - **Bond admins**: existing NextAuth Google flow (`requireAdmin()`), full access.
-- **External builders**: `tvmonitor_access` grants. An admin creates a link per
-  person+org in `/admin/tvmonitor`. The raw token is stored (migration 016) so
-  admins can re-copy a builder's link from the grants list at any time; sign-in
-  lookups still match on the sha256 `token_hash`, and the table is only reachable
-  through admin-gated routes. Opening `/tvmonitor/studio?key=…` exchanges the
-  token for a 30-day signed httpOnly cookie (`lib/tvmonitor-access.ts`, HMAC via
-  `TVMONITOR_ACCESS_SECRET`).
+- **External builders — named users (primary)**: `tvmonitor_users` (migration
+  017). An admin adds an email + org list (multiple orgs = uber-org support) in
+  `/admin/tvmonitor`; the person signs in at `/tvmonitor/studio` by requesting a
+  **magic link** (single-use, 15 min) or via an admin-issued **invite link**
+  (single-use, 7 days). Tokens live hashed in `tvmonitor_login_tokens` and are
+  consumed atomically (`lib/tvmonitor-users.ts`). Email delivery uses Resend
+  when `RESEND_API_KEY` is set (`lib/tvmonitor-email.ts`); without it, admins
+  copy invite links from the UI. Session cookies carry user id + email; every
+  studio API call re-reads the user row, so revocation and org changes apply
+  instantly. Designed so Bond-platform SSO (Cognito) can replace the login
+  mechanism later without touching the permission model.
+- **External builders — legacy access links**: `tvmonitor_access` grants
+  (shareable per-org tokens, `?key=…`). Still honored and manageable in the
+  admin "Legacy access links" panel, but prefer named users.
+- Both paths exchange their credential for a 30-day signed httpOnly cookie
+  (`lib/tvmonitor-access.ts`, HMAC via `TVMONITOR_ACCESS_SECRET`).
   Studio API routes re-check the grant in the DB on every call, so revoking a link
   cuts access immediately. Studio users only see/edit/create pages for their org and
   cannot re-home a page to another org. Opening an access link **always replaces**
