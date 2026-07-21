@@ -504,6 +504,19 @@ export default function MonitorEditor({
                   <NumberInput value={config.schedule.futureHoursLimit} min={1} max={24} onChange={(n) => patchSchedule({ futureHoursLimit: n })} />
                 </Field>
                 <Toggle label="Show event notes" checked={config.schedule.showNotes} onChange={(v) => patchSchedule({ showNotes: v })} />
+                {config.schedule.showNotes && (
+                  <Field label="Notes size">
+                    <Select
+                      value={config.schedule.notesSize}
+                      onChange={(v) => patchSchedule({ notesSize: v as 'small' | 'medium' | 'large' })}
+                      options={[
+                        { value: 'small', label: 'Small' },
+                        { value: 'medium', label: 'Medium (default)' },
+                        { value: 'large', label: 'Large' },
+                      ]}
+                    />
+                  </Field>
+                )}
                 <Toggle label="Show maintenance" checked={config.schedule.showMaintenance} onChange={(v) => patchSchedule({ showMaintenance: v })} />
                 {config.schedule.showMaintenance && (
                   <Field label="Maintenance label" hint='e.g. "Ice Cut" for rinks.'>

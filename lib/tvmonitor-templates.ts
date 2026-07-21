@@ -98,6 +98,7 @@ function baseConfig(): TvMonitorConfig {
       resourceIds: [],
       futureHoursLimit: 9,
       showNotes: true,
+      notesSize: 'medium',
       showMaintenance: true,
       showPrivateEvents: true,
       privateEventLabel: 'Private event',

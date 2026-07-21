@@ -77,6 +77,8 @@ export interface TvMonitorScheduleBlock {
   /** How many hours ahead of now to pull slots for (1–24). */
   futureHoursLimit: number;
   showNotes: boolean;
+  /** Size of event notes text on screen. */
+  notesSize: 'small' | 'medium' | 'large';
   showMaintenance: boolean;
   showPrivateEvents: boolean;
   privateEventLabel: string;
