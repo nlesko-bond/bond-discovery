@@ -26,12 +26,9 @@ export default function StudioShell({
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const me = await fetch('/api/tvmonitor/studio/me', { cache: 'no-store' });
-      if (me.ok) {
-        const data = await me.json();
-        if (!cancelled) setAuth({ status: 'ok', organizationIds: data.organizationIds || [] });
-        return;
-      }
+      // An access link in the URL ALWAYS wins over any existing session —
+      // opening a link for a different org must switch the studio to that org,
+      // never silently fall back to whoever was signed in before.
       const key = searchParams.get('key');
       if (key) {
         const res = await fetch('/api/tvmonitor/studio/session', {
@@ -49,6 +46,12 @@ export default function StudioShell({
             setAuth({ status: 'denied', message: data.error || 'This access link is invalid or has been revoked.' });
           }
         }
+        return;
+      }
+      const me = await fetch('/api/tvmonitor/studio/me', { cache: 'no-store' });
+      if (me.ok) {
+        const data = await me.json();
+        if (!cancelled) setAuth({ status: 'ok', organizationIds: data.organizationIds || [] });
         return;
       }
       if (!cancelled) {
@@ -79,9 +82,15 @@ export default function StudioShell({
             <span className="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">by Bond Sports</span>
           </div>
           {auth.status === 'ok' && (
-            <button onClick={signOut} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800">
-              <LogOut size={15} /> Sign out
-            </button>
+            <div className="flex items-center gap-3">
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-toca-navy">
+                Building for organization{auth.organizationIds.length === 1 ? '' : 's'}{' '}
+                {auth.organizationIds.map((id) => `#${id}`).join(', ')}
+              </span>
+              <button onClick={signOut} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800">
+                <LogOut size={15} /> Sign out
+              </button>
+            </div>
           )}
         </div>
       </header>

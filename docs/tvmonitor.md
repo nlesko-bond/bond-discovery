@@ -57,6 +57,16 @@ Templates (`lib/tvmonitor-templates.ts`): **Classic Board** (no ads),
 **Sponsor Spotlight** (left rail + header sponsor), **Promo Banner** (light theme +
 bottom banner), and **Build your own**. A template is only a starting config.
 
+## Media uploads
+
+Logos and ad images/videos can be pasted as URLs or uploaded. Uploads go
+**directly from the browser to Supabase Storage** via a signed upload URL from
+`POST /api/tvmonitor/media` (admin or studio session required), so they are not
+capped by Vercel's request-body limit. Bucket: `tvmonitor-media`
+(migration `migrations/015_add_tvmonitor_media_bucket.sql`), public read,
+50 MB/file; images ≤ 15 MB, videos ≤ 50 MB, allowlisted MIME types. Studio
+uploads are namespaced by org (`org-{id}/…`).
+
 ## Access model
 
 - **Bond admins**: existing NextAuth Google flow (`requireAdmin()`), full access.
@@ -66,7 +76,9 @@ bottom banner), and **Build your own**. A template is only a starting config.
   httpOnly cookie (`lib/tvmonitor-access.ts`, HMAC via `TVMONITOR_ACCESS_SECRET`).
   Studio API routes re-check the grant in the DB on every call, so revoking a link
   cuts access immediately. Studio users only see/edit/create pages for their org and
-  cannot re-home a page to another org.
+  cannot re-home a page to another org. Opening an access link **always replaces**
+  any existing studio session with that link's org — a browser holds one org
+  session at a time.
 - **Live TV pages are public** (like the Webflow prototype) — they render schedule
   data that is already publicly served by the Bond v4 endpoint.
 
