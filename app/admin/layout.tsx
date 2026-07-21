@@ -127,11 +127,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   title="Bond Sports — Dashboard"
                   className="flex justify-center rounded-lg py-2 hover:bg-gray-100"
                 >
-                  {/* Left-edge crop of the wordmark = the "B" mark. */}
-                  <span className="block h-7 w-7 overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- brand asset, remote CDN */}
-                    <img src={BOND_LOGO_URL} alt="Bond Sports" className="h-7 w-auto max-w-none" />
-                  </span>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- brand mark, static asset */}
+                  <img src="/images/bondy-mark.svg" alt="Bond Sports" className="h-9 w-9" />
                 </Link>
                 <button
                   type="button"
