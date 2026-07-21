@@ -505,17 +505,35 @@ export default function MonitorEditor({
                 </Field>
                 <Toggle label="Show event notes" checked={config.schedule.showNotes} onChange={(v) => patchSchedule({ showNotes: v })} />
                 {config.schedule.showNotes && (
-                  <Field label="Notes size">
-                    <Select
-                      value={config.schedule.notesSize}
-                      onChange={(v) => patchSchedule({ notesSize: v as 'small' | 'medium' | 'large' })}
-                      options={[
-                        { value: 'small', label: 'Small' },
-                        { value: 'medium', label: 'Medium (default)' },
-                        { value: 'large', label: 'Large' },
-                      ]}
+                  <div className="ml-3 space-y-2 border-l-2 border-gray-100 pl-3">
+                    <Field label="Notes size">
+                      <Select
+                        value={config.schedule.notesSize}
+                        onChange={(v) => patchSchedule({ notesSize: v as 'small' | 'medium' | 'large' })}
+                        options={[
+                          { value: 'small', label: 'Small' },
+                          { value: 'medium', label: 'Medium (default)' },
+                          { value: 'large', label: 'Large' },
+                        ]}
+                      />
+                    </Field>
+                    <Field label="Notes color" hint="Clear the field to use the accent color.">
+                      <ColorInput
+                        value={config.schedule.notesColor ?? ''}
+                        onChange={(v) => patchSchedule({ notesColor: v || null })}
+                      />
+                    </Field>
+                    <Toggle
+                      label="Italic"
+                      checked={config.schedule.notesItalic}
+                      onChange={(v) => patchSchedule({ notesItalic: v })}
                     />
-                  </Field>
+                    <Toggle
+                      label="Bold"
+                      checked={config.schedule.notesBold}
+                      onChange={(v) => patchSchedule({ notesBold: v })}
+                    />
+                  </div>
                 )}
                 <Toggle label="Show maintenance" checked={config.schedule.showMaintenance} onChange={(v) => patchSchedule({ showMaintenance: v })} />
                 {config.schedule.showMaintenance && (

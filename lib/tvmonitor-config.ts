@@ -160,6 +160,9 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
         schedule.notesSize === 'small' || schedule.notesSize === 'medium' || schedule.notesSize === 'large'
           ? schedule.notesSize
           : defaults.schedule.notesSize,
+      notesColor: asNullableString(schedule.notesColor),
+      notesItalic: asBool(schedule.notesItalic, defaults.schedule.notesItalic),
+      notesBold: asBool(schedule.notesBold, defaults.schedule.notesBold),
       showMaintenance: asBool(schedule.showMaintenance, defaults.schedule.showMaintenance),
       showPrivateEvents: asBool(schedule.showPrivateEvents, defaults.schedule.showPrivateEvents),
       privateEventLabel: asString(schedule.privateEventLabel, defaults.schedule.privateEventLabel),

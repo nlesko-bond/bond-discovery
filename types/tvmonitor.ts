@@ -79,6 +79,10 @@ export interface TvMonitorScheduleBlock {
   showNotes: boolean;
   /** Size of event notes text on screen. */
   notesSize: 'small' | 'medium' | 'large';
+  /** Notes text color; null/empty uses the design accent color. */
+  notesColor: string | null;
+  notesItalic: boolean;
+  notesBold: boolean;
   showMaintenance: boolean;
   showPrivateEvents: boolean;
   privateEventLabel: string;
