@@ -4,9 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import TvMonitorScreen from '@/components/tvmonitor/TvMonitorScreen';
 import type { TvMonitorConfig, TvMonitorSchedulePayload } from '@/types/tvmonitor';
 
-// Hard reload daily so long-running lobby TVs never accumulate leaks or
-// stale JS bundles after a deploy.
+// Hard reload daily so long-running lobby TVs never accumulate leaks —
+// the safety net behind the build-aware reload below.
 const FULL_RELOAD_AFTER_MS = 24 * 60 * 60 * 1000;
+
+// This client's deployment fingerprint (inlined at build time). When the
+// schedule API starts answering with a different one, a new deploy is live
+// and this TV reloads itself — jittered so a fleet doesn't stampede.
+const CLIENT_BUILD = process.env.NEXT_PUBLIC_TVMONITOR_BUILD ?? 'dev';
 
 /**
  * Live TV wrapper: polls /api/tvmonitor/{slug}/schedule on the configured
@@ -30,6 +35,7 @@ export default function TvMonitorDisplay({
 
   useEffect(() => {
     let cancelled = false;
+    let reloadScheduled = false;
     let timer: ReturnType<typeof setTimeout>;
 
     async function poll() {
@@ -39,10 +45,22 @@ export default function TvMonitorDisplay({
           const data = (await res.json()) as {
             config?: TvMonitorConfig;
             schedule?: TvMonitorSchedulePayload;
+            buildId?: string;
           };
           if (!cancelled) {
             if (data.config) setConfig(data.config);
             if (data.schedule) setSchedule(data.schedule);
+            // New deployment detected: reload within 0–90s (jittered).
+            if (
+              !reloadScheduled &&
+              data.buildId &&
+              data.buildId !== 'dev' &&
+              CLIENT_BUILD !== 'dev' &&
+              data.buildId !== CLIENT_BUILD
+            ) {
+              reloadScheduled = true;
+              setTimeout(() => window.location.reload(), Math.random() * 90_000);
+            }
           }
         }
       } catch {
