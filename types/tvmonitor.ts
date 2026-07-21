@@ -45,8 +45,17 @@ export interface TvMonitorQrConfig {
   label: string;
 }
 
+/**
+ * 'inline'   — logo + title on the left, sponsor center, QRs + clock right.
+ * 'centered' — sponsor + QRs left, big clock/date center, logo right;
+ *              the title renders as a banner bar on top of the schedule
+ *              (the classic rink-TV look).
+ */
+export type TvMonitorHeaderLayout = 'inline' | 'centered';
+
 export interface TvMonitorHeaderBlock {
   enabled: boolean;
+  layout: TvMonitorHeaderLayout;
   showLogo: boolean;
   logoUrl: string | null;
   /** Rendered logo height in px (width scales to fit). */

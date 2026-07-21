@@ -130,6 +130,7 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
     },
     header: {
       enabled: asBool(header.enabled, defaults.header.enabled),
+      layout: header.layout === 'centered' ? 'centered' : header.layout === 'inline' ? 'inline' : defaults.header.layout,
       showLogo: asBool(header.showLogo, defaults.header.showLogo),
       logoUrl: asNullableString(header.logoUrl),
       logoHeightPx: asNumber(header.logoHeightPx, defaults.header.logoHeightPx, 32, 200),

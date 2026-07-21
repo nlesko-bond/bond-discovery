@@ -81,6 +81,7 @@ function baseConfig(): TvMonitorConfig {
     design: { ...TV_DESIGN_PRESETS.dark },
     header: {
       enabled: true,
+      layout: 'inline',
       showLogo: true,
       logoUrl: null,
       logoHeightPx: 80,
@@ -125,6 +126,7 @@ export function buildTvMonitorTemplateConfig(key: TvMonitorTemplateKey): TvMonit
     }
 
     case 'sponsor-spotlight': {
+      config.header.layout = 'centered';
       config.header.scheduleQr.enabled = true;
       config.header.sponsorAdId = 'ad-header-sponsor';
       config.ads = [

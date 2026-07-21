@@ -346,6 +346,23 @@ export default function MonitorEditor({
             <Toggle label="Show header" checked={config.header.enabled} onChange={(v) => patchHeader({ enabled: v })} />
             {config.header.enabled && (
               <>
+                <Field
+                  label="Arrangement"
+                  hint={
+                    config.header.layout === 'centered'
+                      ? 'Sponsor left, clock center, logo right — the title becomes a banner bar on top of the schedule.'
+                      : 'Logo and title on the left, sponsor and clock on the right.'
+                  }
+                >
+                  <Select
+                    value={config.header.layout}
+                    onChange={(v) => patchHeader({ layout: v as 'inline' | 'centered' })}
+                    options={[
+                      { value: 'centered', label: 'Rink board — sponsor / clock / logo, title on the schedule' },
+                      { value: 'inline', label: 'Classic — logo + title left, clock right' },
+                    ]}
+                  />
+                </Field>
                 <Toggle label="Show title" checked={config.header.showTitle} onChange={(v) => patchHeader({ showTitle: v })} />
                 {config.header.showTitle && (
                   <Field label="Title">
