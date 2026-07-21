@@ -83,6 +83,7 @@ function baseConfig(): TvMonitorConfig {
       enabled: true,
       showLogo: true,
       logoUrl: null,
+      logoHeightPx: 80,
       title: 'Facility Schedule',
       showTitle: true,
       showClock: true,

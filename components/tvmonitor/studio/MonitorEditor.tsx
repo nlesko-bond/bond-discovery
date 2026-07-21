@@ -354,14 +354,27 @@ export default function MonitorEditor({
                 )}
                 <Toggle label="Show logo" checked={config.header.showLogo} onChange={(v) => patchHeader({ showLogo: v })} />
                 {config.header.showLogo && (
-                  <Field label="Logo" hint="Upload a file or paste a URL — PNG with transparency looks best.">
-                    <MediaInput
-                      value={config.header.logoUrl ?? ''}
-                      onChange={(url) => patchHeader({ logoUrl: url || null })}
-                      accept="image"
-                      placeholder="https://…/logo.png"
-                    />
-                  </Field>
+                  <>
+                    <Field label="Logo" hint="Upload a file or paste a URL — PNG with transparency looks best.">
+                      <MediaInput
+                        value={config.header.logoUrl ?? ''}
+                        onChange={(url) => patchHeader({ logoUrl: url || null })}
+                        accept="image"
+                        placeholder="https://…/logo.png"
+                      />
+                    </Field>
+                    <Field label={`Logo size: ${config.header.logoHeightPx}px tall`}>
+                      <input
+                        type="range"
+                        min={32}
+                        max={200}
+                        step={4}
+                        value={config.header.logoHeightPx}
+                        onChange={(e) => patchHeader({ logoHeightPx: Number(e.target.value) })}
+                        className="w-full accent-toca-navy"
+                      />
+                    </Field>
+                  </>
                 )}
                 <Toggle label="Show clock" checked={config.header.showClock} onChange={(v) => patchHeader({ showClock: v })} />
                 <Toggle label="Show date" checked={config.header.showDate} onChange={(v) => patchHeader({ showDate: v })} />
