@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
@@ -17,6 +18,8 @@ import {
   ClipboardList,
   ListChecks,
   MonitorPlay,
+  PanelLeftClose,
+  PanelLeftOpen,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -34,10 +37,26 @@ function isNavLinkActive(pathname: string, href: string, activePrefix?: string):
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+const NAV_COLLAPSED_KEY = 'bond_admin_nav_collapsed';
+
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const pathname = usePathname();
   const bypassAuth = isAdminAuthBypassEnabled();
+  const [navCollapsed, setNavCollapsed] = useState(false);
+
+  // Restore the preference after mount (SSR renders expanded; avoids hydration mismatch).
+  useEffect(() => {
+    setNavCollapsed(window.localStorage.getItem(NAV_COLLAPSED_KEY) === '1');
+  }, []);
+
+  function toggleNav() {
+    setNavCollapsed((collapsed) => {
+      const next = !collapsed;
+      window.localStorage.setItem(NAV_COLLAPSED_KEY, next ? '1' : '0');
+      return next;
+    });
+  }
 
   if (pathname === '/admin/login') {
     return <>{children}</>;
@@ -93,30 +112,48 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-64px)] sticky top-16 hidden md:block">
-          <nav className="p-4 space-y-1">
-            <NavLink pathname={pathname} href="/admin" icon={LayoutDashboard}>
+        <aside
+          className={cn(
+            'bg-white border-r border-gray-200 min-h-[calc(100vh-64px)] sticky top-16 hidden md:block shrink-0 transition-[width] duration-200',
+            navCollapsed ? 'w-16' : 'w-64',
+          )}
+        >
+          <nav className={cn('space-y-1', navCollapsed ? 'p-2' : 'p-4')}>
+            <button
+              type="button"
+              onClick={toggleNav}
+              aria-label={navCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+              className={cn(
+                'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900',
+                navCollapsed && 'justify-center px-0',
+              )}
+            >
+              {navCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+              {!navCollapsed && <span className="text-sm font-medium">Collapse</span>}
+            </button>
+            <div className="!my-2 border-t border-gray-200" />
+            <NavLink pathname={pathname} href="/admin" icon={LayoutDashboard} collapsed={navCollapsed}>
               Dashboard
             </NavLink>
-            <NavLink pathname={pathname} href="/admin/partners" icon={Users}>
+            <NavLink pathname={pathname} href="/admin/partners" icon={Users} collapsed={navCollapsed}>
               Partner Groups
             </NavLink>
-            <NavLink pathname={pathname} href="/admin/pages" icon={FileText}>
+            <NavLink pathname={pathname} href="/admin/pages" icon={FileText} collapsed={navCollapsed}>
               Discovery Pages
             </NavLink>
-            <NavLink pathname={pathname} href="/admin/documentation" icon={BookOpen}>
+            <NavLink pathname={pathname} href="/admin/documentation" icon={BookOpen} collapsed={navCollapsed}>
               Documentation
             </NavLink>
-            <NavLink pathname={pathname} href="/admin/memberships" icon={CreditCard}>
+            <NavLink pathname={pathname} href="/admin/memberships" icon={CreditCard} collapsed={navCollapsed}>
               Memberships
             </NavLink>
-            <NavLink pathname={pathname} href="/admin/reservation-pages" icon={CalendarDays}>
+            <NavLink pathname={pathname} href="/admin/reservation-pages" icon={CalendarDays} collapsed={navCollapsed}>
               Reservation pages
             </NavLink>
-            <NavLink pathname={pathname} href="/admin/tvmonitor" icon={MonitorPlay}>
+            <NavLink pathname={pathname} href="/admin/tvmonitor" icon={MonitorPlay} collapsed={navCollapsed}>
               TV Monitors
             </NavLink>
-            <NavLink pathname={pathname} href="/admin/form-pages" icon={ClipboardList}>
+            <NavLink pathname={pathname} href="/admin/form-pages" icon={ClipboardList} collapsed={navCollapsed}>
               Form responses
             </NavLink>
             <NavLink
@@ -124,15 +161,16 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               href="/admin/onboarding/dashboard"
               activePrefix="/admin/onboarding"
               icon={ListChecks}
+              collapsed={navCollapsed}
             >
               Onboarding
             </NavLink>
-            <NavLink pathname={pathname} href="/admin/analytics" icon={BarChart3}>
+            <NavLink pathname={pathname} href="/admin/analytics" icon={BarChart3} collapsed={navCollapsed}>
               Analytics
             </NavLink>
 
             <div className="pt-4 mt-4 border-t border-gray-200">
-              <NavLink pathname={pathname} href="/admin/help" icon={HelpCircle}>
+              <NavLink pathname={pathname} href="/admin/help" icon={HelpCircle} collapsed={navCollapsed}>
                 Help & Docs
               </NavLink>
             </div>
@@ -170,27 +208,31 @@ function NavLink({
   activePrefix,
   icon: Icon,
   children,
+  collapsed = false,
 }: {
   pathname: string;
   href: string;
   activePrefix?: string;
   icon: LucideIcon;
   children: React.ReactNode;
+  collapsed?: boolean;
 }) {
   const active = isNavLinkActive(pathname, href, activePrefix);
   return (
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
+      title={collapsed && typeof children === 'string' ? children : undefined}
       className={cn(
         'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors',
+        collapsed && 'justify-center px-0',
         active
           ? 'bg-gray-100 text-gray-900 ring-1 ring-inset ring-gray-900/10 shadow-sm'
           : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900',
       )}
     >
-      <Icon size={20} className={active ? 'text-gray-900' : 'text-gray-500'} />
-      <span className={cn('font-medium', active && 'font-semibold')}>{children}</span>
+      <Icon size={20} className={cn('shrink-0', active ? 'text-gray-900' : 'text-gray-500')} />
+      {!collapsed && <span className={cn('font-medium', active && 'font-semibold')}>{children}</span>}
     </Link>
   );
 }
