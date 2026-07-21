@@ -23,6 +23,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BOND_LOGO_URL } from '@/lib/onboarding/bond-brand';
 import { isAdminAuthBypassEnabled } from '@/lib/admin-auth-bypass';
 import { AdminProviders } from './AdminProviders';
 import { AdminAuthGuard } from './AdminAuthGuard';
@@ -119,18 +120,44 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           )}
         >
           <nav className={cn('space-y-1', navCollapsed ? 'p-2' : 'p-4')}>
-            <button
-              type="button"
-              onClick={toggleNav}
-              aria-label={navCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-              className={cn(
-                'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900',
-                navCollapsed && 'justify-center px-0',
-              )}
-            >
-              {navCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
-              {!navCollapsed && <span className="text-sm font-medium">Collapse</span>}
-            </button>
+            {navCollapsed ? (
+              <>
+                <Link
+                  href="/admin"
+                  title="Bond Sports — Dashboard"
+                  className="flex justify-center rounded-lg py-2 hover:bg-gray-100"
+                >
+                  {/* Left-edge crop of the wordmark = the "B" mark. */}
+                  <span className="block h-7 w-7 overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- brand asset, remote CDN */}
+                    <img src={BOND_LOGO_URL} alt="Bond Sports" className="h-7 w-auto max-w-none" />
+                  </span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={toggleNav}
+                  aria-label="Expand navigation"
+                  className="flex w-full justify-center rounded-lg py-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                >
+                  <PanelLeftOpen size={20} />
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center justify-between gap-2 px-1 py-1">
+                <Link href="/admin" title="Dashboard" className="rounded-lg p-1 hover:bg-gray-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- brand asset, remote CDN */}
+                  <img src={BOND_LOGO_URL} alt="Bond Sports" className="h-8 w-auto" />
+                </Link>
+                <button
+                  type="button"
+                  onClick={toggleNav}
+                  aria-label="Collapse navigation"
+                  className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                >
+                  <PanelLeftClose size={20} />
+                </button>
+              </div>
+            )}
             <div className="!my-2 border-t border-gray-200" />
             <NavLink pathname={pathname} href="/admin" icon={LayoutDashboard} collapsed={navCollapsed}>
               Dashboard
