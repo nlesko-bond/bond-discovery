@@ -228,6 +228,46 @@ export default function MonitorEditor({
     setResourceInput('');
   }
 
+  // Status chips for the collapsed section headers — neutral for state,
+  // amber for actionable gaps.
+  const enabledAdSlots = config.ads.filter((slot) => slot.enabled);
+  const totalAdAssets = enabledAdSlots.reduce((sum, slot) => sum + slot.assets.length, 0);
+  const emptyAdSlots = enabledAdSlots.filter((slot) => slot.assets.length === 0).length;
+  const missingQrUrl =
+    (config.header.scheduleQr.enabled && !config.header.scheduleQr.url) ||
+    (config.header.waiverQr.enabled && !config.header.waiverQr.url);
+  const missingLogo = config.header.showLogo && !config.header.logoUrl;
+  const headerBits = [
+    config.header.showLogo && 'logo',
+    config.header.showTitle && 'title',
+    config.header.showClock && 'clock',
+    (config.header.scheduleQr.enabled || config.header.waiverQr.enabled) && 'QR',
+    config.header.sponsorAdId && 'sponsor',
+  ].filter(Boolean);
+
+  const summaries = {
+    page: `${isActive ? 'Live' : 'Off'} · ${config.screenRatio === 'fill' ? 'fills screen' : config.screenRatio}`,
+    data:
+      config.schedule.resourceIds.length === 0
+        ? 'No resources yet'
+        : `Facility #${facilityId} · ${config.schedule.resourceIds.length} resource${config.schedule.resourceIds.length === 1 ? '' : 's'}`,
+    header: !config.header.enabled
+      ? 'Hidden'
+      : missingLogo || missingQrUrl
+        ? 'Missing a logo/QR URL'
+        : headerBits.join(' · ') || 'Empty',
+    schedule: !config.schedule.enabled
+      ? 'Hidden'
+      : `Next ${config.schedule.futureHoursLimit}h${config.schedule.autoScroll ? ` · ${config.schedule.scrollMode === 'synchronized' ? 'synced' : 'independent'} scroll` : ''}`,
+    ads:
+      enabledAdSlots.length === 0
+        ? 'None'
+        : emptyAdSlots > 0
+          ? `${enabledAdSlots.length} slot${enabledAdSlots.length === 1 ? '' : 's'} · ${emptyAdSlots} missing media`
+          : `${enabledAdSlots.length} slot${enabledAdSlots.length === 1 ? '' : 's'} · ${totalAdAssets} media`,
+    design: `${config.design.theme === 'dark' ? 'Dark' : 'Light'} · ${config.design.fontFamily}${config.design.bgImageUrl ? ' · bg photo' : ''}`,
+  };
+
   const headerAdOptions = useMemo(
     () => [
       { value: '', label: 'None' },
@@ -271,7 +311,7 @@ export default function MonitorEditor({
       <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
         {/* Settings column */}
         <div className="space-y-4">
-          <SectionCard title="Page">
+          <SectionCard title="Page" collapsible defaultOpen={false} summary={summaries.page}>
             <Field label="Name">
               <TextInput value={name} onChange={(e) => { setName(e.target.value); setSaveState('dirty'); }} />
             </Field>
@@ -299,6 +339,10 @@ export default function MonitorEditor({
           <SectionCard
             title="Data source"
             subtitle={`Organization #${page.organization_id} — resources are the spaces whose schedules show on screen.`}
+            collapsible
+            defaultOpen={false}
+            summary={summaries.data}
+            warning={config.schedule.resourceIds.length === 0}
           >
             <Field label="Facility ID">
               <NumberInput value={facilityId} min={1} onChange={(n) => { setFacilityId(n); setSaveState('dirty'); }} />
@@ -342,7 +386,7 @@ export default function MonitorEditor({
             {errorMessage && saveState !== 'error' && <p className="text-sm text-red-600">{errorMessage}</p>}
           </SectionCard>
 
-          <SectionCard title="Header block">
+          <SectionCard title="Header block" collapsible defaultOpen={false} summary={summaries.header} warning={config.header.enabled && (missingLogo || missingQrUrl)}>
             <Toggle label="Show header" checked={config.header.enabled} onChange={(v) => patchHeader({ enabled: v })} />
             {config.header.enabled && (
               <>
@@ -452,7 +496,7 @@ export default function MonitorEditor({
             )}
           </SectionCard>
 
-          <SectionCard title="Schedule block" subtitle="The resource schedule at the center of the display.">
+          <SectionCard title="Schedule block" subtitle="The resource schedule at the center of the display." collapsible defaultOpen={false} summary={summaries.schedule}>
             <Toggle label="Show schedule" checked={config.schedule.enabled} onChange={(v) => patchSchedule({ enabled: v })} />
             {config.schedule.enabled && (
               <>
@@ -505,7 +549,7 @@ export default function MonitorEditor({
             )}
           </SectionCard>
 
-          <SectionCard title="Ad placements" subtitle="Fixed image or video placements. JS ad tags are on the roadmap.">
+          <SectionCard title="Ad placements" subtitle="Fixed image or video placements. JS ad tags are on the roadmap." collapsible defaultOpen={false} summary={summaries.ads} warning={emptyAdSlots > 0}>
             {config.ads.map((slot, index) => (
               <div key={slot.id} className="rounded-lg border border-gray-200 p-3">
                 <div className="mb-2 flex items-center justify-between">
@@ -651,7 +695,7 @@ export default function MonitorEditor({
             </button>
           </SectionCard>
 
-          <SectionCard title="Design">
+          <SectionCard title="Design" collapsible defaultOpen={false} summary={summaries.design}>
             <div className="flex gap-2">
               {(['dark', 'light'] as const).map((theme) => (
                 <button
