@@ -82,11 +82,46 @@ export default function TvScheduleGrid({
   );
 
   // ---------------------------------------------------------------------
-  // Auto-scroll engine
+  // Auto-scroll engine — seamless loop, never a visible jump.
+  //
+  // Overflowing columns render the event list TWICE. The column scrolls
+  // continuously; once the first copy has fully passed, scrollTop silently
+  // shifts back by one copy's height — pixel-identical content, so the
+  // reset is invisible. The configured pause is applied each time a fresh
+  // "top of the list" lands, so the cycle still breathes.
   // ---------------------------------------------------------------------
   const scrollSignature = grouped.map((g) => `${g.space.id}:${g.events.length}`).join('|');
+  const [loopingColumns, setLoopingColumns] = useState<Set<number>>(new Set());
+
+  // Detect which columns overflow (measured with a single copy rendered).
   useEffect(() => {
-    if (!settings.autoScroll) return;
+    if (!settings.autoScroll) {
+      setLoopingColumns(new Set());
+      return;
+    }
+    const measure = () => {
+      const next = new Set<number>();
+      columnRefs.current.forEach((el, id) => {
+        const copy = el.firstElementChild as HTMLElement | null;
+        const copyHeight = copy?.offsetHeight ?? el.scrollHeight;
+        if (copyHeight > el.clientHeight + 4) next.add(id);
+      });
+      setLoopingColumns((prev) => {
+        if (prev.size === next.size && Array.from(next).every((id) => prev.has(id))) return prev;
+        return next;
+      });
+    };
+    // After paint, and again on resize (font loads / TV rotation).
+    const t = setTimeout(measure, 50);
+    window.addEventListener('resize', measure);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('resize', measure);
+    };
+  }, [settings.autoScroll, scrollSignature, settings.notesSize, compact]);
+
+  useEffect(() => {
+    if (!settings.autoScroll || loopingColumns.size === 0) return;
 
     const pxPerSecond = settings.scrollSpeed * 24;
     const pauseMs = settings.scrollPauseSeconds * 1000;
@@ -99,6 +134,22 @@ export default function TvScheduleGrid({
     const states = new Map<number, ScrollState>();
     const syncState: ScrollState = { progress: 0, pauseUntil: performance.now() + pauseMs };
 
+    const copyHeightOf = (el: HTMLDivElement) => {
+      const copy = el.firstElementChild as HTMLElement | null;
+      return copy?.offsetHeight ?? 0;
+    };
+
+    const advance = (state: ScrollState, wrapAt: number, nowMs: number, dt: number) => {
+      if (nowMs < state.pauseUntil || wrapAt <= 0) return;
+      state.progress += pxPerSecond * dt;
+      if (state.progress >= wrapAt) {
+        // Seamless wrap: the second copy's top is now exactly where the
+        // first copy's top was — shift back invisibly and pause there.
+        state.progress -= wrapAt;
+        state.pauseUntil = nowMs + pauseMs;
+      }
+    };
+
     let raf = 0;
     let last = performance.now();
 
@@ -106,42 +157,28 @@ export default function TvScheduleGrid({
       const dt = Math.min(0.1, (nowMs - last) / 1000);
       last = nowMs;
 
-      const columns = Array.from(columnRefs.current.entries());
+      const columns = Array.from(columnRefs.current.entries()).filter(([id]) => loopingColumns.has(id));
 
       if (synchronized) {
-        const maxScroll = Math.max(
-          0,
-          ...columns.map(([, el]) => el.scrollHeight - el.clientHeight),
-        );
-        if (maxScroll > 0 && nowMs >= syncState.pauseUntil) {
-          syncState.progress += pxPerSecond * dt;
-          if (syncState.progress >= maxScroll) {
-            syncState.progress = 0;
-            syncState.pauseUntil = nowMs + pauseMs;
-            columns.forEach(([, el]) => el.scrollTo({ top: 0 }));
-          }
-        }
+        // One shared clock: all columns move at the same speed; each wraps
+        // on its own copy height so shorter columns simply cycle sooner.
+        const primaryWrap = Math.max(0, ...columns.map(([, el]) => copyHeightOf(el)));
+        advance(syncState, primaryWrap, nowMs, dt);
         columns.forEach(([, el]) => {
-          const ownMax = el.scrollHeight - el.clientHeight;
-          if (ownMax > 0) el.scrollTop = Math.min(syncState.progress, ownMax);
+          const wrap = copyHeightOf(el);
+          if (wrap > 0) el.scrollTop = syncState.progress % wrap;
         });
       } else {
         columns.forEach(([id, el]) => {
-          const ownMax = el.scrollHeight - el.clientHeight;
-          if (ownMax <= 0) return;
+          const wrap = copyHeightOf(el);
+          if (wrap <= 0) return;
           let state = states.get(id);
           if (!state) {
             state = { progress: 0, pauseUntil: nowMs + pauseMs };
             states.set(id, state);
           }
-          if (nowMs >= state.pauseUntil) {
-            state.progress += pxPerSecond * dt;
-            if (state.progress >= ownMax) {
-              state.progress = 0;
-              state.pauseUntil = nowMs + pauseMs;
-            }
-          }
-          el.scrollTop = Math.min(state.progress, ownMax);
+          advance(state, wrap, nowMs, dt);
+          el.scrollTop = state.progress;
         });
       }
 
@@ -149,13 +186,18 @@ export default function TvScheduleGrid({
     };
 
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      columnRefs.current.forEach((el) => {
+        el.scrollTop = 0;
+      });
+    };
   }, [
     settings.autoScroll,
     settings.scrollSpeed,
     settings.scrollMode,
     settings.scrollPauseSeconds,
-    scrollSignature,
+    loopingColumns,
   ]);
 
   if (grouped.length === 0) {
@@ -177,22 +219,9 @@ export default function TvScheduleGrid({
       className="grid h-full min-h-0 gap-6"
       style={{ gridTemplateColumns: `repeat(${grouped.length}, minmax(0, 1fr))` }}
     >
-      {grouped.map(({ space, events }) => (
-        <div key={space.id} className="flex min-h-0 flex-col">
-          {!hideSpaceNames && (
-            <div className="mb-3 border-b-2 pb-2" style={{ borderColor: 'var(--tv-accent)' }}>
-              <h2 className={`${nameSize} truncate font-bold`}>{space.name}</h2>
-            </div>
-          )}
-          <div className="relative min-h-0 flex-1">
-            <div
-              ref={(el) => {
-                if (el) columnRefs.current.set(space.id, el);
-                else columnRefs.current.delete(space.id);
-              }}
-              className="scrollbar-hide absolute inset-0 overflow-y-auto"
-            >
-              {events.length === 0 ? (
+      {grouped.map(({ space, events }) => {
+        const renderEventList = () =>
+          events.length === 0 ? (
                 <div className={`${timeSize} py-6`} style={{ color: 'var(--tv-secondary)' }}>
                   No upcoming events
                 </div>
@@ -289,11 +318,36 @@ export default function TvScheduleGrid({
                     </div>
                   );
                 })
-              )}
+          );
+
+        return (
+          <div key={space.id} className="flex min-h-0 flex-col">
+            {!hideSpaceNames && (
+              <div className="mb-3 border-b-2 pb-2" style={{ borderColor: 'var(--tv-accent)' }}>
+                <h2 className={`${nameSize} truncate font-bold`}>{space.name}</h2>
+              </div>
+            )}
+            <div className="relative min-h-0 flex-1">
+              <div
+                ref={(el) => {
+                  if (el) columnRefs.current.set(space.id, el);
+                  else columnRefs.current.delete(space.id);
+                }}
+                className="scrollbar-hide absolute inset-0 overflow-y-auto"
+              >
+                {/* flow-root so the copy's measured height includes card margins —
+                    the seamless-loop wrap distance must be pixel-exact. */}
+                <div className="flow-root">{renderEventList()}</div>
+                {loopingColumns.has(space.id) && (
+                  <div className="flow-root" aria-hidden="true">
+                    {renderEventList()}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
