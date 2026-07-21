@@ -16,6 +16,7 @@ import {
   CalendarDays,
   ClipboardList,
   ListChecks,
+  MonitorPlay,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -111,6 +112,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </NavLink>
             <NavLink pathname={pathname} href="/admin/reservation-pages" icon={CalendarDays}>
               Reservation pages
+            </NavLink>
+            <NavLink pathname={pathname} href="/admin/tvmonitor" icon={MonitorPlay}>
+              TV Monitors
             </NavLink>
             <NavLink pathname={pathname} href="/admin/form-pages" icon={ClipboardList}>
               Form responses

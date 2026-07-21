@@ -29,6 +29,7 @@ npm run check:env    # report which env vars are set (never prints values)
 | `app/admin/pages/[slug]/` | Admin page editor (5 sections; see `sections/`) |
 | `lib/config.ts` + Supabase `discovery_pages` | Page configs; saving invalidates + re-warms discovery caches |
 | `lib/admin-auth.ts` | `requireAdmin()` guard for admin API mutations |
+| `app/tvmonitor/` + `components/tvmonitor/` | TV Monitor displays (`/tvmonitor/{name}`) + builder studio; see `docs/tvmonitor.md` |
 
 ## Invariants — do not break
 
