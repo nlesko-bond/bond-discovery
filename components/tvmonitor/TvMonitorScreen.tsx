@@ -21,7 +21,7 @@ const RATIO_VALUES: Record<string, number | undefined> = {
   fill: undefined,
 };
 
-function TvClock({ showClock, showDate }: { showClock: boolean; showDate: boolean }) {
+function TvClock({ showClock, showDate, compact }: { showClock: boolean; showDate: boolean; compact: boolean }) {
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     setNow(new Date());
@@ -33,14 +33,17 @@ function TvClock({ showClock, showDate }: { showClock: boolean; showDate: boolea
   return (
     <div className="flex flex-col items-end">
       {showClock && (
-        <div className="text-5xl font-bold tabular-nums leading-none">
+        <div className={`${compact ? 'text-4xl' : 'text-5xl'} font-bold tabular-nums leading-none`}>
           {now
             ? now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })
             : '--:--'}
         </div>
       )}
       {showDate && (
-        <div className="mt-1 text-sm uppercase tracking-widest" style={{ color: 'var(--tv-secondary)' }}>
+        <div
+          className={`mt-1 uppercase tracking-widest ${compact ? 'text-xs' : 'text-sm'}`}
+          style={{ color: 'var(--tv-secondary)' }}
+        >
           {now ? now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : ''}
         </div>
       )}
@@ -48,11 +51,11 @@ function TvClock({ showClock, showDate }: { showClock: boolean; showDate: boolea
   );
 }
 
-function TvQr({ url, label }: { url: string; label: string }) {
+function TvQr({ url, label, compact }: { url: string; label: string; compact: boolean }) {
   return (
     <div className="flex flex-col items-center gap-1">
       {/* eslint-disable-next-line @next/next/no-img-element -- generated QR, remote by design */}
-      <img src={qrSrc(url)} alt={label} className="h-20 w-20 rounded-md bg-white p-1" />
+      <img src={qrSrc(url)} alt={label} className={`${compact ? 'h-14 w-14' : 'h-20 w-20'} rounded-md bg-white p-1`} />
       <span className="max-w-[7rem] text-center text-xs leading-tight" style={{ color: 'var(--tv-secondary)' }}>
         {label}
       </span>
@@ -159,40 +162,52 @@ export default function TvMonitorScreen({
 
       {header.enabled && (
         <header
-          className="flex shrink-0 items-center justify-between gap-6 border-b px-8 py-4"
+          className={`flex shrink-0 flex-wrap items-center justify-between border-b ${compactColumns ? 'gap-4 px-5 py-3' : 'gap-6 px-8 py-4'}`}
           style={{ borderColor: 'var(--tv-card-border)' }}
         >
-          <div className="flex min-w-0 items-center gap-6">
+          {/* Left: logo + title. flex-1 + min-w guarantee the title stays visible;
+              sponsor/clock zones size to content and wrap below if truly out of room. */}
+          <div className="flex min-w-0 flex-1 items-center gap-4" style={{ minWidth: '14rem' }}>
             {header.showLogo && header.logoUrl && (
               // eslint-disable-next-line @next/next/no-img-element -- partner logo, remote by design
-              <img src={header.logoUrl} alt="" className="h-16 max-w-[12rem] object-contain" />
+              <img
+                src={header.logoUrl}
+                alt=""
+                className="shrink-0 object-contain"
+                style={{ height: header.logoHeightPx, maxWidth: header.logoHeightPx * 3.5 }}
+              />
             )}
             {header.showLogo && !header.logoUrl && previewMode && (
               <div
-                className="flex h-16 w-28 items-center justify-center rounded-lg border-2 border-dashed text-xs"
-                style={{ borderColor: 'var(--tv-card-border)', color: 'var(--tv-secondary)' }}
+                className="flex w-28 shrink-0 items-center justify-center rounded-lg border-2 border-dashed text-xs"
+                style={{ borderColor: 'var(--tv-card-border)', color: 'var(--tv-secondary)', height: header.logoHeightPx }}
               >
                 Logo
               </div>
             )}
             {header.showTitle && (
-              <h1 className="truncate text-4xl font-extrabold tracking-tight">{header.title}</h1>
+              <h1 className={`truncate font-extrabold tracking-tight ${compactColumns ? 'text-2xl' : 'text-4xl'}`}>
+                {header.title}
+              </h1>
             )}
           </div>
 
-          <div className="flex shrink-0 items-center gap-8">
-            {headerAd && (
-              <div style={{ height: adSlotSize(headerAd), minWidth: '10rem' }}>
-                <TvAdSlotView slot={headerAd} previewMode={previewMode} />
-              </div>
-            )}
+          {/* Center: sponsor logo/media, height-fitted and never cropped. */}
+          {headerAd && (
+            <div className="shrink-0" style={{ height: adSlotSize(headerAd) }}>
+              <TvAdSlotView slot={headerAd} previewMode={previewMode} headerMode />
+            </div>
+          )}
+
+          {/* Right: QR codes + clock. */}
+          <div className={`flex shrink-0 items-center ${compactColumns ? 'gap-4' : 'gap-8'}`}>
             {header.scheduleQr.enabled && header.scheduleQr.url && (
-              <TvQr url={header.scheduleQr.url} label={header.scheduleQr.label} />
+              <TvQr url={header.scheduleQr.url} label={header.scheduleQr.label} compact={compactColumns} />
             )}
             {header.waiverQr.enabled && header.waiverQr.url && (
-              <TvQr url={header.waiverQr.url} label={header.waiverQr.label} />
+              <TvQr url={header.waiverQr.url} label={header.waiverQr.label} compact={compactColumns} />
             )}
-            <TvClock showClock={header.showClock} showDate={header.showDate} />
+            <TvClock showClock={header.showClock} showDate={header.showDate} compact={compactColumns} />
           </div>
         </header>
       )}

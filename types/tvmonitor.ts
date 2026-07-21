@@ -49,6 +49,8 @@ export interface TvMonitorHeaderBlock {
   enabled: boolean;
   showLogo: boolean;
   logoUrl: string | null;
+  /** Rendered logo height in px (width scales to fit). */
+  logoHeightPx: number;
   title: string;
   showTitle: boolean;
   showClock: boolean;

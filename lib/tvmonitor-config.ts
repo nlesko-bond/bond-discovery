@@ -132,6 +132,7 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
       enabled: asBool(header.enabled, defaults.header.enabled),
       showLogo: asBool(header.showLogo, defaults.header.showLogo),
       logoUrl: asNullableString(header.logoUrl),
+      logoHeightPx: asNumber(header.logoHeightPx, defaults.header.logoHeightPx, 32, 200),
       title: asString(header.title, defaults.header.title),
       showTitle: asBool(header.showTitle, defaults.header.showTitle),
       showClock: asBool(header.showClock, defaults.header.showClock),

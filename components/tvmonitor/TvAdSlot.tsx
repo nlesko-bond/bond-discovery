@@ -13,9 +13,12 @@ import type { TvMonitorAdSlot } from '@/types/tvmonitor';
 export default function TvAdSlotView({
   slot,
   previewMode = false,
+  headerMode = false,
 }: {
   slot: TvMonitorAdSlot;
   previewMode?: boolean;
+  /** In-header sponsor slot: media is height-fitted and never cropped (logos). */
+  headerMode?: boolean;
 }) {
   const assets = slot.assets;
   const [index, setIndex] = useState(0);
@@ -37,11 +40,32 @@ export default function TvAdSlotView({
     if (!previewMode) return null;
     return (
       <div
-        className="flex h-full w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed"
+        className={`flex h-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed ${headerMode ? 'px-6' : 'w-full'}`}
         style={{ borderColor: 'var(--tv-card-border)', color: 'var(--tv-secondary)' }}
       >
-        <ImageIcon size={28} />
-        <span className="px-2 text-center text-sm">Ad slot — add an image or video</span>
+        <ImageIcon size={headerMode ? 18 : 28} />
+        <span className="px-2 text-center text-sm">{headerMode ? 'Sponsor' : 'Ad slot — add an image or video'}</span>
+      </div>
+    );
+  }
+
+  if (headerMode) {
+    return (
+      <div className="flex h-full items-center justify-center overflow-hidden">
+        {current.type === 'video' ? (
+          <video
+            key={current.id}
+            src={current.src}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="tv-ad-fade h-full w-auto max-w-full object-contain"
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element -- sponsor media, remote by design
+          <img key={current.id} src={current.src} alt="" className="tv-ad-fade h-full w-auto max-w-full object-contain" />
+        )}
       </div>
     );
   }
