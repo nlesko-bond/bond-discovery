@@ -1,5 +1,8 @@
 'use client';
 
+import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+
 /**
  * Small form primitives shared by the TV Monitor builder sections.
  * Styling matches the admin editor conventions (label/input classes in globals.css).
@@ -116,12 +119,69 @@ export function Select({
   );
 }
 
-export function SectionCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+export function SectionCard({
+  title,
+  subtitle,
+  children,
+  collapsible = false,
+  defaultOpen = true,
+  summary,
+  warning = false,
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  /** Renders a click-to-toggle header; sections start closed with defaultOpen=false. */
+  collapsible?: boolean;
+  defaultOpen?: boolean;
+  /** Short status chip shown next to the title (visible when collapsed too). */
+  summary?: string;
+  /** Amber-tints the summary chip for actionable gaps (e.g. "no media yet"). */
+  warning?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  if (!collapsible) {
+    return (
+      <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+        {subtitle && <p className="mb-3 mt-0.5 text-xs text-gray-500">{subtitle}</p>}
+        <div className="mt-3 space-y-3">{children}</div>
+      </section>
+    );
+  }
+
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <h3 className="text-base font-semibold text-gray-900">{title}</h3>
-      {subtitle && <p className="mb-3 mt-0.5 text-xs text-gray-500">{subtitle}</p>}
-      <div className="mt-3 space-y-3">{children}</div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 text-left"
+      >
+        <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+        <span className="flex shrink-0 items-center gap-2">
+          {summary && (
+            <span
+              className={`max-w-[16rem] truncate rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                warning ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              {summary}
+            </span>
+          )}
+          <ChevronDown
+            size={18}
+            className={`text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+          />
+        </span>
+      </button>
+      {open && (
+        <>
+          {subtitle && <p className="mt-1 text-xs text-gray-500">{subtitle}</p>}
+          <div className="mt-3 space-y-3">{children}</div>
+        </>
+      )}
     </section>
   );
 }
