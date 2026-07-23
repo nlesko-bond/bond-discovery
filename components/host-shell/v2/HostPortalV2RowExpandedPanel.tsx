@@ -199,7 +199,7 @@ function SegmentRow({
 
   return (
     <li
-      className="flex items-center justify-between gap-4 py-3 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-gray-100"
+      className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-gray-100"
       data-testid="portal-v2-schedule-option-row"
     >
       <div className="min-w-0 flex-1">
@@ -210,7 +210,7 @@ function SegmentRow({
           <p className="mt-0.5 text-[12px] leading-relaxed text-gray-500">{detailLine}</p>
         )}
       </div>
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:gap-3">
         {spotsLabel && (
           <span
             data-testid="portal-v2-segment-spots"
@@ -225,7 +225,7 @@ function SegmentRow({
           </span>
         )}
         {priceLabel && (
-          <span className="w-16 text-right text-[14px] font-bold tabular-nums text-gray-900">
+          <span className="text-[14px] font-bold tabular-nums text-gray-900 sm:w-16 sm:text-right">
             {priceLabel}
           </span>
         )}
@@ -293,7 +293,7 @@ function EventOccurrenceRow({
 
   return (
     <li
-      className="flex items-center justify-between gap-4 py-3 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-gray-100"
+      className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-gray-100"
       data-testid="portal-v2-event-occurrence-row"
     >
       <div className="min-w-0 flex-1">
@@ -302,7 +302,7 @@ function EventOccurrenceRow({
         </p>
         <p className="mt-0.5 text-[12px] leading-relaxed text-gray-500">{occurrence.timeLabel}</p>
       </div>
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:gap-3">
         {resolvedSpotsLabel && (
           <span
             data-testid="portal-v2-segment-spots"
