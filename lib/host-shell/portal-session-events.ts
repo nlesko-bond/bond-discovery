@@ -147,6 +147,35 @@ export function buildSessionTimeChipsBySessionId(
   return bySession;
 }
 
+const WEEKDAY_ORDER = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+/**
+ * Compact "days & times" summary for a session card/row, e.g.
+ * "Tue, Thu · 9:30 AM" or "Mon, Wed, Fri · multiple times". Built only from
+ * real event day/time data (never a fabricated weekly slot). Returns undefined
+ * when there are no timed events to summarize.
+ */
+export function buildSessionScheduleSummary(
+  chips: IHostPortalSessionTimeChip[],
+): string | undefined {
+  if (chips.length === 0) {
+    return undefined;
+  }
+  const days = [...new Set(chips.map((chip) => chip.dayLabel).filter(Boolean))].sort(
+    (a, b) => WEEKDAY_ORDER.indexOf(a) - WEEKDAY_ORDER.indexOf(b),
+  );
+  const times = [...new Set(chips.map((chip) => chip.timeLabel).filter(Boolean))];
+
+  const dayPart = days.length > 0 ? days.join(', ') : undefined;
+  const timePart =
+    times.length === 1 ? times[0] : times.length > 1 ? 'multiple times' : undefined;
+
+  if (dayPart && timePart) {
+    return `${dayPart} · ${timePart}`;
+  }
+  return dayPart ?? timePart;
+}
+
 export function summarizeSessionTimeChips(chips: IHostPortalSessionTimeChip[]): string {
   if (chips.length === 0) {
     return 'View schedule';

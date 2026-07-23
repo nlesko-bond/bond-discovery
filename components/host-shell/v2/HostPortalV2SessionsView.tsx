@@ -12,6 +12,11 @@ import {
   type PortalV2SessionRowColumn,
 } from '@/lib/host-shell/portal-v2';
 import { buildPortalCardAccentContext } from '@/lib/host-shell/portal-card-accent';
+import {
+  buildSessionScheduleSummary,
+  buildSessionTimeChipsBySessionId,
+} from '@/lib/host-shell/portal-session-events';
+import type { IDiscoveryApiEvent } from '@/lib/host-shell/portal-schedule-events';
 import { cn, getSportLabel } from '@/lib/utils';
 import { gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
@@ -213,6 +218,8 @@ interface IStackedCardProps {
   onOpenSchedule?: (programId: string, sessionId: string) => void;
   /** Hidden when cards are already grouped under a program heading. */
   showProgramName?: boolean;
+  /** Compact "days & times" summary (Feature 2); undefined hides the line. */
+  scheduleSummary?: string;
 }
 
 /**
@@ -229,6 +236,7 @@ export function HostPortalV2StackedSessionCard({
   onSegmentsOpenChange,
   onOpenSchedule,
   showProgramName = true,
+  scheduleSummary,
 }: IStackedCardProps) {
   const showPricing = config.features.showPricing !== false;
   const showAvailability = config.features.showAvailability !== false;
@@ -323,6 +331,11 @@ export function HostPortalV2StackedSessionCard({
         )}
         {ageGenderLine && (
           <p className="mt-1 text-xs leading-relaxed text-gray-500">{ageGenderLine}</p>
+        )}
+        {scheduleSummary && (
+          <div className="mt-1.5">
+            <ScheduleSummaryLine summary={scheduleSummary} />
+          </div>
         )}
 
         <div className="mt-3">
@@ -470,6 +483,24 @@ interface ISessionRowProps {
   segmentsOpen: boolean;
   onSegmentsOpenChange: (open: boolean) => void;
   onOpenSchedule?: (programId: string, sessionId: string) => void;
+  /** Compact "days & times" summary (Feature 2); undefined hides the line. */
+  scheduleSummary?: string;
+}
+
+/** Compact days & times line rendered on the collapsed card/row (Feature 2). */
+function ScheduleSummaryLine({ summary, compact = false }: { summary: string; compact?: boolean }) {
+  return (
+    <p
+      data-testid="portal-v2-schedule-summary"
+      className={cn(
+        'inline-flex items-center gap-1 text-gray-600',
+        compact ? 'text-xs' : 'text-[13px]',
+      )}
+    >
+      <Clock size={compact ? 12 : 13} className="shrink-0 text-gray-400" aria-hidden />
+      <span>{summary}</span>
+    </p>
+  );
 }
 
 const ROW_SCHEDULE_COLUMN_WIDTH_PX = 130;
@@ -495,6 +526,7 @@ function HostPortalV2SessionRow({
   segmentsOpen,
   onSegmentsOpenChange,
   onOpenSchedule,
+  scheduleSummary,
 }: ISessionRowProps) {
   const showPricing = config.features.showPricing !== false;
   const showAgeGender = config.features.showAgeGender !== false;
@@ -650,6 +682,11 @@ function HostPortalV2SessionRow({
               {sessionTitle}
             </p>
             {ageGenderLine && <p className="mt-0.5 text-xs text-gray-500">{ageGenderLine}</p>}
+            {scheduleSummary && (
+              <div className="mt-1">
+                <ScheduleSummaryLine summary={scheduleSummary} compact />
+              </div>
+            )}
             {!expandable && !hasSegmentDetail(card) && (
               <div className="mt-1">
                 <VariableScheduleLine
@@ -797,6 +834,11 @@ function HostPortalV2SessionRow({
                 {card.programName}
               </p>
             )}
+            {scheduleSummary && (
+              <div className="mt-1.5">
+                <ScheduleSummaryLine summary={scheduleSummary} compact />
+              </div>
+            )}
             {!expandable && !hasSegmentDetail(card) && (
               <div className="mt-2">
                 <VariableScheduleLine
@@ -868,6 +910,7 @@ interface ISessionRowsListProps {
   segmentsOpenSessionId: string | null;
   onSegmentsOpenChange: (sessionId: string, open: boolean) => void;
   onOpenSchedule?: (programId: string, sessionId: string) => void;
+  scheduleSummaryBySession?: Map<string, string>;
 }
 
 /** 'rows' card style — dense row per session honoring the page's tableColumns ordering. */
@@ -879,6 +922,7 @@ export function HostPortalV2SessionRowsList({
   segmentsOpenSessionId,
   onSegmentsOpenChange,
   onOpenSchedule,
+  scheduleSummaryBySession,
 }: ISessionRowsListProps) {
   const columns = resolvePortalV2SessionRowColumns(config);
 
@@ -917,6 +961,7 @@ export function HostPortalV2SessionRowsList({
             segmentsOpen={segmentsOpenSessionId === card.sessionId}
             onSegmentsOpenChange={(open) => onSegmentsOpenChange(card.sessionId, open)}
             onOpenSchedule={onOpenSchedule}
+            scheduleSummary={scheduleSummaryBySession?.get(card.sessionId)}
           />
         ))}
       </div>
@@ -955,6 +1000,7 @@ interface IStackedGridProps {
   segmentsOpenSessionId: string | null;
   onSegmentsOpenChange: (sessionId: string, open: boolean) => void;
   onOpenSchedule?: (programId: string, sessionId: string) => void;
+  scheduleSummaryBySession?: Map<string, string>;
 }
 
 /**
@@ -974,6 +1020,7 @@ function HostPortalV2StackedGrid({
   segmentsOpenSessionId,
   onSegmentsOpenChange,
   onOpenSchedule,
+  scheduleSummaryBySession,
 }: IStackedGridProps) {
   const gridRef = useRef<HTMLDivElement>(null);
   const [columnCount, setColumnCount] = useState(1);
@@ -1029,6 +1076,7 @@ function HostPortalV2StackedGrid({
             onSegmentsOpenChange={(open) => onSegmentsOpenChange(card.sessionId, open)}
             onOpenSchedule={onOpenSchedule}
             showProgramName={showProgramName}
+            scheduleSummary={scheduleSummaryBySession?.get(card.sessionId)}
           />
           {index === breakoutAfterIndex && openCard && (
             <div className="col-span-full" data-testid="portal-v2-segments-breakout">
@@ -1058,6 +1106,8 @@ interface IHostPortalV2SessionsViewProps {
   cardStyle: PortalCardStyle;
   displayMode: 'programs' | 'sessions';
   cardMinWidthPx: number;
+  /** Events feed used to build the compact "days & times" summary (Feature 2). */
+  apiEvents?: IDiscoveryApiEvent[];
   onOpenSchedule?: (programId: string, sessionId: string) => void;
 }
 
@@ -1079,10 +1129,34 @@ export function HostPortalV2SessionsView({
   cardStyle,
   displayMode,
   cardMinWidthPx,
+  apiEvents,
   onOpenSchedule,
 }: IHostPortalV2SessionsViewProps) {
   const [segmentsOpenSessionId, setSegmentsOpenSessionId] = useState<string | null>(null);
   const hideRegistrationLinks = config.features.hideRegistrationLinks === true;
+
+  // Feature 2: compact "days & times" summary per session, built from the
+  // events feed. Only computed when the page opts in.
+  const scheduleSummaryBySession = useMemo(() => {
+    const map = new Map<string, string>();
+    if (config.features.showSegmentScheduleSummary !== true) {
+      return map;
+    }
+    const chipsBySession = buildSessionTimeChipsBySessionId(apiEvents ?? [], {
+      customRegistrationUrl: config.features.customRegistrationUrl,
+    });
+    chipsBySession.forEach((chips, sessionId) => {
+      const summary = buildSessionScheduleSummary(chips);
+      if (summary) {
+        map.set(sessionId, summary);
+      }
+    });
+    return map;
+  }, [
+    apiEvents,
+    config.features.showSegmentScheduleSummary,
+    config.features.customRegistrationUrl,
+  ]);
   // Accent themes anchor on the FULL card set with no active filters: narrowing
   // by facility/sport must never flip the accent mode and recolor visible cards.
   const themeCards = accentCards ?? cards;
@@ -1113,6 +1187,7 @@ export function HostPortalV2SessionsView({
           segmentsOpenSessionId={segmentsOpenSessionId}
           onSegmentsOpenChange={handleSegmentsOpenChange}
           onOpenSchedule={onOpenSchedule}
+          scheduleSummaryBySession={scheduleSummaryBySession}
         />
       );
     }
@@ -1128,6 +1203,7 @@ export function HostPortalV2SessionsView({
           segmentsOpenSessionId={segmentsOpenSessionId}
           onSegmentsOpenChange={handleSegmentsOpenChange}
           onOpenSchedule={onOpenSchedule}
+          scheduleSummaryBySession={scheduleSummaryBySession}
         />
       );
     }

@@ -2,6 +2,7 @@ import {
   HostPortalLayoutEnum,
   PortalAccentSourceEnum,
   PortalSessionLayoutEnum,
+  PortalSessionSortEnum,
   type FeatureConfig,
   type MemberPricingStyle,
   type PortalCardStyle,
@@ -168,6 +169,21 @@ function resolvePortalRowExpandMode(
   return undefined;
 }
 
+function resolvePortalSessionSort(
+  features: Record<string, unknown>,
+): PortalSessionSortEnum | undefined {
+  const raw = features.portalSessionSort ?? features.portal_session_sort;
+  if (
+    raw === PortalSessionSortEnum.START_DATE ||
+    raw === PortalSessionSortEnum.NAME ||
+    raw === PortalSessionSortEnum.PRICE ||
+    raw === PortalSessionSortEnum.MIN_AGE
+  ) {
+    return raw;
+  }
+  return undefined;
+}
+
 /**
  * Normalizes portal-only feature flags from discovery_pages.features JSON.
  */
@@ -190,6 +206,8 @@ export function normalizePortalFeatureFields(
   | 'portalRowColumns'
   | 'portalRowExpandMode'
   | 'showTieredSessionPricing'
+  | 'portalSessionSort'
+  | 'showSegmentScheduleSummary'
 > {
   const hostPortalLayout = resolveHostPortalLayout(features);
   const portalTemplate = resolvePortalTemplate(features);
@@ -203,6 +221,12 @@ export function normalizePortalFeatureFields(
     features,
     'showTieredSessionPricing',
     'show_tiered_session_pricing',
+  );
+  const portalSessionSort = resolvePortalSessionSort(features);
+  const showSegmentScheduleSummary = resolveOptionalBoolean(
+    features,
+    'showSegmentScheduleSummary',
+    'show_segment_schedule_summary',
   );
   const portalAccentSource = resolvePortalAccentSource(features);
   const portalSessionLayoutDefault = resolvePortalSessionLayoutDefault(features);
@@ -243,6 +267,8 @@ export function normalizePortalFeatureFields(
     ...(portalRowColumns !== undefined && { portalRowColumns }),
     ...(portalRowExpandMode !== undefined && { portalRowExpandMode }),
     ...(showTieredSessionPricing !== undefined && { showTieredSessionPricing }),
+    ...(portalSessionSort !== undefined && { portalSessionSort }),
+    ...(showSegmentScheduleSummary !== undefined && { showSegmentScheduleSummary }),
   };
 }
 

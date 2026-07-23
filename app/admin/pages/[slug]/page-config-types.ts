@@ -5,6 +5,7 @@ import type {
   PortalDisplayMode,
   PortalRowColumn,
   PortalRowExpandMode,
+  PortalSessionSortEnum,
   PortalTemplate,
 } from '@/types';
 import type { BondEnv } from '@/lib/bond-env';
@@ -83,6 +84,8 @@ export interface IPageConfig {
     portalRowColumns?: PortalRowColumn[];
     portalRowExpandMode?: PortalRowExpandMode;
     showTieredSessionPricing?: boolean;
+    portalSessionSort?: PortalSessionSortEnum;
+    showSegmentScheduleSummary?: boolean;
     discoveryCacheEnabled?: boolean;
     availabilityCacheTtl?: number;
     discoveryRefreshPolicy?: '5min' | '15min' | '30min' | '60min';

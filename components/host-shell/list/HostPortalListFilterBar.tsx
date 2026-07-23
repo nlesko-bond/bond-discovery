@@ -102,6 +102,7 @@ function HostPortalListSortControl({
             aria-label="Sort sessions"
           >
             <option value={PortalSessionSortEnum.START_DATE}>Start date</option>
+            <option value={PortalSessionSortEnum.MIN_AGE}>Age (youngest first)</option>
             <option value={PortalSessionSortEnum.NAME}>Name</option>
             <option value={PortalSessionSortEnum.PRICE}>Price</option>
           </select>
@@ -122,6 +123,7 @@ function HostPortalListSortControl({
         className="w-full appearance-none bg-transparent py-2 pl-9 pr-8 text-sm font-medium text-gray-800 focus:outline-none sm:py-2.5"
       >
         <option value={PortalSessionSortEnum.START_DATE}>Start date</option>
+        <option value={PortalSessionSortEnum.MIN_AGE}>Age (youngest first)</option>
         <option value={PortalSessionSortEnum.NAME}>Name</option>
         <option value={PortalSessionSortEnum.PRICE}>Price</option>
       </select>

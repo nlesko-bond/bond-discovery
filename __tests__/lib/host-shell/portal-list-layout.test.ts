@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { derivePortalEventHorizonMonths, derivePortalAgeBounds } from '@/lib/host-shell/portal-list-layout';
+import {
+  derivePortalEventHorizonMonths,
+  derivePortalAgeBounds,
+  orderPortalSessionCards,
+  sortPortalSessionCards,
+} from '@/lib/host-shell/portal-list-layout';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
+import { PortalSessionSortEnum } from '@/types';
+import type { DiscoveryConfig } from '@/types';
 
 function makeCard(endDate: string): IHostPortalSessionCardModel {
   return {
@@ -15,6 +22,20 @@ function makeCard(endDate: string): IHostPortalSessionCardModel {
     endDate,
     segments: [],
     products: [],
+  };
+}
+
+function makeAgeCard(
+  sessionId: string,
+  ageMin: number | undefined,
+  startDate = '2026-01-01T00:00:00.000Z',
+): IHostPortalSessionCardModel {
+  return {
+    ...makeCard('2026-12-31T00:00:00.000Z'),
+    sessionId,
+    name: `Session ${sessionId}`,
+    ageMin,
+    startDate,
   };
 }
 
@@ -49,5 +70,52 @@ describe('derivePortalAgeBounds', () => {
       min: 0,
       max: 18,
     });
+  });
+});
+
+describe('sortPortalSessionCards — MIN_AGE', () => {
+  it('sorts by minimum age ascending, undefined ages last', () => {
+    const cards = [
+      makeAgeCard('a', 12),
+      makeAgeCard('b', undefined),
+      makeAgeCard('c', 4),
+      makeAgeCard('d', 8),
+    ];
+    const sorted = sortPortalSessionCards(cards, PortalSessionSortEnum.MIN_AGE);
+    expect(sorted.map((card) => card.sessionId)).toEqual(['c', 'd', 'a', 'b']);
+  });
+
+  it('breaks ties on equal age by start date', () => {
+    const cards = [
+      makeAgeCard('later', 6, '2026-03-01T00:00:00.000Z'),
+      makeAgeCard('earlier', 6, '2026-01-01T00:00:00.000Z'),
+    ];
+    const sorted = sortPortalSessionCards(cards, PortalSessionSortEnum.MIN_AGE);
+    expect(sorted.map((card) => card.sessionId)).toEqual(['earlier', 'later']);
+  });
+
+  it('does not mutate the input array', () => {
+    const cards = [makeAgeCard('a', 12), makeAgeCard('c', 4)];
+    const original = [...cards];
+    sortPortalSessionCards(cards, PortalSessionSortEnum.MIN_AGE);
+    expect(cards).toEqual(original);
+  });
+});
+
+describe('orderPortalSessionCards', () => {
+  const cards = [makeAgeCard('a', 12), makeAgeCard('c', 4), makeAgeCard('d', 8)];
+
+  function configWithSort(sort?: PortalSessionSortEnum): DiscoveryConfig {
+    return { features: { ...(sort ? { portalSessionSort: sort } : {}) } } as DiscoveryConfig;
+  }
+
+  it('preserves source order when no sort is configured', () => {
+    const ordered = orderPortalSessionCards(cards, configWithSort());
+    expect(ordered.map((card) => card.sessionId)).toEqual(['a', 'c', 'd']);
+  });
+
+  it('applies min-age ordering when configured', () => {
+    const ordered = orderPortalSessionCards(cards, configWithSort(PortalSessionSortEnum.MIN_AGE));
+    expect(ordered.map((card) => card.sessionId)).toEqual(['c', 'd', 'a']);
   });
 });

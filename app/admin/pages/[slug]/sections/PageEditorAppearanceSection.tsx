@@ -830,6 +830,68 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
 
           {derivePortalView(config) !== 'legacy' && (
             <div>
+              <label className="label">Session order</label>
+              <select
+                className="input"
+                value={config.features.portalSessionSort || 'default'}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setConfig({
+                    ...config,
+                    features: {
+                      ...config.features,
+                      portalSessionSort:
+                        value === 'default'
+                          ? undefined
+                          : (value as NonNullable<
+                              IPageConfig['features']['portalSessionSort']
+                            >),
+                    },
+                  });
+                }}
+              >
+                <option value="default">Default — Bond source order</option>
+                <option value="min_age">Age — youngest first</option>
+                <option value="start_date">Start date</option>
+                <option value="name">Name (A–Z)</option>
+                <option value="price">Price (low to high)</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                Controls the order sessions appear in. &quot;Age&quot; sorts by each
+                session&apos;s minimum age ascending.
+              </p>
+            </div>
+          )}
+
+          {(derivePortalView(config) === 'rows' ||
+            derivePortalView(config) === 'stacked') && (
+            <label className="flex items-start gap-3 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                className="mt-0.5 rounded border-gray-300"
+                checked={config.features.showSegmentScheduleSummary === true}
+                onChange={(event) =>
+                  setConfig({
+                    ...config,
+                    features: {
+                      ...config.features,
+                      showSegmentScheduleSummary: event.target.checked,
+                    },
+                  })
+                }
+              />
+              <span>
+                <span className="font-medium text-gray-900">Show days &amp; times on cards</span>
+                <span className="mt-1 block text-xs text-gray-500">
+                  Adds a compact schedule line (e.g. &quot;Tue, Thu · 9:30 AM&quot;) built from the
+                  events feed, without needing to expand the row.
+                </span>
+              </span>
+            </label>
+          )}
+
+          {derivePortalView(config) !== 'legacy' && (
+            <div>
               <label className="label">Member price style</label>
               <select
                 className="input"

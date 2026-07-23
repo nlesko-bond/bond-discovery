@@ -160,12 +160,42 @@ export function sortPortalSessionCards(
     });
     return sorted;
   }
+  if (sort === PortalSessionSortEnum.MIN_AGE) {
+    sorted.sort((a, b) => {
+      const ageA = a.ageMin ?? Number.POSITIVE_INFINITY;
+      const ageB = b.ageMin ?? Number.POSITIVE_INFINITY;
+      if (ageA !== ageB) {
+        return ageA - ageB;
+      }
+      // Stable tiebreak so equal-age sessions keep a predictable order.
+      const startA = a.startDate ?? a.dateRange ?? a.name;
+      const startB = b.startDate ?? b.dateRange ?? b.name;
+      return startA.localeCompare(startB);
+    });
+    return sorted;
+  }
   sorted.sort((a, b) => {
     const startA = a.dateRange ?? a.name;
     const startB = b.dateRange ?? b.name;
     return startA.localeCompare(startB);
   });
   return sorted;
+}
+
+/**
+ * Applies the page's configured session ordering (`features.portalSessionSort`).
+ * When unset, returns the cards untouched so pages keep Bond's source order
+ * (the existing v2 behavior). Opt-in per page via admin.
+ */
+export function orderPortalSessionCards(
+  cards: IHostPortalSessionCardModel[],
+  config: DiscoveryConfig,
+): IHostPortalSessionCardModel[] {
+  const sort = config.features.portalSessionSort;
+  if (!sort) {
+    return cards;
+  }
+  return sortPortalSessionCards(cards, sort);
 }
 
 export function isPortalHeroEnabled(config: DiscoveryConfig): boolean {
