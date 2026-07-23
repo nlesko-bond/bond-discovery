@@ -434,6 +434,111 @@ describe('rows style — tableColumns-driven session rows', () => {
     expect(scheduleSection.querySelector('table')).toBeNull();
   });
 
+  it('formats fractional ages with months in the expand panel meta tag', () => {
+    renderRows([
+      makeMultiSegmentCard({
+        ageMin: 1.333,
+        ageMax: 3,
+        ageRange: undefined,
+      }),
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: /fall rec soccer\. more info/i }));
+    expect(screen.getByTestId('portal-v2-row-meta-tags')).toHaveTextContent('Ages 16 mo - 3 yrs');
+    expect(screen.getByTestId('portal-v2-row-meta-tags')).not.toHaveTextContent('1.333');
+  });
+
+  it('combined action mode expands via More info / Schedule and never opens the schedule tab', () => {
+    const onOpenSchedule = vi.fn();
+    render(
+      <HostPortalV2SessionsView
+        cards={[makeMultiSegmentCard()]}
+        config={makeConfig({
+          portalRowActionMode: 'combined',
+          portalRowColumns: ['date', 'event', 'location', 'spots', 'schedule', 'action'],
+        })}
+        filters={EMPTY_FILTERS}
+        accentColor={ACCENT}
+        cardStyle="rows"
+        displayMode="sessions"
+        cardMinWidthPx={240}
+        onOpenSchedule={onOpenSchedule}
+      />,
+    );
+    expect(screen.queryByTestId('portal-v2-more-info')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('portal-v2-view-schedule')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('portal-v2-combined-expand'));
+    expect(screen.getByTestId('portal-v2-row-expanded')).toBeInTheDocument();
+    expect(onOpenSchedule).not.toHaveBeenCalled();
+    expect(screen.getByTestId('portal-v2-combined-expand')).toHaveTextContent(
+      'More info / Schedule',
+    );
+  });
+
+  it('hides the session count summary under program headings in rows layout', () => {
+    const cardA = makeMultiSegmentCard();
+    const cardB = makeMultiSegmentCard({
+      sessionId: 's2',
+      name: 'Winter Rec Soccer',
+    });
+    render(
+      <HostPortalV2SessionsView
+        cards={[cardA, cardB]}
+        config={makeConfig()}
+        filters={EMPTY_FILTERS}
+        accentColor={ACCENT}
+        cardStyle="rows"
+        displayMode="programs"
+        cardMinWidthPx={240}
+        onOpenSchedule={() => undefined}
+      />,
+    );
+    expect(screen.getByRole('heading', { name: 'Soccer' })).toBeInTheDocument();
+    expect(screen.queryByText(/2 sessions/i)).not.toBeInTheDocument();
+  });
+
+  it('shows segment register + spots + short description when expand-panel toggles are on', () => {
+    renderRows(
+      [
+        makeMultiSegmentCard({
+          description: 'Short blurb from the API.',
+          segments: [
+            {
+              id: 'seg1',
+              name: 'Tue morning',
+              spotsRemaining: 3,
+              availabilityKind: 'almost_full',
+              availabilityLabel: '3 spots left',
+            },
+            {
+              id: 'seg2',
+              name: 'Thu evening',
+              spotsRemaining: 0,
+              isWaitlistEnabled: true,
+              availabilityKind: 'waitlist',
+              availabilityLabel: 'Waitlist',
+            },
+          ],
+        }),
+      ],
+      makeConfig({
+        portalRowShowSegmentRegister: true,
+        portalRowShowSegmentSpots: true,
+        portalRowShowShortDescription: true,
+      }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /fall rec soccer\. more info/i }));
+    expect(screen.getByTestId('portal-v2-row-short-description')).toHaveTextContent(
+      'Short blurb from the API.',
+    );
+    const spots = screen.getAllByTestId('portal-v2-segment-spots');
+    expect(spots[0]).toHaveTextContent('3 spots left');
+    expect(spots[1]).toHaveTextContent('Full');
+    const registers = screen.getAllByTestId('portal-v2-segment-register');
+    expect(registers[0]).toHaveTextContent('Register');
+    expect(registers[0]).toHaveAttribute('href', 'https://example.com/register?sessionId=s1');
+    expect(registers[1]).toHaveTextContent('Join waitlist');
+  });
+
   it('shows tiered pricing in the action column when present on the card model', () => {
     renderRows([
       makeMultiSegmentCard({

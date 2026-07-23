@@ -119,6 +119,18 @@ function hasExpandableRowDetail(card: IHostPortalSessionCardModel): boolean {
   return hasSegmentDetail(card) || hasHostPortalSessionDescription(card.description, card.longDescription);
 }
 
+function isCombinedRowActionMode(config: DiscoveryConfig): boolean {
+  return config.features.portalRowActionMode === 'combined';
+}
+
+/**
+ * Adaptive expand affordance label for combined row-action mode:
+ * schedule-capable rows get "More info / Schedule"; description-only rows get "More info".
+ */
+function resolveCombinedExpandLabel(card: IHostPortalSessionCardModel): string {
+  return hasSegmentDetail(card) ? 'More info / Schedule' : 'More info';
+}
+
 function segmentsChipLabel(card: IHostPortalSessionCardModel): string {
   if (card.segments.length > 0) {
     return card.segments.length === 1 ? '1 segment' : `${card.segments.length} segments`;
@@ -555,12 +567,14 @@ function HostPortalV2SessionRow({
   });
 
   const expandable = hasExpandableRowDetail(card);
+  const combinedActions = isCombinedRowActionMode(config);
   const descriptionSections = formatHostPortalSessionDescription(
     card.description,
     card.longDescription,
   );
   const toggleSegments = () => onSegmentsOpenChange(!segmentsOpen);
   const layoutMode = usePortalV2RowLayoutMode();
+  const combinedExpandLabel = resolveCombinedExpandLabel(card);
 
   useEffect(() => {
     notifyPortalEmbedContentChange();
@@ -631,8 +645,23 @@ function HostPortalV2SessionRow({
     </div>
   );
 
+  const combinedExpandButton = expandable ? (
+    <button
+      type="button"
+      data-testid="portal-v2-combined-expand"
+      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
+      onClick={(event) => {
+        event.stopPropagation();
+        toggleSegments();
+      }}
+    >
+      <Clock size={12} aria-hidden />
+      {combinedExpandLabel}
+    </button>
+  ) : null;
+
   const viewScheduleButton =
-    scheduleTabEnabled && onOpenSchedule && hasSegmentDetail(card) ? (
+    !combinedActions && scheduleTabEnabled && onOpenSchedule && hasSegmentDetail(card) ? (
       <button
         type="button"
         data-testid="portal-v2-view-schedule"
@@ -647,12 +676,27 @@ function HostPortalV2SessionRow({
       </button>
     ) : null;
 
+  const moreInfoButton =
+    !combinedActions && expandable && columns.includes('schedule') ? (
+      <button
+        type="button"
+        data-testid="portal-v2-more-info"
+        className="mt-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
+        onClick={(event) => {
+          event.stopPropagation();
+          toggleSegments();
+        }}
+      >
+        More info
+      </button>
+    ) : null;
+
   const rowToggleProps = expandable
     ? {
         role: 'button' as const,
         tabIndex: 0,
         'aria-expanded': segmentsOpen,
-        'aria-label': `${sessionTitle}. More info`,
+        'aria-label': `${sessionTitle}. ${combinedActions ? combinedExpandLabel : 'More info'}`,
         onClick: toggleSegments,
         onKeyDown: (event: React.KeyboardEvent) => {
           if (event.key === 'Enter' || event.key === ' ') {
@@ -692,38 +736,34 @@ function HostPortalV2SessionRow({
                 <VariableScheduleLine
                   card={card}
                   config={config}
-                  onOpenSchedule={onOpenSchedule}
+                  onOpenSchedule={combinedActions ? undefined : onOpenSchedule}
                   compact
                 />
               </div>
             )}
-            {expandable && !scheduleColumnActive && scheduleTabEnabled && onOpenSchedule && hasSegmentDetail(card) && (
-              <button
-                type="button"
-                data-testid="portal-v2-view-schedule"
-                className="mt-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onOpenSchedule(card.programId, card.sessionId);
-                }}
-              >
-                <Clock size={12} aria-hidden />
-                View schedule
-              </button>
+            {combinedActions && expandable && !scheduleColumnActive && (
+              <div className="mt-1">{combinedExpandButton}</div>
             )}
-            {expandable && scheduleColumnActive && (
-              <button
-                type="button"
-                data-testid="portal-v2-more-info"
-                className="mt-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  toggleSegments();
-                }}
-              >
-                More info
-              </button>
-            )}
+            {!combinedActions &&
+              expandable &&
+              !scheduleColumnActive &&
+              scheduleTabEnabled &&
+              onOpenSchedule &&
+              hasSegmentDetail(card) && (
+                <button
+                  type="button"
+                  data-testid="portal-v2-view-schedule"
+                  className="mt-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onOpenSchedule(card.programId, card.sessionId);
+                  }}
+                >
+                  <Clock size={12} aria-hidden />
+                  View schedule
+                </button>
+              )}
+            {!combinedActions && moreInfoButton}
           </div>
         );
       }
@@ -744,7 +784,7 @@ function HostPortalV2SessionRow({
       case 'schedule':
         return (
           <div data-portal-v2-cell="schedule" className="flex items-center">
-            {viewScheduleButton}
+            {combinedActions ? combinedExpandButton : viewScheduleButton}
           </div>
         );
       case 'action':
@@ -761,8 +801,10 @@ function HostPortalV2SessionRow({
             {registerButton}
           </div>
         );
-      default:
-        return null;
+      default: {
+        const _exhaustive: never = column;
+        return _exhaustive;
+      }
     }
   };
 
@@ -844,7 +886,7 @@ function HostPortalV2SessionRow({
                 <VariableScheduleLine
                   card={card}
                   config={config}
-                  onOpenSchedule={onOpenSchedule}
+                  onOpenSchedule={combinedActions ? undefined : onOpenSchedule}
                   compact
                 />
               </div>
@@ -852,8 +894,10 @@ function HostPortalV2SessionRow({
           </div>
         )}
 
-        {expandable && viewScheduleButton && (
-          <div className="flex flex-wrap items-center gap-2">{viewScheduleButton}</div>
+        {expandable && (combinedActions ? combinedExpandButton : viewScheduleButton) && (
+          <div className="flex flex-wrap items-center gap-2">
+            {combinedActions ? combinedExpandButton : viewScheduleButton}
+          </div>
         )}
 
         {showAction && (priceBlock || registerButton) && (
@@ -1230,15 +1274,18 @@ export function HostPortalV2SessionsView({
 
   if (displayMode === 'programs') {
     const groups = groupCardsByProgram(cards);
+    const showSessionCount = cardStyle !== 'rows';
     return (
       <div className="space-y-8 py-4 md:py-6" data-testid="portal-v2-program-groups">
         {groups.map((group) => (
           <section key={group.programId} aria-label={group.programName}>
             <div className="mb-3 flex items-baseline gap-2">
               <h2 className="text-base font-semibold text-gray-900">{group.programName}</h2>
-              <span className="text-xs text-gray-500">
-                {group.cards.length === 1 ? '1 session' : `${group.cards.length} sessions`}
-              </span>
+              {showSessionCount && (
+                <span className="text-xs text-gray-500">
+                  {group.cards.length === 1 ? '1 session' : `${group.cards.length} sessions`}
+                </span>
+              )}
             </div>
             {renderCardsGrid(group.cards, false)}
           </section>
