@@ -9,6 +9,7 @@ import { bondAnalytics } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
 import { buildHostPortalSessionCards } from '@/lib/host-shell/session-card-model';
+import { orderPortalSessionCards } from '@/lib/host-shell/portal-list-layout';
 import { filterProgramsForPortalSessions } from '@/lib/host-shell/portal-session-filters';
 import { buildPortalFilterOptions } from '@/lib/host-shell/portal-filter-options';
 import {
@@ -145,14 +146,14 @@ export function HostPortalV2Page({
   );
 
   const sessionCards = useMemo(
-    () => buildHostPortalSessionCards(filteredPrograms, config),
+    () => orderPortalSessionCards(buildHostPortalSessionCards(filteredPrograms, config), config),
     [filteredPrograms, config],
   );
 
   // Unfiltered card set: anchors per-card accent colors so filtering never
   // recolors the cards that remain visible.
   const allSessionCards = useMemo(
-    () => buildHostPortalSessionCards(initialPrograms, config),
+    () => orderPortalSessionCards(buildHostPortalSessionCards(initialPrograms, config), config),
     [initialPrograms, config],
   );
   const hasAnyCards = allSessionCards.length > 0;
@@ -190,10 +191,15 @@ export function HostPortalV2Page({
     remeasureKeys: [viewMode, eventsFetched, sessionCards.length, filters],
   });
 
+  const needsEventsForSummary = config.features.showSegmentScheduleSummary === true;
   useEffect(() => {
     // 'list' style needs events eagerly — its rows render per-session time
     // chips from the events feed (same behavior as the v1 sessions-list shell).
-    if (eventsFetched || (viewMode !== 'schedule' && cardStyle !== 'list')) {
+    // The compact schedule summary (any card style) also needs the events feed.
+    if (
+      eventsFetched ||
+      (viewMode !== 'schedule' && cardStyle !== 'list' && !needsEventsForSummary)
+    ) {
       return;
     }
 
@@ -243,7 +249,7 @@ export function HostPortalV2Page({
       });
 
     return () => abortController.abort();
-  }, [viewMode, eventsFetched, config.slug, cardStyle]);
+  }, [viewMode, eventsFetched, config.slug, cardStyle, needsEventsForSummary]);
 
   // Precomputed `full` can be stale on capacity; refresh from Bond via
   // mode=availability (same overlay contract as DiscoveryPage). SSR only
@@ -612,6 +618,7 @@ export function HostPortalV2Page({
               cardStyle={cardStyle}
               displayMode={displayMode}
               cardMinWidthPx={cardMinWidthPx}
+              apiEvents={apiEvents}
               onOpenSchedule={showScheduleTab ? openScheduleForSession : undefined}
             />
           </div>

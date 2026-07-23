@@ -52,7 +52,9 @@ export function HostPortalSessionsListView({
   onBackToSessions,
   scheduleContent,
 }: IHostPortalSessionsListViewProps) {
-  const [sort, setSort] = useState(PortalSessionSortEnum.START_DATE);
+  const [sort, setSort] = useState(
+    config.features.portalSessionSort ?? PortalSessionSortEnum.START_DATE,
+  );
   const ageBounds = useMemo(() => derivePortalAgeBounds(cards), [cards]);
   const [selectedAgeMin, setSelectedAgeMin] = useState(ageBounds.min);
   const [selectedAgeMax, setSelectedAgeMax] = useState(ageBounds.max);

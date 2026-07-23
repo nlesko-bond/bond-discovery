@@ -3,7 +3,12 @@ import {
   isHostPortalSessionLayoutValue,
   normalizePortalFeatureFields,
 } from '@/lib/host-shell/portal-feature-config';
-import { HostPortalLayoutEnum, PortalAccentSourceEnum, PortalSessionLayoutEnum } from '@/types';
+import {
+  HostPortalLayoutEnum,
+  PortalAccentSourceEnum,
+  PortalSessionLayoutEnum,
+  PortalSessionSortEnum,
+} from '@/types';
 
 describe('normalizePortalFeatureFields', () => {
   it('reads snake_case portal feature keys', () => {
@@ -35,6 +40,28 @@ describe('normalizePortalFeatureFields', () => {
       hostPortalLayout: HostPortalLayoutEnum.SESSIONS_FIRST,
       portalSessionLayoutDefault: PortalSessionLayoutEnum.GRID,
       allowPortalSessionLayoutToggle: true,
+    });
+  });
+
+  it('reads camelCase and snake_case portalSessionSort', () => {
+    expect(normalizePortalFeatureFields({ portalSessionSort: 'min_age' })).toEqual({
+      portalSessionSort: PortalSessionSortEnum.MIN_AGE,
+    });
+    expect(normalizePortalFeatureFields({ portal_session_sort: 'start_date' })).toEqual({
+      portalSessionSort: PortalSessionSortEnum.START_DATE,
+    });
+  });
+
+  it('ignores an unknown portalSessionSort value', () => {
+    expect(normalizePortalFeatureFields({ portalSessionSort: 'bogus' })).toEqual({});
+  });
+
+  it('reads showSegmentScheduleSummary in both cases', () => {
+    expect(normalizePortalFeatureFields({ showSegmentScheduleSummary: true })).toEqual({
+      showSegmentScheduleSummary: true,
+    });
+    expect(normalizePortalFeatureFields({ show_segment_schedule_summary: false })).toEqual({
+      showSegmentScheduleSummary: false,
     });
   });
 

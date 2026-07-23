@@ -421,6 +421,8 @@ export enum PortalSessionSortEnum {
   START_DATE = 'start_date',
   NAME = 'name',
   PRICE = 'price',
+  /** Minimum age ascending (sessions with no min age sort last). */
+  MIN_AGE = 'min_age',
 }
 
 export enum PortalAccentSourceEnum {
@@ -553,6 +555,18 @@ export interface FeatureConfig {
   portalRowExpandMode?: PortalRowExpandMode;
   /** When true, show early-bird / late-fee pricing labels on session cards and rows. */
   showTieredSessionPricing?: boolean;
+  /**
+   * Ordering for session cards/rows on the v2 template. When unset, cards keep
+   * Bond's source order (existing behavior). 'min_age' sorts by minimum age
+   * ascending — requested by partners like Coppermine.
+   */
+  portalSessionSort?: PortalSessionSortEnum;
+  /**
+   * When true, v2 session cards/rows show a compact days & times summary
+   * (e.g. "Tue, Thu · 9:30 AM") derived from the events feed, without needing
+   * to expand the row. Default off — opt in per page.
+   */
+  showSegmentScheduleSummary?: boolean;
   /** Show waitlist badges and Join Waitlist CTAs on the schedule tab (default true) */
   showWaitlist?: boolean;
   /** Show program type tag (e.g. Drop-in, Class) on schedule events (default true) */
