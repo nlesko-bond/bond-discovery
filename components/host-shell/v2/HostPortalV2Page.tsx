@@ -192,13 +192,18 @@ export function HostPortalV2Page({
   });
 
   const needsEventsForSummary = config.features.showSegmentScheduleSummary === true;
+  const needsEventsForRowsExpand = cardStyle === 'rows';
   useEffect(() => {
     // 'list' style needs events eagerly — its rows render per-session time
     // chips from the events feed (same behavior as the v1 sessions-list shell).
     // The compact schedule summary (any card style) also needs the events feed.
+    // Rows expand uses events for non-segmented session schedule panels.
     if (
       eventsFetched ||
-      (viewMode !== 'schedule' && cardStyle !== 'list' && !needsEventsForSummary)
+      (viewMode !== 'schedule' &&
+        cardStyle !== 'list' &&
+        !needsEventsForSummary &&
+        !needsEventsForRowsExpand)
     ) {
       return;
     }
@@ -249,7 +254,14 @@ export function HostPortalV2Page({
       });
 
     return () => abortController.abort();
-  }, [viewMode, eventsFetched, config.slug, cardStyle, needsEventsForSummary]);
+  }, [
+    viewMode,
+    eventsFetched,
+    config.slug,
+    cardStyle,
+    needsEventsForSummary,
+    needsEventsForRowsExpand,
+  ]);
 
   // Precomputed `full` can be stale on capacity; refresh from Bond via
   // mode=availability (same overlay contract as DiscoveryPage). SSR only

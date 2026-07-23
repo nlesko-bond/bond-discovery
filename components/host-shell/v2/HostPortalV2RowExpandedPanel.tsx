@@ -6,6 +6,10 @@ import type { ISessionDescriptionSections } from '@/lib/host-shell/portal-sessio
 import type { DiscoveryConfig } from '@/types';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
 import type { IHostPortalSegmentRow } from '@/lib/host-shell/session-card-model';
+import type {
+  IHostPortalUpcomingSessionEvent,
+  IPortalV2EventSchedulePanel,
+} from '@/lib/host-shell/portal-session-events';
 import {
   buildPortalSegmentDetailLine,
   portalSegmentAvailabilityPillClasses,
@@ -25,6 +29,8 @@ interface IHostPortalV2RowExpandedPanelProps {
   config: DiscoveryConfig;
   descriptionSections: ISessionDescriptionSections | null;
   showSegmentSchedule: boolean;
+  eventSchedule?: IPortalV2EventSchedulePanel;
+  onOpenSchedule?: (programId: string, sessionId: string) => void;
 }
 
 /**
@@ -119,6 +125,41 @@ function resolveSegmentSpotsLabel(segment: IHostPortalSegmentRow): string | unde
   return segment.availabilityLabel;
 }
 
+function RegisterCartLink({
+  href,
+  label,
+  card,
+  config,
+}: {
+  href: string;
+  label: string;
+  card: IHostPortalSessionCardModel;
+  config: DiscoveryConfig;
+}) {
+  const linkTarget = resolvePortalScheduleLinkTarget(config);
+  const linkRel = linkTarget === '_blank' ? 'noopener noreferrer' : undefined;
+  return (
+    <a
+      href={href}
+      target={linkTarget}
+      rel={linkRel}
+      data-testid="portal-v2-segment-register"
+      {...getBondRegisterLinkAnalyticsAttributes({
+        programId: card.programId,
+        programName: card.programName,
+        sessionId: card.sessionId,
+        sessionName: card.name,
+        productId: card.registerProductId,
+      })}
+      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <ShoppingCart size={14} aria-hidden />
+      {label}
+    </a>
+  );
+}
+
 function SegmentRow({
   segment,
   card,
@@ -145,8 +186,6 @@ function SegmentRow({
   const legacyAvailabilityLabel =
     showAvailability && !showSegmentSpots ? segment.availabilityLabel : undefined;
   const priceLabel = showPricing ? (segment.priceLabel ?? sessionFallbackPrice) : undefined;
-  const linkTarget = resolvePortalScheduleLinkTarget(config);
-  const linkRel = linkTarget === '_blank' ? 'noopener noreferrer' : undefined;
   const registerUrl = card.registerUrl;
   const waitlistJoinable = isSegmentWaitlistJoinable(segment);
   const segmentFull = isSegmentFull(segment);
@@ -191,24 +230,12 @@ function SegmentRow({
           </span>
         )}
         {canRegister && registerUrl && (
-          <a
+          <RegisterCartLink
             href={registerUrl}
-            target={linkTarget}
-            rel={linkRel}
-            data-testid="portal-v2-segment-register"
-            {...getBondRegisterLinkAnalyticsAttributes({
-              programId: card.programId,
-              programName: card.programName,
-              sessionId: card.sessionId,
-              sessionName: card.name,
-              productId: card.registerProductId,
-            })}
-            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <ShoppingCart size={14} aria-hidden />
-            {registerLabel}
-          </a>
+            label={registerLabel}
+            card={card}
+            config={config}
+          />
         )}
         {showSegmentRegister && segmentFull && !waitlistJoinable && !spotsLabel && (
           <span className="text-[12px] font-medium text-gray-400">Full</span>
@@ -218,11 +245,197 @@ function SegmentRow({
   );
 }
 
+function resolveEventOccurrenceSpotsLabel(
+  occurrence: IHostPortalUpcomingSessionEvent,
+): string | undefined {
+  if (occurrence.isFull) {
+    return 'Full';
+  }
+  if (occurrence.spotsLabel === '1 left') {
+    return '1 spot left';
+  }
+  if (occurrence.spotsLabel.endsWith(' left')) {
+    return occurrence.spotsLabel.replace(/ left$/, ' spots left');
+  }
+  if (occurrence.spotsLabel === 'Open') {
+    return undefined;
+  }
+  return occurrence.spotsLabel;
+}
+
+function EventOccurrenceRow({
+  occurrence,
+  card,
+  config,
+  showSegmentRegister,
+  showSegmentSpots,
+  hideRegistrationLinks,
+}: {
+  occurrence: IHostPortalUpcomingSessionEvent;
+  card: IHostPortalSessionCardModel;
+  config: DiscoveryConfig;
+  showSegmentRegister: boolean;
+  showSegmentSpots: boolean;
+  hideRegistrationLinks: boolean;
+}) {
+  const waitlistJoinable = occurrence.isFull && occurrence.isWaitlistEnabled;
+  const registerUrl = occurrence.registrationUrl ?? card.registerUrl;
+  const canRegister =
+    showSegmentRegister &&
+    !hideRegistrationLinks &&
+    Boolean(registerUrl) &&
+    !card.isClosed &&
+    (!occurrence.isFull || waitlistJoinable);
+  const registerLabel = waitlistJoinable ? 'Join waitlist' : 'Register';
+  const resolvedSpotsLabel = showSegmentSpots
+    ? resolveEventOccurrenceSpotsLabel(occurrence)
+    : undefined;
+
+  return (
+    <li
+      className="flex items-center justify-between gap-4 py-3 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-gray-100"
+      data-testid="portal-v2-event-occurrence-row"
+    >
+      <div className="min-w-0 flex-1">
+        <p className="text-[14px] font-bold leading-snug text-gray-900">
+          {occurrence.dateLabel}
+        </p>
+        <p className="mt-0.5 text-[12px] leading-relaxed text-gray-500">{occurrence.timeLabel}</p>
+      </div>
+      <div className="flex shrink-0 items-center gap-3">
+        {resolvedSpotsLabel && (
+          <span
+            data-testid="portal-v2-segment-spots"
+            className={cn(
+              'inline-flex shrink-0 rounded-full px-2.5 py-1 text-[12px] font-medium',
+              occurrence.isFull ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-800',
+            )}
+          >
+            {resolvedSpotsLabel}
+          </span>
+        )}
+        {canRegister && registerUrl && (
+          <RegisterCartLink
+            href={registerUrl}
+            label={registerLabel}
+            card={card}
+            config={config}
+          />
+        )}
+        {showSegmentRegister && occurrence.isFull && !waitlistJoinable && !resolvedSpotsLabel && (
+          <span className="text-[12px] font-medium text-gray-400">Full</span>
+        )}
+      </div>
+    </li>
+  );
+}
+
+function EventScheduleSection({
+  card,
+  config,
+  eventSchedule,
+  accentColor,
+  showSegmentRegister,
+  showSegmentSpots,
+  hideRegistrationLinks,
+  onOpenSchedule,
+}: {
+  card: IHostPortalSessionCardModel;
+  config: DiscoveryConfig;
+  eventSchedule: IPortalV2EventSchedulePanel;
+  accentColor: string;
+  showSegmentRegister: boolean;
+  showSegmentSpots: boolean;
+  hideRegistrationLinks: boolean;
+  onOpenSchedule?: (programId: string, sessionId: string) => void;
+}) {
+  const sessionTitle = card.name || card.programName;
+  const remainingCount = Math.max(
+    0,
+    eventSchedule.totalUpcomingCount - eventSchedule.upcoming.length,
+  );
+  const scheduleTabEnabled = (config.features.enabledTabs || ['programs', 'schedule']).includes(
+    'schedule',
+  );
+
+  return (
+    <section
+      className="px-5 py-5 sm:px-6 sm:py-6"
+      data-testid="portal-v2-event-schedule"
+      aria-label={`Schedule for ${sessionTitle}`}
+    >
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h4
+          className="text-[11px] font-semibold uppercase tracking-widest"
+          style={{ color: accentColor }}
+        >
+          Schedule
+        </h4>
+        {eventSchedule.totalUpcomingCount > 0 && (
+          <span className="text-[13px] font-medium text-gray-700">
+            {eventSchedule.totalUpcomingCount === 1
+              ? '1 upcoming'
+              : `${eventSchedule.totalUpcomingCount} upcoming`}
+          </span>
+        )}
+      </div>
+
+      {eventSchedule.summary && (
+        <p
+          data-testid="portal-v2-event-schedule-summary"
+          className="mb-3 text-[14px] font-semibold text-gray-900"
+        >
+          {eventSchedule.summary}
+        </p>
+      )}
+
+      {eventSchedule.upcoming.length > 0 && (
+        <ul data-testid="portal-v2-event-occurrence-list">
+          {eventSchedule.upcoming.map((occurrence) => (
+            <EventOccurrenceRow
+              key={occurrence.eventId}
+              occurrence={occurrence}
+              card={card}
+              config={config}
+              showSegmentRegister={showSegmentRegister}
+              showSegmentSpots={showSegmentSpots}
+              hideRegistrationLinks={hideRegistrationLinks}
+            />
+          ))}
+        </ul>
+      )}
+
+      {remainingCount > 0 && (
+        <p className="mt-2 text-[12px] text-gray-500">
+          {remainingCount === 1 ? '1 more date' : `${remainingCount} more dates`}
+        </p>
+      )}
+
+      {scheduleTabEnabled && onOpenSchedule && (
+        <button
+          type="button"
+          data-testid="portal-v2-event-view-full-schedule"
+          className="mt-4 text-[13px] font-semibold underline-offset-2 hover:underline"
+          style={{ color: accentColor }}
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpenSchedule(card.programId, card.sessionId);
+          }}
+        >
+          View full schedule
+        </button>
+      )}
+    </section>
+  );
+}
+
 export function HostPortalV2RowExpandedPanel({
   card,
   config,
   descriptionSections,
   showSegmentSchedule,
+  eventSchedule,
+  onOpenSchedule,
 }: IHostPortalV2RowExpandedPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [panelLayout, setPanelLayout] = useState<'stack' | 'split'>('stack');
@@ -244,6 +457,7 @@ export function HostPortalV2RowExpandedPanel({
   const metaTags = resolveExpandedMetaTags(card, showAgeGender);
   const isSplitLayout = panelLayout === 'split';
   const longOrSoleDescription = descriptionSections?.body ?? descriptionSections?.lead;
+  const showEventSchedule = !showSegmentSchedule && Boolean(eventSchedule);
 
   useEffect(() => {
     const element = panelRef.current;
@@ -267,7 +481,7 @@ export function HostPortalV2RowExpandedPanel({
 
   useEffect(() => {
     notifyPortalEmbedContentChange();
-  }, [panelLayout, isLoading, segments.length, error]);
+  }, [panelLayout, isLoading, segments.length, error, eventSchedule?.upcoming.length]);
 
   return (
     <div
@@ -383,6 +597,19 @@ export function HostPortalV2RowExpandedPanel({
                 </ul>
               )}
             </section>
+          )}
+
+          {showEventSchedule && eventSchedule && (
+            <EventScheduleSection
+              card={card}
+              config={config}
+              eventSchedule={eventSchedule}
+              accentColor={accentColor}
+              showSegmentRegister={showSegmentRegister}
+              showSegmentSpots={showSegmentSpots}
+              hideRegistrationLinks={hideRegistrationLinks}
+              onOpenSchedule={onOpenSchedule}
+            />
           )}
         </div>
       </div>

@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
+  buildEventSchedulePanelsBySessionId,
   buildSessionScheduleSummary,
   formatSessionTimeChipLabel,
   summarizeSessionTimeChips,
   type IHostPortalSessionTimeChip,
 } from '@/lib/host-shell/portal-session-events';
+import type { IDiscoveryApiEvent } from '@/lib/host-shell/portal-schedule-events';
 
 function buildChip(
   overrides: Partial<IHostPortalSessionTimeChip> = {},
@@ -78,5 +80,41 @@ describe('buildSessionScheduleSummary', () => {
       buildChip({ eventId: 'e2', dayLabel: 'Tue', timeLabel: '10:30 AM' }),
     ]);
     expect(summary).toBe('Tue · multiple times');
+  });
+});
+
+describe('buildEventSchedulePanelsBySessionId', () => {
+  const REFERENCE_NOW_MS = Date.parse('2026-09-01T12:00:00.000Z');
+
+  function buildEvent(overrides: Partial<IDiscoveryApiEvent> = {}): IDiscoveryApiEvent {
+    return {
+      id: 'evt-1',
+      sessionId: 's1',
+      startDate: '2026-09-19T13:00:00.000Z',
+      timezone: 'America/New_York',
+      spotsRemaining: 14,
+      ...overrides,
+    };
+  }
+
+  it('builds a pattern summary and caps upcoming occurrences', () => {
+    const events = [
+      buildEvent({ id: 'e1', startDate: '2026-09-19T13:00:00.000Z' }),
+      buildEvent({ id: 'e2', startDate: '2026-09-26T13:00:00.000Z' }),
+      buildEvent({ id: 'e3', startDate: '2026-10-03T13:00:00.000Z' }),
+      buildEvent({ id: 'e4', startDate: '2026-10-10T13:00:00.000Z' }),
+      buildEvent({ id: 'e5', startDate: '2026-10-17T13:00:00.000Z' }),
+      buildEvent({ id: 'past', startDate: '2026-08-01T13:00:00.000Z' }),
+    ];
+    const panels = buildEventSchedulePanelsBySessionId(events, {
+      limit: 4,
+      nowMs: REFERENCE_NOW_MS,
+    });
+    const panel = panels.get('s1');
+    expect(panel?.summary).toBe('Sat · 9:00 AM');
+    expect(panel?.totalUpcomingCount).toBe(5);
+    expect(panel?.upcoming).toHaveLength(4);
+    expect(panel?.upcoming[0].eventId).toBe('e1');
+    expect(panel?.upcoming[0].dateLabel).toMatch(/Sep/);
   });
 });
