@@ -7,6 +7,7 @@ import {
   type MemberPricingStyle,
   type PortalCardStyle,
   type PortalDisplayMode,
+  type PortalRowActionMode,
   type PortalRowColumn,
   type PortalRowExpandMode,
   type PortalTemplate,
@@ -169,6 +170,16 @@ function resolvePortalRowExpandMode(
   return undefined;
 }
 
+function resolvePortalRowActionMode(
+  features: Record<string, unknown>,
+): PortalRowActionMode | undefined {
+  const raw = features.portalRowActionMode ?? features.portal_row_action_mode;
+  if (raw === 'combined' || raw === 'separate') {
+    return raw;
+  }
+  return undefined;
+}
+
 function resolvePortalSessionSort(
   features: Record<string, unknown>,
 ): PortalSessionSortEnum | undefined {
@@ -205,6 +216,10 @@ export function normalizePortalFeatureFields(
   | 'portalDisplayMode'
   | 'portalRowColumns'
   | 'portalRowExpandMode'
+  | 'portalRowActionMode'
+  | 'portalRowShowSegmentRegister'
+  | 'portalRowShowSegmentSpots'
+  | 'portalRowShowShortDescription'
   | 'showTieredSessionPricing'
   | 'portalSessionSort'
   | 'showSegmentScheduleSummary'
@@ -217,6 +232,22 @@ export function normalizePortalFeatureFields(
   const portalDisplayMode = resolvePortalDisplayMode(features);
   const portalRowColumns = resolvePortalRowColumns(features);
   const portalRowExpandMode = resolvePortalRowExpandMode(features);
+  const portalRowActionMode = resolvePortalRowActionMode(features);
+  const portalRowShowSegmentRegister = resolveOptionalBoolean(
+    features,
+    'portalRowShowSegmentRegister',
+    'portal_row_show_segment_register',
+  );
+  const portalRowShowSegmentSpots = resolveOptionalBoolean(
+    features,
+    'portalRowShowSegmentSpots',
+    'portal_row_show_segment_spots',
+  );
+  const portalRowShowShortDescription = resolveOptionalBoolean(
+    features,
+    'portalRowShowShortDescription',
+    'portal_row_show_short_description',
+  );
   const showTieredSessionPricing = resolveOptionalBoolean(
     features,
     'showTieredSessionPricing',
@@ -266,6 +297,10 @@ export function normalizePortalFeatureFields(
     ...(portalDisplayMode !== undefined && { portalDisplayMode }),
     ...(portalRowColumns !== undefined && { portalRowColumns }),
     ...(portalRowExpandMode !== undefined && { portalRowExpandMode }),
+    ...(portalRowActionMode !== undefined && { portalRowActionMode }),
+    ...(portalRowShowSegmentRegister !== undefined && { portalRowShowSegmentRegister }),
+    ...(portalRowShowSegmentSpots !== undefined && { portalRowShowSegmentSpots }),
+    ...(portalRowShowShortDescription !== undefined && { portalRowShowShortDescription }),
     ...(showTieredSessionPricing !== undefined && { showTieredSessionPricing }),
     ...(portalSessionSort !== undefined && { portalSessionSort }),
     ...(showSegmentScheduleSummary !== undefined && { showSegmentScheduleSummary }),

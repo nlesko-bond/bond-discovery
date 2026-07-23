@@ -65,6 +65,26 @@ describe('normalizePortalFeatureFields', () => {
     });
   });
 
+  it('reads portal row expand-panel toggles and action mode', () => {
+    expect(
+      normalizePortalFeatureFields({
+        portalRowActionMode: 'combined',
+        portalRowShowSegmentRegister: true,
+        portal_row_show_segment_spots: true,
+        portal_row_show_short_description: false,
+      }),
+    ).toEqual({
+      portalRowActionMode: 'combined',
+      portalRowShowSegmentRegister: true,
+      portalRowShowSegmentSpots: true,
+      portalRowShowShortDescription: false,
+    });
+  });
+
+  it('ignores an unknown portalRowActionMode value', () => {
+    expect(normalizePortalFeatureFields({ portalRowActionMode: 'bogus' })).toEqual({});
+  });
+
   it('returns empty object when portal keys are absent', () => {
     expect(normalizePortalFeatureFields({ showPricing: true })).toEqual({});
   });

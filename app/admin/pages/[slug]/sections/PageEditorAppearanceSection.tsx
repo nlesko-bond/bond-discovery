@@ -53,6 +53,10 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalCardStyle: 'stacked' as const,
           portalRowColumns: undefined,
           portalRowExpandMode: undefined,
+          portalRowActionMode: undefined,
+          portalRowShowSegmentRegister: undefined,
+          portalRowShowSegmentSpots: undefined,
+          portalRowShowShortDescription: undefined,
         },
       };
     case 'classic':
@@ -65,6 +69,10 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalCardStyle: undefined,
           portalRowColumns: undefined,
           portalRowExpandMode: undefined,
+          portalRowActionMode: undefined,
+          portalRowShowSegmentRegister: undefined,
+          portalRowShowSegmentSpots: undefined,
+          portalRowShowShortDescription: undefined,
         },
       };
     case 'list':
@@ -77,6 +85,10 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalCardStyle: 'list' as const,
           portalRowColumns: undefined,
           portalRowExpandMode: undefined,
+          portalRowActionMode: undefined,
+          portalRowShowSegmentRegister: undefined,
+          portalRowShowSegmentSpots: undefined,
+          portalRowShowShortDescription: undefined,
         },
       };
     case 'legacy':
@@ -89,6 +101,10 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalCardStyle: undefined,
           portalRowColumns: undefined,
           portalRowExpandMode: undefined,
+          portalRowActionMode: undefined,
+          portalRowShowSegmentRegister: undefined,
+          portalRowShowSegmentSpots: undefined,
+          portalRowShowShortDescription: undefined,
         },
       };
   }
@@ -748,6 +764,140 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
                     </div>
                   );
                 })()}
+              </div>
+
+              <div>
+                <label className="label">Row click actions</label>
+                <div className="space-y-2">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-indigo-200 bg-white p-3 text-sm shadow-sm">
+                    <input
+                      type="radio"
+                      className="mt-0.5"
+                      name="portalRowActionMode"
+                      value="separate"
+                      checked={
+                        !config.features.portalRowActionMode ||
+                        config.features.portalRowActionMode === 'separate'
+                      }
+                      onChange={() =>
+                        setConfig({
+                          ...config,
+                          features: { ...config.features, portalRowActionMode: undefined },
+                        })
+                      }
+                    />
+                    <span>
+                      <span className="font-medium text-gray-900">Separate</span>
+                      <span className="mt-0.5 block text-xs text-gray-500">
+                        &quot;View schedule&quot; opens the schedule tab; &quot;More info&quot;
+                        expands the row.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-indigo-200 bg-white p-3 text-sm shadow-sm">
+                    <input
+                      type="radio"
+                      className="mt-0.5"
+                      name="portalRowActionMode"
+                      value="combined"
+                      checked={config.features.portalRowActionMode === 'combined'}
+                      onChange={() =>
+                        setConfig({
+                          ...config,
+                          features: { ...config.features, portalRowActionMode: 'combined' },
+                        })
+                      }
+                    />
+                    <span>
+                      <span className="font-medium text-gray-900">Combined expand</span>
+                      <span className="mt-0.5 block text-xs text-gray-500">
+                        One &quot;More info / Schedule&quot; control (or &quot;More info&quot;
+                        when there is no schedule). The whole row expands; no jump to the
+                        schedule tab.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Expand panel options
+                </p>
+                <label className="flex items-start gap-3 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 rounded border-gray-300"
+                    checked={config.features.portalRowShowSegmentRegister === true}
+                    onChange={(event) =>
+                      setConfig({
+                        ...config,
+                        features: {
+                          ...config.features,
+                          portalRowShowSegmentRegister: event.target.checked || undefined,
+                        },
+                      })
+                    }
+                  />
+                  <span>
+                    <span className="font-medium text-gray-900">
+                      Register cart on schedule options
+                    </span>
+                    <span className="mt-1 block text-xs text-gray-500">
+                      Each time slot shows a cart Register link (Join waitlist when full). Links
+                      to the session registration page.
+                    </span>
+                  </span>
+                </label>
+                <label className="flex items-start gap-3 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 rounded border-gray-300"
+                    checked={config.features.portalRowShowSegmentSpots === true}
+                    onChange={(event) =>
+                      setConfig({
+                        ...config,
+                        features: {
+                          ...config.features,
+                          portalRowShowSegmentSpots: event.target.checked || undefined,
+                        },
+                      })
+                    }
+                  />
+                  <span>
+                    <span className="font-medium text-gray-900">
+                      Spots remaining on schedule options
+                    </span>
+                    <span className="mt-1 block text-xs text-gray-500">
+                      Show remaining spots per time slot; when none remain, show Full.
+                    </span>
+                  </span>
+                </label>
+                <label className="flex items-start gap-3 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 rounded border-gray-300"
+                    checked={config.features.portalRowShowShortDescription === true}
+                    onChange={(event) =>
+                      setConfig({
+                        ...config,
+                        features: {
+                          ...config.features,
+                          portalRowShowShortDescription: event.target.checked || undefined,
+                        },
+                      })
+                    }
+                  />
+                  <span>
+                    <span className="font-medium text-gray-900">
+                      Short description under facility
+                    </span>
+                    <span className="mt-1 block text-xs text-gray-500">
+                      In the expand panel, show the API short description beneath the location
+                      line. Rows with only a description (no schedule) can still expand.
+                    </span>
+                  </span>
+                </label>
               </div>
 
               <label className="flex items-start gap-3 text-sm text-gray-700">

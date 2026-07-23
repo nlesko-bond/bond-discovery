@@ -3,6 +3,7 @@ import type {
   MemberPricingStyle,
   PortalCardStyle,
   PortalDisplayMode,
+  PortalRowActionMode,
   PortalRowColumn,
   PortalRowExpandMode,
   PortalSessionSortEnum,
@@ -83,6 +84,10 @@ export interface IPageConfig {
     portalDisplayMode?: PortalDisplayMode;
     portalRowColumns?: PortalRowColumn[];
     portalRowExpandMode?: PortalRowExpandMode;
+    portalRowActionMode?: PortalRowActionMode;
+    portalRowShowSegmentRegister?: boolean;
+    portalRowShowSegmentSpots?: boolean;
+    portalRowShowShortDescription?: boolean;
     showTieredSessionPricing?: boolean;
     portalSessionSort?: PortalSessionSortEnum;
     showSegmentScheduleSummary?: boolean;

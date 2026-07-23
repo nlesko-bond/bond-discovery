@@ -411,6 +411,13 @@ export type PortalRowColumn = 'date' | 'event' | 'program' | 'location' | 'spots
  */
 export type PortalRowExpandMode = 'sessions' | 'programs';
 
+/**
+ * How row affordances behave in the v2 rows card style.
+ * 'separate': "View schedule" jumps to the schedule tab; "More info" expands the row.
+ * 'combined': one "More info / Schedule" (or "More info") affordance that only expands.
+ */
+export type PortalRowActionMode = 'combined' | 'separate';
+
 export enum HostPortalLayoutEnum {
   LEGACY_PROGRAMS = 'legacy_programs',
   SESSIONS_FIRST = 'sessions_first',
@@ -553,6 +560,26 @@ export interface FeatureConfig {
    * show segment schedule options). 'programs' is reserved for a future program-rows mode.
    */
   portalRowExpandMode?: PortalRowExpandMode;
+  /**
+   * Row affordance behavior for the v2 rows card style. Default 'separate'.
+   * Use 'combined' when the schedule tab link should not appear on rows.
+   */
+  portalRowActionMode?: PortalRowActionMode;
+  /**
+   * When true, each schedule option in the rows expand panel shows a cart Register
+   * (or Join waitlist when full) linking to the session registration URL.
+   */
+  portalRowShowSegmentRegister?: boolean;
+  /**
+   * When true, each schedule option in the rows expand panel shows spots remaining
+   * (or Full when none remain).
+   */
+  portalRowShowSegmentSpots?: boolean;
+  /**
+   * When true, the rows expand panel shows the API short description under the
+   * facility line on the left side.
+   */
+  portalRowShowShortDescription?: boolean;
   /** When true, show early-bird / late-fee pricing labels on session cards and rows. */
   showTieredSessionPricing?: boolean;
   /**

@@ -1,21 +1,22 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { MapPin } from 'lucide-react';
+import { MapPin, ShoppingCart } from 'lucide-react';
 import type { ISessionDescriptionSections } from '@/lib/host-shell/portal-session-description';
 import type { DiscoveryConfig } from '@/types';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
 import type { IHostPortalSegmentRow } from '@/lib/host-shell/session-card-model';
 import {
   buildPortalSegmentDetailLine,
-  portalSegmentAvailabilityLabel,
   portalSegmentAvailabilityPillClasses,
   resolvePortalSegmentScheduleLabel,
 } from '@/lib/host-shell/portal-segment-display';
 import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
 import { notifyPortalEmbedContentChange } from '@/lib/host-shell/embed-resize';
+import { getBondRegisterLinkAnalyticsAttributes } from '@/lib/host-shell/registration-analytics';
+import { resolvePortalScheduleLinkTarget } from '@/lib/host-shell/portal-schedule-events';
 import { useHostPortalSessionSegments } from '../useHostPortalSessionSegments';
-import { cn, getSportLabel } from '@/lib/utils';
+import { cn, formatAgeRange, getSportLabel } from '@/lib/utils';
 
 const EXPANDED_PANEL_SPLIT_MIN_WIDTH_PX = 560;
 
@@ -26,17 +27,19 @@ interface IHostPortalV2RowExpandedPanelProps {
   showSegmentSchedule: boolean;
 }
 
+/**
+ * Formats the expanded-panel age tag with month-aware boundaries
+ * (e.g. "Ages 16 mo - 3 yrs") instead of raw fractional years.
+ */
 function buildAgeTag(ageMin?: number, ageMax?: number, ageRange?: string): string | undefined {
-  if (ageMin !== undefined && ageMax !== undefined) {
-    return `Ages ${ageMin}–${ageMax} yrs`;
+  const formatted = ageRange?.trim() || formatAgeRange(ageMin, ageMax);
+  if (!formatted) {
+    return undefined;
   }
-  if (ageMin !== undefined) {
-    return `Ages ${ageMin}+ yrs`;
+  if (/^ages\b/i.test(formatted)) {
+    return formatted;
   }
-  if (ageRange) {
-    return /^\d/.test(ageRange) ? `Ages ${ageRange}` : ageRange;
-  }
-  return undefined;
+  return `Ages ${formatted}`;
 }
 
 const PROGRAM_TYPE_LABELS: Record<string, string> = {
@@ -83,20 +86,77 @@ function SessionMetaTag({ children }: { children: string }) {
   );
 }
 
+function isSegmentFull(segment: IHostPortalSegmentRow): boolean {
+  if (segment.availabilityKind === 'full' || segment.availabilityKind === 'waitlist') {
+    return true;
+  }
+  return segment.spotsRemaining !== undefined && segment.spotsRemaining <= 0;
+}
+
+function isSegmentWaitlistJoinable(segment: IHostPortalSegmentRow): boolean {
+  if (!isSegmentFull(segment)) {
+    return false;
+  }
+  if (segment.availabilityKind === 'waitlist') {
+    return true;
+  }
+  return segment.isWaitlistEnabled === true;
+}
+
+/**
+ * Spots copy for the expand-panel option row when portalRowShowSegmentSpots is on.
+ * Prefers concrete remaining counts; full / waitlist options surface as "Full".
+ */
+function resolveSegmentSpotsLabel(segment: IHostPortalSegmentRow): string | undefined {
+  if (isSegmentFull(segment)) {
+    return 'Full';
+  }
+  if (segment.spotsRemaining !== undefined && segment.spotsRemaining > 0) {
+    return segment.spotsRemaining === 1
+      ? '1 spot left'
+      : `${segment.spotsRemaining} spots left`;
+  }
+  return segment.availabilityLabel;
+}
+
 function SegmentRow({
   segment,
+  card,
+  config,
   showAvailability,
   showPricing,
+  showSegmentRegister,
+  showSegmentSpots,
   sessionFallbackPrice,
+  hideRegistrationLinks,
 }: {
   segment: IHostPortalSegmentRow;
+  card: IHostPortalSessionCardModel;
+  config: DiscoveryConfig;
   showAvailability: boolean;
   showPricing: boolean;
+  showSegmentRegister: boolean;
+  showSegmentSpots: boolean;
   sessionFallbackPrice?: string;
+  hideRegistrationLinks: boolean;
 }) {
   const detailLine = buildPortalSegmentDetailLine(segment);
-  const availabilityLabel = showAvailability ? portalSegmentAvailabilityLabel(segment) : undefined;
+  const spotsLabel = showSegmentSpots ? resolveSegmentSpotsLabel(segment) : undefined;
+  const legacyAvailabilityLabel =
+    showAvailability && !showSegmentSpots ? segment.availabilityLabel : undefined;
   const priceLabel = showPricing ? (segment.priceLabel ?? sessionFallbackPrice) : undefined;
+  const linkTarget = resolvePortalScheduleLinkTarget(config);
+  const linkRel = linkTarget === '_blank' ? 'noopener noreferrer' : undefined;
+  const registerUrl = card.registerUrl;
+  const waitlistJoinable = isSegmentWaitlistJoinable(segment);
+  const segmentFull = isSegmentFull(segment);
+  const canRegister =
+    showSegmentRegister &&
+    !hideRegistrationLinks &&
+    Boolean(registerUrl) &&
+    !card.isClosed &&
+    (!segmentFull || waitlistJoinable);
+  const registerLabel = waitlistJoinable ? 'Join waitlist' : 'Register';
 
   return (
     <li
@@ -112,15 +172,46 @@ function SegmentRow({
         )}
       </div>
       <div className="flex shrink-0 items-center gap-3">
-        {availabilityLabel && (
+        {spotsLabel && (
+          <span
+            data-testid="portal-v2-segment-spots"
+            className={portalSegmentAvailabilityPillClasses(segment, 'text-[12px] px-2.5 py-1')}
+          >
+            {spotsLabel}
+          </span>
+        )}
+        {legacyAvailabilityLabel && (
           <span className={portalSegmentAvailabilityPillClasses(segment, 'text-[12px] px-2.5 py-1')}>
-            {availabilityLabel}
+            {legacyAvailabilityLabel}
           </span>
         )}
         {priceLabel && (
           <span className="w-16 text-right text-[14px] font-bold tabular-nums text-gray-900">
             {priceLabel}
           </span>
+        )}
+        {canRegister && registerUrl && (
+          <a
+            href={registerUrl}
+            target={linkTarget}
+            rel={linkRel}
+            data-testid="portal-v2-segment-register"
+            {...getBondRegisterLinkAnalyticsAttributes({
+              programId: card.programId,
+              programName: card.programName,
+              sessionId: card.sessionId,
+              sessionName: card.name,
+              productId: card.registerProductId,
+            })}
+            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <ShoppingCart size={14} aria-hidden />
+            {registerLabel}
+          </a>
+        )}
+        {showSegmentRegister && segmentFull && !waitlistJoinable && !spotsLabel && (
+          <span className="text-[12px] font-medium text-gray-400">Full</span>
         )}
       </div>
     </li>
@@ -142,6 +233,11 @@ export function HostPortalV2RowExpandedPanel({
   const showPricing = config.features.showPricing !== false;
   const showAvailability = config.features.showAvailability !== false;
   const showAgeGender = config.features.showAgeGender !== false;
+  const hideRegistrationLinks = config.features.hideRegistrationLinks === true;
+  const showSegmentRegister = config.features.portalRowShowSegmentRegister === true;
+  const showSegmentSpots = config.features.portalRowShowSegmentSpots === true;
+  const showShortDescription = config.features.portalRowShowShortDescription === true;
+  const shortDescription = card.description?.trim() || undefined;
   const sessionFallbackPrice =
     card.startingPriceLabel && card.hasMultipleRegisterOptions
       ? `From ${card.startingPriceLabel}`
@@ -149,6 +245,17 @@ export function HostPortalV2RowExpandedPanel({
   const segmentCount = segments.length;
   const metaTags = resolveExpandedMetaTags(card, showAgeGender);
   const isSplitLayout = panelLayout === 'split';
+  const storyLead =
+    showShortDescription && shortDescription && descriptionSections?.lead === shortDescription
+      ? undefined
+      : descriptionSections?.lead;
+  const storyBody =
+    showShortDescription &&
+    shortDescription &&
+    !descriptionSections?.lead &&
+    descriptionSections?.body === shortDescription
+      ? undefined
+      : descriptionSections?.body;
 
   useEffect(() => {
     const element = panelRef.current;
@@ -190,7 +297,6 @@ export function HostPortalV2RowExpandedPanel({
               : 'grid-cols-1',
           )}
         >
-          {/* ── Left: story ── */}
           <section
             className={cn('px-5 py-5 sm:px-6 sm:py-6', !isSplitLayout && 'border-b border-gray-100')}
             data-testid="portal-v2-row-description"
@@ -222,14 +328,18 @@ export function HostPortalV2RowExpandedPanel({
               </ul>
             )}
 
-            {descriptionSections?.lead && (
+            {storyLead && (
               <p className="mt-4 text-[13px] font-medium leading-relaxed text-gray-800">
-                {descriptionSections.lead}
+                {storyLead}
               </p>
             )}
-            {descriptionSections?.body && (
-              <p className={`whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700${descriptionSections?.lead ? ' mt-2' : ' mt-4'}`}>
-                {descriptionSections.body}
+            {storyBody && (
+              <p
+                className={`whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700${
+                  storyLead ? ' mt-2' : ' mt-4'
+                }`}
+              >
+                {storyBody}
               </p>
             )}
 
@@ -242,9 +352,20 @@ export function HostPortalV2RowExpandedPanel({
                 <span>{card.facilityName}</span>
               </p>
             )}
+
+            {showShortDescription && shortDescription && (
+              <p
+                className={cn(
+                  'text-[13px] leading-relaxed text-gray-700',
+                  card.facilityName ? 'mt-2' : 'mt-5',
+                )}
+                data-testid="portal-v2-row-short-description"
+              >
+                {shortDescription}
+              </p>
+            )}
           </section>
 
-          {/* ── Right: schedule options ── */}
           {showSegmentSchedule && (
             <section
               className="px-5 py-5 sm:px-6 sm:py-6"
@@ -282,9 +403,14 @@ export function HostPortalV2RowExpandedPanel({
                     <SegmentRow
                       key={segment.id}
                       segment={segment}
+                      card={card}
+                      config={config}
                       showAvailability={showAvailability}
                       showPricing={showPricing}
+                      showSegmentRegister={showSegmentRegister}
+                      showSegmentSpots={showSegmentSpots}
                       sessionFallbackPrice={sessionFallbackPrice}
+                      hideRegistrationLinks={hideRegistrationLinks}
                     />
                   ))}
                 </ul>
