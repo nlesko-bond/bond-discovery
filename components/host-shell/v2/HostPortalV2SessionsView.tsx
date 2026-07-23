@@ -13,8 +13,10 @@ import {
 } from '@/lib/host-shell/portal-v2';
 import { buildPortalCardAccentContext } from '@/lib/host-shell/portal-card-accent';
 import {
+  buildEventSchedulePanelsBySessionId,
   buildSessionScheduleSummary,
   buildSessionTimeChipsBySessionId,
+  type IPortalV2EventSchedulePanel,
 } from '@/lib/host-shell/portal-session-events';
 import type { IDiscoveryApiEvent } from '@/lib/host-shell/portal-schedule-events';
 import { cn, getSportLabel } from '@/lib/utils';
@@ -115,21 +117,22 @@ function hasSegmentDetail(card: IHostPortalSessionCardModel): boolean {
   return card.isSegmented || card.segments.length > 0;
 }
 
-function hasExpandableRowDetail(card: IHostPortalSessionCardModel): boolean {
-  return hasSegmentDetail(card) || hasHostPortalSessionDescription(card.description, card.longDescription);
+function hasExpandableRowDetail(
+  card: IHostPortalSessionCardModel,
+  eventSchedule?: IPortalV2EventSchedulePanel,
+): boolean {
+  return (
+    hasSegmentDetail(card) ||
+    Boolean(eventSchedule) ||
+    hasHostPortalSessionDescription(card.description, card.longDescription)
+  );
 }
 
 function isCombinedRowActionMode(config: DiscoveryConfig): boolean {
   return config.features.portalRowActionMode === 'combined';
 }
 
-/**
- * Adaptive expand affordance label for combined row-action mode:
- * schedule-capable rows get "More info / Schedule"; description-only rows get "More info".
- */
-function resolveCombinedExpandLabel(card: IHostPortalSessionCardModel): string {
-  return hasSegmentDetail(card) ? 'More info / Schedule' : 'More info';
-}
+const COMBINED_EXPAND_LABEL = 'More info';
 
 function segmentsChipLabel(card: IHostPortalSessionCardModel): string {
   if (card.segments.length > 0) {
@@ -497,6 +500,8 @@ interface ISessionRowProps {
   onOpenSchedule?: (programId: string, sessionId: string) => void;
   /** Compact "days & times" summary (Feature 2); undefined hides the line. */
   scheduleSummary?: string;
+  /** Event-based schedule panel for non-segmented sessions. */
+  eventSchedule?: IPortalV2EventSchedulePanel;
 }
 
 /** Compact days & times line rendered on the collapsed card/row (Feature 2). */
@@ -539,6 +544,7 @@ function HostPortalV2SessionRow({
   onSegmentsOpenChange,
   onOpenSchedule,
   scheduleSummary,
+  eventSchedule,
 }: ISessionRowProps) {
   const showPricing = config.features.showPricing !== false;
   const showAgeGender = config.features.showAgeGender !== false;
@@ -566,7 +572,7 @@ function HostPortalV2SessionRow({
     productId: card.registerProductId,
   });
 
-  const expandable = hasExpandableRowDetail(card);
+  const expandable = hasExpandableRowDetail(card, eventSchedule);
   const combinedActions = isCombinedRowActionMode(config);
   const descriptionSections = formatHostPortalSessionDescription(
     card.description,
@@ -574,7 +580,7 @@ function HostPortalV2SessionRow({
   );
   const toggleSegments = () => onSegmentsOpenChange(!segmentsOpen);
   const layoutMode = usePortalV2RowLayoutMode();
-  const combinedExpandLabel = resolveCombinedExpandLabel(card);
+  const combinedExpandLabel = COMBINED_EXPAND_LABEL;
 
   useEffect(() => {
     notifyPortalEmbedContentChange();
@@ -651,12 +657,12 @@ function HostPortalV2SessionRow({
       data-testid="portal-v2-combined-expand"
       aria-expanded={segmentsOpen}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-bold tracking-tight',
+        'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold',
         'underline-offset-2 transition-[background-color,text-decoration-color] hover:underline',
-        'bg-[color-mix(in_srgb,var(--v2-expand-accent)_12%,transparent)]',
-        'hover:bg-[color-mix(in_srgb,var(--v2-expand-accent)_22%,transparent)]',
+        'bg-[color-mix(in_srgb,var(--v2-expand-accent)_10%,transparent)]',
+        'hover:bg-[color-mix(in_srgb,var(--v2-expand-accent)_18%,transparent)]',
         segmentsOpen &&
-          'underline bg-[color-mix(in_srgb,var(--v2-expand-accent)_20%,transparent)]',
+          'underline bg-[color-mix(in_srgb,var(--v2-expand-accent)_16%,transparent)]',
       )}
       style={
         {
@@ -671,7 +677,7 @@ function HostPortalV2SessionRow({
     >
       <span>{combinedExpandLabel}</span>
       <ChevronDown
-        size={16}
+        size={14}
         className={cn(
           'shrink-0 transition-transform duration-200',
           segmentsOpen && 'rotate-180',
@@ -960,6 +966,8 @@ function HostPortalV2SessionRow({
             config={config}
             descriptionSections={descriptionSections}
             showSegmentSchedule={hasSegmentDetail(card)}
+            eventSchedule={hasSegmentDetail(card) ? undefined : eventSchedule}
+            onOpenSchedule={onOpenSchedule}
           />
         )}
       </HostPortalV2Collapse>
@@ -976,6 +984,7 @@ interface ISessionRowsListProps {
   onSegmentsOpenChange: (sessionId: string, open: boolean) => void;
   onOpenSchedule?: (programId: string, sessionId: string) => void;
   scheduleSummaryBySession?: Map<string, string>;
+  eventScheduleBySession?: Map<string, IPortalV2EventSchedulePanel>;
 }
 
 /** 'rows' card style — dense row per session honoring the page's tableColumns ordering. */
@@ -988,6 +997,7 @@ export function HostPortalV2SessionRowsList({
   onSegmentsOpenChange,
   onOpenSchedule,
   scheduleSummaryBySession,
+  eventScheduleBySession,
 }: ISessionRowsListProps) {
   const columns = resolvePortalV2SessionRowColumns(config);
 
@@ -1027,6 +1037,9 @@ export function HostPortalV2SessionRowsList({
             onSegmentsOpenChange={(open) => onSegmentsOpenChange(card.sessionId, open)}
             onOpenSchedule={onOpenSchedule}
             scheduleSummary={scheduleSummaryBySession?.get(card.sessionId)}
+            eventSchedule={
+              hasSegmentDetail(card) ? undefined : eventScheduleBySession?.get(card.sessionId)
+            }
           />
         ))}
       </div>
@@ -1222,6 +1235,16 @@ export function HostPortalV2SessionsView({
     config.features.showSegmentScheduleSummary,
     config.features.customRegistrationUrl,
   ]);
+
+  // Rows expand panel for non-segmented sessions: pattern summary + next dates.
+  const eventScheduleBySession = useMemo(() => {
+    if (cardStyle !== 'rows') {
+      return new Map<string, IPortalV2EventSchedulePanel>();
+    }
+    return buildEventSchedulePanelsBySessionId(apiEvents ?? [], {
+      customRegistrationUrl: config.features.customRegistrationUrl,
+    });
+  }, [apiEvents, cardStyle, config.features.customRegistrationUrl]);
   // Accent themes anchor on the FULL card set with no active filters: narrowing
   // by facility/sport must never flip the accent mode and recolor visible cards.
   const themeCards = accentCards ?? cards;
@@ -1253,6 +1276,7 @@ export function HostPortalV2SessionsView({
           onSegmentsOpenChange={handleSegmentsOpenChange}
           onOpenSchedule={onOpenSchedule}
           scheduleSummaryBySession={scheduleSummaryBySession}
+          eventScheduleBySession={eventScheduleBySession}
         />
       );
     }

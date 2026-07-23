@@ -176,6 +176,123 @@ export function buildSessionScheduleSummary(
   return dayPart ?? timePart;
 }
 
+/** Max upcoming occurrences shown in the rows expand panel for event-based sessions. */
+export const PORTAL_V2_EXPAND_UPCOMING_EVENT_LIMIT = 4;
+
+export interface IHostPortalUpcomingSessionEvent {
+  eventId: string;
+  dateLabel: string;
+  timeLabel: string;
+  spotsLabel: string;
+  isFull: boolean;
+  isWaitlistEnabled: boolean;
+  registrationUrl?: string;
+  startDateMs: number;
+}
+
+export interface IPortalV2EventSchedulePanel {
+  summary?: string;
+  upcoming: IHostPortalUpcomingSessionEvent[];
+  totalUpcomingCount: number;
+}
+
+function formatEventDateLabel(isoDate: string, timezone?: string): string {
+  try {
+    return new Date(isoDate).toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      timeZone: timezone || 'America/New_York',
+    });
+  } catch {
+    return '';
+  }
+}
+
+function eventToUpcomingOccurrence(
+  event: IDiscoveryApiEvent,
+  options?: IBuildSessionTimeChipsOptions,
+): IHostPortalUpcomingSessionEvent | null {
+  if (!event.startDate) {
+    return null;
+  }
+  const startDateMs = Date.parse(event.startDate);
+  if (!Number.isFinite(startDateMs)) {
+    return null;
+  }
+  const dateLabel = formatEventDateLabel(event.startDate, event.timezone);
+  const timeLabel = formatEventTime(event.startDate, event.timezone);
+  if (!dateLabel || !timeLabel) {
+    return null;
+  }
+  const spots = formatSpotsLabel(event);
+  return {
+    eventId: event.id,
+    dateLabel,
+    timeLabel,
+    spotsLabel: spots.label,
+    isFull: spots.isFull,
+    isWaitlistEnabled: event.isWaitlistEnabled === true,
+    registrationUrl: resolveChipRegistrationUrl(
+      event,
+      spots.isFull,
+      options?.customRegistrationUrl,
+    ),
+    startDateMs,
+  };
+}
+
+/**
+ * Builds per-session expand-panel schedule data for non-segmented sessions:
+ * a compact day/time pattern summary plus the next N upcoming occurrences.
+ */
+export function buildEventSchedulePanelsBySessionId(
+  events: IDiscoveryApiEvent[],
+  options?: IBuildSessionTimeChipsOptions & {
+    limit?: number;
+    nowMs?: number;
+  },
+): Map<string, IPortalV2EventSchedulePanel> {
+  const limit = options?.limit ?? PORTAL_V2_EXPAND_UPCOMING_EVENT_LIMIT;
+  const nowMs = options?.nowMs ?? Date.now();
+  const chipsBySession = buildSessionTimeChipsBySessionId(events, options);
+  const upcomingBySession = new Map<string, IHostPortalUpcomingSessionEvent[]>();
+
+  events.forEach((event) => {
+    if (!event.sessionId) {
+      return;
+    }
+    const occurrence = eventToUpcomingOccurrence(event, options);
+    if (!occurrence || occurrence.startDateMs < nowMs) {
+      return;
+    }
+    const sessionId = String(event.sessionId);
+    const existing = upcomingBySession.get(sessionId) ?? [];
+    existing.push(occurrence);
+    upcomingBySession.set(sessionId, existing);
+  });
+
+  const panels = new Map<string, IPortalV2EventSchedulePanel>();
+  const sessionIds = new Set([...chipsBySession.keys(), ...upcomingBySession.keys()]);
+  sessionIds.forEach((sessionId) => {
+    const chips = chipsBySession.get(sessionId) ?? [];
+    const upcomingAll = (upcomingBySession.get(sessionId) ?? []).sort(
+      (left, right) => left.startDateMs - right.startDateMs,
+    );
+    const summary = buildSessionScheduleSummary(chips);
+    if (!summary && upcomingAll.length === 0) {
+      return;
+    }
+    panels.set(sessionId, {
+      summary,
+      upcoming: upcomingAll.slice(0, limit),
+      totalUpcomingCount: upcomingAll.length,
+    });
+  });
+
+  return panels;
+}
+
 export function summarizeSessionTimeChips(chips: IHostPortalSessionTimeChip[]): string {
   if (chips.length === 0) {
     return 'View schedule';
