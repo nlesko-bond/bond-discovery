@@ -496,11 +496,12 @@ describe('rows style — tableColumns-driven session rows', () => {
     expect(screen.queryByText(/2 sessions/i)).not.toBeInTheDocument();
   });
 
-  it('shows segment register + spots + short description when expand-panel toggles are on', () => {
+  it('shows segment register + spots when expand-panel toggles are on', () => {
     renderRows(
       [
         makeMultiSegmentCard({
           description: 'Short blurb from the API.',
+          longDescription: 'Longer curriculum copy for the expand panel.',
           segments: [
             {
               id: 'seg1',
@@ -523,13 +524,12 @@ describe('rows style — tableColumns-driven session rows', () => {
       makeConfig({
         portalRowShowSegmentRegister: true,
         portalRowShowSegmentSpots: true,
-        portalRowShowShortDescription: true,
       }),
     );
     fireEvent.click(screen.getByRole('button', { name: /fall rec soccer\. more info/i }));
-    expect(screen.getByTestId('portal-v2-row-short-description')).toHaveTextContent(
-      'Short blurb from the API.',
-    );
+    expect(screen.getByText('Longer curriculum copy for the expand panel.')).toBeInTheDocument();
+    expect(screen.queryByText('Short blurb from the API.')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('portal-v2-row-short-description')).not.toBeInTheDocument();
     const spots = screen.getAllByTestId('portal-v2-segment-spots');
     expect(spots[0]).toHaveTextContent('3 spots left');
     expect(spots[1]).toHaveTextContent('Full');

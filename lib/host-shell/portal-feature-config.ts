@@ -219,7 +219,6 @@ export function normalizePortalFeatureFields(
   | 'portalRowActionMode'
   | 'portalRowShowSegmentRegister'
   | 'portalRowShowSegmentSpots'
-  | 'portalRowShowShortDescription'
   | 'showTieredSessionPricing'
   | 'portalSessionSort'
   | 'showSegmentScheduleSummary'
@@ -242,11 +241,6 @@ export function normalizePortalFeatureFields(
     features,
     'portalRowShowSegmentSpots',
     'portal_row_show_segment_spots',
-  );
-  const portalRowShowShortDescription = resolveOptionalBoolean(
-    features,
-    'portalRowShowShortDescription',
-    'portal_row_show_short_description',
   );
   const showTieredSessionPricing = resolveOptionalBoolean(
     features,
@@ -300,7 +294,6 @@ export function normalizePortalFeatureFields(
     ...(portalRowActionMode !== undefined && { portalRowActionMode }),
     ...(portalRowShowSegmentRegister !== undefined && { portalRowShowSegmentRegister }),
     ...(portalRowShowSegmentSpots !== undefined && { portalRowShowSegmentSpots }),
-    ...(portalRowShowShortDescription !== undefined && { portalRowShowShortDescription }),
     ...(showTieredSessionPricing !== undefined && { showTieredSessionPricing }),
     ...(portalSessionSort !== undefined && { portalSessionSort }),
     ...(showSegmentScheduleSummary !== undefined && { showSegmentScheduleSummary }),

@@ -87,7 +87,6 @@ export interface IPageConfig {
     portalRowActionMode?: PortalRowActionMode;
     portalRowShowSegmentRegister?: boolean;
     portalRowShowSegmentSpots?: boolean;
-    portalRowShowShortDescription?: boolean;
     showTieredSessionPricing?: boolean;
     portalSessionSort?: PortalSessionSortEnum;
     showSegmentScheduleSummary?: boolean;

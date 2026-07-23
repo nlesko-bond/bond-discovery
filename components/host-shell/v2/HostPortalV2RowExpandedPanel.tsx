@@ -236,8 +236,6 @@ export function HostPortalV2RowExpandedPanel({
   const hideRegistrationLinks = config.features.hideRegistrationLinks === true;
   const showSegmentRegister = config.features.portalRowShowSegmentRegister === true;
   const showSegmentSpots = config.features.portalRowShowSegmentSpots === true;
-  const showShortDescription = config.features.portalRowShowShortDescription === true;
-  const shortDescription = card.description?.trim() || undefined;
   const sessionFallbackPrice =
     card.startingPriceLabel && card.hasMultipleRegisterOptions
       ? `From ${card.startingPriceLabel}`
@@ -245,17 +243,7 @@ export function HostPortalV2RowExpandedPanel({
   const segmentCount = segments.length;
   const metaTags = resolveExpandedMetaTags(card, showAgeGender);
   const isSplitLayout = panelLayout === 'split';
-  const storyLead =
-    showShortDescription && shortDescription && descriptionSections?.lead === shortDescription
-      ? undefined
-      : descriptionSections?.lead;
-  const storyBody =
-    showShortDescription &&
-    shortDescription &&
-    !descriptionSections?.lead &&
-    descriptionSections?.body === shortDescription
-      ? undefined
-      : descriptionSections?.body;
+  const longOrSoleDescription = descriptionSections?.body ?? descriptionSections?.lead;
 
   useEffect(() => {
     const element = panelRef.current;
@@ -328,18 +316,9 @@ export function HostPortalV2RowExpandedPanel({
               </ul>
             )}
 
-            {storyLead && (
-              <p className="mt-4 text-[13px] font-medium leading-relaxed text-gray-800">
-                {storyLead}
-              </p>
-            )}
-            {storyBody && (
-              <p
-                className={`whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700${
-                  storyLead ? ' mt-2' : ' mt-4'
-                }`}
-              >
-                {storyBody}
+            {longOrSoleDescription && (
+              <p className="mt-4 whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">
+                {longOrSoleDescription}
               </p>
             )}
 
@@ -350,18 +329,6 @@ export function HostPortalV2RowExpandedPanel({
               >
                 <MapPin size={14} className="shrink-0 text-gray-400" aria-hidden />
                 <span>{card.facilityName}</span>
-              </p>
-            )}
-
-            {showShortDescription && shortDescription && (
-              <p
-                className={cn(
-                  'text-[13px] leading-relaxed text-gray-700',
-                  card.facilityName ? 'mt-2' : 'mt-5',
-                )}
-                data-testid="portal-v2-row-short-description"
-              >
-                {shortDescription}
               </p>
             )}
           </section>

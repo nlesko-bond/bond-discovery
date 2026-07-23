@@ -56,7 +56,6 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalRowActionMode: undefined,
           portalRowShowSegmentRegister: undefined,
           portalRowShowSegmentSpots: undefined,
-          portalRowShowShortDescription: undefined,
         },
       };
     case 'classic':
@@ -72,7 +71,6 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalRowActionMode: undefined,
           portalRowShowSegmentRegister: undefined,
           portalRowShowSegmentSpots: undefined,
-          portalRowShowShortDescription: undefined,
         },
       };
     case 'list':
@@ -88,7 +86,6 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalRowActionMode: undefined,
           portalRowShowSegmentRegister: undefined,
           portalRowShowSegmentSpots: undefined,
-          portalRowShowShortDescription: undefined,
         },
       };
     case 'legacy':
@@ -104,7 +101,6 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalRowActionMode: undefined,
           portalRowShowSegmentRegister: undefined,
           portalRowShowSegmentSpots: undefined,
-          portalRowShowShortDescription: undefined,
         },
       };
   }
@@ -870,31 +866,6 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
                     </span>
                     <span className="mt-1 block text-xs text-gray-500">
                       Show remaining spots per time slot; when none remain, show Full.
-                    </span>
-                  </span>
-                </label>
-                <label className="flex items-start gap-3 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    className="mt-0.5 rounded border-gray-300"
-                    checked={config.features.portalRowShowShortDescription === true}
-                    onChange={(event) =>
-                      setConfig({
-                        ...config,
-                        features: {
-                          ...config.features,
-                          portalRowShowShortDescription: event.target.checked || undefined,
-                        },
-                      })
-                    }
-                  />
-                  <span>
-                    <span className="font-medium text-gray-900">
-                      Short description under facility
-                    </span>
-                    <span className="mt-1 block text-xs text-gray-500">
-                      In the expand panel, show the API short description beneath the location
-                      line. Rows with only a description (no schedule) can still expand.
                     </span>
                   </span>
                 </label>

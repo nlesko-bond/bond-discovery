@@ -575,11 +575,6 @@ export interface FeatureConfig {
    * (or Full when none remain).
    */
   portalRowShowSegmentSpots?: boolean;
-  /**
-   * When true, the rows expand panel shows the API short description under the
-   * facility line on the left side.
-   */
-  portalRowShowShortDescription?: boolean;
   /** When true, show early-bird / late-fee pricing labels on session cards and rows. */
   showTieredSessionPricing?: boolean;
   /**
