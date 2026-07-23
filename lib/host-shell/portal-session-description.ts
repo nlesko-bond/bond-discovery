@@ -9,12 +9,16 @@ function normalizeDescriptionText(value?: string): string | undefined {
 }
 
 const BASIC_HTML_ENTITY_PATTERN =
-  /&(?:amp|ndash|mdash|lt|gt|quot|apos|nbsp|#39|#x2013|#8211);/gi;
+  /&(?:amp|ndash|mdash|lsquo|rsquo|ldquo|rdquo|lt|gt|quot|apos|nbsp|#39|#8216|#8217|#x2018|#x2019|#x2013|#8211);/gi;
 
 const BASIC_HTML_ENTITY_VALUES: Record<string, string> = {
   '&amp;': '&',
   '&ndash;': '–',
   '&mdash;': '—',
+  '&lsquo;': '\u2018',
+  '&rsquo;': '\u2019',
+  '&ldquo;': '\u201C',
+  '&rdquo;': '\u201D',
   '&lt;': '<',
   '&gt;': '>',
   '&quot;': '"',
@@ -22,7 +26,11 @@ const BASIC_HTML_ENTITY_VALUES: Record<string, string> = {
   '&#39;': "'",
   '&nbsp;': ' ',
   '&#8211;': '–',
+  '&#8216;': '\u2018',
+  '&#8217;': '\u2019',
   '&#x2013;': '–',
+  '&#x2018;': '\u2018',
+  '&#x2019;': '\u2019',
 };
 
 function decodeBasicHtmlEntities(value: string): string {

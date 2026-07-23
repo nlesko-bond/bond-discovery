@@ -649,14 +649,35 @@ function HostPortalV2SessionRow({
     <button
       type="button"
       data-testid="portal-v2-combined-expand"
-      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 transition-colors hover:bg-gray-50"
+      aria-expanded={segmentsOpen}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-bold tracking-tight',
+        'underline-offset-2 transition-[background-color,text-decoration-color] hover:underline',
+        'bg-[color-mix(in_srgb,var(--v2-expand-accent)_12%,transparent)]',
+        'hover:bg-[color-mix(in_srgb,var(--v2-expand-accent)_22%,transparent)]',
+        segmentsOpen &&
+          'underline bg-[color-mix(in_srgb,var(--v2-expand-accent)_20%,transparent)]',
+      )}
+      style={
+        {
+          color: accentColor,
+          '--v2-expand-accent': accentColor,
+        } as React.CSSProperties
+      }
       onClick={(event) => {
         event.stopPropagation();
         toggleSegments();
       }}
     >
-      <Clock size={12} aria-hidden />
-      {combinedExpandLabel}
+      <span>{combinedExpandLabel}</span>
+      <ChevronDown
+        size={16}
+        className={cn(
+          'shrink-0 transition-transform duration-200',
+          segmentsOpen && 'rotate-180',
+        )}
+        aria-hidden
+      />
     </button>
   ) : null;
 

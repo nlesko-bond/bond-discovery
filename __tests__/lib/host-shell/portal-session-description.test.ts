@@ -43,5 +43,10 @@ describe('formatHostPortalSessionDescription', () => {
     expect(formatHostPortalSessionDescription(undefined, 'Ages 3&ndash;6 welcome')).toEqual({
       body: 'Ages 3–6 welcome',
     });
+    expect(
+      formatHostPortalSessionDescription("Soccer&rsquo;s very first hello.", undefined),
+    ).toEqual({
+      body: "Soccer\u2019s very first hello.",
+    });
   });
 });

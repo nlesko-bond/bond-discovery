@@ -71,13 +71,11 @@ describe('normalizePortalFeatureFields', () => {
         portalRowActionMode: 'combined',
         portalRowShowSegmentRegister: true,
         portal_row_show_segment_spots: true,
-        portal_row_show_short_description: false,
       }),
     ).toEqual({
       portalRowActionMode: 'combined',
       portalRowShowSegmentRegister: true,
       portalRowShowSegmentSpots: true,
-      portalRowShowShortDescription: false,
     });
   });
 
