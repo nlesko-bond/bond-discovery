@@ -385,7 +385,8 @@ describe('rows style — tableColumns-driven session rows', () => {
     expect(cells).toEqual(['date', 'event', 'program', 'location', 'spots', 'action']);
 
     expect(within(row).getByText('Sep 8 - Nov 24, 2026')).toBeInTheDocument();
-    expect(within(row).getByText('12 weeks')).toBeInTheDocument();
+    // Week count is intentionally not shown in the rows date column (blackout-date confusion).
+    expect(within(row).queryByText('12 weeks')).toBeNull();
     expect(within(row).getByText('Fall Rec Soccer')).toBeInTheDocument();
     expect(within(row).getByText('Soccer')).toBeInTheDocument();
     expect(within(row).getByText('Coppermine Arena')).toBeInTheDocument();

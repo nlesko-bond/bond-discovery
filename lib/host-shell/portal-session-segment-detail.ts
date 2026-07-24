@@ -97,6 +97,7 @@ function buildSegmentRow(
   segment: { id: string; name?: string; startDate?: string; endDate?: string },
   context: IPortalSessionSegmentEnrichmentContext,
   representativeEvent: IRawSegmentEvent | undefined,
+  eventCount = 0,
 ): IHostPortalSegmentRow {
   const segmentName = segment.name?.trim() || 'Segment';
   const scheduleLabel = trimSegmentDisplayName(segmentName, {
@@ -138,6 +139,7 @@ function buildSegmentRow(
     availabilityLabel: availability.label,
     priceLabel: context.priceLabel,
     registrationWindowStatus: context.registrationWindowStatus,
+    eventCount: eventCount > 0 ? eventCount : undefined,
   };
 }
 
@@ -166,10 +168,9 @@ export async function fetchEnrichedPortalSessionSegments(
           String(segment.id),
           { expand: SEGMENT_EVENTS_EXPAND },
         );
-        const representativeEvent = pickRepresentativeSegmentEvent(
-          (eventsResponse.data ?? []) as IRawSegmentEvent[],
-        );
-        return buildSegmentRow(segment, context, representativeEvent);
+        const segmentEvents = (eventsResponse.data ?? []) as IRawSegmentEvent[];
+        const representativeEvent = pickRepresentativeSegmentEvent(segmentEvents);
+        return buildSegmentRow(segment, context, representativeEvent, segmentEvents.length);
       } catch (error) {
         console.error('[portal-session-segments] segment events failed', {
           sessionId,

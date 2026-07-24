@@ -60,6 +60,25 @@ const PROGRAM_TYPE_LABELS: Record<string, string> = {
   rental: 'Rental',
 };
 
+/**
+ * Noun for a segment's occurrence count, chosen by program type. Falls back to
+ * the neutral "events" for leagues/tournaments/club teams and anything unknown
+ * (avoids "sessions", which means something specific in Bond).
+ */
+const SEGMENT_COUNT_NOUN: Record<string, { one: string; many: string }> = {
+  class: { one: 'class', many: 'classes' },
+  clinic: { one: 'clinic', many: 'clinics' },
+  lesson: { one: 'lesson', many: 'lessons' },
+  camp: { one: 'day', many: 'days' },
+};
+
+function formatSegmentCountLabel(count: number, programType?: string): string {
+  const noun =
+    (programType ? SEGMENT_COUNT_NOUN[programType] : undefined) ??
+    { one: 'event', many: 'events' };
+  return `${count} ${count === 1 ? noun.one : noun.many}`;
+}
+
 function resolveExpandedMetaTags(
   card: IHostPortalSessionCardModel,
   showAgeGender: boolean,
@@ -76,7 +95,6 @@ function resolveExpandedMetaTags(
 
   return [
     showAgeGender ? buildAgeTag(card.ageMin, card.ageMax, card.ageRange) : undefined,
-    card.weekCountLabel,
     categoryTag && categoryTag !== sessionTitle ? categoryTag : undefined,
   ].filter((tag): tag is string => Boolean(tag));
 }
@@ -182,6 +200,11 @@ function SegmentRow({
   hideRegistrationLinks: boolean;
 }) {
   const detailLine = buildPortalSegmentDetailLine(segment);
+  const eventCountLabel =
+    segment.eventCount && segment.eventCount > 0
+      ? formatSegmentCountLabel(segment.eventCount, card.programType)
+      : undefined;
+  const detailText = [detailLine, eventCountLabel].filter(Boolean).join(' · ');
   const spotsLabel = showSegmentSpots ? resolveSegmentSpotsLabel(segment) : undefined;
   const legacyAvailabilityLabel =
     showAvailability && !showSegmentSpots ? segment.availabilityLabel : undefined;
@@ -206,8 +229,8 @@ function SegmentRow({
         <p className="text-[14px] font-bold leading-snug text-gray-900">
           {resolvePortalSegmentScheduleLabel(segment)}
         </p>
-        {detailLine && (
-          <p className="mt-0.5 text-[12px] leading-relaxed text-gray-500">{detailLine}</p>
+        {detailText && (
+          <p className="mt-0.5 text-[12px] leading-relaxed text-gray-500">{detailText}</p>
         )}
       </div>
       <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:gap-3">
