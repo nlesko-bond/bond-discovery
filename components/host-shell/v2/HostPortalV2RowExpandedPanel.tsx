@@ -313,19 +313,22 @@ function EventOccurrenceRow({
   const resolvedSpotsLabel = showSegmentSpots
     ? resolveEventOccurrenceSpotsLabel(occurrence)
     : undefined;
+  const timeText = occurrence.endTimeLabel
+    ? `${occurrence.timeLabel} – ${occurrence.endTimeLabel}`
+    : occurrence.timeLabel;
 
   return (
     <li
-      className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-gray-100"
+      className="flex items-center justify-between gap-3 py-3 sm:gap-4 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-gray-100"
       data-testid="portal-v2-event-occurrence-row"
     >
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0">
         <p className="text-[14px] font-bold leading-snug text-gray-900">
           {occurrence.dateLabel}
         </p>
-        <p className="mt-0.5 text-[12px] leading-relaxed text-gray-500">{occurrence.timeLabel}</p>
+        <p className="mt-0.5 text-[12px] leading-relaxed text-gray-500">{timeText}</p>
       </div>
-      <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:gap-3">
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
         {resolvedSpotsLabel && (
           <span
             data-testid="portal-v2-segment-spots"
