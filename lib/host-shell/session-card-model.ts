@@ -39,6 +39,8 @@ export interface IHostPortalSegmentRow {
   availabilityLabel?: string;
   priceLabel?: string;
   registrationWindowStatus?: string;
+  /** Number of scheduled event occurrences (meeting dates) for this segment. */
+  eventCount?: number;
 }
 
 export interface IHostPortalSessionCardModel {

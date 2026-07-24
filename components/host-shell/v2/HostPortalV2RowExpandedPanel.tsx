@@ -76,7 +76,6 @@ function resolveExpandedMetaTags(
 
   return [
     showAgeGender ? buildAgeTag(card.ageMin, card.ageMax, card.ageRange) : undefined,
-    card.weekCountLabel,
     categoryTag && categoryTag !== sessionTitle ? categoryTag : undefined,
   ].filter((tag): tag is string => Boolean(tag));
 }
@@ -182,6 +181,11 @@ function SegmentRow({
   hideRegistrationLinks: boolean;
 }) {
   const detailLine = buildPortalSegmentDetailLine(segment);
+  const eventCountLabel =
+    segment.eventCount && segment.eventCount > 0
+      ? `${segment.eventCount} ${segment.eventCount === 1 ? 'class' : 'classes'}`
+      : undefined;
+  const detailText = [detailLine, eventCountLabel].filter(Boolean).join(' · ');
   const spotsLabel = showSegmentSpots ? resolveSegmentSpotsLabel(segment) : undefined;
   const legacyAvailabilityLabel =
     showAvailability && !showSegmentSpots ? segment.availabilityLabel : undefined;
@@ -206,8 +210,8 @@ function SegmentRow({
         <p className="text-[14px] font-bold leading-snug text-gray-900">
           {resolvePortalSegmentScheduleLabel(segment)}
         </p>
-        {detailLine && (
-          <p className="mt-0.5 text-[12px] leading-relaxed text-gray-500">{detailLine}</p>
+        {detailText && (
+          <p className="mt-0.5 text-[12px] leading-relaxed text-gray-500">{detailText}</p>
         )}
       </div>
       <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:gap-3">
