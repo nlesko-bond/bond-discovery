@@ -183,6 +183,7 @@ export interface IHostPortalUpcomingSessionEvent {
   eventId: string;
   dateLabel: string;
   timeLabel: string;
+  endTimeLabel?: string;
   spotsLabel: string;
   isFull: boolean;
   isWaitlistEnabled: boolean;
@@ -225,11 +226,15 @@ function eventToUpcomingOccurrence(
   if (!dateLabel || !timeLabel) {
     return null;
   }
+  const endTimeLabel = event.endDate
+    ? formatEventTime(event.endDate, event.timezone)
+    : undefined;
   const spots = formatSpotsLabel(event);
   return {
     eventId: event.id,
     dateLabel,
     timeLabel,
+    endTimeLabel: endTimeLabel && endTimeLabel !== timeLabel ? endTimeLabel : undefined,
     spotsLabel: spots.label,
     isFull: spots.isFull,
     isWaitlistEnabled: event.isWaitlistEnabled === true,
