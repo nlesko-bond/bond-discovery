@@ -740,9 +740,6 @@ function HostPortalV2SessionRow({
         return (
           <div data-portal-v2-cell="date">
             <p className="text-sm text-gray-700">{card.dateRange || '—'}</p>
-            {card.weekCountLabel && (
-              <p className="text-xs text-gray-500">{card.weekCountLabel}</p>
-            )}
           </div>
         );
       case 'event': {
@@ -864,9 +861,6 @@ function HostPortalV2SessionRow({
             {showDate ? (
               <div data-portal-v2-cell="date" className="min-w-0">
                 <p className="text-sm font-medium text-gray-900">{card.dateRange || '—'}</p>
-                {card.weekCountLabel && (
-                  <p className="text-xs text-gray-500">{card.weekCountLabel}</p>
-                )}
               </div>
             ) : (
               <span />
