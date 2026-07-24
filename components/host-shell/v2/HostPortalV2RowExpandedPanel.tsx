@@ -60,6 +60,25 @@ const PROGRAM_TYPE_LABELS: Record<string, string> = {
   rental: 'Rental',
 };
 
+/**
+ * Noun for a segment's occurrence count, chosen by program type. Falls back to
+ * the neutral "events" for leagues/tournaments/club teams and anything unknown
+ * (avoids "sessions", which means something specific in Bond).
+ */
+const SEGMENT_COUNT_NOUN: Record<string, { one: string; many: string }> = {
+  class: { one: 'class', many: 'classes' },
+  clinic: { one: 'clinic', many: 'clinics' },
+  lesson: { one: 'lesson', many: 'lessons' },
+  camp: { one: 'day', many: 'days' },
+};
+
+function formatSegmentCountLabel(count: number, programType?: string): string {
+  const noun =
+    (programType ? SEGMENT_COUNT_NOUN[programType] : undefined) ??
+    { one: 'event', many: 'events' };
+  return `${count} ${count === 1 ? noun.one : noun.many}`;
+}
+
 function resolveExpandedMetaTags(
   card: IHostPortalSessionCardModel,
   showAgeGender: boolean,
@@ -183,7 +202,7 @@ function SegmentRow({
   const detailLine = buildPortalSegmentDetailLine(segment);
   const eventCountLabel =
     segment.eventCount && segment.eventCount > 0
-      ? `${segment.eventCount} ${segment.eventCount === 1 ? 'class' : 'classes'}`
+      ? formatSegmentCountLabel(segment.eventCount, card.programType)
       : undefined;
   const detailText = [detailLine, eventCountLabel].filter(Boolean).join(' · ');
   const spotsLabel = showSegmentSpots ? resolveSegmentSpotsLabel(segment) : undefined;
