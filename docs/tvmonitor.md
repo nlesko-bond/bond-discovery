@@ -62,6 +62,14 @@ Templates (`lib/tvmonitor-templates.ts`): **Classic Board** (no ads),
 **Sponsor Spotlight** (left rail + header sponsor), **Promo Banner** (light theme +
 bottom banner), and **Build your own**. A template is only a starting config.
 
+**Duplicating a page**: the list view (`MonitorList`, used by both `/admin/tvmonitor`
+and the studio) has a Duplicate action per row (`duplicateTvMonitorPage()` in
+`lib/tvmonitor-config.ts`). It copies the name ("Copy of {name}"), org, facility, and
+the full config verbatim into a **new, inactive** page — inactive so a duplicate is a
+safe starting point to edit, not an instant second live board on the same resources —
+and opens straight into its editor. The slug is derived from the new name and
+disambiguated with `-2`, `-3`, ... on collision.
+
 ## Media uploads
 
 Logos and ad images/videos can be pasted as URLs or uploaded. Uploads go

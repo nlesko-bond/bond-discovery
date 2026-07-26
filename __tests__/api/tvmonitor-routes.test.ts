@@ -9,6 +9,7 @@ vi.mock('next-auth', () => ({
 const mockGetPageBySlug = vi.fn();
 const mockGetAllPages = vi.fn();
 const mockCreatePage = vi.fn();
+const mockDuplicatePage = vi.fn();
 vi.mock('@/lib/tvmonitor-config', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/tvmonitor-config')>();
   return {
@@ -16,6 +17,7 @@ vi.mock('@/lib/tvmonitor-config', async (importOriginal) => {
     getTvMonitorPageBySlug: (...args: unknown[]) => mockGetPageBySlug(...args),
     getAllTvMonitorPages: (...args: unknown[]) => mockGetAllPages(...args),
     createTvMonitorPage: (...args: unknown[]) => mockCreatePage(...args),
+    duplicateTvMonitorPage: (...args: unknown[]) => mockDuplicatePage(...args),
   };
 });
 
@@ -30,6 +32,7 @@ vi.mock('next/headers', () => ({
 
 import { GET as GET_SCHEDULE } from '@/app/api/tvmonitor/[slug]/schedule/route';
 import { GET as GET_ADMIN_LIST } from '@/app/api/admin/tvmonitor/route';
+import { POST as POST_ADMIN_DUPLICATE } from '@/app/api/admin/tvmonitor/[slug]/duplicate/route';
 import { POST as POST_MEDIA } from '@/app/api/tvmonitor/media/route';
 import { normalizeTvMonitorConfig } from '@/lib/tvmonitor-config';
 
@@ -104,6 +107,46 @@ describe('admin TV monitor routes require admin auth', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.pages).toHaveLength(1);
+  });
+});
+
+describe('POST /api/admin/tvmonitor/[slug]/duplicate', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllEnvs();
+    vi.stubEnv('ADMIN_AUTH_BYPASS', '');
+    vi.stubEnv('NEXT_PUBLIC_ADMIN_AUTH_BYPASS', '');
+    mockGetServerSession.mockResolvedValue(null);
+  });
+
+  it('returns 401 with no admin session', async () => {
+    const res = await POST_ADMIN_DUPLICATE(new NextRequest(`http://localhost/x`, { method: 'POST' }), {
+      params: { slug: PAGE.slug },
+    });
+    expect(res.status).toBe(401);
+    expect(mockDuplicatePage).not.toHaveBeenCalled();
+  });
+
+  it('duplicates the page for an admin session', async () => {
+    mockGetServerSession.mockResolvedValue({ user: { email: 'admin@bondsports.co' } });
+    mockDuplicatePage.mockResolvedValue({ ...PAGE, slug: 'copy-of-hatfield-lobby', name: 'Copy of Hatfield Lobby', is_active: false });
+    const res = await POST_ADMIN_DUPLICATE(new NextRequest(`http://localhost/x`, { method: 'POST' }), {
+      params: { slug: PAGE.slug },
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(mockDuplicatePage).toHaveBeenCalledWith(PAGE.slug);
+    expect(body.page.slug).toBe('copy-of-hatfield-lobby');
+    expect(body.page.is_active).toBe(false);
+  });
+
+  it('surfaces duplicate errors as 400', async () => {
+    mockGetServerSession.mockResolvedValue({ user: { email: 'admin@bondsports.co' } });
+    mockDuplicatePage.mockRejectedValue(new Error('Page not found'));
+    const res = await POST_ADMIN_DUPLICATE(new NextRequest(`http://localhost/x`, { method: 'POST' }), {
+      params: { slug: 'nope' },
+    });
+    expect(res.status).toBe(400);
   });
 });
 
