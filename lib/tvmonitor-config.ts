@@ -288,6 +288,58 @@ export async function createTvMonitorPage(input: {
   return rowToPage(data as Record<string, unknown>);
 }
 
+/**
+ * Copies a page's name, org/facility, and full config into a new inactive
+ * page ("Copy of {name}") so it can be reviewed and edited before going live.
+ * Slug is derived from the new name, disambiguated with -2, -3, ... on collision.
+ */
+export async function duplicateTvMonitorPage(sourceSlug: string): Promise<ITvMonitorPage> {
+  const source = await getTvMonitorPageBySlug(sourceSlug);
+  if (!source) throw new Error('Page not found');
+
+  const db = getSupabaseAdmin();
+  const newName = `Copy of ${source.name}`;
+  const baseSlug = normalizeTvMonitorSlug(newName) || 'copy';
+
+  const { data: existingRows, error: existingError } = await db
+    .from('tvmonitor_pages')
+    .select('slug')
+    .like('slug', `${baseSlug}%`);
+  if (existingError) {
+    console.error('[TvMonitorConfig] duplicate slug-check error:', existingError);
+    throw new Error(existingError.message);
+  }
+  const taken = new Set((existingRows || []).map((row) => String((row as Record<string, unknown>).slug)));
+  let slug = baseSlug;
+  let suffix = 2;
+  while (taken.has(slug)) {
+    slug = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+
+  const { data, error } = await db
+    .from('tvmonitor_pages')
+    .insert({
+      name: newName,
+      slug,
+      organization_id: source.organization_id,
+      facility_id: source.facility_id,
+      config: source.config,
+      // Inactive by default: a duplicate is a starting point to edit, not a
+      // second live board pointed at the same resources.
+      is_active: false,
+      created_by: source.created_by,
+    })
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error('[TvMonitorConfig] duplicate error:', error);
+    throw new Error(error?.message || 'Duplicate failed');
+  }
+  return rowToPage(data as Record<string, unknown>);
+}
+
 export async function updateTvMonitorPage(
   slug: string,
   updates: {

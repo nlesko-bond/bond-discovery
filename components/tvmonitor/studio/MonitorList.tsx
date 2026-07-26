@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ExternalLink, MonitorPlay, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Copy, ExternalLink, MonitorPlay, Pencil, Plus, Trash2 } from 'lucide-react';
 import { normalizeTvMonitorSlug } from '@/lib/tvmonitor-config';
 import { TV_MONITOR_TEMPLATES } from '@/lib/tvmonitor-templates';
 import { Field, NumberInput, SectionCard, Select, TextInput } from '@/components/tvmonitor/studio/fields';
@@ -57,6 +57,7 @@ export default function MonitorList({
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [duplicatingSlug, setDuplicatingSlug] = useState<string | null>(null);
   const [form, setForm] = useState({
     template: 'rink-classic' as TvMonitorTemplateKey,
     name: '',
@@ -126,6 +127,21 @@ export default function MonitorList({
     if (!confirm(`Delete TV monitor "${slug}"? Any TV showing it will go dark.`)) return;
     await fetch(`${apiBase}/${slug}`, { method: 'DELETE' });
     void fetchPages();
+  }
+
+  async function handleDuplicate(slug: string) {
+    setDuplicatingSlug(slug);
+    try {
+      const res = await fetch(`${apiBase}/${slug}/duplicate`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Failed to duplicate page');
+        return;
+      }
+      router.push(`${editorBasePath}/${data.page.slug}`);
+    } finally {
+      setDuplicatingSlug(null);
+    }
   }
 
   if (loading) {
@@ -272,6 +288,14 @@ export default function MonitorList({
                   className="flex items-center gap-1 rounded-lg bg-toca-navy px-3 py-2 text-sm font-medium text-white hover:bg-toca-purple"
                 >
                   <Pencil size={14} /> Edit
+                </button>
+                <button
+                  onClick={() => handleDuplicate(page.slug)}
+                  disabled={duplicatingSlug === page.slug}
+                  className="rounded-lg border border-gray-300 p-2 text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                  title="Duplicate"
+                >
+                  <Copy size={16} />
                 </button>
                 <button
                   onClick={() => handleDelete(page.slug)}
