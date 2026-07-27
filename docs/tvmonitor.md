@@ -53,7 +53,7 @@ Building blocks inside `config`:
 | Block | Settings |
 |---|---|
 | `header` | logo, title, live clock, date, schedule QR, waiver QR, optional sponsor ad slot |
-| `schedule` | **view** — `columns` (one column per resource) or `feed` (all resources merged into one full-width, chronologically-sorted scrolling list, each event tagged with its resource); resource (space) IDs (≤`MAX_TV_RESOURCES`, currently 12), hours ahead (1–24), show notes / maintenance / private events + notes size/color/italic/bold, labels, auto-scroll (speed 1–5, pause; `columns` also has synchronized vs independent) |
+| `schedule` | **view** — `columns` (one column per resource) or `feed` (all resources merged into one full-width, chronologically-sorted scrolling list, each event tagged with its resource); resource (space) IDs — cap depends on view, see below; hours ahead (1–24), show notes / maintenance / private events + notes size/color/italic/bold, labels, auto-scroll (speed 1–5, pause; `columns` also has synchronized vs independent) |
 | `ads[]` | fixed placements: left/right rail (optionally full screen height, header beside it), top/bottom banner, in-header; sized by pixels or % of screen; each rotates image/video assets by URL with per-asset duration. The builder shows each slot's rendered px + aspect ratio. JS ad tags are a planned future asset type. |
 | `design` | dark/light presets, Google font, font/secondary/accent colors, background gradient (color 1 → color 2), optional background image with adjustable color-overlay strength, card colors |
 | `screenRatio` | `fill` (default) or 16:9 / 4:3 / 21:9 / 9:16 letterboxed |
@@ -82,6 +82,19 @@ disambiguated with `-2`, `-3`, ... on collision.
   (`resourceColorFor`), assigned by the resource's position in `resourceIds`, not its
   Bond space ID, so they stay stable relative to each other. Built for "everything
   happening at the facility today" boards rather than per-rink columns.
+
+**Resource ID cap is per-view, not shared** (`resourceIdCapFor()` in
+`lib/tvmonitor-config.ts`): `MAX_TV_RESOURCES_COLUMNS = 12` (a display constraint —
+side-by-side columns stop being readable past a dozen) vs `MAX_TV_RESOURCES_FEED = 60`
+(feed has no columns-must-fit constraint; the cap only bounds Bond query/URL size).
+⚠️ **A single shared cap of 12 shipped for one release and silently truncated feed
+pages with more than 12 resources on save — a real customer page (36 resource IDs)
+lost 24 of them with no signal.** The lesson: any place that can drop `resourceIds`
+past a cap (the editor's "Add" merge, and switching View between modes) must warn
+before doing it — see `addResource()` / `handleViewModeChange()` in `MonitorEditor.tsx`.
+`normalizeTvMonitorConfig`'s clamp remains as a last-resort safety net, not the primary
+UX; it stays silent by design (server-side normalization has no user to warn), so the
+client-side guards are load-bearing.
 
 Both views share one auto-scroll engine (`useSeamlessLoopScroll` in
 `components/tvmonitor/useSeamlessLoopScroll.ts`): overflowing columns render their

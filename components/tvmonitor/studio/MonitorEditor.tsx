@@ -7,7 +7,7 @@ import MonitorPreview, { BASE_SIZES } from '@/components/tvmonitor/studio/Monito
 import MediaInput from '@/components/tvmonitor/studio/MediaInput';
 import { ColorInput, Field, NumberInput, SectionCard, Select, TextInput, Toggle } from '@/components/tvmonitor/studio/fields';
 import { TV_DESIGN_PRESETS } from '@/lib/tvmonitor-templates';
-import { MAX_TV_RESOURCES } from '@/lib/tvmonitor-config';
+import { resourceIdCapFor } from '@/lib/tvmonitor-config';
 import type {
   ITvMonitorPage,
   TvMonitorAdAsset,
@@ -224,9 +224,35 @@ export default function MonitorEditor({
       .map((s) => parseInt(s.trim(), 10))
       .filter((n) => Number.isFinite(n) && n > 0);
     if (!ids.length) return;
-    const merged = Array.from(new Set([...config.schedule.resourceIds, ...ids])).slice(0, MAX_TV_RESOURCES);
+    const cap = resourceIdCapFor(config.schedule.viewMode);
+    const combined = Array.from(new Set([...config.schedule.resourceIds, ...ids]));
+    const merged = combined.slice(0, cap);
+    if (combined.length > cap) {
+      // Never truncate silently — this exact bug shipped once already (a
+      // 36-ID paste in feed mode quietly became 12, with no signal to the
+      // person editing, and they lost hours chasing a "no events" ghost).
+      alert(
+        `Only the first ${cap} resources are kept in ${config.schedule.viewMode} view — ` +
+          `${combined.length - cap} of the ${combined.length} you now have were NOT added. ` +
+          `Remove some existing resources first if you need the later ones.`,
+      );
+    }
     patchSchedule({ resourceIds: merged });
     setResourceInput('');
+  }
+
+  function handleViewModeChange(nextViewMode: 'columns' | 'feed') {
+    const cap = resourceIdCapFor(nextViewMode);
+    const current = config.schedule.resourceIds;
+    if (current.length > cap) {
+      alert(
+        `Switching to ${nextViewMode} view keeps only the first ${cap} of your ${current.length} resources — ` +
+          `the rest will be dropped. Re-add them if you switch back.`,
+      );
+      patchSchedule({ viewMode: nextViewMode, resourceIds: current.slice(0, cap) });
+      return;
+    }
+    patchSchedule({ viewMode: nextViewMode });
   }
 
   // Status chips for the collapsed section headers — neutral for state,
@@ -352,8 +378,8 @@ export default function MonitorEditor({
               label="Resources (space IDs)"
               hint={
                 config.schedule.viewMode === 'feed'
-                  ? `Up to ${MAX_TV_RESOURCES} — merged into one scrolling feed, each event tagged with its resource.`
-                  : `Up to ${MAX_TV_RESOURCES} — one schedule column each, in this order.`
+                  ? `Up to ${resourceIdCapFor('feed')} — merged into one scrolling feed, each event tagged with its resource.`
+                  : `Up to ${resourceIdCapFor('columns')} — one schedule column each, in this order.`
               }
             >
               <div className="flex flex-wrap gap-2">
@@ -518,7 +544,7 @@ export default function MonitorEditor({
                 >
                   <Select
                     value={config.schedule.viewMode}
-                    onChange={(v) => patchSchedule({ viewMode: v as 'columns' | 'feed' })}
+                    onChange={(v) => handleViewModeChange(v as 'columns' | 'feed')}
                     options={[
                       { value: 'columns', label: 'Columns — one per resource' },
                       { value: 'feed', label: "Feed — everything today, one scrolling list" },

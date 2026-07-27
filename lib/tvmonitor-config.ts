@@ -21,10 +21,21 @@ const TEMPLATE_KEYS: TvMonitorTemplateKey[] = ['rink-classic', 'sponsor-spotligh
 const SCREEN_RATIOS: TvMonitorScreenRatio[] = ['fill', '16:9', '4:3', '21:9', '9:16'];
 const AD_PLACEMENTS = ['left', 'right', 'top', 'bottom', 'header'] as const;
 
-// Raised from 6 to accommodate the 'feed' view (lib/tvmonitor-schedule-format.ts),
-// where resources merge into one scrolling list instead of side-by-side columns,
-// so a facility with many rinks/courts isn't capped by column width.
-export const MAX_TV_RESOURCES = 12;
+// 'columns' is a visual layout constraint: side-by-side columns on a TV stop
+// being readable well before a dozen, regardless of screen size.
+export const MAX_TV_RESOURCES_COLUMNS = 12;
+// 'feed' merges everything into one scrolling list — no columns-must-fit
+// constraint. The cap here only bounds the Bond query / URL size, not
+// display, so it's generous. Raise further if a facility genuinely needs it.
+export const MAX_TV_RESOURCES_FEED = 60;
+// Highest cap across view modes; used as the upper bound before a caller
+// knows which view is active (e.g. the editor's "add" input can't clamp
+// per-view until it knows — see resourceIdCapFor()).
+export const MAX_TV_RESOURCES = MAX_TV_RESOURCES_FEED;
+
+export function resourceIdCapFor(viewMode: 'columns' | 'feed'): number {
+  return viewMode === 'feed' ? MAX_TV_RESOURCES_FEED : MAX_TV_RESOURCES_COLUMNS;
+}
 export const MIN_TV_REFRESH_SECONDS = 30;
 
 function asString(value: unknown, fallback: string): string {
@@ -107,6 +118,7 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
     header.waiverQr && typeof header.waiverQr === 'object' ? (header.waiverQr as Record<string, unknown>) : {};
 
   const schedule = rec.schedule && typeof rec.schedule === 'object' ? (rec.schedule as Record<string, unknown>) : {};
+  const scheduleViewMode: 'columns' | 'feed' = schedule.viewMode === 'feed' ? 'feed' : 'columns';
 
   const rawAds = Array.isArray(rec.ads) ? rec.ads : defaults.ads;
   const ads = rawAds.map((slot, i) => normalizeAdSlot(slot, i)).filter((slot): slot is TvMonitorAdSlot => slot !== null);
@@ -156,8 +168,14 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
     },
     schedule: {
       enabled: asBool(schedule.enabled, defaults.schedule.enabled),
-      viewMode: schedule.viewMode === 'feed' ? 'feed' : 'columns',
-      resourceIds: asIdArray(schedule.resourceIds).slice(0, MAX_TV_RESOURCES),
+      viewMode: scheduleViewMode,
+      // Cap depends on the mode above: columns is a display constraint (12),
+      // feed only bounds query size (60) — see resourceIdCapFor(). Silently
+      // dropping IDs past the cap on save is a real gotcha (it happened:
+      // saving 36 IDs in feed mode against the old single cap of 12 quietly
+      // dropped 24 of them with no signal to the person editing), so the
+      // studio warns before save whenever it would truncate — see MonitorEditor.
+      resourceIds: asIdArray(schedule.resourceIds).slice(0, resourceIdCapFor(scheduleViewMode)),
       futureHoursLimit: asNumber(schedule.futureHoursLimit, defaults.schedule.futureHoursLimit, 1, 24),
       showNotes: asBool(schedule.showNotes, defaults.schedule.showNotes),
       notesSize:
