@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   isReservedTvMonitorSlug,
+  MAX_TV_RESOURCES_COLUMNS,
+  MAX_TV_RESOURCES_FEED,
   normalizeTvMonitorConfig,
   normalizeTvMonitorSlug,
+  resourceIdCapFor,
 } from '@/lib/tvmonitor-config';
 import { buildTvMonitorTemplateConfig, TV_DESIGN_PRESETS, TV_MONITOR_TEMPLATES } from '@/lib/tvmonitor-templates';
 
@@ -49,6 +52,28 @@ describe('normalizeTvMonitorConfig', () => {
     expect(normalizeTvMonitorConfig({ schedule: {} }).schedule.viewMode).toBe('columns');
     expect(normalizeTvMonitorConfig({ schedule: { viewMode: 'feed' } }).schedule.viewMode).toBe('feed');
     expect(normalizeTvMonitorConfig({ schedule: { viewMode: 'bogus' } }).schedule.viewMode).toBe('columns');
+  });
+
+  it('resourceIdCapFor returns the per-mode cap', () => {
+    expect(resourceIdCapFor('columns')).toBe(MAX_TV_RESOURCES_COLUMNS);
+    expect(resourceIdCapFor('feed')).toBe(MAX_TV_RESOURCES_FEED);
+    expect(MAX_TV_RESOURCES_FEED).toBeGreaterThan(MAX_TV_RESOURCES_COLUMNS);
+  });
+
+  it('regression: feed view keeps far more than the 12-column cap (a real 36-ID page was silently truncated to 12 by a shared cap)', () => {
+    const ids = Array.from({ length: 36 }, (_, i) => 7581 + i);
+    const feedConfig = normalizeTvMonitorConfig({ schedule: { viewMode: 'feed', resourceIds: ids } });
+    expect(feedConfig.schedule.resourceIds).toEqual(ids);
+
+    // Columns mode still enforces its own, smaller display-driven cap.
+    const columnsConfig = normalizeTvMonitorConfig({ schedule: { viewMode: 'columns', resourceIds: ids } });
+    expect(columnsConfig.schedule.resourceIds).toHaveLength(MAX_TV_RESOURCES_COLUMNS);
+  });
+
+  it('feed view still clamps at its own (much higher) cap', () => {
+    const tooMany = Array.from({ length: 100 }, (_, i) => i + 1);
+    const config = normalizeTvMonitorConfig({ schedule: { viewMode: 'feed', resourceIds: tooMany } });
+    expect(config.schedule.resourceIds).toHaveLength(MAX_TV_RESOURCES_FEED);
   });
 
   it('drops ad assets without a src and defaults bad placements', () => {
