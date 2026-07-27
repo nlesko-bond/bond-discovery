@@ -21,7 +21,10 @@ const TEMPLATE_KEYS: TvMonitorTemplateKey[] = ['rink-classic', 'sponsor-spotligh
 const SCREEN_RATIOS: TvMonitorScreenRatio[] = ['fill', '16:9', '4:3', '21:9', '9:16'];
 const AD_PLACEMENTS = ['left', 'right', 'top', 'bottom', 'header'] as const;
 
-export const MAX_TV_RESOURCES = 6;
+// Raised from 6 to accommodate the 'feed' view (lib/tvmonitor-schedule-format.ts),
+// where resources merge into one scrolling list instead of side-by-side columns,
+// so a facility with many rinks/courts isn't capped by column width.
+export const MAX_TV_RESOURCES = 12;
 export const MIN_TV_REFRESH_SECONDS = 30;
 
 function asString(value: unknown, fallback: string): string {
@@ -153,6 +156,7 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
     },
     schedule: {
       enabled: asBool(schedule.enabled, defaults.schedule.enabled),
+      viewMode: schedule.viewMode === 'feed' ? 'feed' : 'columns',
       resourceIds: asIdArray(schedule.resourceIds).slice(0, MAX_TV_RESOURCES),
       futureHoursLimit: asNumber(schedule.futureHoursLimit, defaults.schedule.futureHoursLimit, 1, 24),
       showNotes: asBool(schedule.showNotes, defaults.schedule.showNotes),

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import TvAdSlotView from '@/components/tvmonitor/TvAdSlot';
 import TvScheduleGrid from '@/components/tvmonitor/TvScheduleGrid';
+import TvScheduleFeed from '@/components/tvmonitor/TvScheduleFeed';
 import type { TvMonitorAdSlot, TvMonitorConfig, TvMonitorSchedulePayload } from '@/types/tvmonitor';
 
 function qrSrc(url: string): string {
@@ -288,15 +289,19 @@ export default function TvMonitorScreen({
           )}
           <div className="min-h-0 flex-1">
             {scheduleBlock.enabled ? (
-              <TvScheduleGrid
-                spaces={spaces}
-                settings={scheduleBlock}
-                compact={compactColumns}
-                // Single rink under a title banner: the banner IS the column header.
-                hideSpaceNames={
-                  header.enabled && header.layout === 'centered' && header.showTitle && spaces.length <= 1
-                }
-              />
+              scheduleBlock.viewMode === 'feed' ? (
+                <TvScheduleFeed spaces={spaces} settings={scheduleBlock} compact={compactColumns} />
+              ) : (
+                <TvScheduleGrid
+                  spaces={spaces}
+                  settings={scheduleBlock}
+                  compact={compactColumns}
+                  // Single rink under a title banner: the banner IS the column header.
+                  hideSpaceNames={
+                    header.enabled && header.layout === 'centered' && header.showTitle && spaces.length <= 1
+                  }
+                />
+              )
             ) : previewMode ? (
               <div className="flex h-full items-center justify-center text-xl" style={{ color: 'var(--tv-secondary)' }}>
                 Schedule block is turned off

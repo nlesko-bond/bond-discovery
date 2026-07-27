@@ -16,6 +16,7 @@ describe('normalizeTvMonitorConfig', () => {
     expect(config.header.enabled).toBe(true);
     expect(config.schedule.enabled).toBe(true);
     expect(config.schedule.resourceIds).toEqual([]);
+    expect(config.schedule.viewMode).toBe('columns');
     expect(config.schedule.scrollMode).toBe('synchronized');
     expect(config.ads).toEqual([]);
     expect(config.refreshSeconds).toBe(60);
@@ -31,17 +32,23 @@ describe('normalizeTvMonitorConfig', () => {
     const config = normalizeTvMonitorConfig({
       refreshSeconds: 1,
       schedule: {
-        resourceIds: [1, 2, 3, 4, 5, 6, 7, 8],
+        resourceIds: Array.from({ length: 20 }, (_, i) => i + 1),
         futureHoursLimit: 99,
         scrollSpeed: 42,
         scrollPauseSeconds: -5,
       },
     });
     expect(config.refreshSeconds).toBe(30);
-    expect(config.schedule.resourceIds).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(config.schedule.resourceIds).toEqual(Array.from({ length: 12 }, (_, i) => i + 1));
     expect(config.schedule.futureHoursLimit).toBe(24);
     expect(config.schedule.scrollSpeed).toBe(5);
     expect(config.schedule.scrollPauseSeconds).toBe(0);
+  });
+
+  it('defaults viewMode to columns and accepts feed', () => {
+    expect(normalizeTvMonitorConfig({ schedule: {} }).schedule.viewMode).toBe('columns');
+    expect(normalizeTvMonitorConfig({ schedule: { viewMode: 'feed' } }).schedule.viewMode).toBe('feed');
+    expect(normalizeTvMonitorConfig({ schedule: { viewMode: 'bogus' } }).schedule.viewMode).toBe('columns');
   });
 
   it('drops ad assets without a src and defaults bad placements', () => {

@@ -95,6 +95,7 @@ function baseConfig(): TvMonitorConfig {
     },
     schedule: {
       enabled: true,
+      viewMode: 'columns',
       resourceIds: [],
       futureHoursLimit: 9,
       showNotes: true,

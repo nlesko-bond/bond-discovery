@@ -53,7 +53,7 @@ Building blocks inside `config`:
 | Block | Settings |
 |---|---|
 | `header` | logo, title, live clock, date, schedule QR, waiver QR, optional sponsor ad slot |
-| `schedule` | resource (space) IDs (≤6 columns), hours ahead (1–24), show notes / maintenance / private events, labels, auto-scroll (speed 1–5, synchronized vs independent, pause) |
+| `schedule` | **view** — `columns` (one column per resource) or `feed` (all resources merged into one full-width, chronologically-sorted scrolling list, each event tagged with its resource); resource (space) IDs (≤`MAX_TV_RESOURCES`, currently 12), hours ahead (1–24), show notes / maintenance / private events + notes size/color/italic/bold, labels, auto-scroll (speed 1–5, pause; `columns` also has synchronized vs independent) |
 | `ads[]` | fixed placements: left/right rail (optionally full screen height, header beside it), top/bottom banner, in-header; sized by pixels or % of screen; each rotates image/video assets by URL with per-asset duration. The builder shows each slot's rendered px + aspect ratio. JS ad tags are a planned future asset type. |
 | `design` | dark/light presets, Google font, font/secondary/accent colors, background gradient (color 1 → color 2), optional background image with adjustable color-overlay strength, card colors |
 | `screenRatio` | `fill` (default) or 16:9 / 4:3 / 21:9 / 9:16 letterboxed |
@@ -69,6 +69,25 @@ the full config verbatim into a **new, inactive** page — inactive so a duplica
 safe starting point to edit, not an instant second live board on the same resources —
 and opens straight into its editor. The slug is derived from the new name and
 disambiguated with `-2`, `-3`, ... on collision.
+
+**Schedule view — columns vs feed**: `TvMonitorScreen` picks the renderer from
+`config.schedule.viewMode`.
+- `columns` (`components/tvmonitor/TvScheduleGrid.tsx`, default) — one column per
+  resource, each independently or synchronously auto-scrolling.
+- `feed` (`components/tvmonitor/TvScheduleFeed.tsx`) — every resource's events merged
+  into a single full-width column sorted chronologically by start time
+  (`slotStartTimestamp` in `lib/tvmonitor-schedule-format.ts`). Each card identifies its
+  resource two ways at once — a color-coded left strip/dot plus a text pill — so it
+  reads at a glance and isn't color-dependent. Colors come from a fixed palette
+  (`resourceColorFor`), assigned by the resource's position in `resourceIds`, not its
+  Bond space ID, so they stay stable relative to each other. Built for "everything
+  happening at the facility today" boards rather than per-rink columns.
+
+Both views share one auto-scroll engine (`useSeamlessLoopScroll` in
+`components/tvmonitor/useSeamlessLoopScroll.ts`): overflowing columns render their
+content twice and wrap `scrollTop` back by exactly one copy's height once the first
+copy scrolls past, so the loop never visibly jumps. Shared time/duration/grouping
+helpers live in `lib/tvmonitor-schedule-format.ts`.
 
 ## Media uploads
 
