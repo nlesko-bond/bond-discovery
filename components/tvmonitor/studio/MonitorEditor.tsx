@@ -7,6 +7,7 @@ import MonitorPreview, { BASE_SIZES } from '@/components/tvmonitor/studio/Monito
 import MediaInput from '@/components/tvmonitor/studio/MediaInput';
 import { ColorInput, Field, NumberInput, SectionCard, Select, TextInput, Toggle } from '@/components/tvmonitor/studio/fields';
 import { TV_DESIGN_PRESETS } from '@/lib/tvmonitor-templates';
+import { MAX_TV_RESOURCES } from '@/lib/tvmonitor-config';
 import type {
   ITvMonitorPage,
   TvMonitorAdAsset,
@@ -223,7 +224,7 @@ export default function MonitorEditor({
       .map((s) => parseInt(s.trim(), 10))
       .filter((n) => Number.isFinite(n) && n > 0);
     if (!ids.length) return;
-    const merged = Array.from(new Set([...config.schedule.resourceIds, ...ids])).slice(0, 6);
+    const merged = Array.from(new Set([...config.schedule.resourceIds, ...ids])).slice(0, MAX_TV_RESOURCES);
     patchSchedule({ resourceIds: merged });
     setResourceInput('');
   }
@@ -258,7 +259,7 @@ export default function MonitorEditor({
         : headerBits.join(' · ') || 'Empty',
     schedule: !config.schedule.enabled
       ? 'Hidden'
-      : `Next ${config.schedule.futureHoursLimit}h${config.schedule.autoScroll ? ` · ${config.schedule.scrollMode === 'synchronized' ? 'synced' : 'independent'} scroll` : ''}`,
+      : `${config.schedule.viewMode === 'feed' ? 'Feed' : 'Columns'} · Next ${config.schedule.futureHoursLimit}h${config.schedule.autoScroll ? ` · ${config.schedule.viewMode === 'columns' ? (config.schedule.scrollMode === 'synchronized' ? 'synced' : 'independent') + ' scroll' : 'scrolling'}` : ''}`,
     ads:
       enabledAdSlots.length === 0
         ? 'None'
@@ -347,7 +348,14 @@ export default function MonitorEditor({
             <Field label="Facility ID">
               <NumberInput value={facilityId} min={1} onChange={(n) => { setFacilityId(n); setSaveState('dirty'); }} />
             </Field>
-            <Field label="Resources (space IDs)" hint="Up to 6 — one schedule column each, in this order.">
+            <Field
+              label="Resources (space IDs)"
+              hint={
+                config.schedule.viewMode === 'feed'
+                  ? `Up to ${MAX_TV_RESOURCES} — merged into one scrolling feed, each event tagged with its resource.`
+                  : `Up to ${MAX_TV_RESOURCES} — one schedule column each, in this order.`
+              }
+            >
               <div className="flex flex-wrap gap-2">
                 {config.schedule.resourceIds.map((id) => (
                   <span key={id} className="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm">
@@ -500,6 +508,23 @@ export default function MonitorEditor({
             <Toggle label="Show schedule" checked={config.schedule.enabled} onChange={(v) => patchSchedule({ enabled: v })} />
             {config.schedule.enabled && (
               <>
+                <Field
+                  label="View"
+                  hint={
+                    config.schedule.viewMode === 'feed'
+                      ? 'All resources merged into one scrolling list, sorted by time, with the location shown on each event.'
+                      : 'One column per resource, side by side.'
+                  }
+                >
+                  <Select
+                    value={config.schedule.viewMode}
+                    onChange={(v) => patchSchedule({ viewMode: v as 'columns' | 'feed' })}
+                    options={[
+                      { value: 'columns', label: 'Columns — one per resource' },
+                      { value: 'feed', label: "Feed — everything today, one scrolling list" },
+                    ]}
+                  />
+                </Field>
                 <Field label="Hours ahead to show (1–24)">
                   <NumberInput value={config.schedule.futureHoursLimit} min={1} max={24} onChange={(n) => patchSchedule({ futureHoursLimit: n })} />
                 </Field>
@@ -561,16 +586,18 @@ export default function MonitorEditor({
                         className="w-full accent-toca-navy"
                       />
                     </Field>
-                    <Field label="Scroll style">
-                      <Select
-                        value={config.schedule.scrollMode}
-                        onChange={(v) => patchSchedule({ scrollMode: v as 'synchronized' | 'independent' })}
-                        options={[
-                          { value: 'synchronized', label: 'Synchronized — all columns together' },
-                          { value: 'independent', label: 'Independent — each column on its own' },
-                        ]}
-                      />
-                    </Field>
+                    {config.schedule.viewMode === 'columns' && (
+                      <Field label="Scroll style">
+                        <Select
+                          value={config.schedule.scrollMode}
+                          onChange={(v) => patchSchedule({ scrollMode: v as 'synchronized' | 'independent' })}
+                          options={[
+                            { value: 'synchronized', label: 'Synchronized — all columns together' },
+                            { value: 'independent', label: 'Independent — each column on its own' },
+                          ]}
+                        />
+                      </Field>
+                    )}
                     <Field label="Pause at top (seconds)">
                       <NumberInput value={config.schedule.scrollPauseSeconds} min={0} max={30} onChange={(n) => patchSchedule({ scrollPauseSeconds: n })} />
                     </Field>

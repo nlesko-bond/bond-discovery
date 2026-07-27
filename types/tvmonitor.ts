@@ -70,9 +70,19 @@ export interface TvMonitorHeaderBlock {
   sponsorAdId: string | null;
 }
 
+/**
+ * 'columns' — one column per resource, side by side (the original layout).
+ * 'feed'    — every resource merged into one full-width, chronologically
+ *             sorted scrolling list, with each event's resource called out
+ *             on the card. For "everything happening today at the facility"
+ *             boards where columns-per-rink isn't the point.
+ */
+export type TvMonitorScheduleViewMode = 'columns' | 'feed';
+
 export interface TvMonitorScheduleBlock {
   enabled: boolean;
-  /** Bond space/resource IDs to display — one column per resource. */
+  viewMode: TvMonitorScheduleViewMode;
+  /** Bond space/resource IDs to display — one column per resource in 'columns' view. */
   resourceIds: number[];
   /** How many hours ahead of now to pull slots for (1–24). */
   futureHoursLimit: number;
