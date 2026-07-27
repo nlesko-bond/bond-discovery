@@ -138,10 +138,10 @@ export default function TvScheduleFeed({
                   )}
                   {/* Location pill — second cue, explicit text so it's never ambiguous. */}
                   <span
-                    className="flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold"
+                    className={`flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 font-semibold ${compact ? 'text-sm' : 'text-base'}`}
                     style={{ borderColor: 'var(--tv-card-border)' }}
                   >
-                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: event.spaceColor }} />
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: event.spaceColor }} />
                     {event.spaceName}
                   </span>
                 </div>
