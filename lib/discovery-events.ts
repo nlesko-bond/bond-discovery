@@ -5,6 +5,10 @@ import {
   getDiscoveryIncludedProgramIds,
   shouldSkipProgramByPageConfig,
 } from '@/lib/discovery-program-scope';
+import {
+  clampEventLookbackDays,
+  getEventLookbackStartDate,
+} from '@/lib/event-lookback';
 import { transformProgram, transformSession } from '@/lib/transformers';
 import { cacheGet, cacheSet, discoveryAvailabilityCacheKey, discoveryFullCacheKey } from '@/lib/cache';
 import type { Program, DiscoveryConfig, Session } from '@/types';
@@ -235,6 +239,23 @@ async function buildContext(request: DiscoveryEventsRequest): Promise<DiscoveryE
     }
   }
 
+  const lookbackDays = clampEventLookbackDays(config?.features?.eventLookbackDays);
+  const lookbackStart =
+    lookbackDays > 0 ? getEventLookbackStartDate(lookbackDays) : undefined;
+  const mode = request.mode || 'full';
+  const includePast =
+    mode === 'availability'
+      ? false
+      : request.includePast !== undefined
+        ? Boolean(request.includePast)
+        : lookbackDays > 0;
+  const startDateFilter =
+    mode === 'availability'
+      ? undefined
+      : request.startDateFilter !== undefined
+        ? request.startDateFilter
+        : lookbackStart;
+
   return {
     slug,
     apiKey,
@@ -243,10 +264,10 @@ async function buildContext(request: DiscoveryEventsRequest): Promise<DiscoveryE
     bondApiBaseUrl: getBondBaseUrl(bondEnv),
     orgIds,
     facilityId: request.facilityId,
-    includePast: Boolean(request.includePast),
-    startDateFilter: request.startDateFilter,
+    includePast,
+    startDateFilter,
     endDateFilter: request.endDateFilter,
-    mode: request.mode || 'full',
+    mode,
     programFilterMode,
     excludedProgramIds,
     includedProgramIds,
@@ -309,13 +330,28 @@ function shouldSkipProgram(programId: unknown, context: DiscoveryEventsContext):
   return shouldSkipProgramByPageConfig(programId, context.config);
 }
 
-function shouldSkipSessionByDate(session: any, includePast: boolean): boolean {
-  if (includePast || !session.endDate) return false;
-  const sessionTimezone = session.timezone as string | undefined;
-  const todayInSessionTz = sessionTimezone ? getTodayInTimezone(sessionTimezone) : new Date().toISOString().split('T')[0];
+function shouldSkipSessionByDate(
+  session: { endDate?: string; timezone?: string },
+  context: DiscoveryEventsContext,
+): boolean {
+  if (!session.endDate) {
+    return false;
+  }
+  const sessionTimezone = session.timezone;
   const sessionEndLocalDate = sessionTimezone
     ? getLocalDate(session.endDate, sessionTimezone)
     : session.endDate.split('T')[0];
+
+  if (context.startDateFilter) {
+    return sessionEndLocalDate < context.startDateFilter;
+  }
+  if (context.includePast) {
+    return false;
+  }
+
+  const todayInSessionTz = sessionTimezone
+    ? getTodayInTimezone(sessionTimezone)
+    : new Date().toISOString().split('T')[0];
   return sessionEndLocalDate < todayInSessionTz;
 }
 
@@ -476,7 +512,7 @@ async function fetchSessionEvents(
   session: any,
   context: DiscoveryEventsContext
 ): Promise<DiscoveryEvent[]> {
-  if (shouldSkipSessionByDate(session, context.includePast)) {
+  if (shouldSkipSessionByDate(session, context)) {
     return [];
   }
 

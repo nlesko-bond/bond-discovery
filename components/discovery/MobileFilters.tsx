@@ -39,6 +39,10 @@ interface MobileFiltersProps {
   brandColor?: string;
   /** Label for space filter section (default: Space). When default, mobile shows "Space / court". */
   spaceFilterLabel?: string;
+  /** Earliest selectable schedule date (YYYY-MM-DD), from event lookback. */
+  minDate?: string;
+  /** Latest selectable schedule date (YYYY-MM-DD), from event horizon. */
+  maxDate?: string;
 }
 
 export function MobileFilters({
@@ -53,6 +57,8 @@ export function MobileFilters({
   showSearch = true,
   brandColor = '#6366F1',
   spaceFilterLabel = 'Space',
+  minDate,
+  maxDate,
 }: MobileFiltersProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -393,6 +399,8 @@ export function MobileFilters({
                   <input
                     type="date"
                     value={filters.dateRange?.start || ''}
+                    min={minDate}
+                    max={maxDate}
                     onChange={(e) => onFiltersChange({
                       ...filters,
                       dateRange: { ...filters.dateRange, start: e.target.value },
@@ -405,6 +413,13 @@ export function MobileFilters({
                   <input
                     type="date"
                     value={filters.dateRange?.end || ''}
+                    min={
+                      filters.dateRange?.start &&
+                      (!minDate || filters.dateRange.start > minDate)
+                        ? filters.dateRange.start
+                        : minDate
+                    }
+                    max={maxDate}
                     onChange={(e) => onFiltersChange({
                       ...filters,
                       dateRange: { ...filters.dateRange, end: e.target.value },

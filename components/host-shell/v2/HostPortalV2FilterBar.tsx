@@ -20,6 +20,10 @@ import {
 } from 'lucide-react';
 import type { DiscoveryConfig, DiscoveryFilters, Program } from '@/types';
 import { cn, getProgramTypeLabel } from '@/lib/utils';
+import {
+  clampEventLookbackDays,
+  getScheduleDateBounds,
+} from '@/lib/event-lookback';
 import type { IPortalFilterOptions } from '@/lib/host-shell/portal-filter-options';
 import {
   buildV2GenderOptions,
@@ -133,6 +137,10 @@ export function HostPortalV2FilterBar({
     : configFilters;
   const showSearch = config.features.showSearch !== false && enabledFilters.includes('search');
   const showDates = enabledFilters.includes('dateRange');
+  const scheduleDateBounds = getScheduleDateBounds(
+    clampEventLookbackDays(config.features.eventLookbackDays),
+    config.features.eventHorizonMonths ?? 3,
+  );
 
   const ageBucketOptions = useMemo(
     () => countSessionsPerAgeBucket(programs).filter((bucket) => bucket.count > 0),
@@ -328,6 +336,8 @@ export function HostPortalV2FilterBar({
         type="date"
         aria-label="From date"
         value={filters.dateRange?.start ?? ''}
+        min={scheduleDateBounds.minDate}
+        max={scheduleDateBounds.maxDate}
         onChange={(event) =>
           onFiltersChange({
             ...filters,
@@ -342,6 +352,12 @@ export function HostPortalV2FilterBar({
         type="date"
         aria-label="To date"
         value={filters.dateRange?.end ?? ''}
+        min={
+          filters.dateRange?.start && filters.dateRange.start > scheduleDateBounds.minDate
+            ? filters.dateRange.start
+            : scheduleDateBounds.minDate
+        }
+        max={scheduleDateBounds.maxDate}
         onChange={(event) =>
           onFiltersChange({
             ...filters,

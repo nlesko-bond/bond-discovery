@@ -504,6 +504,11 @@ export interface FeatureConfig {
   mobileQuickFilterChips?: boolean;
   // Max months of future events to return (default: 3)
   eventHorizonMonths?: number;
+  /**
+   * How many past days of schedule events to include (0–30, default 0).
+   * Programs stay future-only; only the events/schedule path uses this.
+   */
+  eventLookbackDays?: number;
   // Bond public API environment for this discovery page
   bondEnv?: BondEnv;
   /** When true, show “Redeem pass” for events whose session has a punch-pass product */

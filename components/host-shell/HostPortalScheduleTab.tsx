@@ -5,6 +5,7 @@ import { ScheduleViewSkeleton } from '@/components/ui/Skeleton';
 import type { DiscoveryConfig, DiscoveryFilters, Program, WeekSchedule } from '@/types';
 import { scheduleViewParamFromPageSearchParams } from '@/lib/schedule-view-resolution';
 import { isLeagueScheduleTableContext } from '@/lib/league-schedule-context';
+import { shouldApplyScheduleEventDateFilters } from '@/lib/event-lookback';
 
 interface IHostPortalScheduleTabProps {
   schedule: WeekSchedule[] | null;
@@ -42,6 +43,7 @@ export function HostPortalScheduleTab({
   linkTarget,
 }: IHostPortalScheduleTabProps) {
   const leagueTableMode = isLeagueScheduleTableContext(config, filters ?? {}, programs);
+  const applyScheduleDateFilters = shouldApplyScheduleEventDateFilters(config.features);
 
   if (isLoading && !schedule) {
     return <ScheduleViewSkeleton />;
@@ -62,9 +64,9 @@ export function HostPortalScheduleTab({
       linkTarget={linkTarget}
       hideRegistrationLinks={config.features.hideRegistrationLinks}
       customRegistrationUrl={config.features.customRegistrationUrl}
-      filters={config.features.showScheduleTableDateFilters ? filters : undefined}
+      filters={applyScheduleDateFilters ? filters : undefined}
       onScheduleFiltersChange={
-        config.features.showScheduleTableDateFilters ? onScheduleFiltersChange : undefined
+        applyScheduleDateFilters ? onScheduleFiltersChange : undefined
       }
       initialUrlScheduleView={scheduleViewParamFromPageSearchParams(searchParams)}
       leagueTableMode={leagueTableMode}

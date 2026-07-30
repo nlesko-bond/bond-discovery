@@ -58,7 +58,7 @@ export function filterPortalScheduleEvents(
   apiEvents: IDiscoveryApiEvent[],
   filters: DiscoveryFilters,
   programs: Program[],
-  showScheduleTableDateFilters: boolean,
+  applyDateFilters: boolean,
 ): IDiscoveryApiEvent[] {
   let result = [...apiEvents];
 
@@ -196,7 +196,7 @@ export function filterPortalScheduleEvents(
     }
   }
 
-  if (showScheduleTableDateFilters) {
+  if (applyDateFilters) {
     if (filters.dateRange?.start || filters.dateRange?.end) {
       result = result.filter(
         (event) =>

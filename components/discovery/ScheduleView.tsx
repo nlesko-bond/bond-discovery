@@ -35,6 +35,11 @@ import { format, parseISO, startOfMonth, addMonths, subMonths, isToday, isSameDa
 import { DayView, WeekGridView, MonthView } from './calendar';
 import { ScheduleTableFilterBar } from './ScheduleTableFilterBar';
 import {
+  clampEventLookbackDays,
+  getScheduleDateBounds,
+  shouldApplyScheduleEventDateFilters,
+} from '@/lib/event-lookback';
+import {
   Skeleton,
   ScheduleViewSkeleton,
   ScheduleTableSkeleton,
@@ -266,6 +271,24 @@ export function ScheduleView({
   // Defer to useLayoutEffect so server and client first paint match (Date()/timezone differs in SSR).
   const [currentMonth, setCurrentMonth] = useState<Date | null>(null);
   const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
+  const scheduleDateBounds = useMemo(
+    () =>
+      getScheduleDateBounds(
+        clampEventLookbackDays(config.features.eventLookbackDays),
+        config.features.eventHorizonMonths ?? 3,
+      ),
+    [config.features.eventLookbackDays, config.features.eventHorizonMonths],
+  );
+  const canGoToPrevMonth =
+    currentMonth !== null &&
+    startOfMonth(currentMonth) > startOfMonth(parseISO(scheduleDateBounds.minDate));
+  const canGoToNextMonth =
+    currentMonth !== null &&
+    startOfMonth(currentMonth) < startOfMonth(parseISO(scheduleDateBounds.maxDate));
+  const canGoToPrevDay =
+    selectedDayDate !== null && selectedDayDate > scheduleDateBounds.minDate;
+  const canGoToNextDay =
+    selectedDayDate !== null && selectedDayDate < scheduleDateBounds.maxDate;
   
   // Lazy loading for list view
   const [visibleDays, setVisibleDays] = useState(14); // Start with 2 weeks
@@ -768,15 +791,19 @@ export function ScheduleView({
             style={{ background: themeHeaderBackground }}
           >
             <button
+              type="button"
+              disabled={!canGoToPrevMonth}
               onClick={() => setCurrentMonth((m) => subMonths(m!, 1))}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-40 disabled:pointer-events-none"
             >
               <ChevronLeft size={20} />
             </button>
             <h2 className="text-lg font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
             <button
+              type="button"
+              disabled={!canGoToNextMonth}
               onClick={() => setCurrentMonth((m) => addMonths(m!, 1))}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-40 disabled:pointer-events-none"
             >
               <ChevronRight size={20} />
             </button>
@@ -799,13 +826,18 @@ export function ScheduleView({
             style={{ background: themeHeaderBackground }}
           >
             <button
+              type="button"
+              disabled={!canGoToPrevDay}
               onClick={() => {
                 const currentDate = parseISO(selectedDayDate);
                 const prevDate = new Date(currentDate);
                 prevDate.setDate(prevDate.getDate() - 1);
-                setSelectedDayDate(prevDate.toISOString().split('T')[0]);
+                const next = prevDate.toISOString().split('T')[0];
+                if (next >= scheduleDateBounds.minDate) {
+                  setSelectedDayDate(next);
+                }
               }}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-40 disabled:pointer-events-none"
             >
               <ChevronLeft size={20} />
             </button>
@@ -814,13 +846,18 @@ export function ScheduleView({
               <button type="button" onClick={() => setViewMode('list')} className="text-xs text-white/70 hover:text-white">← Back to list</button>
             </div>
             <button
+              type="button"
+              disabled={!canGoToNextDay}
               onClick={() => {
                 const currentDate = parseISO(selectedDayDate);
                 const nextDate = new Date(currentDate);
                 nextDate.setDate(nextDate.getDate() + 1);
-                setSelectedDayDate(nextDate.toISOString().split('T')[0]);
+                const next = nextDate.toISOString().split('T')[0];
+                if (next <= scheduleDateBounds.maxDate) {
+                  setSelectedDayDate(next);
+                }
               }}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-40 disabled:pointer-events-none"
             >
               <ChevronRight size={20} />
             </button>
@@ -962,7 +999,9 @@ export function ScheduleView({
       {/* Table View - Desktop only */}
       {viewMode === 'table' && (
         <>
-          {config.features.showScheduleTableDateFilters && filters && onScheduleFiltersChange && (
+          {shouldApplyScheduleEventDateFilters(config.features) &&
+            filters &&
+            onScheduleFiltersChange && (
             <ScheduleTableFilterBar
               config={config}
               filters={filters}

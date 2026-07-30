@@ -3,6 +3,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { BOND_ENV_OPTIONS, DEFAULT_BOND_ENV, type BondEnv } from '@/lib/bond-env';
+import {
+  clampEventLookbackDays,
+  DEFAULT_EVENT_LOOKBACK_DAYS,
+  MAX_EVENT_LOOKBACK_DAYS,
+  MIN_EVENT_LOOKBACK_DAYS,
+} from '@/lib/event-lookback';
 import { formatRelativeTime } from '../page-config-utils';
 import type { IPageEditorSectionProps } from '../page-config-types';
 
@@ -60,6 +66,8 @@ export function PageEditorDataSection({ config, setConfig }: IPageEditorSectionP
 
   const lastWarmed = formatRelativeTime(status?.lastRefreshed ?? null);
   const cronLastRun = formatRelativeTime(status?.cronLastRun?.at ?? null);
+  const erroredSlugs = status?.cronLastRun?.errors ?? [];
+  const thisPageErrored = erroredSlugs.includes(config.slug);
 
   return (
     <div className="space-y-8">
@@ -82,12 +90,15 @@ export function PageEditorDataSection({ config, setConfig }: IPageEditorSectionP
             <p className="text-sm text-gray-600">
               Warm cron last ran:{' '}
               <span className="font-medium text-gray-900">{cronLastRun || 'unknown'}</span>
-              {status?.cronLastRun?.errors && status.cronLastRun.errors.length > 0 && (
-                <span className="ml-2 text-amber-700">
-                  ({status.cronLastRun.errors.length} slug(s) errored on the last run)
-                </span>
-              )}
             </p>
+            {erroredSlugs.length > 0 && (
+              <p className={`mt-1 text-sm ${thisPageErrored ? 'text-red-700' : 'text-amber-700'}`}>
+                {thisPageErrored
+                  ? 'This page failed to warm on the last cron run — the previous cached payload is still being served.'
+                  : 'Other pages failed to warm on the last cron run (this page was fine):'}{' '}
+                <span className="font-medium">{erroredSlugs.join(', ')}</span>
+              </p>
+            )}
             {statusError && (
               <p className="mt-1 text-xs text-gray-500">
                 Cache status unavailable (KV not configured or request failed).
@@ -199,6 +210,35 @@ export function PageEditorDataSection({ config, setConfig }: IPageEditorSectionP
             />
             <p className="mt-1 text-xs text-gray-500">
               How many months of upcoming events the schedule shows. Default: 3.
+            </p>
+          </div>
+
+          <div>
+            <label className="label">Event lookback (days)</label>
+            <input
+              type="number"
+              min={MIN_EVENT_LOOKBACK_DAYS}
+              max={MAX_EVENT_LOOKBACK_DAYS}
+              className="input"
+              placeholder={String(DEFAULT_EVENT_LOOKBACK_DAYS)}
+              value={config.features.eventLookbackDays ?? DEFAULT_EVENT_LOOKBACK_DAYS}
+              onChange={(event) =>
+                setConfig({
+                  ...config,
+                  features: {
+                    ...config.features,
+                    eventLookbackDays: clampEventLookbackDays(
+                      parseInt(event.target.value, 10),
+                    ),
+                  },
+                })
+              }
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              How many past days the schedule/events tab can show (0–
+              {MAX_EVENT_LOOKBACK_DAYS}). Default: {DEFAULT_EVENT_LOOKBACK_DAYS}{' '}
+              (today and future only). Programs are unchanged. Visitors still land on
+              today and can pick earlier dates within this window.
             </p>
           </div>
 

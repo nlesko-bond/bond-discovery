@@ -12,6 +12,11 @@ import {
   type DiscoveryEventsResult,
 } from '@/lib/discovery-events';
 import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
+import {
+  clampEventLookbackDays,
+  getEventLookbackStartDate,
+  getTodayDateString,
+} from '@/lib/event-lookback';
 import type { DiscoveryConfig } from '@/types';
 
 export interface WarmDetail {
@@ -60,24 +65,35 @@ export async function warmScopeGroup(configs: DiscoveryConfig[]): Promise<WarmDe
       })
     );
 
-    // Fetch full events ONCE for this scope
+    // Fetch full events ONCE for this scope (use the widest lookback in the group)
+    const maxLookbackDays = Math.max(
+      0,
+      ...configs.map((config) => clampEventLookbackDays(config.features?.eventLookbackDays)),
+    );
+    const groupLookbackStart =
+      maxLookbackDays > 0 ? getEventLookbackStartDate(maxLookbackDays) : undefined;
     const full: DiscoveryEventsResult = await getDiscoveryEvents({
       slug: primary.slug,
       mode: 'full',
       forceFresh: true,
+      includePast: maxLookbackDays > 0,
+      startDateFilter: groupLookbackStart,
     });
 
     // Availability is no longer written to KV (always fetched fresh from Bond per request).
 
     // Write discovery:response for EVERY slug that shares this scope
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayDateString();
     for (const config of configs) {
       try {
         const horizonMonths = config.features?.eventHorizonMonths ?? 3;
+        const lookbackDays = clampEventLookbackDays(config.features?.eventLookbackDays);
+        const windowStart =
+          lookbackDays > 0 ? getEventLookbackStartDate(lookbackDays) : today;
         const filtered = filterEventsForResponse(
           full.payload.data as FullDiscoveryEvent[],
           horizonMonths,
-          today,
+          windowStart,
         );
         const precomputed = {
           ...full.payload,

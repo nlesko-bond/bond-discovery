@@ -96,6 +96,7 @@ export interface IPageConfig {
     scheduleThemeStyle?: 'gradient' | 'solid';
     mobileQuickFilterChips?: boolean;
     eventHorizonMonths?: number;
+    eventLookbackDays?: number;
     showPunchPassRedeemButton?: boolean;
     punchPassRedeemUrl?: string;
     showScheduleTableDateFilters?: boolean;

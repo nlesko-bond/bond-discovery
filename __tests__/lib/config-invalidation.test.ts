@@ -58,6 +58,7 @@ function mockSupabaseRow(row: Record<string, unknown>) {
 describe('updateAffectsDiscoveryPayload', () => {
   it('is true for payload-affecting fields', () => {
     expect(updateAffectsDiscoveryPayload({ features: { eventHorizonMonths: 6 } } as any)).toBe(true);
+    expect(updateAffectsDiscoveryPayload({ features: { eventLookbackDays: 7 } } as any)).toBe(true);
     expect(updateAffectsDiscoveryPayload({ features: { bondEnv: 'staging' } } as any)).toBe(true);
     expect(updateAffectsDiscoveryPayload({ organizationIds: ['1'] } as any)).toBe(true);
     expect(updateAffectsDiscoveryPayload({ facilityIds: ['2'] } as any)).toBe(true);
@@ -85,6 +86,15 @@ describe('updatePageConfig cache invalidation', () => {
     await updatePageConfig(SLUG, { features: { ...mockFeatures, eventHorizonMonths: 6 } } as any);
 
     // rowToConfig normalizes a missing bondEnv to 'production'
+    expect(invalidateMock).toHaveBeenCalledTimes(1);
+    expect(invalidateMock).toHaveBeenCalledWith(SLUG, 'production');
+  });
+
+  it('invalidates the response cache when eventLookbackDays changes', async () => {
+    mockSupabaseRow(mockDiscoveryPageRow);
+
+    await updatePageConfig(SLUG, { features: { ...mockFeatures, eventLookbackDays: 7 } } as any);
+
     expect(invalidateMock).toHaveBeenCalledTimes(1);
     expect(invalidateMock).toHaveBeenCalledWith(SLUG, 'production');
   });

@@ -19,6 +19,12 @@ import {
   type IDiscoveryApiEvent,
 } from '@/lib/host-shell/portal-schedule-events';
 import {
+  clampEventLookbackDays,
+  getDefaultScheduleDateRangeForLookback,
+  resolveInitialScheduleDateRange,
+  shouldApplyScheduleEventDateFilters,
+} from '@/lib/event-lookback';
+import {
   resolveEffectivePortalDisplayMode,
   resolvePortalCardMinWidth,
   resolvePortalCardStyle,
@@ -90,10 +96,12 @@ export function HostPortalV2Page({
       ? ((searchParams.programTypes as string).split('_') as DiscoveryFilters['programTypes'])
       : [],
     sports: searchParams.sports ? (searchParams.sports as string).split('_') : [],
-    dateRange: {
-      start: searchParams.startDate as string,
-      end: searchParams.endDate as string,
-    },
+    dateRange: resolveInitialScheduleDateRange({
+      lookbackDays: clampEventLookbackDays(config.features.eventLookbackDays),
+      horizonMonths: config.features.eventHorizonMonths ?? 3,
+      urlStart: searchParams.startDate as string | undefined,
+      urlEnd: searchParams.endDate as string | undefined,
+    }),
     ageRange: {},
     gender: 'all',
     availability: 'all',
@@ -164,9 +172,9 @@ export function HostPortalV2Page({
         apiEvents,
         filters,
         initialPrograms,
-        config.features.showScheduleTableDateFilters === true,
+        shouldApplyScheduleEventDateFilters(config.features),
       ),
-    [apiEvents, filters, initialPrograms, config.features.showScheduleTableDateFilters],
+    [apiEvents, filters, initialPrograms, config.features],
   );
 
   const scheduleData = useMemo(() => {
@@ -371,7 +379,9 @@ export function HostPortalV2Page({
       facilityIds: [],
       programTypes: [],
       sports: [],
-      dateRange: {},
+      dateRange: getDefaultScheduleDateRangeForLookback(
+        clampEventLookbackDays(config.features.eventLookbackDays),
+      ),
       ageRange: {},
       ageBucketIds: [],
       gender: 'all',
@@ -380,7 +390,7 @@ export function HostPortalV2Page({
       availabilityModes: [],
       spaceNames: undefined,
     }));
-  }, []);
+  }, [config.features.eventLookbackDays]);
 
   useEffect(() => {
     const params = new URLSearchParams(currentSearchString);
@@ -467,9 +477,13 @@ export function HostPortalV2Page({
                 onLoadMore={loadMoreEvents}
                 loadingMore={loadingMore}
                 hasMultipleFacilities={filterOptions.hasMultipleFacilities}
-                filters={config.features.showScheduleTableDateFilters ? filters : undefined}
+                filters={
+                  shouldApplyScheduleEventDateFilters(config.features) ? filters : undefined
+                }
                 onScheduleFiltersChange={
-                  config.features.showScheduleTableDateFilters ? handleFiltersChange : undefined
+                  shouldApplyScheduleEventDateFilters(config.features)
+                    ? handleFiltersChange
+                    : undefined
                 }
                 searchParams={searchParams}
                 programs={initialPrograms}
@@ -606,9 +620,13 @@ export function HostPortalV2Page({
             onLoadMore={loadMoreEvents}
             loadingMore={loadingMore}
             hasMultipleFacilities={filterOptions.hasMultipleFacilities}
-            filters={config.features.showScheduleTableDateFilters ? filters : undefined}
+            filters={
+              shouldApplyScheduleEventDateFilters(config.features) ? filters : undefined
+            }
             onScheduleFiltersChange={
-              config.features.showScheduleTableDateFilters ? handleFiltersChange : undefined
+              shouldApplyScheduleEventDateFilters(config.features)
+                ? handleFiltersChange
+                : undefined
             }
             searchParams={searchParams}
             programs={initialPrograms}

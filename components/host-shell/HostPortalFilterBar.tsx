@@ -14,6 +14,10 @@ import {
 } from 'lucide-react';
 import type { DiscoveryConfig, DiscoveryFilters, ProgramType } from '@/types';
 import { cn, getProgramTypeLabel, getSportLabel } from '@/lib/utils';
+import {
+  clampEventLookbackDays,
+  getScheduleDateBounds,
+} from '@/lib/event-lookback';
 import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
 import { PORTAL_AGE_BUCKETS } from '@/lib/host-shell/portal-age-buckets';
 import type { IPortalFilterOptions } from '@/lib/host-shell/portal-filter-options';
@@ -50,6 +54,10 @@ export function HostPortalFilterBar({
   scheduleSpaces = [],
 }: IHostPortalFilterBarProps) {
   const { secondaryColor, primaryColor } = resolvePortalBrandColors(config);
+  const scheduleDateBounds = getScheduleDateBounds(
+    clampEventLookbackDays(config.features.eventLookbackDays),
+    config.features.eventHorizonMonths ?? 3,
+  );
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(filters.search ?? '');
   const barRef = useRef<HTMLDivElement>(null);
@@ -469,6 +477,8 @@ export function HostPortalFilterBar({
                       <input
                         type="date"
                         value={filters.dateRange?.start ?? ''}
+                        min={scheduleDateBounds.minDate}
+                        max={scheduleDateBounds.maxDate}
                         onChange={(event) =>
                           onFiltersChange({
                             ...filters,
@@ -487,6 +497,13 @@ export function HostPortalFilterBar({
                       <input
                         type="date"
                         value={filters.dateRange?.end ?? ''}
+                        min={
+                          filters.dateRange?.start &&
+                          filters.dateRange.start > scheduleDateBounds.minDate
+                            ? filters.dateRange.start
+                            : scheduleDateBounds.minDate
+                        }
+                        max={scheduleDateBounds.maxDate}
                         onChange={(event) =>
                           onFiltersChange({
                             ...filters,

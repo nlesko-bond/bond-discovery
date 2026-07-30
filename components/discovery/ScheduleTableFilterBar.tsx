@@ -5,6 +5,11 @@ import { CalendarRange, ChevronDown, X } from 'lucide-react';
 import type { DiscoveryConfig, DiscoveryFilters } from '@/types';
 import { cn } from '@/lib/utils';
 import {
+  clampEventLookbackDays,
+  getDefaultScheduleDateRangeForLookback,
+  getScheduleDateBounds,
+} from '@/lib/event-lookback';
+import {
   format,
   addDays,
   startOfWeek,
@@ -68,16 +73,36 @@ export function ScheduleTableFilterBar({ config, filters, onChange }: ScheduleTa
     onChange({ ...filters, daysOfWeek: next.length ? next : undefined });
   };
 
-  const clearAll = () => onChange({ ...filters, dateRange: {}, daysOfWeek: undefined });
+  const clearAll = () =>
+    onChange({
+      ...filters,
+      dateRange: getDefaultScheduleDateRangeForLookback(
+        clampEventLookbackDays(config.features.eventLookbackDays),
+      ),
+      daysOfWeek: undefined,
+    });
 
   const hasActive = Boolean(dr.start || dr.end || dows.length > 0);
   const hasRange = Boolean(dr.start || dr.end);
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const bounds = getScheduleDateBounds(
+    clampEventLookbackDays(config.features.eventLookbackDays),
+    config.features.eventHorizonMonths ?? 3,
+  );
+  const today = bounds.today;
+
+  const clampPresetRange = (start: string, end: string) => {
+    const clampedStart = start < bounds.minDate ? bounds.minDate : start;
+    const clampedEnd = end > bounds.maxDate ? bounds.maxDate : end;
+    if (clampedStart > clampedEnd) {
+      return { start: bounds.minDate, end: bounds.minDate };
+    }
+    return { start: clampedStart, end: clampedEnd };
+  };
 
   const applyPresetNext7 = () => {
     onChange({
       ...filters,
-      dateRange: { start: today, end: format(addDays(new Date(), 7), 'yyyy-MM-dd') },
+      dateRange: clampPresetRange(today, format(addDays(new Date(), 7), 'yyyy-MM-dd')),
     });
   };
 
@@ -85,10 +110,10 @@ export function ScheduleTableFilterBar({ config, filters, onChange }: ScheduleTa
     const now = new Date();
     onChange({
       ...filters,
-      dateRange: {
-        start: format(startOfWeek(now, { weekStartsOn: 0 }), 'yyyy-MM-dd'),
-        end: format(endOfWeek(now, { weekStartsOn: 0 }), 'yyyy-MM-dd'),
-      },
+      dateRange: clampPresetRange(
+        format(startOfWeek(now, { weekStartsOn: 0 }), 'yyyy-MM-dd'),
+        format(endOfWeek(now, { weekStartsOn: 0 }), 'yyyy-MM-dd'),
+      ),
     });
   };
 
@@ -96,10 +121,10 @@ export function ScheduleTableFilterBar({ config, filters, onChange }: ScheduleTa
     const now = new Date();
     onChange({
       ...filters,
-      dateRange: {
-        start: format(startOfMonth(now), 'yyyy-MM-dd'),
-        end: format(endOfMonth(now), 'yyyy-MM-dd'),
-      },
+      dateRange: clampPresetRange(
+        format(startOfMonth(now), 'yyyy-MM-dd'),
+        format(endOfMonth(now), 'yyyy-MM-dd'),
+      ),
     });
   };
 
@@ -181,6 +206,8 @@ export function ScheduleTableFilterBar({ config, filters, onChange }: ScheduleTa
                   id="stf-start"
                   type="date"
                   value={dr.start || ''}
+                  min={bounds.minDate}
+                  max={bounds.maxDate}
                   onChange={(e) => setDateRange({ start: e.target.value || undefined })}
                   className={dateInputClass}
                 />
@@ -193,7 +220,8 @@ export function ScheduleTableFilterBar({ config, filters, onChange }: ScheduleTa
                   id="stf-end"
                   type="date"
                   value={dr.end || ''}
-                  min={dr.start || undefined}
+                  min={dr.start && dr.start > bounds.minDate ? dr.start : bounds.minDate}
+                  max={bounds.maxDate}
                   onChange={(e) => setDateRange({ end: e.target.value || undefined })}
                   className={dateInputClass}
                 />
@@ -203,7 +231,14 @@ export function ScheduleTableFilterBar({ config, filters, onChange }: ScheduleTa
               <button
                 type="button"
                 className="mt-2 w-full text-center text-[11px] font-semibold text-gray-500 hover:text-gray-800"
-                onClick={() => onChange({ ...filters, dateRange: {} })}
+                onClick={() =>
+                  onChange({
+                    ...filters,
+                    dateRange: getDefaultScheduleDateRangeForLookback(
+                      clampEventLookbackDays(config.features.eventLookbackDays),
+                    ),
+                  })
+                }
               >
                 Clear date range
               </button>

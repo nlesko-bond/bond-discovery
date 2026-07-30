@@ -22,6 +22,13 @@ import {
   eventMatchesDaysOfWeek,
   eventMatchesSpaceNames,
 } from '@/lib/schedule-event-filters';
+import {
+  clampEventLookbackDays,
+  getDefaultScheduleDateRangeForLookback,
+  getScheduleDateBounds,
+  resolveInitialScheduleDateRange,
+  shouldApplyScheduleEventDateFilters,
+} from '@/lib/event-lookback';
 import { scheduleViewParamFromPageSearchParams } from '@/lib/schedule-view-resolution';
 import { isLeagueScheduleTableContext } from '@/lib/league-schedule-context';
 import { BrandLogo } from '@/components/ui/BrandLogo';
@@ -93,10 +100,12 @@ export function DiscoveryPage({
         sports: searchParams.sports 
           ? (searchParams.sports as string).split('_') 
           : [],
-        dateRange: {
-          start: searchParams.startDate as string,
-          end: searchParams.endDate as string,
-        },
+        dateRange: resolveInitialScheduleDateRange({
+          lookbackDays: clampEventLookbackDays(config.features.eventLookbackDays),
+          horizonMonths: config.features.eventHorizonMonths ?? 3,
+          urlStart: searchParams.startDate as string | undefined,
+          urlEnd: searchParams.endDate as string | undefined,
+        }),
         ageRange: {
           min: searchParams.ageMin ? parseInt(searchParams.ageMin as string) : undefined,
           max: searchParams.ageMax ? parseInt(searchParams.ageMax as string) : undefined,
@@ -128,7 +137,14 @@ export function DiscoveryPage({
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         try {
-          return JSON.parse(saved);
+          const parsed = JSON.parse(saved) as DiscoveryFilters;
+          parsed.dateRange = resolveInitialScheduleDateRange({
+            lookbackDays: clampEventLookbackDays(config.features.eventLookbackDays),
+            horizonMonths: config.features.eventHorizonMonths ?? 3,
+            urlStart: parsed.dateRange?.start,
+            urlEnd: parsed.dateRange?.end,
+          });
+          return parsed;
         } catch {
           // Invalid JSON, ignore
         }
@@ -143,7 +159,9 @@ export function DiscoveryPage({
       facilityIds: [],
       programTypes: [],
       sports: [],
-      dateRange: {},
+      dateRange: getDefaultScheduleDateRangeForLookback(
+        clampEventLookbackDays(config.features.eventLookbackDays),
+      ),
       ageRange: {},
       gender: 'all',
       availability: 'all',
@@ -157,6 +175,14 @@ export function DiscoveryPage({
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [filters, setFilters] = useState<DiscoveryFilters>(getInitialFilters);
   const [showCopied, setShowCopied] = useState(false);
+  const scheduleDateBounds = useMemo(
+    () =>
+      getScheduleDateBounds(
+        clampEventLookbackDays(config.features.eventLookbackDays),
+        config.features.eventHorizonMonths ?? 3,
+      ),
+    [config.features.eventLookbackDays, config.features.eventHorizonMonths],
+  );
   
   // Link target based on config setting
   // new_tab = _blank (default), same_window = _top, in_frame = _self
@@ -869,8 +895,8 @@ export function DiscoveryPage({
       }
     }
 
-    // Event-level date / weekday filters (opt-in; schedule table UI + filtering)
-    if (config.features.showScheduleTableDateFilters) {
+    // Event-level date / weekday filters (schedule table UI and/or lookback)
+    if (shouldApplyScheduleEventDateFilters(config.features)) {
       if (filters.dateRange?.start || filters.dateRange?.end) {
         result = result.filter((event) => eventMatchesDateRange(event, filters.dateRange));
       }
@@ -880,7 +906,7 @@ export function DiscoveryPage({
     }
 
     return result;
-  }, [apiEvents, filters, initialPrograms, config.features.showScheduleTableDateFilters]);
+  }, [apiEvents, filters, initialPrograms, config.features]);
 
   const leagueTableMode = useMemo(
     () => isLeagueScheduleTableContext(config, filters, initialPrograms),
@@ -1127,16 +1153,28 @@ export function DiscoveryPage({
     if (filters.facilityIds?.length) count++;
     if (filters.programTypes?.length) count++;
     if (filters.sports?.length) count++;
-    if (filters.dateRange?.start || filters.dateRange?.end) count++;
+    const defaultDateRange = getDefaultScheduleDateRangeForLookback(
+      clampEventLookbackDays(config.features.eventLookbackDays),
+    );
+    const isDefaultDateRange =
+      (filters.dateRange?.start || undefined) === (defaultDateRange.start || undefined) &&
+      (filters.dateRange?.end || undefined) === (defaultDateRange.end || undefined);
+    if (!isDefaultDateRange && (filters.dateRange?.start || filters.dateRange?.end)) {
+      count++;
+    }
     if (filters.ageRange?.min || filters.ageRange?.max) count++;
     if (filters.gender && filters.gender !== 'all') count++;
     if (filters.availability && filters.availability !== 'all') count++;
-    if (config.features.showScheduleTableDateFilters && filters.daysOfWeek && filters.daysOfWeek.length > 0) {
+    if (
+      shouldApplyScheduleEventDateFilters(config.features) &&
+      filters.daysOfWeek &&
+      filters.daysOfWeek.length > 0
+    ) {
       count++;
     }
     if (filters.spaceNames && filters.spaceNames.length > 0) count++;
     return count;
-  }, [filters, config.features.showScheduleTableDateFilters]);
+  }, [filters, config.features]);
 
   return (
     <div 
@@ -1468,9 +1506,13 @@ export function DiscoveryPage({
               linkTarget={linkTarget}
               hideRegistrationLinks={config.features.hideRegistrationLinks}
               customRegistrationUrl={config.features.customRegistrationUrl}
-              filters={config.features.showScheduleTableDateFilters ? filters : undefined}
+              filters={
+                shouldApplyScheduleEventDateFilters(config.features) ? filters : undefined
+              }
               onScheduleFiltersChange={
-                config.features.showScheduleTableDateFilters ? handleFiltersChange : undefined
+                shouldApplyScheduleEventDateFilters(config.features)
+                  ? handleFiltersChange
+                  : undefined
               }
               initialUrlScheduleView={scheduleViewParamFromPageSearchParams(searchParams)}
               leagueTableMode={leagueTableMode}
@@ -1492,6 +1534,8 @@ export function DiscoveryPage({
         showSearch={config.features.showSearch !== false}
         brandColor={config.branding.secondaryColor}
         spaceFilterLabel={config.features.spaceColumnLabel?.trim() || 'Space'}
+        minDate={scheduleDateBounds.minDate}
+        maxDate={scheduleDateBounds.maxDate}
       />
 
       {/* Footer */}

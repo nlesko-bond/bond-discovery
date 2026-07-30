@@ -11,6 +11,11 @@ import { getAvailabilityPayload } from '@/lib/availability-cache';
 import { maybeAlertZeroDiscoveryEvents } from '@/lib/discovery-zero-events-alert';
 import { getBondApiStats } from '@/lib/bond-client';
 import {
+  clampEventLookbackDays,
+  getEventLookbackStartDate,
+  getTodayDateString,
+} from '@/lib/event-lookback';
+import {
   embedKitCorsHeaders,
   isEmbedKitBrowserRequestAllowed,
   type IEmbedKitCorsHeaderOptions,
@@ -153,10 +158,18 @@ export async function GET(request: Request) {
   }
 
   // ── Fallback: full pipeline (slower but always works) ──
-  const startDate = searchParams.get('startDate') || new Date().toISOString().split('T')[0];
+  const pageLookbackDays = clampEventLookbackDays(
+    embedCorsConfig?.features?.eventLookbackDays,
+  );
+  const defaultWindowStart =
+    pageLookbackDays > 0
+      ? getEventLookbackStartDate(pageLookbackDays)
+      : getTodayDateString();
+  const startDate = searchParams.get('startDate') || defaultWindowStart;
   const explicitEndDate = searchParams.get('endDate') || undefined;
   const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : undefined;
   const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!, 10) : 0;
+  const includePastParam = searchParams.get('includePast');
 
   try {
     const bondStatsBefore = getBondApiStats();
@@ -167,7 +180,8 @@ export async function GET(request: Request) {
         ? searchParams.get('orgIds')!.split(/[_,]/).filter(Boolean)
         : undefined,
       facilityId: searchParams.get('facilityId') || undefined,
-      includePast: searchParams.get('includePast') === 'true',
+      includePast:
+        includePastParam === null ? undefined : includePastParam === 'true',
       mode,
       forceFresh,
     });

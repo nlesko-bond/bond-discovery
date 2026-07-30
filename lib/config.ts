@@ -16,6 +16,10 @@ import {
 import { getSupabaseAdmin, DiscoveryPageRow } from './supabase';
 import { DEFAULT_BOND_ENV, resolveBondEnv } from './bond-env';
 import { invalidateDiscoveryResponseCache } from './cache';
+import {
+  clampEventLookbackDays,
+  DEFAULT_EVENT_LOOKBACK_DAYS,
+} from './event-lookback';
 import { normalizePortalFeatureFields } from './host-shell/portal-feature-config';
 
 /**
@@ -112,6 +116,7 @@ function rowToConfig(row: DiscoveryPageRow): DiscoveryConfig {
       scheduleThemeStyle: features.scheduleThemeStyle || 'solid',
       mobileQuickFilterChips: features.mobileQuickFilterChips ?? true,
       eventHorizonMonths: typeof features.eventHorizonMonths === 'number' ? features.eventHorizonMonths : 3,
+      eventLookbackDays: clampEventLookbackDays(features.eventLookbackDays),
       bondEnv: resolveBondEnv(features.bondEnv),
       showPunchPassRedeemButton: features.showPunchPassRedeemButton === true,
       punchPassRedeemUrl:
@@ -165,6 +170,7 @@ export const defaultConfig: DiscoveryConfig = {
     scheduleThemeStyle: 'solid',
     mobileQuickFilterChips: true,
     eventHorizonMonths: 3,
+    eventLookbackDays: DEFAULT_EVENT_LOOKBACK_DAYS,
     bondEnv: DEFAULT_BOND_ENV,
     showPunchPassRedeemButton: false,
     showScheduleTableDateFilters: false,
@@ -335,6 +341,7 @@ export function updateAffectsDiscoveryPayload(updates: Partial<DiscoveryConfig>)
     updates.features?.excludedProgramIds !== undefined ||
     updates.features?.includedProgramIds !== undefined ||
     updates.features?.eventHorizonMonths !== undefined ||
+    updates.features?.eventLookbackDays !== undefined ||
     updates.features?.bondEnv !== undefined
   );
 }
