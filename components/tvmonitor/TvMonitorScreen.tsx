@@ -72,16 +72,20 @@ function TvClock({
 }
 
 function TvWeatherChip({ weather, compact }: { weather: TvMonitorWeatherPayload; compact: boolean }) {
+  // Geocoding returns "City, State, Country" for disambiguation, but that's
+  // too long for a TV chip — show just the city, keep the full string as a
+  // tooltip for anyone inspecting on a device that supports hover.
+  const city = weather.location.split(',')[0]?.trim() || weather.location;
   return (
     <div className="flex flex-col items-center leading-tight">
       <div className={compact ? 'text-3xl' : 'text-4xl'}>{weather.icon}</div>
       <div className={`font-bold tabular-nums ${compact ? 'text-lg' : 'text-xl'}`}>{weather.temperatureF}°F</div>
       <div
-        className="max-w-[8rem] truncate text-center text-xs"
+        className="max-w-[9rem] truncate text-center text-xs"
         style={{ color: 'var(--tv-secondary)' }}
-        title={weather.condition}
+        title={`${weather.location} — ${weather.condition}`}
       >
-        {weather.location}
+        {city}
       </div>
     </div>
   );
