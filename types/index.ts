@@ -566,6 +566,11 @@ export interface FeatureConfig {
    */
   portalRowActionMode?: PortalRowActionMode;
   /**
+   * Custom label for the v2 rows expand affordance (the "More info" button /
+   * combined toggle). Default "More info". e.g. set to "Schedule".
+   */
+  portalRowMoreInfoLabel?: string;
+  /**
    * When true, each schedule option in the rows expand panel shows a cart Register
    * (or Join waitlist when full) linking to the session registration URL.
    */
