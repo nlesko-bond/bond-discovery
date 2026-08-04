@@ -4,7 +4,13 @@ import { useEffect, useMemo, useState } from 'react';
 import TvAdSlotView from '@/components/tvmonitor/TvAdSlot';
 import TvScheduleGrid from '@/components/tvmonitor/TvScheduleGrid';
 import TvScheduleFeed from '@/components/tvmonitor/TvScheduleFeed';
-import type { TvMonitorAdSlot, TvMonitorConfig, TvMonitorSchedulePayload } from '@/types/tvmonitor';
+import TvMonitorTicker from '@/components/tvmonitor/TvMonitorTicker';
+import type {
+  TvMonitorAdSlot,
+  TvMonitorConfig,
+  TvMonitorSchedulePayload,
+  TvMonitorWeatherPayload,
+} from '@/types/tvmonitor';
 
 function qrSrc(url: string): string {
   return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
@@ -65,6 +71,22 @@ function TvClock({
   );
 }
 
+function TvWeatherChip({ weather, compact }: { weather: TvMonitorWeatherPayload; compact: boolean }) {
+  return (
+    <div className="flex flex-col items-center leading-tight">
+      <div className={compact ? 'text-3xl' : 'text-4xl'}>{weather.icon}</div>
+      <div className={`font-bold tabular-nums ${compact ? 'text-lg' : 'text-xl'}`}>{weather.temperatureF}°F</div>
+      <div
+        className="max-w-[8rem] truncate text-center text-xs"
+        style={{ color: 'var(--tv-secondary)' }}
+        title={weather.condition}
+      >
+        {weather.location}
+      </div>
+    </div>
+  );
+}
+
 function TvQr({ url, label, compact }: { url: string; label: string; compact: boolean }) {
   return (
     <div className="flex flex-col items-center gap-1">
@@ -85,10 +107,12 @@ function TvQr({ url, label, compact }: { url: string; label: string; compact: bo
 export default function TvMonitorScreen({
   config,
   schedule,
+  weather = null,
   previewMode = false,
 }: {
   config: TvMonitorConfig;
   schedule: TvMonitorSchedulePayload | null;
+  weather?: TvMonitorWeatherPayload | null;
   previewMode?: boolean;
 }) {
   const { design, header, schedule: scheduleBlock, ads } = config;
@@ -193,8 +217,11 @@ export default function TvMonitorScreen({
             )}
           </div>
 
-          {/* Center: big clock + date. */}
-          <TvClock showClock={header.showClock} showDate={header.showDate} compact={compactColumns} align="center" />
+          {/* Center: big clock + date, weather alongside when enabled. */}
+          <div className="flex items-center gap-6">
+            {weather && <TvWeatherChip weather={weather} compact={compactColumns} />}
+            <TvClock showClock={header.showClock} showDate={header.showDate} compact={compactColumns} align="center" />
+          </div>
 
           {/* Right: facility logo. */}
           <div className="flex flex-1 items-center justify-end">
@@ -266,6 +293,7 @@ export default function TvMonitorScreen({
             {header.waiverQr.enabled && header.waiverQr.url && (
               <TvQr url={header.waiverQr.url} label={header.waiverQr.label} compact={compactColumns} />
             )}
+            {weather && <TvWeatherChip weather={weather} compact={compactColumns} />}
             <TvClock showClock={header.showClock} showDate={header.showDate} compact={compactColumns} />
           </div>
         </header>
@@ -330,6 +358,11 @@ export default function TvMonitorScreen({
             <TvAdSlotView slot={slot} previewMode={previewMode} />
           </div>
         ))}
+      </div>
+
+      {/* Spans the full screen width, below even the full-height rails. */}
+      <div className="relative z-10">
+        <TvMonitorTicker settings={config.ticker} />
       </div>
     </div>
   );

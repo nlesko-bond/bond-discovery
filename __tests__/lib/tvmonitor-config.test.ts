@@ -114,6 +114,50 @@ describe('normalizeTvMonitorConfig', () => {
     expect(dropped.header.sponsorAdId).toBeNull();
   });
 
+  it('defaults weather to disabled with no location', () => {
+    const config = normalizeTvMonitorConfig({});
+    expect(config.header.weather).toEqual({ enabled: false, location: null });
+  });
+
+  it('normalizes weather settings', () => {
+    const config = normalizeTvMonitorConfig({ header: { weather: { enabled: true, location: '  60007  ' } } });
+    expect(config.header.weather).toEqual({ enabled: true, location: '  60007  ' });
+  });
+
+  it('clears primaryResourceId when it is not one of the schedule resourceIds', () => {
+    const kept = normalizeTvMonitorConfig({ schedule: { resourceIds: [1, 2, 3], primaryResourceId: 2 } });
+    expect(kept.schedule.primaryResourceId).toBe(2);
+
+    const dropped = normalizeTvMonitorConfig({ schedule: { resourceIds: [1, 2, 3], primaryResourceId: 99 } });
+    expect(dropped.schedule.primaryResourceId).toBeNull();
+
+    const noResources = normalizeTvMonitorConfig({ schedule: { resourceIds: [], primaryResourceId: 1 } });
+    expect(noResources.schedule.primaryResourceId).toBeNull();
+  });
+
+  it('defaults wayfindingLabel and cardStyle, and validates cardStyle', () => {
+    expect(normalizeTvMonitorConfig({}).schedule.wayfindingLabel).toBe('YOU ARE HERE');
+    expect(normalizeTvMonitorConfig({}).schedule.cardStyle).toBe('cards');
+    expect(normalizeTvMonitorConfig({ schedule: { cardStyle: 'plain' } }).schedule.cardStyle).toBe('plain');
+    expect(normalizeTvMonitorConfig({ schedule: { cardStyle: 'bogus' } }).schedule.cardStyle).toBe('cards');
+  });
+
+  it('normalizes the ticker block, capping messages at 20 and dropping blanks', () => {
+    const empty = normalizeTvMonitorConfig({});
+    expect(empty.ticker).toEqual({ enabled: false, label: 'UPDATES', messages: [], scrollSpeed: 3 });
+
+    const withMessages = normalizeTvMonitorConfig({
+      ticker: { enabled: true, label: 'NEWS', messages: ['Open skate 6pm', '', '  ', 'Pro shop sale'], scrollSpeed: 9 },
+    });
+    expect(withMessages.ticker.enabled).toBe(true);
+    expect(withMessages.ticker.label).toBe('NEWS');
+    expect(withMessages.ticker.messages).toEqual(['Open skate 6pm', 'Pro shop sale']);
+    expect(withMessages.ticker.scrollSpeed).toBe(5);
+
+    const tooMany = normalizeTvMonitorConfig({ ticker: { messages: Array.from({ length: 30 }, (_, i) => `msg ${i}`) } });
+    expect(tooMany.ticker.messages).toHaveLength(20);
+  });
+
   it('respects light theme presets for missing colors', () => {
     const config = normalizeTvMonitorConfig({ design: { theme: 'light' } });
     expect(config.design.bgColor1).toBe(TV_DESIGN_PRESETS.light.bgColor1);

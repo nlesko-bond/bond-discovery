@@ -151,6 +151,7 @@ export default function MonitorEditor({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ facilityName: string; spaces: TvMonitorSpace[] } | null>(null);
   const [resourceInput, setResourceInput] = useState('');
+  const [tickerMessageInput, setTickerMessageInput] = useState('');
   const [copied, setCopied] = useState(false);
 
   const liveUrl = `/tvmonitor/${page.slug}`;
@@ -177,6 +178,9 @@ export default function MonitorEditor({
   }
   function patchAd(id: string, updates: Partial<TvMonitorAdSlot>) {
     patchConfig({ ads: config.ads.map((slot) => (slot.id === id ? { ...slot, ...updates } : slot)) });
+  }
+  function patchTicker(updates: Partial<TvMonitorConfig['ticker']>) {
+    patchConfig({ ticker: { ...config.ticker, ...updates } });
   }
 
   async function handleSave() {
@@ -241,6 +245,17 @@ export default function MonitorEditor({
     setResourceInput('');
   }
 
+  function addTickerMessage() {
+    const msg = tickerMessageInput.trim();
+    if (!msg) return;
+    if (config.ticker.messages.length >= 20) {
+      alert('Up to 20 ticker messages — remove one before adding another.');
+      return;
+    }
+    patchTicker({ messages: [...config.ticker.messages, msg] });
+    setTickerMessageInput('');
+  }
+
   function handleViewModeChange(nextViewMode: 'columns' | 'feed') {
     const cap = resourceIdCapFor(nextViewMode);
     const current = config.schedule.resourceIds;
@@ -264,12 +279,14 @@ export default function MonitorEditor({
     (config.header.scheduleQr.enabled && !config.header.scheduleQr.url) ||
     (config.header.waiverQr.enabled && !config.header.waiverQr.url);
   const missingLogo = config.header.showLogo && !config.header.logoUrl;
+  const missingWeatherLocation = config.header.weather.enabled && !config.header.weather.location;
   const headerBits = [
     config.header.showLogo && 'logo',
     config.header.showTitle && 'title',
     config.header.showClock && 'clock',
     (config.header.scheduleQr.enabled || config.header.waiverQr.enabled) && 'QR',
     config.header.sponsorAdId && 'sponsor',
+    config.header.weather.enabled && 'weather',
   ].filter(Boolean);
 
   const summaries = {
@@ -280,8 +297,8 @@ export default function MonitorEditor({
         : `Facility #${facilityId} · ${config.schedule.resourceIds.length} resource${config.schedule.resourceIds.length === 1 ? '' : 's'}`,
     header: !config.header.enabled
       ? 'Hidden'
-      : missingLogo || missingQrUrl
-        ? 'Missing a logo/QR URL'
+      : missingLogo || missingQrUrl || missingWeatherLocation
+        ? 'Missing a logo/QR/weather location'
         : headerBits.join(' · ') || 'Empty',
     schedule: !config.schedule.enabled
       ? 'Hidden'
@@ -293,6 +310,11 @@ export default function MonitorEditor({
           ? `${enabledAdSlots.length} slot${enabledAdSlots.length === 1 ? '' : 's'} · ${emptyAdSlots} missing media`
           : `${enabledAdSlots.length} slot${enabledAdSlots.length === 1 ? '' : 's'} · ${totalAdAssets} media`,
     design: `${config.design.theme === 'dark' ? 'Dark' : 'Light'} · ${config.design.fontFamily}${config.design.bgImageUrl ? ' · bg photo' : ''}`,
+    ticker: !config.ticker.enabled
+      ? 'Off'
+      : config.ticker.messages.length === 0
+        ? 'On · no messages yet'
+        : `${config.ticker.messages.length} message${config.ticker.messages.length === 1 ? '' : 's'}`,
   };
 
   const headerAdOptions = useMemo(
@@ -301,6 +323,17 @@ export default function MonitorEditor({
       ...config.ads.filter((a) => a.placement === 'header').map((a) => ({ value: a.id, label: `Ad slot ${a.id}` })),
     ],
     [config.ads],
+  );
+
+  const primaryResourceOptions = useMemo(
+    () => [
+      { value: '', label: 'None' },
+      ...config.schedule.resourceIds.map((id) => ({
+        value: String(id),
+        label: testResult?.spaces.find((s) => s.id === id)?.name ?? `#${id}`,
+      })),
+    ],
+    [config.schedule.resourceIds, testResult],
   );
 
   return (
@@ -420,7 +453,7 @@ export default function MonitorEditor({
             {errorMessage && saveState !== 'error' && <p className="text-sm text-red-600">{errorMessage}</p>}
           </SectionCard>
 
-          <SectionCard title="Header block" collapsible defaultOpen={false} summary={summaries.header} warning={config.header.enabled && (missingLogo || missingQrUrl)}>
+          <SectionCard title="Header block" collapsible defaultOpen={false} summary={summaries.header} warning={config.header.enabled && (missingLogo || missingQrUrl || missingWeatherLocation)}>
             <Toggle label="Show header" checked={config.header.enabled} onChange={(v) => patchHeader({ enabled: v })} />
             {config.header.enabled && (
               <>
@@ -526,6 +559,22 @@ export default function MonitorEditor({
                     />
                   </Field>
                 )}
+                <Toggle
+                  label="Weather"
+                  checked={config.header.weather.enabled}
+                  onChange={(v) => patchHeader({ weather: { ...config.header.weather, enabled: v } })}
+                />
+                {config.header.weather.enabled && (
+                  <div className="ml-3 space-y-2 border-l-2 border-gray-100 pl-3">
+                    <Field label="City or ZIP" hint="Free-text location — geocoded automatically (no API key needed).">
+                      <TextInput
+                        value={config.header.weather.location ?? ''}
+                        onChange={(e) => patchHeader({ weather: { ...config.header.weather, location: e.target.value || null } })}
+                        placeholder="e.g. Elk Grove Village, IL or 60007"
+                      />
+                    </Field>
+                  </div>
+                )}
               </>
             )}
           </SectionCard>
@@ -554,6 +603,38 @@ export default function MonitorEditor({
                 <Field label="Hours ahead to show (1–24)">
                   <NumberInput value={config.schedule.futureHoursLimit} min={1} max={24} onChange={(n) => patchSchedule({ futureHoursLimit: n })} />
                 </Field>
+                <Field label="Event card style">
+                  <Select
+                    value={config.schedule.cardStyle}
+                    onChange={(v) => patchSchedule({ cardStyle: v as 'cards' | 'plain' })}
+                    options={[
+                      { value: 'cards', label: 'Cards — bordered boxes (default)' },
+                      { value: 'plain', label: 'Plain text — centered, no card chrome' },
+                    ]}
+                  />
+                </Field>
+                {config.schedule.viewMode === 'columns' && config.schedule.resourceIds.length > 1 && (
+                  <>
+                    <Field
+                      label='Highlight "you are here"'
+                      hint="Adds a banner above one column and mutes the others — e.g. pointing at the rink nearest this TV."
+                    >
+                      <Select
+                        value={config.schedule.primaryResourceId != null ? String(config.schedule.primaryResourceId) : ''}
+                        onChange={(v) => patchSchedule({ primaryResourceId: v ? Number(v) : null })}
+                        options={primaryResourceOptions}
+                      />
+                    </Field>
+                    {config.schedule.primaryResourceId != null && (
+                      <Field label="Banner label">
+                        <TextInput
+                          value={config.schedule.wayfindingLabel}
+                          onChange={(e) => patchSchedule({ wayfindingLabel: e.target.value })}
+                        />
+                      </Field>
+                    )}
+                  </>
+                )}
                 <Toggle label="Show event notes" checked={config.schedule.showNotes} onChange={(v) => patchSchedule({ showNotes: v })} />
                 {config.schedule.showNotes && (
                   <div className="ml-3 space-y-2 border-l-2 border-gray-100 pl-3">
@@ -777,6 +858,62 @@ export default function MonitorEditor({
             >
               <Plus size={14} /> Add ad placement
             </button>
+          </SectionCard>
+
+          <SectionCard
+            title="Ticker"
+            subtitle="A scrolling text bar across the bottom of the screen — announcements, not ads."
+            collapsible
+            defaultOpen={false}
+            summary={summaries.ticker}
+            warning={config.ticker.enabled && config.ticker.messages.length === 0}
+          >
+            <Toggle label="Show ticker" checked={config.ticker.enabled} onChange={(v) => patchTicker({ enabled: v })} />
+            {config.ticker.enabled && (
+              <>
+                <Field label="Label" hint='Short leading chip, e.g. "UPDATES".'>
+                  <TextInput value={config.ticker.label} onChange={(e) => patchTicker({ label: e.target.value })} />
+                </Field>
+                <Field label="Messages" hint="Up to 20 — they scroll together, separated by a bullet.">
+                  <div className="flex flex-wrap gap-2">
+                    {config.ticker.messages.map((msg, i) => (
+                      <span key={i} className="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm">
+                        {msg}
+                        <button
+                          onClick={() => patchTicker({ messages: config.ticker.messages.filter((_, idx) => idx !== i) })}
+                          className="text-gray-400 hover:text-red-500"
+                          aria-label={`Remove message ${i + 1}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <TextInput
+                      value={tickerMessageInput}
+                      onChange={(e) => setTickerMessageInput(e.target.value)}
+                      placeholder="e.g. Open skate 6-8pm tonight"
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTickerMessage(); } }}
+                    />
+                    <button onClick={addTickerMessage} className="rounded-lg border border-gray-300 px-3 text-sm hover:bg-gray-50">
+                      Add
+                    </button>
+                  </div>
+                </Field>
+                <Field label={`Scroll speed: ${config.ticker.scrollSpeed}`}>
+                  <input
+                    type="range"
+                    min={1}
+                    max={5}
+                    step={1}
+                    value={config.ticker.scrollSpeed}
+                    onChange={(e) => patchTicker({ scrollSpeed: Number(e.target.value) })}
+                    className="w-full accent-toca-navy"
+                  />
+                </Field>
+              </>
+            )}
           </SectionCard>
 
           <SectionCard title="Design" collapsible defaultOpen={false} summary={summaries.design}>

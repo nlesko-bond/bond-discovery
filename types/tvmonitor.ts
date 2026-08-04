@@ -45,6 +45,12 @@ export interface TvMonitorQrConfig {
   label: string;
 }
 
+export interface TvMonitorWeatherConfig {
+  enabled: boolean;
+  /** City/ZIP text, e.g. "Elk Grove Village, IL" or "60007" — geocoded via Open-Meteo. */
+  location: string | null;
+}
+
 /**
  * 'inline'   — logo + title on the left, sponsor center, QRs + clock right.
  * 'centered' — sponsor + QRs left, big clock/date center, logo right;
@@ -68,6 +74,7 @@ export interface TvMonitorHeaderBlock {
   waiverQr: TvMonitorQrConfig;
   /** Optional sponsor ad slot rendered inside the header bar. */
   sponsorAdId: string | null;
+  weather: TvMonitorWeatherConfig;
 }
 
 /**
@@ -79,11 +86,23 @@ export interface TvMonitorHeaderBlock {
  */
 export type TvMonitorScheduleViewMode = 'columns' | 'feed';
 
+/** 'cards' — bordered event cards (default). 'plain' — centered stacked text, no card chrome. */
+export type TvMonitorScheduleCardStyle = 'cards' | 'plain';
+
 export interface TvMonitorScheduleBlock {
   enabled: boolean;
   viewMode: TvMonitorScheduleViewMode;
   /** Bond space/resource IDs to display — one column per resource in 'columns' view. */
   resourceIds: number[];
+  /**
+   * Highlights one resource column as "you are here" with a wayfinding
+   * banner above it and muted styling on the others. 'columns' view only —
+   * the concept doesn't apply once resources are merged into one feed.
+   */
+  primaryResourceId: number | null;
+  /** Label on the wayfinding banner, e.g. "YOU ARE HERE". */
+  wayfindingLabel: string;
+  cardStyle: TvMonitorScheduleCardStyle;
   /** How many hours ahead of now to pull slots for (1–24). */
   futureHoursLimit: number;
   showNotes: boolean;
@@ -141,6 +160,16 @@ export interface TvMonitorAdSlot {
   assets: TvMonitorAdAsset[];
 }
 
+/** Scrolling text bar at the bottom of the screen — distinct from image/video ad banners. */
+export interface TvMonitorTickerBlock {
+  enabled: boolean;
+  /** Short leading chip, e.g. "UPDATES". */
+  label: string;
+  messages: string[];
+  /** 1 (slow) – 5 (fast). */
+  scrollSpeed: number;
+}
+
 export interface TvMonitorConfig {
   template: TvMonitorTemplateKey;
   screenRatio: TvMonitorScreenRatio;
@@ -148,6 +177,7 @@ export interface TvMonitorConfig {
   header: TvMonitorHeaderBlock;
   schedule: TvMonitorScheduleBlock;
   ads: TvMonitorAdSlot[];
+  ticker: TvMonitorTickerBlock;
   /** How often the TV re-polls /api/tvmonitor/{slug}/schedule (seconds, min 30). */
   refreshSeconds: number;
 }
@@ -211,5 +241,21 @@ export interface TvMonitorSchedulePayload {
   facilityId: number;
   facilityName: string;
   spaces: TvMonitorSpace[];
+  fetchedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Weather (Open-Meteo geocode + forecast), normalized for the header chip
+// ---------------------------------------------------------------------------
+
+export interface TvMonitorWeatherPayload {
+  /** Resolved place name from geocoding, e.g. "Elk Grove Village, IL, US". */
+  location: string;
+  temperatureF: number;
+  weatherCode: number;
+  /** Short human label for the weather code, e.g. "Partly cloudy". */
+  condition: string;
+  /** Emoji icon for the weather code. */
+  icon: string;
   fetchedAt: string;
 }

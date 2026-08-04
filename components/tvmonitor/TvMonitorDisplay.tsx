@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import TvMonitorScreen from '@/components/tvmonitor/TvMonitorScreen';
-import type { TvMonitorConfig, TvMonitorSchedulePayload } from '@/types/tvmonitor';
+import type { TvMonitorConfig, TvMonitorSchedulePayload, TvMonitorWeatherPayload } from '@/types/tvmonitor';
 
 // Hard reload daily so long-running lobby TVs never accumulate leaks —
 // the safety net behind the build-aware reload below.
@@ -23,13 +23,16 @@ export default function TvMonitorDisplay({
   slug,
   initialConfig,
   initialSchedule,
+  initialWeather = null,
 }: {
   slug: string;
   initialConfig: TvMonitorConfig;
   initialSchedule: TvMonitorSchedulePayload | null;
+  initialWeather?: TvMonitorWeatherPayload | null;
 }) {
   const [config, setConfig] = useState(initialConfig);
   const [schedule, setSchedule] = useState(initialSchedule);
+  const [weather, setWeather] = useState(initialWeather);
   const refreshSecondsRef = useRef(initialConfig.refreshSeconds);
   refreshSecondsRef.current = config.refreshSeconds;
 
@@ -45,11 +48,13 @@ export default function TvMonitorDisplay({
           const data = (await res.json()) as {
             config?: TvMonitorConfig;
             schedule?: TvMonitorSchedulePayload;
+            weather?: TvMonitorWeatherPayload | null;
             buildId?: string;
           };
           if (!cancelled) {
             if (data.config) setConfig(data.config);
             if (data.schedule) setSchedule(data.schedule);
+            if ('weather' in data) setWeather(data.weather ?? null);
             // New deployment detected: reload within 0–90s (jittered).
             if (
               !reloadScheduled &&
@@ -81,5 +86,5 @@ export default function TvMonitorDisplay({
     };
   }, [slug]);
 
-  return <TvMonitorScreen config={config} schedule={schedule} />;
+  return <TvMonitorScreen config={config} schedule={schedule} weather={weather} />;
 }
