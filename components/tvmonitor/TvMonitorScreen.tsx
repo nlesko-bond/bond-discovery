@@ -255,9 +255,18 @@ export default function TvMonitorScreen({
           className={`flex shrink-0 flex-wrap items-center justify-between border-b ${compactColumns ? 'gap-4 px-5 py-3' : 'gap-6 px-8 py-4'}`}
           style={{ borderColor: 'var(--tv-card-border)' }}
         >
-          {/* Left: logo + title. flex-1 + min-w guarantee the title stays visible;
-              sponsor/clock zones size to content and wrap below if truly out of room. */}
+          {/* Left: logo + title, order controlled by logoPosition. flex-1 + min-w
+              guarantee the title stays visible; sponsor/clock zones size to
+              content and wrap below if truly out of room. */}
           <div className="flex min-w-0 flex-1 items-center gap-4" style={{ minWidth: '14rem' }}>
+            {header.logoPosition === 'right' && header.showTitle && (
+              <h1
+                className="truncate font-extrabold tracking-tight"
+                style={{ fontSize: header.titleSizePx }}
+              >
+                {header.title}
+              </h1>
+            )}
             {header.showLogo && header.logoUrl && (
               // eslint-disable-next-line @next/next/no-img-element -- partner logo, remote by design
               <img
@@ -275,8 +284,11 @@ export default function TvMonitorScreen({
                 Logo
               </div>
             )}
-            {header.showTitle && (
-              <h1 className={`truncate font-extrabold tracking-tight ${compactColumns ? 'text-2xl' : 'text-4xl'}`}>
+            {header.logoPosition === 'left' && header.showTitle && (
+              <h1
+                className="truncate font-extrabold tracking-tight"
+                style={{ fontSize: header.titleSizePx }}
+              >
                 {header.title}
               </h1>
             )}
@@ -313,8 +325,8 @@ export default function TvMonitorScreen({
         <main className="flex min-h-0 min-w-0 flex-1 flex-col px-8 py-4">
           {header.enabled && header.layout === 'centered' && header.showTitle && (
             <div
-              className={`mb-4 shrink-0 rounded px-4 py-2 text-center font-extrabold uppercase tracking-wide ${compactColumns ? 'text-3xl' : 'text-4xl'}`}
-              style={{ background: 'var(--tv-accent)', color: 'var(--tv-font-color)' }}
+              className="mb-4 shrink-0 rounded px-4 py-2 text-center font-extrabold uppercase tracking-wide"
+              style={{ background: 'var(--tv-accent)', color: 'var(--tv-font-color)', fontSize: header.titleSizePx }}
             >
               {header.title}
             </div>
