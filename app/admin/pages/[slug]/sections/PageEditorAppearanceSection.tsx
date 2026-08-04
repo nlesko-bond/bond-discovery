@@ -816,6 +816,29 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
                 </div>
               </div>
 
+              <div>
+                <label className="label">Expand button label</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="More info"
+                  value={config.features.portalRowMoreInfoLabel ?? ''}
+                  onChange={(event) =>
+                    setConfig({
+                      ...config,
+                      features: {
+                        ...config.features,
+                        portalRowMoreInfoLabel: event.target.value || undefined,
+                      },
+                    })
+                  }
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Text for the row&apos;s expand control (e.g. &quot;Schedule&quot;). Defaults to
+                  &quot;More info&quot;.
+                </p>
+              </div>
+
               <div className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Expand panel options

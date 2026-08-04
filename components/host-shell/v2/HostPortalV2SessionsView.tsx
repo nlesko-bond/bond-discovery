@@ -580,7 +580,8 @@ function HostPortalV2SessionRow({
   );
   const toggleSegments = () => onSegmentsOpenChange(!segmentsOpen);
   const layoutMode = usePortalV2RowLayoutMode();
-  const combinedExpandLabel = COMBINED_EXPAND_LABEL;
+  const combinedExpandLabel =
+    config.features.portalRowMoreInfoLabel?.trim() || COMBINED_EXPAND_LABEL;
 
   useEffect(() => {
     notifyPortalEmbedContentChange();
@@ -714,7 +715,7 @@ function HostPortalV2SessionRow({
           toggleSegments();
         }}
       >
-        More info
+        {combinedExpandLabel}
       </button>
     ) : null;
 
@@ -723,7 +724,7 @@ function HostPortalV2SessionRow({
         role: 'button' as const,
         tabIndex: 0,
         'aria-expanded': segmentsOpen,
-        'aria-label': `${sessionTitle}. ${combinedActions ? combinedExpandLabel : 'More info'}`,
+        'aria-label': `${sessionTitle}. ${combinedExpandLabel}`,
         onClick: toggleSegments,
         onKeyDown: (event: React.KeyboardEvent) => {
           if (event.key === 'Enter' || event.key === ' ') {

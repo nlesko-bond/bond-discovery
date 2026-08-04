@@ -85,6 +85,7 @@ export interface IPageConfig {
     portalRowColumns?: PortalRowColumn[];
     portalRowExpandMode?: PortalRowExpandMode;
     portalRowActionMode?: PortalRowActionMode;
+    portalRowMoreInfoLabel?: string;
     portalRowShowSegmentRegister?: boolean;
     portalRowShowSegmentSpots?: boolean;
     showTieredSessionPricing?: boolean;
