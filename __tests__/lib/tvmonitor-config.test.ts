@@ -114,6 +114,15 @@ describe('normalizeTvMonitorConfig', () => {
     expect(dropped.header.sponsorAdId).toBeNull();
   });
 
+  it('defaults titleSizePx and logoPosition, and clamps/validates them', () => {
+    expect(normalizeTvMonitorConfig({}).header.titleSizePx).toBe(40);
+    expect(normalizeTvMonitorConfig({}).header.logoPosition).toBe('left');
+    expect(normalizeTvMonitorConfig({ header: { titleSizePx: 500 } }).header.titleSizePx).toBe(96);
+    expect(normalizeTvMonitorConfig({ header: { titleSizePx: 2 } }).header.titleSizePx).toBe(16);
+    expect(normalizeTvMonitorConfig({ header: { logoPosition: 'right' } }).header.logoPosition).toBe('right');
+    expect(normalizeTvMonitorConfig({ header: { logoPosition: 'bogus' } }).header.logoPosition).toBe('left');
+  });
+
   it('defaults weather to disabled with no location', () => {
     const config = normalizeTvMonitorConfig({});
     expect(config.header.weather).toEqual({ enabled: false, location: null });

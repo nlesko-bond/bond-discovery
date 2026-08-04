@@ -66,8 +66,12 @@ export interface TvMonitorHeaderBlock {
   logoUrl: string | null;
   /** Rendered logo height in px (width scales to fit). */
   logoHeightPx: number;
+  /** 'inline' layout only — logo before or after the title text. */
+  logoPosition: 'left' | 'right';
   title: string;
   showTitle: boolean;
+  /** Rendered title font size in px. */
+  titleSizePx: number;
   showClock: boolean;
   showDate: boolean;
   scheduleQr: TvMonitorQrConfig;

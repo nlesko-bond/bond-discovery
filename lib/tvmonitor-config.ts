@@ -163,8 +163,10 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
       showLogo: asBool(header.showLogo, defaults.header.showLogo),
       logoUrl: asNullableString(header.logoUrl),
       logoHeightPx: asNumber(header.logoHeightPx, defaults.header.logoHeightPx, 32, 200),
+      logoPosition: header.logoPosition === 'right' ? 'right' : 'left',
       title: asString(header.title, defaults.header.title),
       showTitle: asBool(header.showTitle, defaults.header.showTitle),
+      titleSizePx: asNumber(header.titleSizePx, defaults.header.titleSizePx, 16, 96),
       showClock: asBool(header.showClock, defaults.header.showClock),
       showDate: asBool(header.showDate, defaults.header.showDate),
       scheduleQr: {

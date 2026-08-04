@@ -476,9 +476,22 @@ export default function MonitorEditor({
                 </Field>
                 <Toggle label="Show title" checked={config.header.showTitle} onChange={(v) => patchHeader({ showTitle: v })} />
                 {config.header.showTitle && (
-                  <Field label="Title">
-                    <TextInput value={config.header.title} onChange={(e) => patchHeader({ title: e.target.value })} />
-                  </Field>
+                  <>
+                    <Field label="Title">
+                      <TextInput value={config.header.title} onChange={(e) => patchHeader({ title: e.target.value })} />
+                    </Field>
+                    <Field label={`Title size: ${config.header.titleSizePx}px`}>
+                      <input
+                        type="range"
+                        min={16}
+                        max={96}
+                        step={2}
+                        value={config.header.titleSizePx}
+                        onChange={(e) => patchHeader({ titleSizePx: Number(e.target.value) })}
+                        className="w-full accent-toca-navy"
+                      />
+                    </Field>
+                  </>
                 )}
                 <Toggle label="Show logo" checked={config.header.showLogo} onChange={(v) => patchHeader({ showLogo: v })} />
                 {config.header.showLogo && (
@@ -502,6 +515,18 @@ export default function MonitorEditor({
                         className="w-full accent-toca-navy"
                       />
                     </Field>
+                    {config.header.layout === 'inline' && config.header.showTitle && (
+                      <Field label="Logo position" hint="Only applies with the Classic arrangement — where the logo sits relative to the title.">
+                        <Select
+                          value={config.header.logoPosition}
+                          onChange={(v) => patchHeader({ logoPosition: v as 'left' | 'right' })}
+                          options={[
+                            { value: 'left', label: 'Left of title' },
+                            { value: 'right', label: 'Right of title' },
+                          ]}
+                        />
+                      </Field>
+                    )}
                   </>
                 )}
                 <Toggle label="Show clock" checked={config.header.showClock} onChange={(v) => patchHeader({ showClock: v })} />
