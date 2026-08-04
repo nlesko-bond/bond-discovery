@@ -52,11 +52,37 @@ Building blocks inside `config`:
 
 | Block | Settings |
 |---|---|
-| `header` | logo, title, live clock, date, schedule QR, waiver QR, optional sponsor ad slot |
-| `schedule` | **view** — `columns` (one column per resource) or `feed` (all resources merged into one full-width, chronologically-sorted scrolling list, each event tagged with its resource); resource (space) IDs — cap depends on view, see below; hours ahead (1–24), show notes / maintenance / private events + notes size/color/italic/bold, labels, auto-scroll (speed 1–5, pause; `columns` also has synchronized vs independent) |
+| `header` | logo, title, live clock, date, schedule QR, waiver QR, optional sponsor ad slot, optional weather chip (see below) |
+| `schedule` | **view** — `columns` (one column per resource) or `feed` (all resources merged into one full-width, chronologically-sorted scrolling list, each event tagged with its resource); resource (space) IDs — cap depends on view, see below; optional "you are here" wayfinding highlight (`columns` only, see below); card style — `cards` (default) or `plain`; hours ahead (1–24), show notes / maintenance / private events + notes size/color/italic/bold, labels, auto-scroll (speed 1–5, pause; `columns` also has synchronized vs independent) |
 | `ads[]` | fixed placements: left/right rail (optionally full screen height, header beside it), top/bottom banner, in-header; sized by pixels or % of screen; each rotates image/video assets by URL with per-asset duration. The builder shows each slot's rendered px + aspect ratio. JS ad tags are a planned future asset type. |
+| `ticker` | optional scrolling text bar across the bottom of the screen — a label chip + up to 20 plain-text messages, pure CSS marquee. Distinct from `ads[]`: text announcements, not image/video creative. |
 | `design` | dark/light presets, Google font, font/secondary/accent colors, background gradient (color 1 → color 2), optional background image with adjustable color-overlay strength, card colors |
 | `screenRatio` | `fill` (default) or 16:9 / 4:3 / 21:9 / 9:16 letterboxed |
+
+**Weather** (`header.weather`): a free-text city/ZIP `location` field, geocoded and
+forecast via [Open-Meteo](https://open-meteo.com) — a free, keyless public API
+(`lib/tvmonitor-weather.ts`). Renders as an icon + °F chip next to the clock in
+both header layouts. Fetched server-side (schedule route + SSR page + builder
+preview route), cached 15 min with a 6h stale shadow via `cachedSWR`, same
+pattern as the Bond schedule fetch. Weather is decorative, not load-bearing:
+`getTvMonitorWeather()` swallows any failure (bad location text, Open-Meteo
+outage) and returns `null` rather than throwing, so a bad ZIP can never take
+down the schedule response the rest of the page depends on — it just hides
+the chip.
+
+**Wayfinding banner** (`schedule.primaryResourceId` / `wayfindingLabel`,
+`columns` view only): highlights one resource column as "you are here" — a
+banner with a downward-pointing triangle above the chosen column, other
+columns rendered muted (lower opacity + partial desaturation). Only applies
+with more than one column; `normalizeTvMonitorConfig` clears the pointer if it
+doesn't resolve to one of the page's current `resourceIds` (same "keep the
+pointer only if the target still exists" pattern as `header.sponsorAdId`).
+
+**Card style** (`schedule.cardStyle`): `cards` (default) keeps the existing
+bordered/background event cards. `plain` renders centered, stacked text with
+no card chrome — separated by a hairline divider instead of a box — for
+boards that want a cleaner, more sign-like look. Applies to both `columns`
+and `feed` views.
 
 Templates (`lib/tvmonitor-templates.ts`): **Classic Board** (no ads),
 **Sponsor Spotlight** (left rail + header sponsor), **Promo Banner** (light theme +
@@ -146,5 +172,5 @@ uploads are namespaced by org (`org-{id}/…`).
   `next.config.js`.
 - No cron: the request-path `cachedSWR` (60s ttl / 30min stale) is the freshness
   mechanism, sized for always-on TVs.
-- Tests: `__tests__/lib/tvmonitor-config.test.ts`,
+- Tests: `__tests__/lib/tvmonitor-config.test.ts`, `__tests__/lib/tvmonitor-weather.test.ts`,
   `__tests__/lib/tvmonitor-access.test.ts`, `__tests__/api/tvmonitor-routes.test.ts`.

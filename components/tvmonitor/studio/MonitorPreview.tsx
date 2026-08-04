@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import TvMonitorScreen from '@/components/tvmonitor/TvMonitorScreen';
-import type { TvMonitorConfig, TvMonitorSchedulePayload } from '@/types/tvmonitor';
+import type { TvMonitorConfig, TvMonitorSchedulePayload, TvMonitorWeatherPayload } from '@/types/tvmonitor';
 
 /** Base render resolution per screen ratio; the preview scales it to fit. */
 export const BASE_SIZES: Record<string, { w: number; h: number }> = {
@@ -31,6 +31,7 @@ export default function MonitorPreview({
   const [containerWidth, setContainerWidth] = useState(0);
   const [schedule, setSchedule] = useState<TvMonitorSchedulePayload | null>(null);
   const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [weather, setWeather] = useState<TvMonitorWeatherPayload | null>(null);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -78,6 +79,30 @@ export default function MonitorPreview({
     };
   }, [organizationId, facilityId, resourceKey, hours]);
 
+  const weatherLocation = config.header.weather.enabled ? config.header.weather.location : null;
+
+  useEffect(() => {
+    if (!weatherLocation) {
+      setWeather(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ location: weatherLocation });
+        const res = await fetch(`/api/tvmonitor/preview-weather?${params}`, { cache: 'no-store' });
+        const data = await res.json();
+        if (!cancelled && res.ok) setWeather(data.weather ?? null);
+      } catch {
+        // Weather is decorative in the preview too — a failed lookup just hides the chip.
+      }
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [weatherLocation]);
+
   const base = BASE_SIZES[config.screenRatio] ?? BASE_SIZES.fill;
   const scale = containerWidth > 0 ? containerWidth / base.w : 0;
 
@@ -97,7 +122,7 @@ export default function MonitorPreview({
               transformOrigin: 'top left',
             }}
           >
-            <TvMonitorScreen config={config} schedule={schedule} previewMode />
+            <TvMonitorScreen config={config} schedule={schedule} weather={weather} previewMode />
           </div>
         )}
       </div>

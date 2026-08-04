@@ -75,6 +75,7 @@ export default function TvScheduleFeed({
   const eventNameSize = compact ? 'text-xl' : 'text-2xl';
   const notesSize =
     settings.notesSize === 'large' ? 'text-2xl' : settings.notesSize === 'medium' ? 'text-lg' : 'text-sm';
+  const plain = settings.cardStyle === 'plain';
 
   const renderFeed = () =>
     feedItems.length === 0 ? (
@@ -93,11 +94,12 @@ export default function TvScheduleFeed({
         return (
           <div
             key={event.slotId}
-            className="mb-4 flex gap-4 rounded-xl border p-4"
-            style={{
-              background: 'var(--tv-card-bg)',
-              borderColor: live ? 'var(--tv-accent)' : 'var(--tv-card-border)',
-            }}
+            className={plain ? 'mb-5 flex gap-4 border-b pb-4 last:border-b-0' : 'mb-4 flex gap-4 rounded-xl border p-4'}
+            style={
+              plain
+                ? { borderColor: 'var(--tv-card-border)' }
+                : { background: 'var(--tv-card-bg)', borderColor: live ? 'var(--tv-accent)' : 'var(--tv-card-border)' }
+            }
           >
             {/* Color-coded resource strip — first of the two location cues. */}
             <div className="w-1.5 shrink-0 rounded-full" style={{ background: event.spaceColor }} />
@@ -164,7 +166,7 @@ export default function TvScheduleFeed({
                   <div
                     key={child.slotId}
                     className="mt-3 flex items-stretch gap-2 rounded-lg"
-                    style={childIsMaintenance ? { background: 'var(--tv-card-bg)' } : undefined}
+                    style={childIsMaintenance && !plain ? { background: 'var(--tv-card-bg)' } : undefined}
                   >
                     <div className="w-1 rounded" style={{ background: 'var(--tv-accent)' }} />
                     <div className="flex-1 py-1">

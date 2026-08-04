@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import TvMonitorDisplay from '@/components/tvmonitor/TvMonitorDisplay';
 import { getTvMonitorPageBySlug } from '@/lib/tvmonitor-config';
 import { getTvMonitorSchedule } from '@/lib/tvmonitor-schedule';
+import { getTvMonitorWeather } from '@/lib/tvmonitor-weather';
 import type { TvMonitorSchedulePayload } from '@/types/tvmonitor';
 
 export const dynamic = 'force-dynamic';
@@ -35,5 +36,15 @@ export default async function TvMonitorPage({ params }: { params: { slug: string
     console.error('[TvMonitor] initial schedule fetch failed:', error);
   }
 
-  return <TvMonitorDisplay slug={page.slug} initialConfig={page.config} initialSchedule={initialSchedule} />;
+  const { weather } = page.config.header;
+  const initialWeather = weather.enabled && weather.location ? await getTvMonitorWeather(weather.location) : null;
+
+  return (
+    <TvMonitorDisplay
+      slug={page.slug}
+      initialConfig={page.config}
+      initialSchedule={initialSchedule}
+      initialWeather={initialWeather}
+    />
+  );
 }

@@ -92,11 +92,15 @@ function baseConfig(): TvMonitorConfig {
       scheduleQr: { enabled: false, url: null, label: 'Full schedule' },
       waiverQr: { enabled: false, url: null, label: 'Scan for waiver' },
       sponsorAdId: null,
+      weather: { enabled: false, location: null },
     },
     schedule: {
       enabled: true,
       viewMode: 'columns',
       resourceIds: [],
+      primaryResourceId: null,
+      wayfindingLabel: 'YOU ARE HERE',
+      cardStyle: 'cards',
       futureHoursLimit: 9,
       showNotes: true,
       notesSize: 'medium',
@@ -113,6 +117,7 @@ function baseConfig(): TvMonitorConfig {
       scrollPauseSeconds: 3,
     },
     ads: [],
+    ticker: { enabled: false, label: 'UPDATES', messages: [], scrollSpeed: 3 },
     refreshSeconds: 60,
   };
 }

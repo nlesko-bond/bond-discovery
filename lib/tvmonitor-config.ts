@@ -116,14 +116,28 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
     header.scheduleQr && typeof header.scheduleQr === 'object' ? (header.scheduleQr as Record<string, unknown>) : {};
   const waiverQr =
     header.waiverQr && typeof header.waiverQr === 'object' ? (header.waiverQr as Record<string, unknown>) : {};
+  const weather =
+    header.weather && typeof header.weather === 'object' ? (header.weather as Record<string, unknown>) : {};
 
   const schedule = rec.schedule && typeof rec.schedule === 'object' ? (rec.schedule as Record<string, unknown>) : {};
   const scheduleViewMode: 'columns' | 'feed' = schedule.viewMode === 'feed' ? 'feed' : 'columns';
+  const scheduleResourceIds = asIdArray(schedule.resourceIds).slice(0, resourceIdCapFor(scheduleViewMode));
+  // Only keep the "you are here" pointer if it's actually one of the resources on screen.
+  const primaryResourceIdRaw = Number(schedule.primaryResourceId);
+  const primaryResourceId =
+    Number.isFinite(primaryResourceIdRaw) && scheduleResourceIds.includes(primaryResourceIdRaw)
+      ? primaryResourceIdRaw
+      : null;
 
   const rawAds = Array.isArray(rec.ads) ? rec.ads : defaults.ads;
   const ads = rawAds.map((slot, i) => normalizeAdSlot(slot, i)).filter((slot): slot is TvMonitorAdSlot => slot !== null);
 
   const sponsorAdId = asNullableString(header.sponsorAdId);
+
+  const ticker = rec.ticker && typeof rec.ticker === 'object' ? (rec.ticker as Record<string, unknown>) : {};
+  const tickerMessages = Array.isArray(ticker.messages)
+    ? ticker.messages.filter((m): m is string => typeof m === 'string' && m.trim().length > 0).slice(0, 20)
+    : defaults.ticker.messages;
 
   return {
     template,
@@ -165,6 +179,10 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
       },
       // Keep the pointer only if the slot actually exists.
       sponsorAdId: sponsorAdId && ads.some((slot) => slot.id === sponsorAdId) ? sponsorAdId : null,
+      weather: {
+        enabled: asBool(weather.enabled, defaults.header.weather.enabled),
+        location: asNullableString(weather.location),
+      },
     },
     schedule: {
       enabled: asBool(schedule.enabled, defaults.schedule.enabled),
@@ -175,7 +193,10 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
       // saving 36 IDs in feed mode against the old single cap of 12 quietly
       // dropped 24 of them with no signal to the person editing), so the
       // studio warns before save whenever it would truncate — see MonitorEditor.
-      resourceIds: asIdArray(schedule.resourceIds).slice(0, resourceIdCapFor(scheduleViewMode)),
+      resourceIds: scheduleResourceIds,
+      primaryResourceId,
+      wayfindingLabel: asString(schedule.wayfindingLabel, defaults.schedule.wayfindingLabel),
+      cardStyle: schedule.cardStyle === 'plain' ? 'plain' : 'cards',
       futureHoursLimit: asNumber(schedule.futureHoursLimit, defaults.schedule.futureHoursLimit, 1, 24),
       showNotes: asBool(schedule.showNotes, defaults.schedule.showNotes),
       notesSize:
@@ -195,6 +216,12 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
       scrollPauseSeconds: asNumber(schedule.scrollPauseSeconds, defaults.schedule.scrollPauseSeconds, 0, 30),
     },
     ads,
+    ticker: {
+      enabled: asBool(ticker.enabled, defaults.ticker.enabled),
+      label: asString(ticker.label, defaults.ticker.label),
+      messages: tickerMessages,
+      scrollSpeed: asNumber(ticker.scrollSpeed, defaults.ticker.scrollSpeed, 1, 5),
+    },
     refreshSeconds: asNumber(rec.refreshSeconds, defaults.refreshSeconds, MIN_TV_REFRESH_SECONDS, 3600),
   };
 }
