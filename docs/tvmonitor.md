@@ -94,7 +94,19 @@ and the studio) has a Duplicate action per row (`duplicateTvMonitorPage()` in
 the full config verbatim into a **new, inactive** page — inactive so a duplicate is a
 safe starting point to edit, not an instant second live board on the same resources —
 and opens straight into its editor. The slug is derived from the new name and
-disambiguated with `-2`, `-3`, ... on collision.
+disambiguated with `-2`, `-3`, ... on collision — the editor's **URL name**
+field (see below) lets you rename it to whatever the duplicate is actually for.
+
+**Editing the slug**: the Page section has an editable **URL name** field (not
+just at creation/duplicate time — any page, including a live one, can be
+renamed). `updateTvMonitorPage()` re-validates and re-disambiguates it exactly
+like creation. Renaming a live page is deliberately *not* blocked — an admin
+or studio user may need to fix a typo or rename post-launch — but the editor
+shows a red/amber warning banner (red when the page `is_active`) as soon as
+the field differs from the saved value: the old address 404s immediately for
+anyone holding it (a link, QR code, or bookmark), since there is no redirect
+or alias. Saving a slug change also client-side redirects the browser to the
+new editor URL, since the route itself is keyed by slug.
 
 **Schedule view — columns vs feed**: `TvMonitorScreen` picks the renderer from
 `config.schedule.viewMode`.

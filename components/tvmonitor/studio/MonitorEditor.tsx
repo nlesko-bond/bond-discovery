@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Copy, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import MonitorPreview, { BASE_SIZES } from '@/components/tvmonitor/studio/MonitorPreview';
 import MediaInput from '@/components/tvmonitor/studio/MediaInput';
@@ -142,9 +143,11 @@ export default function MonitorEditor({
   apiBase: string;
   backHref: string;
 }) {
+  const router = useRouter();
   const [page, setPage] = useState(initialPage);
   const [config, setConfig] = useState<TvMonitorConfig>(initialPage.config);
   const [name, setName] = useState(initialPage.name);
+  const [slug, setSlug] = useState(initialPage.slug);
   const [isActive, setIsActive] = useState(initialPage.is_active);
   const [facilityId, setFacilityId] = useState(initialPage.facility_id);
   const [saveState, setSaveState] = useState<SaveState>('clean');
@@ -186,18 +189,26 @@ export default function MonitorEditor({
   async function handleSave() {
     setSaveState('saving');
     setErrorMessage(null);
+    const previousSlug = page.slug;
     try {
       const res = await fetch(`${apiBase}/${page.slug}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, is_active: isActive, facility_id: facilityId, config }),
+        body: JSON.stringify({ name, slug, is_active: isActive, facility_id: facilityId, config }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed');
       setPage(data.page);
       setConfig(data.page.config);
+      setSlug(data.page.slug);
       setSaveState('saved');
       setTimeout(() => setSaveState((s) => (s === 'saved' ? 'clean' : s)), 2000);
+      // The URL name just changed — this route is keyed by slug, so jump to
+      // the new address (replace, not push: the old URL is dead, no reason
+      // to leave it in back-button history).
+      if (data.page.slug !== previousSlug) {
+        router.replace(`${backHref}/${data.page.slug}`);
+      }
     } catch (error) {
       setSaveState('error');
       setErrorMessage(error instanceof Error ? error.message : 'Save failed');
@@ -375,6 +386,25 @@ export default function MonitorEditor({
             <Field label="Name">
               <TextInput value={name} onChange={(e) => { setName(e.target.value); setSaveState('dirty'); }} />
             </Field>
+            <Field label="URL name (slug)" hint={`Becomes the live address: …/tvmonitor/${slug || '…'}`}>
+              <TextInput
+                value={slug}
+                onChange={(e) => { setSlug(e.target.value); setSaveState('dirty'); }}
+                placeholder="e.g. elk-grove-east-rink"
+              />
+            </Field>
+            {slug !== page.slug && (
+              <p
+                className={`rounded-md px-3 py-2 text-xs font-medium ${
+                  isActive ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-800'
+                }`}
+              >
+                ⚠️ Changing the URL breaks any existing link, QR code, or bookmark pointed at{' '}
+                <code className="rounded bg-black/5 px-1">/tvmonitor/{page.slug}</code> — anyone still using the old
+                address will hit a 404. {isActive && 'This page is live right now. '}Only save this change if you're
+                100% sure nobody needs the old link anymore.
+              </p>
+            )}
             <Field label="Page URL" hint="Share this URL — open it fullscreen on the TV's browser.">
               <div className="flex gap-2">
                 <TextInput value={fullLiveUrl} readOnly />
