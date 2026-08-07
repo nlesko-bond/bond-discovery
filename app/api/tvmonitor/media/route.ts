@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { requireAdmin } from '@/lib/admin-auth';
 import { requireStudioSession, TV_STUDIO_COOKIE_NAME } from '@/lib/tvmonitor-access';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { formatBytesLimit, MAX_TV_IMAGE_BYTES, MAX_TV_VIDEO_BYTES } from '@/lib/cloudinaryUpload';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,8 +11,9 @@ const BUCKET = 'tvmonitor-media';
 
 const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']);
 const VIDEO_TYPES = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
-const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
-const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // matches the bucket's file_size_limit
+/** Prefer Cloudinary for images; this route remains for videos (and legacy). */
+const MAX_IMAGE_BYTES = MAX_TV_IMAGE_BYTES;
+const MAX_VIDEO_BYTES = MAX_TV_VIDEO_BYTES;
 
 /**
  * Issues a signed Supabase Storage upload URL so the browser uploads media
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
     const maxBytes = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
     if (sizeBytes <= 0 || sizeBytes > maxBytes) {
       return NextResponse.json(
-        { error: `File too large — max ${Math.round(maxBytes / 1024 / 1024)} MB for ${isVideo ? 'videos' : 'images'}.` },
+        { error: `File too large — max ${formatBytesLimit(maxBytes)} for ${isVideo ? 'videos' : 'images'}.` },
         { status: 400 },
       );
     }

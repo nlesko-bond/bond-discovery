@@ -3,16 +3,24 @@
 import { useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
 import { TextInput } from '@/components/tvmonitor/studio/fields';
+import {
+  formatBytesLimit,
+  MAX_TV_IMAGE_BYTES,
+  MAX_TV_VIDEO_BYTES,
+  uploadImageToCloudinary,
+} from '@/lib/cloudinaryUpload';
 
 const ACCEPT = {
   image: 'image/jpeg,image/png,image/webp,image/gif,image/svg+xml',
   media: 'image/jpeg,image/png,image/webp,image/gif,image/svg+xml,video/mp4,video/webm,video/quicktime',
 } as const;
 
+const IMAGE_MIME_PREFIX = 'image/';
+const CLOUDINARY_TV_FOLDER = 'facility-schedule/tvmonitor';
+
 /**
- * URL field with a direct-to-storage upload button. Files go straight from
- * the browser to Supabase Storage via a signed URL from /api/tvmonitor/media,
- * so uploads aren't capped by the serverless request-body limit.
+ * URL field with upload. Images go to Bond Cloudinary (egress off Supabase).
+ * Videos still use signed Supabase Storage uploads via /api/tvmonitor/media.
  */
 export default function MediaInput({
   value,
@@ -34,6 +42,20 @@ export default function MediaInput({
     setUploading(true);
     setError(null);
     try {
+      const isImage = file.type.startsWith(IMAGE_MIME_PREFIX);
+      if (isImage) {
+        if (file.size > MAX_TV_IMAGE_BYTES) {
+          throw new Error(`Image too large — max ${formatBytesLimit(MAX_TV_IMAGE_BYTES)}.`);
+        }
+        const url = await uploadImageToCloudinary(file, CLOUDINARY_TV_FOLDER);
+        onChange(url, 'image');
+        return;
+      }
+
+      if (file.size > MAX_TV_VIDEO_BYTES) {
+        throw new Error(`Video too large — max ${formatBytesLimit(MAX_TV_VIDEO_BYTES)}.`);
+      }
+
       const signRes = await fetch('/api/tvmonitor/media', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
