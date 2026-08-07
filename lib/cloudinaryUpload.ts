@@ -8,13 +8,19 @@ const BYTES_PER_MB = 1024 * 1024;
 
 export const MAX_SCHEDULE_LOGO_BYTES = 500 * BYTES_PER_KB;
 export const MAX_TV_IMAGE_BYTES = Math.round(1.5 * BYTES_PER_MB);
-export const MAX_TV_VIDEO_BYTES = 15 * BYTES_PER_MB;
+export const MAX_TV_VIDEO_BYTES = 5 * BYTES_PER_MB;
 
 const DEFAULT_CLOUDINARY_IMAGE_UPLOAD_URL =
   'https://api.cloudinary.com/v1_1/rcenter/image/upload?upload_preset=tm4almj6';
+const DEFAULT_CLOUDINARY_VIDEO_UPLOAD_URL =
+  'https://api.cloudinary.com/v1_1/rcenter/video/upload?upload_preset=tm4almj6';
 
 export function getCloudinaryImageUploadUrl(): string {
   return process.env.NEXT_PUBLIC_CLOUDINARY_IMAGE_UPLOAD_URL || DEFAULT_CLOUDINARY_IMAGE_UPLOAD_URL;
+}
+
+export function getCloudinaryVideoUploadUrl(): string {
+  return process.env.NEXT_PUBLIC_CLOUDINARY_VIDEO_UPLOAD_URL || DEFAULT_CLOUDINARY_VIDEO_UPLOAD_URL;
 }
 
 interface ICloudinaryUploadResponse {
@@ -27,11 +33,22 @@ interface ICloudinaryUploadResponse {
  * Uploads an image to Bond Cloudinary via the unsigned `tm4almj6` preset.
  */
 export async function uploadImageToCloudinary(file: File, folder: string): Promise<string> {
+  return uploadToCloudinary(file, folder, getCloudinaryImageUploadUrl());
+}
+
+/**
+ * Uploads a video to Bond Cloudinary via the unsigned `tm4almj6` preset.
+ */
+export async function uploadVideoToCloudinary(file: File, folder: string): Promise<string> {
+  return uploadToCloudinary(file, folder, getCloudinaryVideoUploadUrl());
+}
+
+async function uploadToCloudinary(file: File, folder: string, uploadUrl: string): Promise<string> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('folder', folder);
 
-  const response = await fetch(getCloudinaryImageUploadUrl(), {
+  const response = await fetch(uploadUrl, {
     method: 'POST',
     body: formData,
   });

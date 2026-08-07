@@ -11,7 +11,7 @@ const BUCKET = 'tvmonitor-media';
 
 const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']);
 const VIDEO_TYPES = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
-/** Prefer Cloudinary for images; this route remains for videos (and legacy). */
+/** Legacy Supabase upload fallback; the current studio uploads media to Cloudinary. */
 const MAX_IMAGE_BYTES = MAX_TV_IMAGE_BYTES;
 const MAX_VIDEO_BYTES = MAX_TV_VIDEO_BYTES;
 

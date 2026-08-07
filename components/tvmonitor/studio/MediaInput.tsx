@@ -8,6 +8,7 @@ import {
   MAX_TV_IMAGE_BYTES,
   MAX_TV_VIDEO_BYTES,
   uploadImageToCloudinary,
+  uploadVideoToCloudinary,
 } from '@/lib/cloudinaryUpload';
 
 const ACCEPT = {
@@ -19,8 +20,7 @@ const IMAGE_MIME_PREFIX = 'image/';
 const CLOUDINARY_TV_FOLDER = 'facility-schedule/tvmonitor';
 
 /**
- * URL field with upload. Images go to Bond Cloudinary (egress off Supabase).
- * Videos still use signed Supabase Storage uploads via /api/tvmonitor/media.
+ * URL field with image and video uploads to Bond Cloudinary.
  */
 export default function MediaInput({
   value,
@@ -56,22 +56,8 @@ export default function MediaInput({
         throw new Error(`Video too large — max ${formatBytesLimit(MAX_TV_VIDEO_BYTES)}.`);
       }
 
-      const signRes = await fetch('/api/tvmonitor/media', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.name, contentType: file.type, sizeBytes: file.size }),
-      });
-      const sign = await signRes.json();
-      if (!signRes.ok) throw new Error(sign.error || 'Upload failed');
-
-      const putRes = await fetch(sign.uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': file.type },
-        body: file,
-      });
-      if (!putRes.ok) throw new Error('Upload failed — please try again');
-
-      onChange(sign.publicUrl, sign.kind === 'video' ? 'video' : 'image');
+      const url = await uploadVideoToCloudinary(file, CLOUDINARY_TV_FOLDER);
+      onChange(url, 'video');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {

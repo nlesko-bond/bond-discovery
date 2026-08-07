@@ -1,5 +1,4 @@
--- Tighten TV monitor media bucket upload cap to match app limits (15 MB videos).
--- Images are preferred via Cloudinary going forward; videos remain on Supabase.
+-- Retain a small legacy Supabase upload cap; new images and videos use Cloudinary.
 UPDATE storage.buckets
-SET file_size_limit = 15728640
+SET file_size_limit = 5242880
 WHERE id = 'tvmonitor-media';
