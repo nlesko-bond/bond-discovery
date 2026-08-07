@@ -108,6 +108,17 @@ anyone holding it (a link, QR code, or bookmark), since there is no redirect
 or alias. Saving a slug change also client-side redirects the browser to the
 new editor URL, since the route itself is keyed by slug.
 
+**Editing the organization** (Bond admin only): the Data source section has an
+editable **Organization ID** field, gated by `allowOrgChange` (passed `true`
+only from `/admin/tvmonitor/[slug]`, never from the external studio route —
+studio users stay org-locked and cannot re-home a page, enforced server-side
+too: the studio PATCH route strips `organization_id` from the request body
+regardless of what the client sends). Facility IDs and resource/space IDs
+only mean something within their own org, so changing it immediately clears
+Facility ID and the resource list client-side and shows a warning — forcing a
+conscious re-pick rather than silently saving a page pointed at another org's
+(possibly nonexistent, possibly someone else's) facility/resources.
+
 **Schedule view — columns vs feed**: `TvMonitorScreen` picks the renderer from
 `config.schedule.viewMode`.
 - `columns` (`components/tvmonitor/TvScheduleGrid.tsx`, default) — one column per
