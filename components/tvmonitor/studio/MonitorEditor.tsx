@@ -138,10 +138,13 @@ export default function MonitorEditor({
   page: initialPage,
   apiBase,
   backHref,
+  allowOrgChange = false,
 }: {
   page: ITvMonitorPage;
   apiBase: string;
   backHref: string;
+  /** Bond admin only — studio users stay org-locked (cannot re-home a page). */
+  allowOrgChange?: boolean;
 }) {
   const router = useRouter();
   const [page, setPage] = useState(initialPage);
@@ -149,6 +152,7 @@ export default function MonitorEditor({
   const [name, setName] = useState(initialPage.name);
   const [slug, setSlug] = useState(initialPage.slug);
   const [isActive, setIsActive] = useState(initialPage.is_active);
+  const [organizationId, setOrganizationId] = useState(initialPage.organization_id);
   const [facilityId, setFacilityId] = useState(initialPage.facility_id);
   const [saveState, setSaveState] = useState<SaveState>('clean');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -186,6 +190,18 @@ export default function MonitorEditor({
     patchConfig({ ticker: { ...config.ticker, ...updates } });
   }
 
+  // Facility IDs and resource/space IDs only mean something within their own
+  // org — carrying them over to a different org would silently point the
+  // page at facilities/resources that don't exist there (or worse, exist but
+  // belong to someone else). Force a conscious re-pick instead.
+  function handleOrgIdChange(nextOrgId: number) {
+    setOrganizationId(nextOrgId);
+    setFacilityId(0);
+    patchSchedule({ resourceIds: [], primaryResourceId: null });
+    setTestResult(null);
+    setSaveState('dirty');
+  }
+
   async function handleSave() {
     setSaveState('saving');
     setErrorMessage(null);
@@ -194,13 +210,22 @@ export default function MonitorEditor({
       const res = await fetch(`${apiBase}/${page.slug}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, slug, is_active: isActive, facility_id: facilityId, config }),
+        body: JSON.stringify({
+          name,
+          slug,
+          is_active: isActive,
+          organization_id: organizationId,
+          facility_id: facilityId,
+          config,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed');
       setPage(data.page);
       setConfig(data.page.config);
       setSlug(data.page.slug);
+      setOrganizationId(data.page.organization_id);
+      setFacilityId(data.page.facility_id);
       setSaveState('saved');
       setTimeout(() => setSaveState((s) => (s === 'saved' ? 'clean' : s)), 2000);
       // The URL name just changed — this route is keyed by slug, so jump to
@@ -428,12 +453,29 @@ export default function MonitorEditor({
 
           <SectionCard
             title="Data source"
-            subtitle={`Organization #${page.organization_id} — resources are the spaces whose schedules show on screen.`}
+            subtitle={
+              allowOrgChange
+                ? 'Resources are the spaces whose schedules show on screen.'
+                : `Organization #${page.organization_id} — resources are the spaces whose schedules show on screen.`
+            }
             collapsible
             defaultOpen={false}
             summary={summaries.data}
             warning={config.schedule.resourceIds.length === 0}
           >
+            {allowOrgChange && (
+              <>
+                <Field label="Organization ID">
+                  <NumberInput value={organizationId} min={1} onChange={handleOrgIdChange} />
+                </Field>
+                {organizationId !== page.organization_id && (
+                  <p className="rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-800">
+                    ⚠️ Changing the organization cleared Facility ID and Resources below — facility/space IDs only
+                    mean something within their own org. Re-enter them for org #{organizationId} before saving.
+                  </p>
+                )}
+              </>
+            )}
             <Field label="Facility ID">
               <NumberInput value={facilityId} min={1} onChange={(n) => { setFacilityId(n); setSaveState('dirty'); }} />
             </Field>

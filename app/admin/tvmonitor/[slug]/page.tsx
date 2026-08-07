@@ -28,5 +28,5 @@ export default function AdminTvMonitorEditorPage() {
   if (!page) {
     return <div className="h-96 animate-pulse rounded-xl bg-gray-200" />;
   }
-  return <MonitorEditor page={page} apiBase="/api/admin/tvmonitor" backHref="/admin/tvmonitor" />;
+  return <MonitorEditor page={page} apiBase="/api/admin/tvmonitor" backHref="/admin/tvmonitor" allowOrgChange />;
 }

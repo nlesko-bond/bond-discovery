@@ -397,6 +397,7 @@ export async function updateTvMonitorPage(
     name?: string;
     slug?: string;
     is_active?: boolean;
+    organization_id?: number;
     facility_id?: number;
     config?: unknown;
   },
@@ -415,6 +416,11 @@ export async function updateTvMonitorPage(
     updateData.slug = next;
   }
   if (updates.is_active !== undefined) updateData.is_active = Boolean(updates.is_active);
+  if (updates.organization_id !== undefined) {
+    const organizationId = Number(updates.organization_id);
+    if (!Number.isFinite(organizationId) || organizationId <= 0) throw new Error('A valid organization ID is required');
+    updateData.organization_id = organizationId;
+  }
   if (updates.facility_id !== undefined) {
     const facilityId = Number(updates.facility_id);
     if (!Number.isFinite(facilityId) || facilityId <= 0) throw new Error('A valid facility ID is required');
