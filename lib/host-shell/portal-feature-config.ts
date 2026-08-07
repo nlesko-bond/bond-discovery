@@ -8,8 +8,10 @@ import {
   type PortalCardStyle,
   type PortalDisplayMode,
   type PortalRowActionMode,
+  type PortalRowChevronPosition,
   type PortalRowColumn,
   type PortalRowExpandMode,
+  type PortalRowRegisterBehavior,
   type PortalTemplate,
 } from '@/types';
 
@@ -180,6 +182,26 @@ function resolvePortalRowActionMode(
   return undefined;
 }
 
+function resolvePortalRowRegisterBehavior(
+  features: Record<string, unknown>,
+): PortalRowRegisterBehavior | undefined {
+  const raw = features.portalRowRegisterBehavior ?? features.portal_row_register_behavior;
+  if (raw === 'register' || raw === 'expand') {
+    return raw;
+  }
+  return undefined;
+}
+
+function resolvePortalRowChevronPosition(
+  features: Record<string, unknown>,
+): PortalRowChevronPosition | undefined {
+  const raw = features.portalRowChevronPosition ?? features.portal_row_chevron_position;
+  if (raw === 'left' || raw === 'right') {
+    return raw;
+  }
+  return undefined;
+}
+
 function resolvePortalSessionSort(
   features: Record<string, unknown>,
 ): PortalSessionSortEnum | undefined {
@@ -218,6 +240,9 @@ export function normalizePortalFeatureFields(
   | 'portalRowExpandMode'
   | 'portalRowActionMode'
   | 'portalRowMoreInfoLabel'
+  | 'portalRowRegisterLabel'
+  | 'portalRowRegisterBehavior'
+  | 'portalRowChevronPosition'
   | 'portalRowShowSegmentRegister'
   | 'portalRowShowSegmentSpots'
   | 'showTieredSessionPricing'
@@ -238,6 +263,13 @@ export function normalizePortalFeatureFields(
     'portalRowMoreInfoLabel',
     'portal_row_more_info_label',
   );
+  const portalRowRegisterLabel = resolveOptionalTrimmedString(
+    features,
+    'portalRowRegisterLabel',
+    'portal_row_register_label',
+  );
+  const portalRowRegisterBehavior = resolvePortalRowRegisterBehavior(features);
+  const portalRowChevronPosition = resolvePortalRowChevronPosition(features);
   const portalRowShowSegmentRegister = resolveOptionalBoolean(
     features,
     'portalRowShowSegmentRegister',
@@ -299,6 +331,9 @@ export function normalizePortalFeatureFields(
     ...(portalRowExpandMode !== undefined && { portalRowExpandMode }),
     ...(portalRowActionMode !== undefined && { portalRowActionMode }),
     ...(portalRowMoreInfoLabel !== undefined && { portalRowMoreInfoLabel }),
+    ...(portalRowRegisterLabel !== undefined && { portalRowRegisterLabel }),
+    ...(portalRowRegisterBehavior !== undefined && { portalRowRegisterBehavior }),
+    ...(portalRowChevronPosition !== undefined && { portalRowChevronPosition }),
     ...(portalRowShowSegmentRegister !== undefined && { portalRowShowSegmentRegister }),
     ...(portalRowShowSegmentSpots !== undefined && { portalRowShowSegmentSpots }),
     ...(showTieredSessionPricing !== undefined && { showTieredSessionPricing }),

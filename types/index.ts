@@ -418,6 +418,17 @@ export type PortalRowExpandMode = 'sessions' | 'programs';
  */
 export type PortalRowActionMode = 'combined' | 'separate';
 
+/**
+ * What the rows action-column button does.
+ * 'register' (default): links out to the session registration URL.
+ * 'expand': toggles the row's expanded detail panel instead of leaving the page.
+ * Falls back to 'register' on rows that have nothing to expand.
+ */
+export type PortalRowRegisterBehavior = 'register' | 'expand';
+
+/** Which side of a session row the expand/collapse chevron sits on. Default 'right'. */
+export type PortalRowChevronPosition = 'left' | 'right';
+
 export enum HostPortalLayoutEnum {
   LEGACY_PROGRAMS = 'legacy_programs',
   SESSIONS_FIRST = 'sessions_first',
@@ -575,6 +586,18 @@ export interface FeatureConfig {
    * combined toggle). Default "More info". e.g. set to "Schedule".
    */
   portalRowMoreInfoLabel?: string;
+  /**
+   * Custom label for the v2 rows action-column button. Default "Register".
+   * The closed-session state still reads "Closed".
+   */
+  portalRowRegisterLabel?: string;
+  /**
+   * What the rows action-column button does. Default 'register' (link out to the
+   * session registration URL). 'expand' turns it into a row-expand toggle.
+   */
+  portalRowRegisterBehavior?: PortalRowRegisterBehavior;
+  /** Which side of the row the expand chevron sits on. Default 'right'. */
+  portalRowChevronPosition?: PortalRowChevronPosition;
   /**
    * When true, each schedule option in the rows expand panel shows a cart Register
    * (or Join waitlist when full) linking to the session registration URL.

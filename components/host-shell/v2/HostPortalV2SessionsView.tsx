@@ -1,8 +1,13 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Calendar, ChevronDown, ChevronUp, Clock, ExternalLink } from 'lucide-react';
-import type { DiscoveryConfig, DiscoveryFilters, PortalCardStyle } from '@/types';
+import { Calendar, ChevronDown, ChevronRight, ChevronUp, Clock, ExternalLink } from 'lucide-react';
+import type {
+  DiscoveryConfig,
+  DiscoveryFilters,
+  PortalCardStyle,
+  PortalRowChevronPosition,
+} from '@/types';
 import type { IHostPortalSessionCardModel } from '@/lib/host-shell/session-card-model';
 import {
   derivePortalCardTint,
@@ -133,6 +138,16 @@ function isCombinedRowActionMode(config: DiscoveryConfig): boolean {
 }
 
 const COMBINED_EXPAND_LABEL = 'More info';
+const DEFAULT_ROW_REGISTER_LABEL = 'Register';
+
+/** Row action-column button: link out to registration (default) vs expand the row. */
+function rowActionExpands(config: DiscoveryConfig): boolean {
+  return config.features.portalRowRegisterBehavior === 'expand';
+}
+
+function resolveRowChevronPosition(config: DiscoveryConfig): PortalRowChevronPosition {
+  return config.features.portalRowChevronPosition === 'left' ? 'left' : 'right';
+}
 
 function segmentsChipLabel(card: IHostPortalSessionCardModel): string {
   if (card.segments.length > 0) {
@@ -522,7 +537,10 @@ function ScheduleSummaryLine({ summary, compact = false }: { summary: string; co
 
 const ROW_SCHEDULE_COLUMN_WIDTH_PX = 130;
 
-function rowGridTemplate(columns: PortalV2SessionRowColumn[]): string {
+function rowGridTemplate(
+  columns: PortalV2SessionRowColumn[],
+  chevronPosition: PortalRowChevronPosition = 'right',
+): string {
   const cells = columns.map((column) => {
     if (column === 'event') return 'minmax(0, 2.5fr)';
     if (column === 'spots') return `minmax(${ROW_SPOTS_COLUMN_WIDTH_PX}px, max-content)`;
@@ -531,7 +549,10 @@ function rowGridTemplate(columns: PortalV2SessionRowColumn[]): string {
     if (column === 'schedule') return `${ROW_SCHEDULE_COLUMN_WIDTH_PX}px`;
     return 'minmax(0, 1fr)';
   });
-  return [...cells, `${ROW_CHEVRON_COLUMN_WIDTH_PX}px`].join(' ');
+  const chevronCell = `${ROW_CHEVRON_COLUMN_WIDTH_PX}px`;
+  return chevronPosition === 'left'
+    ? [chevronCell, ...cells].join(' ')
+    : [...cells, chevronCell].join(' ');
 }
 
 function HostPortalV2SessionRow({
@@ -582,6 +603,11 @@ function HostPortalV2SessionRow({
   const layoutMode = usePortalV2RowLayoutMode();
   const combinedExpandLabel =
     config.features.portalRowMoreInfoLabel?.trim() || COMBINED_EXPAND_LABEL;
+  const registerLabel =
+    config.features.portalRowRegisterLabel?.trim() || DEFAULT_ROW_REGISTER_LABEL;
+  const chevronPosition = resolveRowChevronPosition(config);
+  /** Rows with nothing to expand fall back to the registration link. */
+  const actionExpands = rowActionExpands(config) && expandable;
 
   useEffect(() => {
     notifyPortalEmbedContentChange();
@@ -607,25 +633,33 @@ function HostPortalV2SessionRow({
     </span>
   );
 
+  // Left-side chevrons follow the disclosure-triangle idiom (points right when
+  // collapsed, down when open); right-side keeps the original caret-down flip.
+  const ChevronIcon = chevronPosition === 'left' ? ChevronRight : ChevronDown;
   const expandChevron = expandable ? (
-    <ChevronDown
+    <ChevronIcon
       size={18}
       className={cn(
-        'shrink-0 text-gray-400 transition-transform duration-200',
-        segmentsOpen && 'rotate-180',
+        'shrink-0 text-gray-400 transition-[transform,color] duration-200',
+        'group-hover:text-gray-600',
+        segmentsOpen && (chevronPosition === 'left' ? 'rotate-90' : 'rotate-180'),
+        segmentsOpen && 'text-gray-600',
       )}
       aria-hidden
     />
   ) : null;
 
-  const registerButton = !hideRegistrationLinks && card.registerUrl && showAction && (
+  const actionButtonClassName =
+    'inline-flex min-h-[44px] shrink-0 items-center justify-center gap-1 rounded-xl px-5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90';
+
+  const registerLink = !hideRegistrationLinks && card.registerUrl && showAction && (
     <a
       href={card.registerUrl}
       target={linkTarget}
       rel={linkRel}
       {...registerAnalyticsAttributes}
       className={cn(
-        'inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl px-5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90',
+        actionButtonClassName,
         card.isClosed && 'pointer-events-none cursor-not-allowed opacity-60',
       )}
       style={{
@@ -637,9 +671,33 @@ function HostPortalV2SessionRow({
         trackRegisterClick(config, card, card.registerProductId);
       }}
     >
-      {card.isClosed ? 'Closed' : 'Register'}
+      {card.isClosed ? 'Closed' : registerLabel}
     </a>
   );
+
+  const actionExpandButton =
+    showAction && actionExpands ? (
+      <button
+        type="button"
+        data-testid="portal-v2-row-action-expand"
+        aria-expanded={segmentsOpen}
+        className={actionButtonClassName}
+        style={{ backgroundColor: accentColor }}
+        onClick={(event) => {
+          event.stopPropagation();
+          toggleSegments();
+        }}
+      >
+        <span>{registerLabel}</span>
+        <ChevronDown
+          size={16}
+          className={cn('shrink-0 transition-transform duration-200', segmentsOpen && 'rotate-180')}
+          aria-hidden
+        />
+      </button>
+    ) : null;
+
+  const registerButton = actionExpandButton ?? registerLink;
 
   const priceBlock = collapsedPriceLabel && (
     <div className="min-w-0">
@@ -852,23 +910,31 @@ function HostPortalV2SessionRow({
         {...rowToggleProps}
         data-portal-v2-layout="mobile"
         className={cn(
-          'flex flex-col gap-3 px-4 py-4',
-          expandable && 'cursor-pointer active:bg-gray-50',
-          segmentsOpen && expandable && 'bg-gray-50/80',
+          'group flex flex-col gap-3 px-4 py-4 transition-colors duration-150',
+          expandable && 'cursor-pointer active:bg-[color-mix(in_srgb,var(--v2-row-accent)_10%,white)]',
+          segmentsOpen &&
+            expandable &&
+            'bg-[color-mix(in_srgb,var(--v2-row-accent)_10%,white)]',
         )}
+        style={{ '--v2-row-accent': accentColor } as React.CSSProperties}
       >
         {(showDate || showSpots || expandable) && (
           <div className="flex items-start justify-between gap-3">
+            {chevronPosition === 'left' && expandChevron && (
+              <span className="shrink-0 pt-0.5" aria-hidden>
+                {expandChevron}
+              </span>
+            )}
             {showDate ? (
-              <div data-portal-v2-cell="date" className="min-w-0">
+              <div data-portal-v2-cell="date" className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-900">{card.dateRange || '—'}</p>
               </div>
             ) : (
-              <span />
+              <span className="flex-1" />
             )}
             <div className="flex shrink-0 items-center gap-2">
               {showSpots && <div data-portal-v2-cell="spots">{availabilityPill}</div>}
-              {expandChevron}
+              {chevronPosition === 'right' && expandChevron}
             </div>
           </div>
         )}
@@ -939,18 +1005,35 @@ function HostPortalV2SessionRow({
         {...rowToggleProps}
         data-portal-v2-layout="desktop"
         className={cn(
-          'grid items-center gap-3 px-4 py-3 [grid-template-columns:var(--v2-row-cols)]',
-          expandable && 'cursor-pointer hover:bg-gray-50',
-          segmentsOpen && expandable && 'bg-gray-50/80',
+          'group grid items-center gap-3 px-4 py-3 [grid-template-columns:var(--v2-row-cols)]',
+          expandable && [
+            'cursor-pointer transition-colors duration-150',
+            'hover:bg-[color-mix(in_srgb,var(--v2-row-accent)_8%,white)]',
+          ],
+          segmentsOpen &&
+            expandable &&
+            'bg-[color-mix(in_srgb,var(--v2-row-accent)_12%,white)]',
         )}
-        style={{ '--v2-row-cols': rowGridTemplate(columns) } as React.CSSProperties}
+        style={
+          {
+            '--v2-row-cols': rowGridTemplate(columns, chevronPosition),
+            '--v2-row-accent': accentColor,
+          } as React.CSSProperties
+        }
       >
+        {chevronPosition === 'left' && (
+          <span className="justify-self-start" aria-hidden>
+            {expandChevron}
+          </span>
+        )}
         {columns.map((column) => (
           <div key={column}>{renderDesktopCell(column)}</div>
         ))}
-        <span className="justify-self-end" aria-hidden>
-          {expandChevron}
-        </span>
+        {chevronPosition === 'right' && (
+          <span className="justify-self-end" aria-hidden>
+            {expandChevron}
+          </span>
+        )}
       </div>
       )}
 
@@ -995,6 +1078,7 @@ export function HostPortalV2SessionRowsList({
   eventScheduleBySession,
 }: ISessionRowsListProps) {
   const columns = resolvePortalV2SessionRowColumns(config);
+  const chevronPosition = resolveRowChevronPosition(config);
 
   return (
     <div
@@ -1003,9 +1087,12 @@ export function HostPortalV2SessionRowsList({
     >
       <div
         className="hidden border-b border-gray-200 bg-gray-50/80 px-4 py-2.5 sm:grid sm:gap-3 sm:[grid-template-columns:var(--v2-row-cols)]"
-        style={{ '--v2-row-cols': rowGridTemplate(columns) } as React.CSSProperties}
+        style={
+          { '--v2-row-cols': rowGridTemplate(columns, chevronPosition) } as React.CSSProperties
+        }
         aria-hidden
       >
+        {chevronPosition === 'left' && <span />}
         {columns.map((column) => (
           <span
             key={column}
@@ -1017,7 +1104,7 @@ export function HostPortalV2SessionRowsList({
             {ROW_COLUMN_LABELS[column]}
           </span>
         ))}
-        <span />
+        {chevronPosition === 'right' && <span />}
       </div>
       <div className="max-sm:space-y-3 sm:divide-y sm:divide-gray-100">
         {cards.map((card) => (

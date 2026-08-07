@@ -159,7 +159,13 @@ export function resolvePortalV2SessionRowColumns(
       return showAvailability;
     }
     if (column === 'action') {
-      return !hideRegistrationLinks || showPricing;
+      // An 'expand' action button is a row toggle, not a registration link, so it
+      // stays useful even when registration links are hidden and pricing is off.
+      return (
+        !hideRegistrationLinks ||
+        showPricing ||
+        config.features.portalRowRegisterBehavior === 'expand'
+      );
     }
     return true;
   });

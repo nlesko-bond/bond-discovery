@@ -4,8 +4,10 @@ import type {
   PortalCardStyle,
   PortalDisplayMode,
   PortalRowActionMode,
+  PortalRowChevronPosition,
   PortalRowColumn,
   PortalRowExpandMode,
+  PortalRowRegisterBehavior,
   PortalSessionSortEnum,
   PortalTemplate,
 } from '@/types';
@@ -86,6 +88,9 @@ export interface IPageConfig {
     portalRowExpandMode?: PortalRowExpandMode;
     portalRowActionMode?: PortalRowActionMode;
     portalRowMoreInfoLabel?: string;
+    portalRowRegisterLabel?: string;
+    portalRowRegisterBehavior?: PortalRowRegisterBehavior;
+    portalRowChevronPosition?: PortalRowChevronPosition;
     portalRowShowSegmentRegister?: boolean;
     portalRowShowSegmentSpots?: boolean;
     showTieredSessionPricing?: boolean;

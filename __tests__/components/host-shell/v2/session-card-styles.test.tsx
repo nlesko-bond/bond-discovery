@@ -412,6 +412,54 @@ describe('rows style — tableColumns-driven session rows', () => {
     expect(cells).not.toContain('program');
   });
 
+  it('uses the configured action button label', () => {
+    renderRows([makeMultiSegmentCard()], makeConfig({ portalRowRegisterLabel: 'Sign up' }));
+    const row = screen.getByTestId('portal-v2-card');
+    expect(within(row).getByRole('link', { name: /sign up/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('register'),
+    );
+    expect(within(row).queryByRole('link', { name: /^register$/i })).toBeNull();
+  });
+
+  it('turns the action button into a row-expand toggle when configured', () => {
+    renderRows(
+      [makeMultiSegmentCard()],
+      makeConfig({ portalRowRegisterBehavior: 'expand', portalRowRegisterLabel: 'View times' }),
+    );
+    const row = screen.getByTestId('portal-v2-card');
+    // No link out to registration from the action column.
+    expect(within(row).queryByRole('link', { name: /view times|register/i })).toBeNull();
+
+    const toggle = within(row).getByTestId('portal-v2-row-action-expand');
+    expect(toggle).toHaveTextContent('View times');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(toggle);
+    expect(within(row).getByTestId('portal-v2-row-action-expand')).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+  });
+
+  it('falls back to the registration link when an expand-action row has nothing to expand', () => {
+    renderRows([makeVariableScheduleCard()], makeConfig({ portalRowRegisterBehavior: 'expand' }));
+    const row = screen.getByTestId('portal-v2-card');
+    expect(within(row).queryByTestId('portal-v2-row-action-expand')).toBeNull();
+    expect(within(row).getByRole('link', { name: /register/i })).toBeInTheDocument();
+  });
+
+  it('places the chevron column first when chevron position is left', () => {
+    renderRows([makeMultiSegmentCard()], makeConfig({ portalRowChevronPosition: 'left' }));
+    const desktopLayout = screen
+      .getByTestId('portal-v2-card')
+      .querySelector('[data-portal-v2-layout="desktop"]') as HTMLElement;
+    expect(desktopLayout.getAttribute('style')).toContain('--v2-row-cols: 20px');
+    // First grid child is the chevron cell, not a data cell.
+    expect(desktopLayout.firstElementChild?.hasAttribute('data-portal-v2-cell')).toBe(false);
+    expect(desktopLayout.firstElementChild?.querySelector('svg')).not.toBeNull();
+  });
+
   it('expands description and segments when the row is clicked', () => {
     renderRows([
       makeMultiSegmentCard({

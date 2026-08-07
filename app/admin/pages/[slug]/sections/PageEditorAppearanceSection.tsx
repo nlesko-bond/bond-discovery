@@ -54,6 +54,8 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalRowColumns: undefined,
           portalRowExpandMode: undefined,
           portalRowActionMode: undefined,
+          portalRowRegisterBehavior: undefined,
+          portalRowChevronPosition: undefined,
           portalRowShowSegmentRegister: undefined,
           portalRowShowSegmentSpots: undefined,
         },
@@ -69,6 +71,8 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalRowColumns: undefined,
           portalRowExpandMode: undefined,
           portalRowActionMode: undefined,
+          portalRowRegisterBehavior: undefined,
+          portalRowChevronPosition: undefined,
           portalRowShowSegmentRegister: undefined,
           portalRowShowSegmentSpots: undefined,
         },
@@ -84,6 +88,8 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalRowColumns: undefined,
           portalRowExpandMode: undefined,
           portalRowActionMode: undefined,
+          portalRowRegisterBehavior: undefined,
+          portalRowChevronPosition: undefined,
           portalRowShowSegmentRegister: undefined,
           portalRowShowSegmentSpots: undefined,
         },
@@ -99,6 +105,8 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalRowColumns: undefined,
           portalRowExpandMode: undefined,
           portalRowActionMode: undefined,
+          portalRowRegisterBehavior: undefined,
+          portalRowChevronPosition: undefined,
           portalRowShowSegmentRegister: undefined,
           portalRowShowSegmentSpots: undefined,
         },
@@ -836,6 +844,82 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
                 <p className="mt-1 text-xs text-gray-500">
                   Text for the row&apos;s expand control (e.g. &quot;Schedule&quot;). Defaults to
                   &quot;More info&quot;.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="label">Action button label</label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="Register"
+                    value={config.features.portalRowRegisterLabel ?? ''}
+                    onChange={(event) =>
+                      setConfig({
+                        ...config,
+                        features: {
+                          ...config.features,
+                          portalRowRegisterLabel: event.target.value || undefined,
+                        },
+                      })
+                    }
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Text on the last column&apos;s button (e.g. &quot;Sign up&quot;, &quot;View
+                    times&quot;). Defaults to &quot;Register&quot;. Closed sessions still read
+                    &quot;Closed&quot;.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="label">Action button behavior</label>
+                  <select
+                    className="input"
+                    value={config.features.portalRowRegisterBehavior ?? 'register'}
+                    onChange={(event) =>
+                      setConfig({
+                        ...config,
+                        features: {
+                          ...config.features,
+                          portalRowRegisterBehavior:
+                            event.target.value === 'expand' ? 'expand' : undefined,
+                        },
+                      })
+                    }
+                  >
+                    <option value="register">Link to registration (default)</option>
+                    <option value="expand">Expand row and show details</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    &quot;Expand row&quot; keeps visitors on the page. Rows with no detail to
+                    expand fall back to the registration link.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="label">Expand chevron position</label>
+                <select
+                  className="input"
+                  value={config.features.portalRowChevronPosition ?? 'right'}
+                  onChange={(event) =>
+                    setConfig({
+                      ...config,
+                      features: {
+                        ...config.features,
+                        portalRowChevronPosition:
+                          event.target.value === 'left' ? 'left' : undefined,
+                      },
+                    })
+                  }
+                >
+                  <option value="right">Right edge (default)</option>
+                  <option value="left">Left edge (disclosure style)</option>
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Left places a disclosure arrow before the first column — clearer when the
+                  action button also expands the row.
                 </p>
               </div>
 

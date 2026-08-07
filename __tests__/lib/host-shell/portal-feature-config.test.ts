@@ -83,6 +83,30 @@ describe('normalizePortalFeatureFields', () => {
     expect(normalizePortalFeatureFields({ portalRowActionMode: 'bogus' })).toEqual({});
   });
 
+  it('reads the rows action-button label, behavior and chevron position', () => {
+    expect(
+      normalizePortalFeatureFields({
+        portalRowRegisterLabel: '  Sign up  ',
+        portal_row_register_behavior: 'expand',
+        portalRowChevronPosition: 'left',
+      }),
+    ).toEqual({
+      portalRowRegisterLabel: 'Sign up',
+      portalRowRegisterBehavior: 'expand',
+      portalRowChevronPosition: 'left',
+    });
+  });
+
+  it('ignores unknown rows action-button behavior and chevron position values', () => {
+    expect(
+      normalizePortalFeatureFields({
+        portalRowRegisterBehavior: 'bogus',
+        portalRowChevronPosition: 'middle',
+        portalRowRegisterLabel: '   ',
+      }),
+    ).toEqual({});
+  });
+
   it('returns empty object when portal keys are absent', () => {
     expect(normalizePortalFeatureFields({ showPricing: true })).toEqual({});
   });
