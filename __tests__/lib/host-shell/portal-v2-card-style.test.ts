@@ -202,4 +202,38 @@ describe('resolvePortalV2SessionRowColumns', () => {
       'action',
     ]);
   });
+
+  it('drops the schedule column when combined mode hides the expand button', () => {
+    // In combined mode the schedule column holds only the expand button, so
+    // keeping it would leave a SCHEDULE header over an empty 130px cell.
+    const config = makeConfig({
+      portalRowColumns: ['date', 'event', 'schedule', 'location', 'action'],
+      portalRowActionMode: 'combined',
+      portalRowShowExpandButton: false,
+    });
+    expect(resolvePortalV2SessionRowColumns(config)).toEqual([
+      'date',
+      'event',
+      'location',
+      'action',
+    ]);
+  });
+
+  it('keeps the schedule column when the expand button is hidden in separate mode', () => {
+    // Separate mode renders "View schedule" there, which is unaffected.
+    const config = makeConfig({
+      portalRowColumns: ['date', 'event', 'schedule', 'action'],
+      portalRowActionMode: 'separate',
+      portalRowShowExpandButton: false,
+    });
+    expect(resolvePortalV2SessionRowColumns(config)).toContain('schedule');
+  });
+
+  it('keeps the schedule column when the expand button is shown', () => {
+    const config = makeConfig({
+      portalRowColumns: ['date', 'event', 'schedule', 'action'],
+      portalRowActionMode: 'combined',
+    });
+    expect(resolvePortalV2SessionRowColumns(config)).toContain('schedule');
+  });
 });

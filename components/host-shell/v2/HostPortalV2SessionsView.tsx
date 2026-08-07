@@ -578,12 +578,17 @@ function HostPortalV2SessionRow({
   const pillStyle = AVAILABILITY_PILL_STYLES[availability.kind];
   const ageGenderLine = showAgeGender ? buildAgeGenderLine(card) : undefined;
 
+  // Narrower than the page-wide showPricing: segments can carry different
+  // prices, so a session-level "From $X" is sometimes worse than no price.
+  const showRowPrice = showPricing && config.features.portalRowShowPrice !== false;
+
   const collapsedPriceLabel =
-    showPricing && card.startingPriceLabel
+    showRowPrice && card.startingPriceLabel
       ? card.hasMultipleRegisterOptions
         ? `From ${card.startingPriceLabel}`
         : (card.products[0]?.priceLabel ?? card.startingPriceLabel)
       : undefined;
+  const rowTieredPricingLabel = showRowPrice ? card.tieredPricingLabel : undefined;
 
   const registerAnalyticsAttributes = getBondRegisterLinkAnalyticsAttributes({
     programId: card.programId,
@@ -606,6 +611,8 @@ function HostPortalV2SessionRow({
   const registerLabel =
     config.features.portalRowRegisterLabel?.trim() || DEFAULT_ROW_REGISTER_LABEL;
   const chevronPosition = resolveRowChevronPosition(config);
+  /** The inline expand button is redundant once the action column expands the row. */
+  const showExpandButton = config.features.portalRowShowExpandButton !== false;
   /** Rows with nothing to expand fall back to the registration link. */
   const actionExpands = rowActionExpands(config) && expandable;
 
@@ -704,13 +711,13 @@ function HostPortalV2SessionRow({
       <p className="text-lg font-bold tabular-nums leading-tight text-gray-900">
         {collapsedPriceLabel}
       </p>
-      {card.tieredPricingLabel && (
-        <HostPortalV2TieredPricingLine label={card.tieredPricingLabel} />
+      {rowTieredPricingLabel && (
+        <HostPortalV2TieredPricingLine label={rowTieredPricingLabel} />
       )}
     </div>
   );
 
-  const combinedExpandButton = expandable ? (
+  const combinedExpandButton = expandable && showExpandButton ? (
     <button
       type="button"
       data-testid="portal-v2-combined-expand"
@@ -763,7 +770,7 @@ function HostPortalV2SessionRow({
     ) : null;
 
   const moreInfoButton =
-    !combinedActions && expandable && columns.includes('schedule') ? (
+    !combinedActions && expandable && showExpandButton && columns.includes('schedule') ? (
       <button
         type="button"
         data-testid="portal-v2-more-info"
@@ -824,7 +831,7 @@ function HostPortalV2SessionRow({
                 />
               </div>
             )}
-            {combinedActions && expandable && !scheduleColumnActive && (
+            {combinedActions && !scheduleColumnActive && combinedExpandButton && (
               <div className="mt-1">{combinedExpandButton}</div>
             )}
             {!combinedActions &&
@@ -878,8 +885,8 @@ function HostPortalV2SessionRow({
                 {collapsedPriceLabel}
               </span>
             )}
-            {card.tieredPricingLabel && (
-              <HostPortalV2TieredPricingLine label={card.tieredPricingLabel} />
+            {rowTieredPricingLabel && (
+              <HostPortalV2TieredPricingLine label={rowTieredPricingLabel} />
             )}
             {registerButton}
           </div>

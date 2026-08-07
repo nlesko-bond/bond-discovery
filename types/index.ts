@@ -587,6 +587,20 @@ export interface FeatureConfig {
    */
   portalRowMoreInfoLabel?: string;
   /**
+   * When false, hides the rows expand button (the `portalRowMoreInfoLabel`
+   * control in the session/schedule column). Default true. The row itself and
+   * the chevron still expand — this only removes the inline button, which is
+   * redundant when the action column is already set to expand the row.
+   */
+  portalRowShowExpandButton?: boolean;
+  /**
+   * When false, hides the price in the rows action column. Default true.
+   * Useful when segments carry different prices and a single session-level
+   * "From $X" reads as misleading — per-segment prices still show in the
+   * expanded panel. Narrower than the page-wide `showPricing`.
+   */
+  portalRowShowPrice?: boolean;
+  /**
    * Custom label for the v2 rows action-column button. Default "Register".
    * The closed-session state still reads "Closed".
    */

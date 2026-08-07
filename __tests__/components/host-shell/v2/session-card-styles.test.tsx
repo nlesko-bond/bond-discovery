@@ -412,6 +412,44 @@ describe('rows style — tableColumns-driven session rows', () => {
     expect(cells).not.toContain('program');
   });
 
+  it('hides the inline expand button when portalRowShowExpandButton is false', () => {
+    const config = makeConfig({
+      portalRowActionMode: 'combined',
+      portalRowShowExpandButton: false,
+      portalRowRegisterBehavior: 'expand',
+    });
+    renderRows([makeMultiSegmentCard()], config);
+    const row = screen.getByTestId('portal-v2-card');
+    expect(within(row).queryByTestId('portal-v2-combined-expand')).toBeNull();
+    expect(within(row).queryByTestId('portal-v2-more-info')).toBeNull();
+    // The row itself still expands.
+    fireEvent.click(within(row).getByTestId('portal-v2-row-action-expand'));
+    expect(within(row).getByTestId('portal-v2-row-action-expand')).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+  });
+
+  it('keeps the inline expand button by default', () => {
+    renderRows([makeMultiSegmentCard()], makeConfig({ portalRowActionMode: 'combined' }));
+    expect(
+      within(screen.getByTestId('portal-v2-card')).getByTestId('portal-v2-combined-expand'),
+    ).toBeInTheDocument();
+  });
+
+  it('hides the row price when portalRowShowPrice is false', () => {
+    renderRows([makeMultiSegmentCard()], makeConfig({ portalRowShowPrice: false }));
+    const row = screen.getByTestId('portal-v2-card');
+    expect(row.textContent).not.toMatch(/\$\d/);
+    // The Register button is unaffected.
+    expect(within(row).getByRole('link', { name: /register/i })).toBeInTheDocument();
+  });
+
+  it('shows the row price by default', () => {
+    renderRows([makeMultiSegmentCard()]);
+    expect(screen.getByTestId('portal-v2-card').textContent).toMatch(/\$\d/);
+  });
+
   it('uses the configured action button label', () => {
     renderRows([makeMultiSegmentCard()], makeConfig({ portalRowRegisterLabel: 'Sign up' }));
     const row = screen.getByTestId('portal-v2-card');

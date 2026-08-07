@@ -88,6 +88,8 @@ export interface IPageConfig {
     portalRowExpandMode?: PortalRowExpandMode;
     portalRowActionMode?: PortalRowActionMode;
     portalRowMoreInfoLabel?: string;
+    portalRowShowExpandButton?: boolean;
+    portalRowShowPrice?: boolean;
     portalRowRegisterLabel?: string;
     portalRowRegisterBehavior?: PortalRowRegisterBehavior;
     portalRowChevronPosition?: PortalRowChevronPosition;

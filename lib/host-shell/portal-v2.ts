@@ -154,7 +154,16 @@ export function resolvePortalV2SessionRowColumns(
   const showPricing = config.features.showPricing !== false;
   const hideRegistrationLinks = config.features.hideRegistrationLinks === true;
 
+  // In combined action mode the schedule column holds only the expand button, so
+  // hiding that button would leave a dangling header over an empty 130px cell.
+  const scheduleColumnIsEmpty =
+    config.features.portalRowActionMode === 'combined' &&
+    config.features.portalRowShowExpandButton === false;
+
   const columns = configured.filter((column) => {
+    if (column === 'schedule') {
+      return !scheduleColumnIsEmpty;
+    }
     if (column === 'spots') {
       return showAvailability;
     }

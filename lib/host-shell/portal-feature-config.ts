@@ -240,6 +240,8 @@ export function normalizePortalFeatureFields(
   | 'portalRowExpandMode'
   | 'portalRowActionMode'
   | 'portalRowMoreInfoLabel'
+  | 'portalRowShowExpandButton'
+  | 'portalRowShowPrice'
   | 'portalRowRegisterLabel'
   | 'portalRowRegisterBehavior'
   | 'portalRowChevronPosition'
@@ -262,6 +264,16 @@ export function normalizePortalFeatureFields(
     features,
     'portalRowMoreInfoLabel',
     'portal_row_more_info_label',
+  );
+  const portalRowShowExpandButton = resolveOptionalBoolean(
+    features,
+    'portalRowShowExpandButton',
+    'portal_row_show_expand_button',
+  );
+  const portalRowShowPrice = resolveOptionalBoolean(
+    features,
+    'portalRowShowPrice',
+    'portal_row_show_price',
   );
   const portalRowRegisterLabel = resolveOptionalTrimmedString(
     features,
@@ -331,6 +343,8 @@ export function normalizePortalFeatureFields(
     ...(portalRowExpandMode !== undefined && { portalRowExpandMode }),
     ...(portalRowActionMode !== undefined && { portalRowActionMode }),
     ...(portalRowMoreInfoLabel !== undefined && { portalRowMoreInfoLabel }),
+    ...(portalRowShowExpandButton !== undefined && { portalRowShowExpandButton }),
+    ...(portalRowShowPrice !== undefined && { portalRowShowPrice }),
     ...(portalRowRegisterLabel !== undefined && { portalRowRegisterLabel }),
     ...(portalRowRegisterBehavior !== undefined && { portalRowRegisterBehavior }),
     ...(portalRowChevronPosition !== undefined && { portalRowChevronPosition }),

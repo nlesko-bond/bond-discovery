@@ -56,6 +56,8 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalRowActionMode: undefined,
           portalRowRegisterBehavior: undefined,
           portalRowChevronPosition: undefined,
+          portalRowShowExpandButton: undefined,
+          portalRowShowPrice: undefined,
           portalRowShowSegmentRegister: undefined,
           portalRowShowSegmentSpots: undefined,
         },
@@ -73,6 +75,8 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalRowActionMode: undefined,
           portalRowRegisterBehavior: undefined,
           portalRowChevronPosition: undefined,
+          portalRowShowExpandButton: undefined,
+          portalRowShowPrice: undefined,
           portalRowShowSegmentRegister: undefined,
           portalRowShowSegmentSpots: undefined,
         },
@@ -90,6 +94,8 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalRowActionMode: undefined,
           portalRowRegisterBehavior: undefined,
           portalRowChevronPosition: undefined,
+          portalRowShowExpandButton: undefined,
+          portalRowShowPrice: undefined,
           portalRowShowSegmentRegister: undefined,
           portalRowShowSegmentSpots: undefined,
         },
@@ -107,6 +113,8 @@ function applyPortalView(config: IPageConfig, view: PortalView): IPageConfig {
           portalRowActionMode: undefined,
           portalRowRegisterBehavior: undefined,
           portalRowChevronPosition: undefined,
+          portalRowShowExpandButton: undefined,
+          portalRowShowPrice: undefined,
           portalRowShowSegmentRegister: undefined,
           portalRowShowSegmentSpots: undefined,
         },
@@ -825,11 +833,35 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
               </div>
 
               <div>
-                <label className="label">Expand button label</label>
+                <label className="label">Expand button</label>
+                <label className="flex items-start gap-3 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 rounded border-gray-300"
+                    checked={config.features.portalRowShowExpandButton !== false}
+                    onChange={(event) =>
+                      setConfig({
+                        ...config,
+                        features: {
+                          ...config.features,
+                          portalRowShowExpandButton: event.target.checked ? undefined : false,
+                        },
+                      })
+                    }
+                  />
+                  <span>
+                    <span className="font-medium text-gray-900">Show the expand button</span>
+                    <span className="mt-1 block text-xs text-gray-500">
+                      The inline button inside the session column. Turn off when the action
+                      column already expands the row — the chevron and row click still expand.
+                    </span>
+                  </span>
+                </label>
                 <input
                   type="text"
-                  className="input"
+                  className="input mt-3 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
                   placeholder="More info"
+                  disabled={config.features.portalRowShowExpandButton === false}
                   value={config.features.portalRowMoreInfoLabel ?? ''}
                   onChange={(event) =>
                     setConfig({
@@ -870,6 +902,30 @@ export function PageEditorAppearanceSection({ config, setConfig }: IPageEditorSe
                     times&quot;). Defaults to &quot;Register&quot;. Closed sessions still read
                     &quot;Closed&quot;.
                   </p>
+                  <label className="mt-3 flex items-start gap-3 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 rounded border-gray-300"
+                      checked={config.features.portalRowShowPrice !== false}
+                      onChange={(event) =>
+                        setConfig({
+                          ...config,
+                          features: {
+                            ...config.features,
+                            portalRowShowPrice: event.target.checked ? undefined : false,
+                          },
+                        })
+                      }
+                    />
+                    <span>
+                      <span className="font-medium text-gray-900">Show price on the row</span>
+                      <span className="mt-1 block text-xs text-gray-500">
+                        Turn off when segments carry different prices and a session-level
+                        &quot;From $X&quot; would mislead. Per-segment prices still show in the
+                        expanded panel.
+                      </span>
+                    </span>
+                  </label>
                 </div>
 
                 <div>
