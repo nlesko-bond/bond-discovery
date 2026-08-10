@@ -226,6 +226,7 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
       scrollSpeed: asNumber(ticker.scrollSpeed, defaults.ticker.scrollSpeed, 1, 5),
     },
     refreshSeconds: asNumber(rec.refreshSeconds, defaults.refreshSeconds, MIN_TV_REFRESH_SECONDS, 3600),
+    legacyBrowserMode: asBool(rec.legacyBrowserMode, defaults.legacyBrowserMode),
   };
 }
 

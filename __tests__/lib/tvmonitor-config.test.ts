@@ -114,6 +114,12 @@ describe('normalizeTvMonitorConfig', () => {
     expect(dropped.header.sponsorAdId).toBeNull();
   });
 
+  it('defaults legacyBrowserMode to false and accepts a boolean', () => {
+    expect(normalizeTvMonitorConfig({}).legacyBrowserMode).toBe(false);
+    expect(normalizeTvMonitorConfig({ legacyBrowserMode: true }).legacyBrowserMode).toBe(true);
+    expect(normalizeTvMonitorConfig({ legacyBrowserMode: 'yes' }).legacyBrowserMode).toBe(false);
+  });
+
   it('defaults titleSizePx and logoPosition, and clamps/validates them', () => {
     expect(normalizeTvMonitorConfig({}).header.titleSizePx).toBe(40);
     expect(normalizeTvMonitorConfig({}).header.logoPosition).toBe('left');
