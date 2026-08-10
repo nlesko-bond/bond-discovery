@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTvMonitorPageBySlug } from '@/lib/tvmonitor-config';
+import { getTvMonitorPageBySlugCached } from '@/lib/tvmonitor-config';
 import { getTvMonitorSchedule } from '@/lib/tvmonitor-schedule';
 import { getTvMonitorWeather } from '@/lib/tvmonitor-weather';
 
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(_request: NextRequest, { params }: { params: { slug: string } }) {
   try {
-    const page = await getTvMonitorPageBySlug(params.slug);
+    const page = await getTvMonitorPageBySlugCached(params.slug);
     if (!page || !page.is_active) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }

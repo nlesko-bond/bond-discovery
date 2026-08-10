@@ -15,6 +15,7 @@ vi.mock('@/lib/tvmonitor-config', async (importOriginal) => {
   return {
     ...actual,
     getTvMonitorPageBySlug: (...args: unknown[]) => mockGetPageBySlug(...args),
+    getTvMonitorPageBySlugCached: (...args: unknown[]) => mockGetPageBySlug(...args),
     getAllTvMonitorPages: (...args: unknown[]) => mockGetAllPages(...args),
     createTvMonitorPage: (...args: unknown[]) => mockCreatePage(...args),
     duplicateTvMonitorPage: (...args: unknown[]) => mockDuplicatePage(...args),

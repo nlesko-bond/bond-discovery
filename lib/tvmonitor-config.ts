@@ -7,6 +7,7 @@
  */
 
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { cacheDelete, cachedSWR } from '@/lib/cache';
 import { buildTvMonitorTemplateConfig, TV_DESIGN_PRESETS } from '@/lib/tvmonitor-templates';
 import type {
   ITvMonitorPage,
@@ -294,6 +295,39 @@ export async function getTvMonitorPageBySlug(slug: string): Promise<ITvMonitorPa
   return rowToPage(data as Record<string, unknown>);
 }
 
+// A wall of TVs polls /api/tvmonitor/{slug}/schedule every ~30-60s each. Without
+// caching, every poll re-reads the full config row from Postgres, which is the
+// bulk of this project's PostgREST egress. Caching collapses that to at most one
+// read per slug per TTL window; builder saves invalidate the key so edits still
+// go live within a poll.
+const TV_PAGE_CACHE_TTL_SECONDS = 60;
+const TV_PAGE_CACHE_STALE_TTL_SECONDS = 60 * 30;
+
+export function tvMonitorPageCacheKey(slug: string): string {
+  return `tvmonitor:page:${slug}`;
+}
+
+/**
+ * Cached read of a TV monitor page for the public polling/display paths.
+ * Admin/studio reads should keep using getTvMonitorPageBySlug so editors always
+ * see their latest save.
+ */
+export async function getTvMonitorPageBySlugCached(slug: string): Promise<ITvMonitorPage | null> {
+  return cachedSWR(tvMonitorPageCacheKey(slug), () => getTvMonitorPageBySlug(slug), {
+    ttl: TV_PAGE_CACHE_TTL_SECONDS,
+    staleTtl: TV_PAGE_CACHE_STALE_TTL_SECONDS,
+  });
+}
+
+/**
+ * Drops both the fresh key and its SWR stale shadow so a builder save is
+ * reflected on the next poll instead of after the TTL.
+ */
+export async function invalidateTvMonitorPageCache(slug: string): Promise<void> {
+  const key = tvMonitorPageCacheKey(slug);
+  await Promise.all([cacheDelete(key), cacheDelete(`swr:${key}`)]);
+}
+
 export async function createTvMonitorPage(input: {
   name: string;
   slug: string;
@@ -440,6 +474,12 @@ export async function updateTvMonitorPage(
   if (fetchError || !data) {
     throw new Error(fetchError?.message || 'Not found after update');
   }
+
+  await invalidateTvMonitorPageCache(slug);
+  if (fetchSlug !== slug) {
+    await invalidateTvMonitorPageCache(fetchSlug);
+  }
+
   return rowToPage(data as Record<string, unknown>);
 }
 
@@ -450,5 +490,6 @@ export async function deleteTvMonitorPage(slug: string): Promise<boolean> {
     console.error('[TvMonitorConfig] delete error:', error);
     return false;
   }
+  await invalidateTvMonitorPageCache(slug);
   return true;
 }
