@@ -218,31 +218,38 @@ hardware's vendor found in the normal path:
   target, both the `@-webkit-keyframes` rules and every `-webkit-animation`
   usage are declared alongside the unprefixed ones (harmless everywhere else;
   unrecognized rules are just ignored).
-- **Vertical layout — no flex-grow above a scrolling region**: old Blink
-  (confirmed on Chromium 38, via a customer's real webOS display) doesn't
-  reliably give a `position: absolute; top/right/bottom/left: 0` child a
-  *definite* height when its containing block's own height comes from
-  `flex: 1 1 0` (flex-grow) along a **column** container's main axis — the
-  bug that made the schedule columns invisible (clipped away by
-  `overflow:hidden`) or, once that was removed, scroll up over the header
-  instead of staying inside their own column. Cross-axis *stretch* sizing (a
-  flex item's height/width auto-filling a row/column container's cross axis)
-  is unaffected — that's been reliable since early flexbox. Every
-  auto-scrolling region uses exactly the abs-pos + inset pattern (see
-  `marqueeWrap` in `lib/tvmonitor-legacy-render.ts`), so instead of a
-  hardcoded pixel height (which would only work for one specific
-  header/ad/ticker/screen configuration), every ancestor in that vertical
-  chain — the outer row, the row holding the header/ads, the schedule
-  wrapper, the wayfinding-to-columns row, and each column's name-header
-  offset — gets an explicit `height` or `calc(100% - …)` computed from the
-  *actual configured* header height, ad slot sizes, ticker height, wayfinding
-  row height, and column name-header height (`adHeightTerm()`/`heightMinus()`
-  and the constants above them in that file). `calc()` mixing `vh` and `px`
-  terms in one expression is safe this old (unlike `min()/max()`, which is
-  not — see above); only the header's own height is an estimate (a few
-  configured-size heuristics, since it isn't itself an ancestor of a
-  scrolling region and its auto-height sizing isn't affected by this bug) —
-  everything else pins an exact value so the estimate can't drift.
+- **Vertical layout — position:absolute instead of flex-grow or calc() above
+  a scrolling region**: confirmed on the actual target hardware (Chromium
+  38, via a customer's real webOS display), a flex item's
+  `height: calc(100% - Npx)` does not reliably feed flex-basis resolution on
+  that old engine — the item collapses to (near) zero, taking any
+  `position:absolute; top/right/bottom/left: 0` descendant down with it
+  (the bug that made the schedule columns invisible, clipped away by
+  `overflow:hidden`, or — once that was removed to diagnose it — scroll up
+  over the header instead of staying inside their own column). A first
+  attempt at fixing this by giving each ancestor an explicit
+  `height:calc(100% - …)` still hit the same bug, since it's still a
+  calc()'d height on a flex item. Two things that *do* work reliably on
+  that hardware instead: plain percentage flex-basis (`height:100%`, no
+  calc — proven by the header/ticker/ad zones) and cross-axis *stretch*
+  sizing (a flex item's height/width auto-filling a row/column container's
+  cross axis, which every "column" div relies on); and `position:absolute`
+  with `top`/`right`/`bottom`/`left` offsets (calc() *inside* those offsets
+  is fine — a much older layout algorithm that never touches flex-basis at
+  all, the same technique the background layer has always used
+  successfully). So every container in the chain that needs to "fill
+  remaining space after a known-size sibling" — the row holding the
+  header/ads, the schedule wrapper, the wayfinding-to-columns row, and each
+  column's scrolling region (`marqueeWrap` in
+  `lib/tvmonitor-legacy-render.ts`) — is `position:absolute` with plain
+  offsets computed from the *actual configured* header height, ad slot
+  sizes, ticker height, wayfinding row height, and column name-header
+  height (`adHeightTerm()`/`sumTerms()` and the constants above them in
+  that file), never a calc()'d `height` on a flex item. Only the header's
+  own height is an estimate (a few configured-size heuristics, since it
+  isn't itself an ancestor of a scrolling region and its ordinary
+  auto-height sizing isn't affected by this bug) — everything else pins an
+  exact value so the estimate can't drift.
 - **Clock and "happening now"**: Bond's slots-schedule endpoint returns bare
   `HH:mm:ss` times with **no timezone marker at all**. The normal (React)
   view gets away with parsing them as local time because it runs in the TV's
