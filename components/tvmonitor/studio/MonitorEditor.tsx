@@ -326,7 +326,13 @@ export default function MonitorEditor({
   ].filter(Boolean);
 
   const summaries = {
-    page: `${isActive ? 'Live' : 'Off'} · ${config.screenRatio === 'fill' ? 'fills screen' : config.screenRatio}${config.legacyBrowserMode ? ' · legacy mode' : ''}`,
+    page: `${isActive ? 'Live' : 'Off'} · ${config.screenRatio === 'fill' ? 'fills screen' : config.screenRatio}${
+      config.legacyBrowserMode
+        ? config.schedule.timezone
+          ? ' · legacy mode'
+          : ' · legacy mode, no timezone set'
+        : ''
+    }`,
     data:
       config.schedule.resourceIds.length === 0
         ? 'No resources yet'
@@ -407,7 +413,13 @@ export default function MonitorEditor({
       <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
         {/* Settings column */}
         <div className="space-y-4">
-          <SectionCard title="Page" collapsible defaultOpen={false} summary={summaries.page}>
+          <SectionCard
+            title="Page"
+            collapsible
+            defaultOpen={false}
+            summary={summaries.page}
+            warning={config.legacyBrowserMode && !config.schedule.timezone}
+          >
             <Field label="Name">
               <TextInput value={name} onChange={(e) => { setName(e.target.value); setSaveState('dirty'); }} />
             </Field>
@@ -455,12 +467,38 @@ export default function MonitorEditor({
               onChange={(v) => patchConfig({ legacyBrowserMode: v })}
             />
             <p className="text-xs text-gray-500">
-              For old or embedded signage browsers that can&apos;t run this app&apos;s normal code (e.g. webOS
-              Chromium 53–68) — if a TV shows a blank or broken page, try this. When on, the live page redirects to
-              a separate, plain HTML version: no JS at all, so no build-target or hydration issues; the page
-              refreshes on a timer instead of polling, and auto-scroll runs as a continuous CSS loop (no pause,
-              no overflow detection). Ad rotation only changes across refreshes, not on an in-page timer.
+              For old or embedded signage browsers that can&apos;t run this app&apos;s normal code (e.g. older
+              webOS/embedded Chromium builds — tested down to Chromium 38) — if a TV shows a blank or broken page,
+              try this. When on, the live page redirects to a separate, plain HTML version: no JS at all, so no
+              build-target or hydration issues; the page refreshes on a timer instead of polling, and auto-scroll
+              runs as a continuous CSS loop (no pause, no overflow detection). Ad rotation only changes across
+              refreshes, not on an in-page timer.
             </p>
+            {config.legacyBrowserMode && (
+              <>
+                <Field
+                  label="Facility timezone (IANA)"
+                  hint={
+                    'Required for the clock and "Now" highlight to be correct in this mode — e.g. "America/Denver", ' +
+                    '"America/Chicago", "America/New_York". Bond’s schedule times carry no timezone of their own; ' +
+                    'the normal view gets away with assuming the TV’s own clock, but this version renders on our ' +
+                    'server, which has no idea what timezone the rink is in.'
+                  }
+                >
+                  <TextInput
+                    value={config.schedule.timezone ?? ''}
+                    onChange={(e) => patchSchedule({ timezone: e.target.value || null })}
+                    placeholder="America/Denver"
+                  />
+                </Field>
+                {!config.schedule.timezone && (
+                  <p className="rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                    ⚠️ Without this, the legacy version&apos;s clock and &quot;Now&quot; highlight will use our
+                    server&apos;s timezone, not the rink&apos;s — likely off by several hours.
+                  </p>
+                )}
+              </>
+            )}
           </SectionCard>
 
           <SectionCard

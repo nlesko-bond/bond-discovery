@@ -103,6 +103,7 @@ function baseConfig(): TvMonitorConfig {
       primaryResourceId: null,
       wayfindingLabel: 'YOU ARE HERE',
       cardStyle: 'cards',
+      timezone: null,
       futureHoursLimit: 9,
       showNotes: true,
       notesSize: 'medium',

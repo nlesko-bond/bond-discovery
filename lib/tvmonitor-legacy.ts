@@ -71,6 +71,43 @@ export function pickRotatingAsset(assets: TvMonitorAdAsset[], now: Date): TvMoni
 }
 
 /**
+ * Bond's slots-schedule endpoint returns bare "HH:mm:ss" wall-clock times
+ * with no timezone marker. The normal (React) view gets away with parsing
+ * them as local time because it runs in the TV's own browser, whose system
+ * clock is the facility's timezone; this render path runs server-side
+ * (typically UTC on Vercel), where that assumption doesn't hold at all —
+ * without correction, both the on-screen clock and the "happening now" state
+ * come out wrong by the server's offset from the facility.
+ *
+ * This builds a Date whose LOCAL (server-runtime) wall-clock reading matches
+ * what a clock physically in `timeZone` reads at the instant `instant`
+ * represents. Parsed the exact same naive way slot times are
+ * (`new Date(`${date}T${time}`)`), the result is directly comparable to slot
+ * start/end times regardless of the server's actual timezone. Falls back to
+ * `instant` unchanged for an invalid/unrecognized timezone identifier.
+ */
+export function zonedWallClockDate(instant: Date, timeZone: string): Date {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).formatToParts(instant);
+    const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '00';
+    // Some ICU implementations format midnight as "24" with hour12:false.
+    const hour = get('hour') === '24' ? '00' : get('hour');
+    return new Date(`${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}:${get('second')}`);
+  } catch {
+    return instant;
+  }
+}
+
+/**
  * Simple stroke-based weather icons as inline SVG markup. Signage displays
  * have no emoji font, so an emoji glyph (the modern view's `weather.icon`)
  * renders as an empty box; SVG has no font dependency at all.

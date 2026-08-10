@@ -45,7 +45,13 @@ import {
   slotStartTimestamp,
   type GroupedScheduleSlot,
 } from '@/lib/tvmonitor-schedule-format';
-import { escapeHtml, legacyWeatherIconSvg, pickRotatingAsset, toLegacyImageUrl } from '@/lib/tvmonitor-legacy';
+import {
+  escapeHtml,
+  legacyWeatherIconSvg,
+  pickRotatingAsset,
+  toLegacyImageUrl,
+  zonedWallClockDate,
+} from '@/lib/tvmonitor-legacy';
 import type {
   TvMonitorAdSlot,
   TvMonitorConfig,
@@ -95,11 +101,20 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
   const accent = design.accentColor;
   const secondary = design.secondaryFontColor;
 
+  // Bond's slot times carry no timezone marker (see zonedWallClockDate) — the
+  // clock/date and "happening now" state need the facility's real timezone
+  // to be correct on this server-rendered path. Falls back to the server's
+  // own timezone (usually UTC on Vercel) if it isn't configured, which is
+  // wrong for basically every real facility; the editor warns when this is
+  // missing with legacy mode on.
+  const facilityTimeZone = scheduleBlock.timezone ?? undefined;
+  const nowForLiveCheck = scheduleBlock.timezone ? zonedWallClockDate(now, scheduleBlock.timezone) : now;
+
   const clockText = header.showClock
-    ? now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })
+    ? now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: facilityTimeZone })
     : null;
   const dateText = header.showDate
-    ? now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+    ? now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: facilityTimeZone })
     : null;
 
   function adSlotSizeCss(slot: TvMonitorAdSlot, axis: 'width' | 'height'): string {
@@ -214,7 +229,7 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
   const plain = scheduleBlock.cardStyle === 'plain';
 
   function renderEventCard(event: GroupedScheduleSlot): string {
-    const live = isSlotHappeningNow(event, now);
+    const live = isSlotHappeningNow(event, nowForLiveCheck);
     const isMaintenance = event.slotType === 'maintenance';
     const title = event.isPrivate
       ? scheduleBlock.privateEventLabel
@@ -259,7 +274,7 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
     const durationSeconds = legacyScrollDurationSeconds(itemCount, scheduleBlock.scrollSpeed);
     return (
       `<div style="position:relative;flex:1 1 0;min-height:0;overflow:hidden;">` +
-      `<div style="position:absolute;top:0;right:0;bottom:0;left:0;animation:tvLegacyColScroll ${durationSeconds}s linear infinite;">` +
+      `<div style="position:absolute;top:0;right:0;bottom:0;left:0;-webkit-animation:tvLegacyColScroll ${durationSeconds}s linear infinite;animation:tvLegacyColScroll ${durationSeconds}s linear infinite;">` +
       `${contentHtml}${contentHtml}</div></div>`
     );
   }
@@ -354,7 +369,7 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
           `${labelHtml}` +
           `<div style="position:relative;flex:1 1 0;min-width:0;overflow:hidden;">` +
           `<div style="display:flex;width:max-content;align-items:center;white-space:nowrap;padding:12px 0;font-size:18px;` +
-          `animation:tvLegacyTicker ${durationSeconds}s linear infinite;">` +
+          `-webkit-animation:tvLegacyTicker ${durationSeconds}s linear infinite;animation:tvLegacyTicker ${durationSeconds}s linear infinite;">` +
           `<span style="padding-right:64px;">${escapedText}</span><span style="padding-right:64px;">${escapedText}</span>` +
           `</div></div></div>`
         );
@@ -409,7 +424,13 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
     `<style>` +
     `html, body { margin: 0; padding: 0; height: 100%; }` +
     `* { box-sizing: border-box; }` +
+    // Unprefixed @keyframes/animation only landed in Chrome 43 — the actual
+    // target hardware for this render path (webOS 3.x, Chromium 38) needs
+    // the -webkit- prefix. Both are declared; unrecognized rules are
+    // ignored, so having both is always safe.
+    `@-webkit-keyframes tvLegacyColScroll { from { -webkit-transform: translateY(0); } to { -webkit-transform: translateY(-50%); } }` +
     `@keyframes tvLegacyColScroll { from { transform: translateY(0); } to { transform: translateY(-50%); } }` +
+    `@-webkit-keyframes tvLegacyTicker { from { -webkit-transform: translateX(0); } to { -webkit-transform: translateX(-50%); } }` +
     `@keyframes tvLegacyTicker { from { transform: translateX(0); } to { transform: translateX(-50%); } }` +
     `</style>` +
     `</head>`;

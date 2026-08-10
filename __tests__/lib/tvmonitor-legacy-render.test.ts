@@ -103,4 +103,20 @@ describe('renderTvMonitorLegacyHtml', () => {
     const html = render({ schedule: { resourceIds: [] } }, { ...SCHEDULE, spaces: [] });
     expect(html).toContain('Add resources');
   });
+
+  it('uses the configured facility timezone for the clock and the "Now" highlight, not the server clock', () => {
+    // 23:30 UTC is 4:30 PM in Denver (MST, UTC-7, no DST in January) — right
+    // in the middle of the fixture's 16:00-17:00 slot. A server defaulting
+    // to its own (UTC) clock would show 11:30 PM and miss the "Now" state
+    // entirely (23:30 is outside 16:00-17:00).
+    const now = new Date('2026-01-15T23:30:00Z');
+    const config = normalizeTvMonitorConfig({
+      legacyBrowserMode: true,
+      schedule: { resourceIds: [1], timezone: 'America/Denver' },
+    });
+    const html = renderTvMonitorLegacyHtml({ config, schedule: SCHEDULE, weather: null, now, pageName: 'Test Page' });
+    expect(html).toContain('4:30 PM');
+    expect(html).not.toContain('11:30 PM');
+    expect(html).toContain('>Now<');
+  });
 });
