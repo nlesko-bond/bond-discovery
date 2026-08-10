@@ -78,6 +78,27 @@ describe('renderTvMonitorLegacyHtml', () => {
     expect(html).not.toMatch(/inset:/);
   });
 
+  it('gives every auto-scrolling region an explicit height instead of flex-grow — old Blink (Chromium 38) never resolves a definite height for a `position:absolute;top/right/bottom/left:0` child of a flex-grow-sized ancestor, which otherwise clips the schedule to nothing or lets it scroll over the header', () => {
+    const html = render({ schedule: { viewMode: 'columns', resourceIds: [1, 2], autoScroll: true } });
+    // Every scrolling wrapper (marqueeWrap) must set an explicit height (not
+    // flex-grow) on the element that contains the abs-pos scroll layer.
+    expect(html).toMatch(/height:[^"]+;min-height:0;overflow:hidden;"><div style="position:absolute;top:0;right:0;bottom:0;left:0;/);
+    // The old buggy pattern — a flex-grow ancestor feeding an abs-pos child —
+    // must not reappear anywhere in the vertical layout chain.
+    expect(html).not.toMatch(/flex:1 1 0;min-height:0;overflow:hidden;"><div style="position:absolute/);
+  });
+
+  it('sizes the header-to-ticker layout chain with calc() instead of flex-grow so it holds for any header/ad/ticker configuration', () => {
+    const html = render({
+      header: { enabled: true, layout: 'inline', showTitle: true, showClock: true },
+      ticker: { enabled: true, label: 'UPDATES', messages: ['Hello world'], scrollSpeed: 3 },
+      schedule: { viewMode: 'columns', resourceIds: [1, 2] },
+    });
+    expect(html).toMatch(/height:calc\(100% - \d+px\);flex-shrink:0;min-height:0;/); // outer row minus ticker
+    expect(html).not.toMatch(/<div style="display:flex;flex:1 1 0;min-height:0;">/); // mainRow no longer flex-grows
+    expect(html).not.toMatch(/<div style="position:relative;display:flex;flex:1 1 0;min-height:0;">/); // outer row no longer flex-grows
+  });
+
   it('renders the feed view chronologically without throwing', () => {
     const html = render({ schedule: { viewMode: 'feed', resourceIds: [1, 2] } });
     expect(html).toContain('Stick N Puck');

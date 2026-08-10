@@ -61,6 +61,18 @@ import type {
 
 const FONT_STACK = 'Arial, Helvetica, sans-serif';
 
+// Fixed-height UI chrome whose rendered size we pin exactly via inline
+// `height` (rather than letting it auto-size) so it always matches the
+// numbers used in the calc()s below — see the "Layout height math" note.
+const TICKER_HEIGHT_PX = 52;
+const WAYFINDING_ROW_CONTENT_HEIGHT_PX = 48;
+const WAYFINDING_ROW_MARGIN_PX = 8;
+const NAME_HEADER_CONTENT_HEIGHT_PX = 44;
+const NAME_HEADER_MARGIN_PX = 12;
+const CLOCK_BLOCK_HEIGHT_PX = 64;
+const WEATHER_CHIP_HEIGHT_PX = 90;
+const HEADER_VERTICAL_PADDING_PX = 32;
+
 function qrSrc(url: string): string {
   return `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(url)}`;
 }
@@ -69,6 +81,49 @@ function legacyScrollDurationSeconds(itemCount: number, scrollSpeed: number): nu
   const base = Math.max(3, itemCount) * 6;
   const speedFactor = Math.max(0.4, scrollSpeed / 3);
   return Math.max(10, Math.round(base / speedFactor));
+}
+
+// -- Layout height math ------------------------------------------------------
+//
+// Old Blink/WebKit (confirmed on Chromium 38) doesn't reliably give a
+// `position: absolute; top/right/bottom/left: 0` child a *definite* height
+// when its containing block's own height comes from flex-grow (`flex: 1 1 0`)
+// along a column container's main axis — the child either collapses to zero
+// height (clipped away by overflow:hidden) or renders unclamped over its
+// siblings. Cross-axis *stretch* sizing (a flex item's height/width filling a
+// row/column container's cross axis) is unaffected — that's been reliable
+// since early flexbox implementations. Every scrolling region here uses
+// exactly the abs-pos + inset pattern (see marqueeWrap), so every one of its
+// ancestors whose height would otherwise come from flex-grow gets an
+// explicit height/calc() below instead — computed from the actual configured
+// sizes so this holds for any config, not just today's screen.
+function adHeightTerm(slot: TvMonitorAdSlot): string {
+  return slot.sizeMode === 'ratio' ? `${slot.sizePercent}vh` : `${slot.sizePx}px`;
+}
+
+function heightMinus(terms: string[]): string {
+  return terms.length === 0 ? '100%' : `calc(100% - ${terms.join(' - ')})`;
+}
+
+// The header isn't forced to an explicit height (unlike the ticker/wayfinding
+// row/name header/title banner below) — it's not an ancestor of any abs-pos
+// scrolling region, and its own layout (align-items:center, auto height) is
+// ordinary CSS auto-sizing, which old Blink handles fine. This is only an
+// *estimate* of that auto height, needed so mainRow's calc() below knows how
+// much space the header actually takes — a few px of drift here is a cosmetic
+// gap/overlap at worst, not the invisible-content bug this file works around.
+function headerHeightPx(
+  header: TvMonitorConfig['header'],
+  hasWeatherChip: boolean,
+  headerAd: TvMonitorAdSlot | undefined,
+): number {
+  const parts = [0];
+  if (header.showLogo && header.logoUrl) parts.push(header.logoHeightPx);
+  if (header.showTitle) parts.push(Math.round(header.titleSizePx * 1.25));
+  if (header.showClock || header.showDate) parts.push(CLOCK_BLOCK_HEIGHT_PX);
+  if (hasWeatherChip) parts.push(WEATHER_CHIP_HEIGHT_PX);
+  if (headerAd && headerAd.sizeMode === 'pixels') parts.push(headerAd.sizePx);
+  return Math.max(...parts) + HEADER_VERTICAL_PADDING_PX;
 }
 
 interface Props {
@@ -95,6 +150,8 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
         slot.id !== header.sponsorAdId &&
         (placement === 'left' || placement === 'right' ? slot.fullHeight === Boolean(fullHeight) : true),
     );
+  const topAdSlots = zoneAds('top');
+  const bottomAdSlots = zoneAds('bottom');
 
   const gradient = `linear-gradient(160deg, ${design.bgColor1} 0%, ${design.bgColor2} 100%)`;
   const bgImage = toLegacyImageUrl(design.bgImageUrl);
@@ -165,6 +222,18 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
       `</div>`
     : '';
 
+  // See the "Layout height math" note above adHeightTerm/heightMinus: mainRow
+  // no longer sizes itself via flex-grow, so it needs to know exactly how
+  // much vertical space its siblings (header, top/bottom ads) are taking.
+  const headerAdRatioTerm = headerAd && headerAd.sizeMode === 'ratio' ? adHeightTerm(headerAd) : null;
+  const mainRowHeightTerms = [
+    header.enabled ? `${headerHeightPx(header, Boolean(weatherChipHtml), headerAd)}px` : null,
+    headerAdRatioTerm,
+    ...topAdSlots.map(adHeightTerm),
+    ...bottomAdSlots.map(adHeightTerm),
+  ].filter((term): term is string => Boolean(term));
+  const mainRowHeight = heightMinus(mainRowHeightTerms);
+
   function qrHtml(url: string | null, label: string): string {
     if (!url) return '';
     return (
@@ -217,12 +286,17 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
       `</header>`;
   }
 
-  const centeredTitleBannerHtml =
-    header.enabled && header.layout === 'centered' && header.showTitle
-      ? `<div style="margin-bottom:16px;flex-shrink:0;border-radius:6px;padding:8px 16px;text-align:center;` +
-        `text-transform:uppercase;letter-spacing:0.02em;font-weight:800;font-size:${header.titleSizePx}px;` +
-        `background:${accent};color:${design.fontColor};">${escapeHtml(header.title)}</div>`
-      : '';
+  const showTitleBanner = header.enabled && header.layout === 'centered' && header.showTitle;
+  // Own border-box height only — the 16px margin-bottom is tracked
+  // separately below since it's not part of the div's own height.
+  const titleBannerContentHeightPx = Math.round(header.titleSizePx * 1.25) + 16;
+  const centeredTitleBannerHtml = showTitleBanner
+    ? `<div style="height:${titleBannerContentHeightPx}px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;` +
+      `margin-bottom:16px;flex-shrink:0;border-radius:6px;padding:8px 16px;text-align:center;` +
+      `text-transform:uppercase;letter-spacing:0.02em;font-weight:800;font-size:${header.titleSizePx}px;` +
+      `background:${accent};color:${design.fontColor};">${escapeHtml(header.title)}</div>`
+    : '';
+  const scheduleWrapperHeight = showTitleBanner ? heightMinus([`${titleBannerContentHeightPx + 16}px`]) : '100%';
 
   const hideSpaceNames = Boolean(header.enabled && header.layout === 'centered' && header.showTitle && spaces.length <= 1);
 
@@ -269,13 +343,16 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
     );
   }
 
-  function marqueeWrap(contentHtml: string, itemCount: number): string {
+  function marqueeWrap(contentHtml: string, itemCount: number, heightExpr: string): string {
     if (!scheduleBlock.autoScroll || itemCount === 0) {
-      return `<div style="flex:1 1 0;min-height:0;overflow:hidden;">${contentHtml}</div>`;
+      return `<div style="height:${heightExpr};min-height:0;overflow:hidden;">${contentHtml}</div>`;
     }
     const durationSeconds = legacyScrollDurationSeconds(itemCount, scheduleBlock.scrollSpeed);
+    // The scrolling content's `top/right/bottom/left:0` only resolves to a
+    // definite height because this wrapper has an explicit `height` (not
+    // flex-grow) — see the "Layout height math" note above.
     return (
-      `<div style="position:relative;flex:1 1 0;min-height:0;overflow:hidden;">` +
+      `<div style="position:relative;height:${heightExpr};min-height:0;overflow:hidden;">` +
       `<div style="position:absolute;top:0;right:0;bottom:0;left:0;-webkit-animation:tvLegacyColScroll ${durationSeconds}s linear infinite;animation:tvLegacyColScroll ${durationSeconds}s linear infinite;">` +
       `${contentHtml}${contentHtml}</div></div>`
     );
@@ -315,7 +392,7 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
           `${renderEventCard(event)}</div></div>`,
       )
       .join('');
-    scheduleAreaHtml = marqueeWrap(`<div>${listHtml}</div>`, items.length);
+    scheduleAreaHtml = marqueeWrap(`<div>${listHtml}</div>`, items.length, '100%');
   } else {
     const hasWayfinding =
       spaces.length > 1 &&
@@ -323,7 +400,7 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
       spaces.some((s) => s.id === scheduleBlock.primaryResourceId);
 
     const wayfindingRowHtml = hasWayfinding
-      ? `<div style="display:flex;margin-bottom:8px;flex-shrink:0;">` +
+      ? `<div style="display:flex;height:${WAYFINDING_ROW_CONTENT_HEIGHT_PX}px;overflow:hidden;margin-bottom:${WAYFINDING_ROW_MARGIN_PX}px;flex-shrink:0;">` +
         spaces
           .map(
             (space) =>
@@ -340,6 +417,9 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
           .join('') +
         `</div>`
       : '';
+    const columnsRowHeight = hasWayfinding
+      ? heightMinus([`${WAYFINDING_ROW_CONTENT_HEIGHT_PX + WAYFINDING_ROW_MARGIN_PX}px`])
+      : '100%';
 
     const columnsHtml = spaces
       .map((space) => {
@@ -350,19 +430,22 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
             ? `<div style="padding:24px 0;color:${secondary};">No upcoming events</div>`
             : `<div>${events.map((event) => renderEventCard(event)).join('')}</div>`;
         const nameHtml = !hideSpaceNames
-          ? `<div style="margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid ${accent};">` +
+          ? `<div style="height:${NAME_HEADER_CONTENT_HEIGHT_PX}px;overflow:hidden;margin-bottom:${NAME_HEADER_MARGIN_PX}px;padding-bottom:8px;border-bottom:2px solid ${accent};">` +
             `<h2 style="margin:0;font-size:26px;font-weight:700;text-align:${plain ? 'center' : 'left'};">${escapeHtml(space.name)}</h2></div>`
           : '';
+        const columnMarqueeHeight = hideSpaceNames
+          ? '100%'
+          : heightMinus([`${NAME_HEADER_CONTENT_HEIGHT_PX + NAME_HEADER_MARGIN_PX}px`]);
         return (
           `<div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;margin-left:12px;margin-right:12px;opacity:${muted ? 0.55 : 1};">` +
-          `${nameHtml}${marqueeWrap(listHtml, events.length)}</div>`
+          `${nameHtml}${marqueeWrap(listHtml, events.length, columnMarqueeHeight)}</div>`
         );
       })
       .join('');
 
     scheduleAreaHtml =
       `<div style="display:flex;flex-direction:column;height:100%;min-height:0;">` +
-      `${wayfindingRowHtml}<div style="display:flex;flex:1 1 0;min-height:0;">${columnsHtml}</div></div>`;
+      `${wayfindingRowHtml}<div style="display:flex;height:${columnsRowHeight};min-height:0;">${columnsHtml}</div></div>`;
   }
 
   // -- Ticker ---------------------------------------------------------------
@@ -376,7 +459,7 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
             `text-transform:uppercase;letter-spacing:0.08em;background:${accent};color:${design.bgColor1};">${escapeHtml(ticker.label)}</div>`
           : '';
         return (
-          `<div style="position:relative;display:flex;flex-shrink:0;border-top:1px solid ${cardBorder};background:${cardBg};overflow:hidden;">` +
+          `<div style="position:relative;display:flex;height:${TICKER_HEIGHT_PX}px;flex-shrink:0;border-top:1px solid ${cardBorder};background:${cardBg};overflow:hidden;">` +
           `${labelHtml}` +
           `<div style="position:relative;flex:1 1 0;min-width:0;overflow:hidden;">` +
           `<div style="display:flex;width:max-content;align-items:center;white-space:nowrap;padding:12px 0;font-size:18px;` +
@@ -390,8 +473,8 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
   // -- Ad zones ---------------------------------------------------------------
   const leftFullAds = zoneAds('left', true).map((s) => renderAdSlot(s, 'width')).join('');
   const rightFullAds = zoneAds('right', true).map((s) => renderAdSlot(s, 'width')).join('');
-  const topAds = zoneAds('top').map((s) => renderAdSlot(s, 'height')).join('');
-  const bottomAds = zoneAds('bottom').map((s) => renderAdSlot(s, 'height')).join('');
+  const topAds = topAdSlots.map((s) => renderAdSlot(s, 'height')).join('');
+  const bottomAds = bottomAdSlots.map((s) => renderAdSlot(s, 'height')).join('');
   const leftAds = zoneAds('left').map((s) => renderAdSlot(s, 'width')).join('');
   const rightAds = zoneAds('right').map((s) => renderAdSlot(s, 'width')).join('');
 
@@ -401,20 +484,24 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
       `<div style="position:absolute;top:0;right:0;bottom:0;left:0;background:${gradient};opacity:${design.bgImageOverlayOpacity / 100};"></div>`
     : '';
 
+  // Both derived from body's own explicit height:100vh — see the "Layout
+  // height math" note above adHeightTerm/heightMinus.
+  const outerRowHeight = tickerHtml ? heightMinus([`${TICKER_HEIGHT_PX}px`]) : '100%';
+
   const bodyHtml =
     `<body style="font-family:${FONT_STACK};color:${design.fontColor};background:${bodyBackground};position:relative;` +
     `min-height:100vh;height:100vh;overflow:hidden;display:flex;flex-direction:column;margin:0;padding:0;">` +
     bgLayerHtml +
-    `<div style="position:relative;display:flex;flex:1 1 0;min-height:0;">` +
+    `<div style="position:relative;display:flex;height:${outerRowHeight};flex-shrink:0;min-height:0;">` +
     leftFullAds +
     `<div style="display:flex;flex-direction:column;flex:1 1 0;min-width:0;min-height:0;">` +
     topAds +
     headerHtml +
-    `<div style="display:flex;flex:1 1 0;min-height:0;">` +
+    `<div style="display:flex;height:${mainRowHeight};flex-shrink:0;min-height:0;">` +
     leftAds +
     `<main style="display:flex;flex-direction:column;flex:1 1 0;min-width:0;min-height:0;padding:16px 32px;">` +
     centeredTitleBannerHtml +
-    `<div style="flex:1 1 0;min-height:0;">${scheduleAreaHtml}</div>` +
+    `<div style="height:${scheduleWrapperHeight};min-height:0;">${scheduleAreaHtml}</div>` +
     `</main>` +
     rightAds +
     `</div>` +
