@@ -218,6 +218,31 @@ hardware's vendor found in the normal path:
   target, both the `@-webkit-keyframes` rules and every `-webkit-animation`
   usage are declared alongside the unprefixed ones (harmless everywhere else;
   unrecognized rules are just ignored).
+- **Vertical layout — no flex-grow above a scrolling region**: old Blink
+  (confirmed on Chromium 38, via a customer's real webOS display) doesn't
+  reliably give a `position: absolute; top/right/bottom/left: 0` child a
+  *definite* height when its containing block's own height comes from
+  `flex: 1 1 0` (flex-grow) along a **column** container's main axis — the
+  bug that made the schedule columns invisible (clipped away by
+  `overflow:hidden`) or, once that was removed, scroll up over the header
+  instead of staying inside their own column. Cross-axis *stretch* sizing (a
+  flex item's height/width auto-filling a row/column container's cross axis)
+  is unaffected — that's been reliable since early flexbox. Every
+  auto-scrolling region uses exactly the abs-pos + inset pattern (see
+  `marqueeWrap` in `lib/tvmonitor-legacy-render.ts`), so instead of a
+  hardcoded pixel height (which would only work for one specific
+  header/ad/ticker/screen configuration), every ancestor in that vertical
+  chain — the outer row, the row holding the header/ads, the schedule
+  wrapper, the wayfinding-to-columns row, and each column's name-header
+  offset — gets an explicit `height` or `calc(100% - …)` computed from the
+  *actual configured* header height, ad slot sizes, ticker height, wayfinding
+  row height, and column name-header height (`adHeightTerm()`/`heightMinus()`
+  and the constants above them in that file). `calc()` mixing `vh` and `px`
+  terms in one expression is safe this old (unlike `min()/max()`, which is
+  not — see above); only the header's own height is an estimate (a few
+  configured-size heuristics, since it isn't itself an ancestor of a
+  scrolling region and its auto-height sizing isn't affected by this bug) —
+  everything else pins an exact value so the estimate can't drift.
 - **Clock and "happening now"**: Bond's slots-schedule endpoint returns bare
   `HH:mm:ss` times with **no timezone marker at all**. The normal (React)
   view gets away with parsing them as local time because it runs in the TV's
