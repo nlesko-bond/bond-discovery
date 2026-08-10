@@ -161,6 +161,78 @@ capped by Vercel's request-body limit. Bucket: `tvmonitor-media`
 50 MB/file; images ≤ 15 MB, videos ≤ 50 MB, allowlisted MIME types. Studio
 uploads are namespaced by org (`org-{id}/…`).
 
+## Legacy browser compatibility
+
+Some signage hardware (e.g. LG webOS commercial displays) runs an embedded
+Chromium far older than anything this app targets — a real customer's fleet
+floor was Chromium 53. On hardware that old, **any** React hydration attempt
+throws (a runtime API React itself needs, `Node.prototype.getRootNode`,
+didn't land until Chrome 54) and *deletes the server-rendered HTML* on its way
+down, turning a would-be-fine static page into a blank screen. Transpiling to
+an old JS target and polyfilling the missing APIs doesn't fix this cleanly:
+Next.js has no supported way to target a different JS engine per route, and
+polyfill coverage is inherently whack-a-mole (there's always a next missing
+API). The robust fix is to skip hydration entirely for these pages.
+
+**`config.legacyBrowserMode`** (Page section, default off): when on, the live
+page (`/tvmonitor/{slug}`) `redirect()`s — a plain HTTP 3xx, no JS involved —
+to `/tvmonitor/{slug}/legacy`, a Route Handler
+(`app/tvmonitor/[slug]/legacy/route.ts`) that returns a hand-built,
+**framework-free** HTML string (`lib/tvmonitor-legacy-render.ts`) with zero
+`<script>` tags of any kind. The browser never requests any client JS for
+this page, so there is nothing to fail to parse and nothing to hydrate.
+If the toggle is later turned back off, the `/legacy` route notices on its
+own next request and redirects back to the normal page, so a stale bookmark
+doesn't linger in compat mode forever.
+
+Consequences of "no client JS, ever," each a direct fix for a bug the
+hardware's vendor found in the normal path:
+- **Data freshness**: `<meta http-equiv="refresh">` (a full reload every
+  `refreshSeconds`) replaces fetch polling. Builder edits reach the TV on the
+  next reload, same as before — just via a different mechanism.
+- **Auto-scroll and the ticker**: content is duplicated once and looped with
+  a CSS `@keyframes` `translateY`/`translateX` animation, not the JS
+  seamless-scroll engine (`useSeamlessLoopScroll`). The math still relies on
+  "0% and 100% look identical" (translating exactly one copy's distance) for
+  a seamless loop, just driven by CSS instead of measured `scrollTop`.
+  `scrollPauseSeconds` isn't replicated (continuous scroll only), and a
+  column short enough to not actually need scrolling will still loop gently
+  — there's no DOM to measure overflow against without JS. Cosmetic
+  differences from the normal view, not bugs.
+- **Ad rotation**: with no in-page timer, `pickRotatingAsset()`
+  (`lib/tvmonitor-legacy.ts`) picks a duration-weighted slot keyed off
+  wall-clock time, so assets still cycle roughly in proportion to their
+  configured duration — just once per reload, not continuously.
+- **CSS**: flexbox + `vh` + explicit longhand only — no CSS Grid, `dvh`, flex
+  `gap`, `inset` shorthand, or the CSS `min()/max()` functions used for
+  screenRatio letterboxing (skipped entirely in this mode; the display
+  always fills the viewport). All either unsupported or landed well after
+  Chrome 53. None of this can lean on the compiled Tailwind stylesheet either
+  — it isn't loaded on this path — so every element carries its own inline
+  `style="…"` string.
+- **Fonts**: a generic system stack, not the configurable Google Font — one
+  less external network dependency this path doesn't need.
+- **Images**: AVIF/WebP decoding requires a modern Chromium. For our own
+  Cloudinary-hosted uploads, `toLegacyImageUrl()` forces PNG delivery via a
+  URL transformation (`f_png`, no re-upload needed); externally pasted URLs
+  we don't control the delivery of pass through unchanged.
+- **Weather icon**: an inline SVG (`legacyWeatherIconSvg()`) instead of the
+  normal view's emoji glyph — signage displays have no emoji font, so an
+  emoji renders as an empty box.
+
+**Why a Route Handler, not a page**: an App Router *page* always ships Next's
+client runtime for hydration purposes, even one built entirely from Server
+Components with zero `'use client'` boundaries — that's the exact thing old
+Chromium can't survive. `lib/tvmonitor-legacy-render.ts` also can't use JSX
+at all: Next's build rejects importing `react-dom/server` from anywhere
+reachable by a file under `app/`, transitively, specifically to stop people
+routing around its own rendering pipeline — which is precisely what this
+path needs to do. The renderer is therefore plain string concatenation, with
+every dynamic value (event/reservation names, notes, weather location,
+ticker messages, the page name — anything ultimately sourced from Bond data
+or admin-entered config) passed through `escapeHtml()` before being spliced
+into the response.
+
 ## Access model
 
 - **Bond admins**: existing NextAuth Google flow (`requireAdmin()`), full access.
@@ -196,4 +268,5 @@ uploads are namespaced by org (`org-{id}/…`).
 - No cron: the request-path `cachedSWR` (60s ttl / 30min stale) is the freshness
   mechanism, sized for always-on TVs.
 - Tests: `__tests__/lib/tvmonitor-config.test.ts`, `__tests__/lib/tvmonitor-weather.test.ts`,
-  `__tests__/lib/tvmonitor-access.test.ts`, `__tests__/api/tvmonitor-routes.test.ts`.
+  `__tests__/lib/tvmonitor-access.test.ts`, `__tests__/api/tvmonitor-routes.test.ts`,
+  `__tests__/lib/tvmonitor-legacy.test.ts`, `__tests__/lib/tvmonitor-legacy-render.test.ts`.

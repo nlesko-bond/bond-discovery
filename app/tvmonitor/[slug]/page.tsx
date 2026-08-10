@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import TvMonitorDisplay from '@/components/tvmonitor/TvMonitorDisplay';
 import { getTvMonitorPageBySlugCached } from '@/lib/tvmonitor-config';
 import { getTvMonitorSchedule } from '@/lib/tvmonitor-schedule';
@@ -20,6 +20,13 @@ export default async function TvMonitorPage({ params }: { params: { slug: string
   const page = await getTvMonitorPageBySlugCached(params.slug);
   if (!page || !page.is_active) {
     notFound();
+  }
+
+  // Old signage browsers can't survive this page's React hydration at all —
+  // redirect (a plain HTTP 3xx, no JS involved) to the zero-client-JS render
+  // instead of trying to polyfill our way around it. See docs/tvmonitor.md.
+  if (page.config.legacyBrowserMode) {
+    redirect(`/tvmonitor/${page.slug}/legacy`);
   }
 
   // First paint comes with data (cached; never blocks long) — the client then

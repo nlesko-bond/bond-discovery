@@ -184,6 +184,14 @@ export interface TvMonitorConfig {
   ticker: TvMonitorTickerBlock;
   /** How often the TV re-polls /api/tvmonitor/{slug}/schedule (seconds, min 30). */
   refreshSeconds: number;
+  /**
+   * For old/embedded signage browsers (e.g. webOS Chromium 53-68) that can't
+   * run this app's client JS at all — any React hydration on hardware that
+   * old throws mid-hydration and wipes the server-rendered HTML, so the fix
+   * isn't polyfills, it's serving a separate zero-JS page. See
+   * app/tvmonitor/[slug]/legacy/route.ts and TvMonitorLegacyScreen.
+   */
+  legacyBrowserMode: boolean;
 }
 
 export interface ITvMonitorPage {

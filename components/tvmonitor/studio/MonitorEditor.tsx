@@ -326,7 +326,7 @@ export default function MonitorEditor({
   ].filter(Boolean);
 
   const summaries = {
-    page: `${isActive ? 'Live' : 'Off'} · ${config.screenRatio === 'fill' ? 'fills screen' : config.screenRatio}`,
+    page: `${isActive ? 'Live' : 'Off'} · ${config.screenRatio === 'fill' ? 'fills screen' : config.screenRatio}${config.legacyBrowserMode ? ' · legacy mode' : ''}`,
     data:
       config.schedule.resourceIds.length === 0
         ? 'No resources yet'
@@ -449,6 +449,18 @@ export default function MonitorEditor({
             <Field label="Data refresh (seconds)" hint="How often the TV re-checks the schedule and your edits.">
               <NumberInput value={config.refreshSeconds} min={30} max={3600} onChange={(n) => patchConfig({ refreshSeconds: n })} />
             </Field>
+            <Toggle
+              label="Legacy browser compatibility"
+              checked={config.legacyBrowserMode}
+              onChange={(v) => patchConfig({ legacyBrowserMode: v })}
+            />
+            <p className="text-xs text-gray-500">
+              For old or embedded signage browsers that can&apos;t run this app&apos;s normal code (e.g. webOS
+              Chromium 53–68) — if a TV shows a blank or broken page, try this. When on, the live page redirects to
+              a separate, plain HTML version: no JS at all, so no build-target or hydration issues; the page
+              refreshes on a timer instead of polling, and auto-scroll runs as a continuous CSS loop (no pause,
+              no overflow detection). Ad rotation only changes across refreshes, not on an in-page timer.
+            </p>
           </SectionCard>
 
           <SectionCard

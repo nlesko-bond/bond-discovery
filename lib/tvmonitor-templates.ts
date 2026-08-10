@@ -121,6 +121,7 @@ function baseConfig(): TvMonitorConfig {
     ads: [],
     ticker: { enabled: false, label: 'UPDATES', messages: [], scrollSpeed: 3 },
     refreshSeconds: 60,
+    legacyBrowserMode: false,
   };
 }
 
