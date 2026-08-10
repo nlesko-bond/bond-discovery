@@ -28,6 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
 
   const { schedule: scheduleBlock, header } = page.config;
   let schedule: TvMonitorSchedulePayload | null = null;
+  let scheduleFetchFailed = false;
   try {
     schedule = await getTvMonitorSchedule(
       page.organization_id,
@@ -37,6 +38,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
     );
   } catch (error) {
     console.error('[TvMonitorLegacy] schedule fetch failed:', error);
+    scheduleFetchFailed = true;
   }
 
   const weather =
@@ -45,6 +47,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
   const html = renderTvMonitorLegacyHtml({
     config: page.config,
     schedule,
+    scheduleFetchFailed,
     weather,
     now: new Date(),
     pageName: page.name,

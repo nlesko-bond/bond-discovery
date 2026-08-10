@@ -74,13 +74,15 @@ function legacyScrollDurationSeconds(itemCount: number, scrollSpeed: number): nu
 interface Props {
   config: TvMonitorConfig;
   schedule: TvMonitorSchedulePayload | null;
+  /** True when the server-side Bond fetch itself threw — distinct from "zero resources configured", which never throws. */
+  scheduleFetchFailed?: boolean;
   weather: TvMonitorWeatherPayload | null;
   now: Date;
   pageName: string;
 }
 
 export function renderTvMonitorLegacyHtml(props: Props): string {
-  const { config, schedule, weather, now, pageName } = props;
+  const { config, schedule, scheduleFetchFailed = false, weather, now, pageName } = props;
   const { design, header, schedule: scheduleBlock, ads, ticker } = config;
   const spaces = schedule?.spaces ?? [];
 
@@ -283,7 +285,16 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
   if (!scheduleBlock.enabled) {
     scheduleAreaHtml = '';
   } else if (spaces.length === 0) {
-    scheduleAreaHtml = `<div style="display:flex;height:100%;align-items:center;justify-content:center;font-size:24px;color:${secondary};">Add resources to this schedule to see events.</div>`;
+    // Zero configured resourceIds never throws (getTvMonitorSchedule returns
+    // successfully with empty spaces), so it's distinguishable from an
+    // actual Bond fetch failure — don't show the same "go configure this"
+    // message for both, or a real outage looks identical to a config gap.
+    const message = scheduleBlock.resourceIds.length === 0
+      ? 'Add resources to this schedule to see events.'
+      : scheduleFetchFailed
+        ? 'Could not reach the Bond schedule API — this will retry automatically on the next refresh.'
+        : 'No events returned for the configured resources.';
+    scheduleAreaHtml = `<div style="display:flex;height:100%;align-items:center;justify-content:center;font-size:24px;color:${secondary};text-align:center;padding:0 32px;">${escapeHtml(message)}</div>`;
   } else if (scheduleBlock.viewMode === 'feed') {
     const items: Array<GroupedScheduleSlot & { spaceName: string; spaceColor: string }> = [];
     spaces.forEach((space, index) => {
