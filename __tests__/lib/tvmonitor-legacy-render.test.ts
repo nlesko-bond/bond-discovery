@@ -104,6 +104,32 @@ describe('renderTvMonitorLegacyHtml', () => {
     expect(html).toContain('Add resources');
   });
 
+  it('distinguishes a failed Bond fetch from zero configured resources — both would otherwise look like "no data"', () => {
+    const config = normalizeTvMonitorConfig({ legacyBrowserMode: true, schedule: { resourceIds: [1, 2] } });
+
+    const configuredButNoData = renderTvMonitorLegacyHtml({
+      config,
+      schedule: { facilityId: 1, facilityName: 'Test', spaces: [], fetchedAt: NOW.toISOString() },
+      scheduleFetchFailed: false,
+      weather: null,
+      now: NOW,
+      pageName: 'Test Page',
+    });
+    expect(configuredButNoData).toContain('No events returned for the configured resources');
+    expect(configuredButNoData).not.toContain('Add resources');
+
+    const fetchFailed = renderTvMonitorLegacyHtml({
+      config,
+      schedule: null,
+      scheduleFetchFailed: true,
+      weather: null,
+      now: NOW,
+      pageName: 'Test Page',
+    });
+    expect(fetchFailed).toContain('Could not reach the Bond schedule API');
+    expect(fetchFailed).not.toContain('Add resources');
+  });
+
   it('uses the configured facility timezone for the clock and the "Now" highlight, not the server clock', () => {
     // 23:30 UTC is 4:30 PM in Denver (MST, UTC-7, no DST in January) — right
     // in the middle of the fixture's 16:00-17:00 slot. A server defaulting
