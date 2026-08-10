@@ -164,15 +164,19 @@ uploads are namespaced by org (`org-{id}/…`).
 ## Legacy browser compatibility
 
 Some signage hardware (e.g. LG webOS commercial displays) runs an embedded
-Chromium far older than anything this app targets — a real customer's fleet
-floor was Chromium 53. On hardware that old, **any** React hydration attempt
-throws (a runtime API React itself needs, `Node.prototype.getRootNode`,
-didn't land until Chrome 54) and *deletes the server-rendered HTML* on its way
-down, turning a would-be-fine static page into a blank screen. Transpiling to
-an old JS target and polyfilling the missing APIs doesn't fix this cleanly:
-Next.js has no supported way to target a different JS engine per route, and
-polyfill coverage is inherently whack-a-mole (there's always a next missing
-API). The robust fix is to skip hydration entirely for these pages.
+Chromium far older than anything this app targets — confirmed fleets have run
+webOS 3.x (Chromium 38) and Chromium 53–68. On hardware that old, **any**
+React hydration attempt throws (a runtime API React itself needs,
+`Node.prototype.getRootNode`, didn't land until Chrome 54) and *deletes the
+server-rendered HTML* on its way down, turning a would-be-fine static page
+into a blank screen. Transpiling to an old JS target and polyfilling the
+missing APIs doesn't fix this cleanly: Next.js has no supported way to target
+a different JS engine per route, and polyfill coverage is inherently
+whack-a-mole (there's always a next missing API). The robust fix is to skip
+hydration entirely for these pages — which has a useful side effect: since
+this render path ships **no client JS of any kind**, the target Chromium
+version mostly stops mattering for the JS engine and only matters for CSS
+rendering-engine feature support, a much narrower and more auditable surface.
 
 **`config.legacyBrowserMode`** (Page section, default off): when on, the live
 page (`/tvmonitor/{slug}`) `redirect()`s — a plain HTTP 3xx, no JS involved —
@@ -209,7 +213,27 @@ hardware's vendor found in the normal path:
   always fills the viewport). All either unsupported or landed well after
   Chrome 53. None of this can lean on the compiled Tailwind stylesheet either
   — it isn't loaded on this path — so every element carries its own inline
-  `style="…"` string.
+  `style="…"` string. Unprefixed `@keyframes`/`animation` (used for the
+  scroll/ticker loops) didn't land until Chrome 43 — below Chromium 38's
+  target, both the `@-webkit-keyframes` rules and every `-webkit-animation`
+  usage are declared alongside the unprefixed ones (harmless everywhere else;
+  unrecognized rules are just ignored).
+- **Clock and "happening now"**: Bond's slots-schedule endpoint returns bare
+  `HH:mm:ss` times with **no timezone marker at all**. The normal (React)
+  view gets away with parsing them as local time because it runs in the TV's
+  own browser, whose system clock already matches the facility's timezone;
+  this path renders **server-side** (Vercel functions run in UTC), where that
+  assumption is simply wrong. `schedule.timezone` (an IANA identifier, e.g.
+  `"America/Denver"` — a field in the Data source section, only shown with
+  legacy mode on) fixes both the on-screen clock/date and the "Now" highlight
+  via `zonedWallClockDate()` (`lib/tvmonitor-legacy.ts`): it builds a Date
+  whose local wall-clock reading matches what a clock physically in that
+  timezone would read, so it's directly comparable to the naively-parsed
+  slot times without needing to know what timezone the server itself is in.
+  Leaving it unset falls back to the server's own timezone, which is wrong
+  for virtually every real facility — the editor shows an explicit warning
+  (and the collapsed section chip flags it) whenever legacy mode is on
+  without it configured.
 - **Fonts**: a generic system stack, not the configurable Google Font — one
   less external network dependency this path doesn't need.
 - **Images**: AVIF/WebP decoding requires a modern Chromium. For our own

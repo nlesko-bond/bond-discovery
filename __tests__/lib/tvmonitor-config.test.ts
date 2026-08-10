@@ -157,6 +157,14 @@ describe('normalizeTvMonitorConfig', () => {
     expect(normalizeTvMonitorConfig({ schedule: { cardStyle: 'bogus' } }).schedule.cardStyle).toBe('cards');
   });
 
+  it('defaults schedule.timezone to null and accepts an IANA identifier', () => {
+    expect(normalizeTvMonitorConfig({}).schedule.timezone).toBeNull();
+    expect(normalizeTvMonitorConfig({ schedule: { timezone: 'America/Denver' } }).schedule.timezone).toBe(
+      'America/Denver',
+    );
+    expect(normalizeTvMonitorConfig({ schedule: { timezone: '' } }).schedule.timezone).toBeNull();
+  });
+
   it('normalizes the ticker block, capping messages at 20 and dropping blanks', () => {
     const empty = normalizeTvMonitorConfig({});
     expect(empty.ticker).toEqual({ enabled: false, label: 'UPDATES', messages: [], scrollSpeed: 3 });

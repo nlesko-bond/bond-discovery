@@ -107,6 +107,17 @@ export interface TvMonitorScheduleBlock {
   /** Label on the wayfinding banner, e.g. "YOU ARE HERE". */
   wayfindingLabel: string;
   cardStyle: TvMonitorScheduleCardStyle;
+  /**
+   * IANA timezone (e.g. "America/Denver") the facility's Bond slot times are
+   * in. Bond's v4 slots-schedule endpoint returns bare wall-clock times with
+   * no timezone marker at all — the normal (React) view gets away with
+   * assuming the viewing device's own clock, since an on-site TV's system
+   * timezone is the facility's. legacyBrowserMode renders server-side
+   * (typically in UTC), so it has no such assumption to lean on and needs
+   * this explicitly to compute the "happening now" state and the on-screen
+   * clock/date correctly. Unused by the normal view.
+   */
+  timezone: string | null;
   /** How many hours ahead of now to pull slots for (1–24). */
   futureHoursLimit: number;
   showNotes: boolean;

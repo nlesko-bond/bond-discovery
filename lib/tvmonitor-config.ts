@@ -200,6 +200,7 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
       primaryResourceId,
       wayfindingLabel: asString(schedule.wayfindingLabel, defaults.schedule.wayfindingLabel),
       cardStyle: schedule.cardStyle === 'plain' ? 'plain' : 'cards',
+      timezone: asNullableString(schedule.timezone),
       futureHoursLimit: asNumber(schedule.futureHoursLimit, defaults.schedule.futureHoursLimit, 1, 24),
       showNotes: asBool(schedule.showNotes, defaults.schedule.showNotes),
       notesSize:

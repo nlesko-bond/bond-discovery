@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { legacyWeatherIconSvg, pickRotatingAsset, toLegacyImageUrl } from '@/lib/tvmonitor-legacy';
+import { legacyWeatherIconSvg, pickRotatingAsset, toLegacyImageUrl, zonedWallClockDate } from '@/lib/tvmonitor-legacy';
 import type { TvMonitorAdAsset } from '@/types/tvmonitor';
 
 function asset(overrides: Partial<TvMonitorAdAsset>): TvMonitorAdAsset {
@@ -51,6 +51,31 @@ describe('pickRotatingAsset', () => {
     expect(pickRotatingAsset(pool, new Date(15_000))).toBe(b);
     // Same time-of-cycle should always resolve to the same asset.
     expect(pickRotatingAsset(pool, new Date(25_000))).toBe(a);
+  });
+});
+
+describe('zonedWallClockDate', () => {
+  it('produces the facility wall-clock time as naive local components', () => {
+    const instant = new Date('2026-01-15T23:00:00Z'); // 23:00 UTC, mid-January (MST, UTC-7, no DST)
+    const result = zonedWallClockDate(instant, 'America/Denver');
+    expect(result.getFullYear()).toBe(2026);
+    expect(result.getMonth()).toBe(0);
+    expect(result.getDate()).toBe(15);
+    expect(result.getHours()).toBe(16); // 23:00 UTC - 7h
+    expect(result.getMinutes()).toBe(0);
+  });
+
+  it('is directly comparable to a naively-parsed slot time the same way isSlotHappeningNow compares them', () => {
+    const slotStart = new Date('2026-01-15T16:00:00');
+    const slotEnd = new Date('2026-01-15T17:00:00');
+    const instantInsideSlot = new Date('2026-01-15T23:30:00Z'); // 16:30 in Denver
+    const zoned = zonedWallClockDate(instantInsideSlot, 'America/Denver');
+    expect(zoned >= slotStart && zoned < slotEnd).toBe(true);
+  });
+
+  it('falls back to the raw instant for an invalid timezone identifier', () => {
+    const instant = new Date('2026-01-15T23:00:00Z');
+    expect(zonedWallClockDate(instant, 'Not/ARealZone')).toBe(instant);
   });
 });
 
