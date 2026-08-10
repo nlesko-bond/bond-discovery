@@ -224,14 +224,20 @@ hardware's vendor found in the normal path:
   own browser, whose system clock already matches the facility's timezone;
   this path renders **server-side** (Vercel functions run in UTC), where that
   assumption is simply wrong. `schedule.timezone` (an IANA identifier, e.g.
-  `"America/Denver"` — a field in the Data source section, only shown with
-  legacy mode on) fixes both the on-screen clock/date and the "Now" highlight
-  via `zonedWallClockDate()` (`lib/tvmonitor-legacy.ts`): it builds a Date
-  whose local wall-clock reading matches what a clock physically in that
-  timezone would read, so it's directly comparable to the naively-parsed
-  slot times without needing to know what timezone the server itself is in.
-  Leaving it unset falls back to the server's own timezone, which is wrong
-  for virtually every real facility — the editor shows an explicit warning
+  `"America/Denver"` — a field in the **Page** section, right below the
+  legacy-mode toggle, only shown with it on) fixes both the on-screen
+  clock/date and the "Now" highlight via `zonedWallClockDate()`
+  (`lib/tvmonitor-legacy.ts`): it builds a Date whose local wall-clock
+  reading matches what a clock physically in that timezone would read, so
+  it's directly comparable to the naively-parsed slot times without needing
+  to know what timezone the server itself is in. The field is a text input
+  wired to an HTML `<datalist>` (`getTimezoneOptions()` in
+  `MonitorEditor.tsx`) populated from `Intl.supportedValuesOf('timeZone')`
+  when the browser supports it (the full canonical IANA list, no maintenance
+  burden on us) or a small hardcoded common-zones fallback otherwise — native
+  type-to-filter suggestions while still accepting free-form entry. Leaving
+  it unset falls back to the server's own timezone, which is wrong for
+  virtually every real facility — the editor shows an explicit warning
   (and the collapsed section chip flags it) whenever legacy mode is on
   without it configured.
 - **Fonts**: a generic system stack, not the configurable Google Font — one
