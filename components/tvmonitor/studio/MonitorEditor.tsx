@@ -30,6 +30,39 @@ const FONT_OPTIONS = [
   'Anton',
 ].map((f) => ({ value: f, label: f }));
 
+// Used only if the browser doesn't support Intl.supportedValuesOf (older
+// Safari) — covers the timezones Bond facilities are overwhelmingly likely
+// to be in. The common case (modern Chrome/Edge/Firefox admin browsers)
+// gets the full canonical IANA list straight from the browser's own ICU
+// data, no maintenance burden on us.
+const FALLBACK_TIMEZONES = [
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Phoenix',
+  'America/Los_Angeles',
+  'America/Anchorage',
+  'Pacific/Honolulu',
+  'America/Toronto',
+  'America/Vancouver',
+  'America/Edmonton',
+  'America/Winnipeg',
+  'America/Halifax',
+  'UTC',
+];
+
+function getTimezoneOptions(): string[] {
+  const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
+  if (typeof supportedValuesOf === 'function') {
+    try {
+      return supportedValuesOf('timeZone');
+    } catch {
+      // fall through to the fallback list below
+    }
+  }
+  return FALLBACK_TIMEZONES;
+}
+
 const RATIO_OPTIONS = [
   { value: 'fill', label: 'Fill the screen (recommended)' },
   { value: '16:9', label: '16:9 — standard TV' },
@@ -359,6 +392,9 @@ export default function MonitorEditor({
         : `${config.ticker.messages.length} message${config.ticker.messages.length === 1 ? '' : 's'}`,
   };
 
+  // Computed once — the browser's own IANA list doesn't change during a session.
+  const timezoneOptions = useMemo(() => getTimezoneOptions(), []);
+
   const headerAdOptions = useMemo(
     () => [
       { value: '', label: 'None' },
@@ -479,17 +515,23 @@ export default function MonitorEditor({
                 <Field
                   label="Facility timezone (IANA)"
                   hint={
-                    'Required for the clock and "Now" highlight to be correct in this mode — e.g. "America/Denver", ' +
-                    '"America/Chicago", "America/New_York". Bond’s schedule times carry no timezone of their own; ' +
-                    'the normal view gets away with assuming the TV’s own clock, but this version renders on our ' +
-                    'server, which has no idea what timezone the rink is in.'
+                    'Required for the clock and "Now" highlight to be correct in this mode — start typing a city ' +
+                    'or region for suggestions (e.g. "Denver", "Chicago"). Bond’s schedule times carry no timezone ' +
+                    'of their own; the normal view gets away with assuming the TV’s own clock, but this version ' +
+                    'renders on our server, which has no idea what timezone the rink is in.'
                   }
                 >
                   <TextInput
                     value={config.schedule.timezone ?? ''}
                     onChange={(e) => patchSchedule({ timezone: e.target.value || null })}
                     placeholder="America/Denver"
+                    list="tvmonitor-timezone-options"
                   />
+                  <datalist id="tvmonitor-timezone-options">
+                    {timezoneOptions.map((tz) => (
+                      <option key={tz} value={tz} />
+                    ))}
+                  </datalist>
                 </Field>
                 {!config.schedule.timezone && (
                   <p className="rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
