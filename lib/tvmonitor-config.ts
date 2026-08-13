@@ -14,6 +14,8 @@ import type {
   TvMonitorAdAsset,
   TvMonitorAdSlot,
   TvMonitorConfig,
+  TvMonitorScheduleGroup,
+  TvMonitorScheduleViewMode,
   TvMonitorScreenRatio,
   TvMonitorTemplateKey,
 } from '@/types/tvmonitor';
@@ -34,9 +36,21 @@ export const MAX_TV_RESOURCES_FEED = 60;
 // per-view until it knows — see resourceIdCapFor()).
 export const MAX_TV_RESOURCES = MAX_TV_RESOURCES_FEED;
 
-export function resourceIdCapFor(viewMode: 'columns' | 'feed'): number {
-  return viewMode === 'feed' ? MAX_TV_RESOURCES_FEED : MAX_TV_RESOURCES_COLUMNS;
+export function resourceIdCapFor(viewMode: TvMonitorScheduleViewMode): number {
+  // 'grouped' is a set of feeds side by side — each column merges its
+  // resources rather than giving each one its own column, so the readability
+  // constraint that caps 'columns' at 12 doesn't apply. What it does cap is
+  // the number of *columns* (MAX_TV_SCHEDULE_GROUPS), not the resource count.
+  return viewMode === 'columns' ? MAX_TV_RESOURCES_COLUMNS : MAX_TV_RESOURCES_FEED;
 }
+
+// Grouped view renders one column per group. A feed card is wide (time block +
+// title + resource pill), so columns get unreadable fast: two is comfortable on
+// a 1080p TV, four is the practical ceiling. This caps user-created groups; the
+// implicit "Other" column for unassigned resources can push the rendered count
+// to five, which is a deliberately visible "you left resources unassigned"
+// state rather than a layout we're designing for.
+export const MAX_TV_SCHEDULE_GROUPS = 4;
 export const MIN_TV_REFRESH_SECONDS = 30;
 
 function asString(value: unknown, fallback: string): string {
@@ -60,6 +74,54 @@ function asNumber(value: unknown, fallback: number, min: number, max: number): n
 function asIdArray(value: unknown): number[] {
   if (!Array.isArray(value)) return [];
   return value.map((n) => Number(n)).filter((n) => Number.isFinite(n) && n > 0);
+}
+
+/**
+ * Normalizes the 'grouped' view's columns against the page's resource
+ * inventory. Groups are pointers into `resourceIds`, not a second source of
+ * truth, so this enforces three things:
+ *
+ *  - every referenced ID still exists in `resourceIds` (same "keep the pointer
+ *    only if the target still exists" rule as header.sponsorAdId and
+ *    schedule.primaryResourceId);
+ *  - an ID lives in at most one group — first group to claim it wins, so a
+ *    duplicated ID can never render the same events in two columns;
+ *  - at most MAX_TV_SCHEDULE_GROUPS columns.
+ *
+ * IDs left unclaimed are deliberately NOT dropped here — the renderer collects
+ * them into a trailing "Other" column so unassigned resources stay visible on
+ * screen instead of disappearing (see buildScheduleGroupColumns).
+ *
+ * Groups survive in every view mode so grouped → feed → grouped round-trips
+ * without losing the grouping. Switching to 'columns' is the one lossy
+ * direction, since its cap of 12 can shrink `resourceIds` out from under the
+ * groups — MonitorEditor warns before making that switch.
+ */
+function normalizeScheduleGroups(raw: unknown, resourceIds: number[]): TvMonitorScheduleGroup[] {
+  if (!Array.isArray(raw)) return [];
+  const inventory = new Set(resourceIds);
+  const claimed = new Set<number>();
+  const usedIds = new Set<string>();
+
+  return raw
+    .slice(0, MAX_TV_SCHEDULE_GROUPS)
+    .map((entry, index): TvMonitorScheduleGroup | null => {
+      if (!entry || typeof entry !== 'object') return null;
+      const group = entry as Record<string, unknown>;
+
+      let id = asString(group.id, `group-${index}`);
+      if (usedIds.has(id)) id = `${id}-${index}`;
+      usedIds.add(id);
+
+      const groupResourceIds = asIdArray(group.resourceIds).filter((resourceId) => {
+        if (!inventory.has(resourceId) || claimed.has(resourceId)) return false;
+        claimed.add(resourceId);
+        return true;
+      });
+
+      return { id, label: asString(group.label, `Group ${index + 1}`), resourceIds: groupResourceIds };
+    })
+    .filter((group): group is TvMonitorScheduleGroup => group !== null);
 }
 
 function normalizeAdAsset(raw: unknown, index: number): TvMonitorAdAsset | null {
@@ -121,8 +183,10 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
     header.weather && typeof header.weather === 'object' ? (header.weather as Record<string, unknown>) : {};
 
   const schedule = rec.schedule && typeof rec.schedule === 'object' ? (rec.schedule as Record<string, unknown>) : {};
-  const scheduleViewMode: 'columns' | 'feed' = schedule.viewMode === 'feed' ? 'feed' : 'columns';
+  const scheduleViewMode: TvMonitorScheduleViewMode =
+    schedule.viewMode === 'feed' ? 'feed' : schedule.viewMode === 'grouped' ? 'grouped' : 'columns';
   const scheduleResourceIds = asIdArray(schedule.resourceIds).slice(0, resourceIdCapFor(scheduleViewMode));
+  const scheduleGroups = normalizeScheduleGroups(schedule.groups, scheduleResourceIds);
   // Only keep the "you are here" pointer if it's actually one of the resources on screen.
   const primaryResourceIdRaw = Number(schedule.primaryResourceId);
   const primaryResourceId =
@@ -197,6 +261,7 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
       // dropped 24 of them with no signal to the person editing), so the
       // studio warns before save whenever it would truncate — see MonitorEditor.
       resourceIds: scheduleResourceIds,
+      groups: scheduleGroups,
       primaryResourceId,
       wayfindingLabel: asString(schedule.wayfindingLabel, defaults.schedule.wayfindingLabel),
       cardStyle: schedule.cardStyle === 'plain' ? 'plain' : 'cards',

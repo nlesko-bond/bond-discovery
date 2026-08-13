@@ -53,7 +53,7 @@ Building blocks inside `config`:
 | Block | Settings |
 |---|---|
 | `header` | logo, title, live clock, date, schedule QR, waiver QR, optional sponsor ad slot, optional weather chip (see below) |
-| `schedule` | **view** — `columns` (one column per resource) or `feed` (all resources merged into one full-width, chronologically-sorted scrolling list, each event tagged with its resource); resource (space) IDs — cap depends on view, see below; optional "you are here" wayfinding highlight (`columns` only, see below); card style — `cards` (default) or `plain`; hours ahead (1–24), show notes / maintenance / private events + notes size/color/italic/bold, labels, auto-scroll (speed 1–5, pause; `columns` also has synchronized vs independent) |
+| `schedule` | **view** — `columns` (one column per resource), `feed` (all resources merged into one full-width, chronologically-sorted scrolling list, each event tagged with its resource), or `grouped` (several named columns, each a feed over its own group of resources); resource (space) IDs — cap depends on view, see below; `grouped` also carries `groups[]`; optional "you are here" wayfinding highlight (`columns` only, see below); card style — `cards` (default) or `plain`; hours ahead (1–24), show notes / maintenance / private events + notes size/color/italic/bold, labels, auto-scroll (speed 1–5, pause; `columns` and `grouped` also have synchronized vs independent) |
 | `ads[]` | fixed placements: left/right rail (optionally full screen height, header beside it), top/bottom banner, in-header; sized by pixels or % of screen; each rotates image/video assets by URL with per-asset duration. The builder shows each slot's rendered px + aspect ratio. JS ad tags are a planned future asset type. |
 | `ticker` | optional scrolling text bar across the bottom of the screen — a label chip + up to 20 plain-text messages, pure CSS marquee. Distinct from `ads[]`: text announcements, not image/video creative. |
 | `design` | dark/light presets, Google font, font/secondary/accent colors, background gradient (color 1 → color 2), optional background image with adjustable color-overlay strength, card colors |
@@ -81,8 +81,7 @@ pointer only if the target still exists" pattern as `header.sponsorAdId`).
 **Card style** (`schedule.cardStyle`): `cards` (default) keeps the existing
 bordered/background event cards. `plain` renders centered, stacked text with
 no card chrome — separated by a hairline divider instead of a box — for
-boards that want a cleaner, more sign-like look. Applies to both `columns`
-and `feed` views.
+boards that want a cleaner, more sign-like look. Applies to all three views.
 
 Templates (`lib/tvmonitor-templates.ts`): **Classic Board** (no ads),
 **Sponsor Spotlight** (left rail + header sponsor), **Promo Banner** (light theme +
@@ -119,8 +118,8 @@ Facility ID and the resource list client-side and shows a warning — forcing a
 conscious re-pick rather than silently saving a page pointed at another org's
 (possibly nonexistent, possibly someone else's) facility/resources.
 
-**Schedule view — columns vs feed**: `TvMonitorScreen` picks the renderer from
-`config.schedule.viewMode`.
+**Schedule view — columns vs feed vs grouped**: `TvMonitorScreen` picks the renderer
+from `config.schedule.viewMode`.
 - `columns` (`components/tvmonitor/TvScheduleGrid.tsx`, default) — one column per
   resource, each independently or synchronously auto-scrolling.
 - `feed` (`components/tvmonitor/TvScheduleFeed.tsx`) — every resource's events merged
@@ -131,11 +130,53 @@ conscious re-pick rather than silently saving a page pointed at another org's
   (`resourceColorFor`), assigned by the resource's position in `resourceIds`, not its
   Bond space ID, so they stay stable relative to each other. Built for "everything
   happening at the facility today" boards rather than per-rink columns.
+- `grouped` (`components/tvmonitor/TvScheduleGroupedFeed.tsx`) — the middle ground:
+  several equal-width columns, each one a `feed` over its own named group of
+  resources ("Courts" on the left, "Pool Lanes" on the right). Cards are identical
+  to `feed` cards, resource pill and all — only the set of resources merged into
+  each column differs, so a grouped column tells you both *which group* (header)
+  and *which resource* (pill) an event belongs to.
+
+`feed` and every column of `grouped` render the same `TvFeedList` component and share
+`buildFeedItems()`, so filtering, parent/child nesting, and sort order can't drift
+between them. The legacy zero-JS renderer calls the same `buildFeedItems()` /
+`buildScheduleGroupColumns()` helpers for the same reason.
+
+**Grouped view specifics**
+- `schedule.groups[]` (`{ id, label, resourceIds }`) are **pointers into
+  `resourceIds`, not a second source of truth**. `resourceIds` stays the only thing
+  the Bond fetch and its cache key are built from, in every view mode — grouping is
+  purely a render-time concern and cannot affect fetch scope.
+- `normalizeScheduleGroups()` enforces that every referenced ID still exists in
+  `resourceIds` (the same "keep the pointer only if the target still exists" rule as
+  `header.sponsorAdId` / `schedule.primaryResourceId`), that an ID lives in at most
+  one group (first group to claim it wins), and that there are at most
+  `MAX_TV_SCHEDULE_GROUPS = 4` groups — a feed card is wide, so two columns are
+  comfortable on a 1080p TV and four is the practical ceiling.
+- **Unassigned resources are never dropped.** IDs no group claims are collected by
+  `buildScheduleGroupColumns()` into a trailing, muted **"Other"** column (which can
+  push the rendered count to five — a deliberately visible "you left resources
+  unassigned" state, not a layout we design for). The editor flags it in amber and in
+  the collapsed section chip. This is the same lesson as the resource-cap bug below:
+  a visibly odd extra column is recoverable, an invisible omission is not.
+- Groups survive in **every** view mode, so grouped → feed → grouped round-trips
+  without losing the grouping. Switching to `columns` is the one lossy direction (its
+  cap of 12 can shrink `resourceIds` out from under the groups) — `MonitorEditor`
+  warns before making that switch.
+- Switching *into* grouped seeds a single "All resources" group holding everything, so
+  the board is valid the instant the mode changes (identical to feed) rather than
+  starting blank.
+- Resource colors come from `buildResourceColors()`, keyed by **space id** rather than
+  by position within a column — two columns each starting at `palette[0]` would paint
+  unrelated resources the same color on one screen.
 
 **Resource ID cap is per-view, not shared** (`resourceIdCapFor()` in
 `lib/tvmonitor-config.ts`): `MAX_TV_RESOURCES_COLUMNS = 12` (a display constraint —
 side-by-side columns stop being readable past a dozen) vs `MAX_TV_RESOURCES_FEED = 60`
 (feed has no columns-must-fit constraint; the cap only bounds Bond query/URL size).
+`grouped` uses the feed cap: it merges resources into columns rather than giving each
+its own, so what it caps is the number of *columns* (`MAX_TV_SCHEDULE_GROUPS`), not
+the resource count.
 ⚠️ **A single shared cap of 12 shipped for one release and silently truncated feed
 pages with more than 12 resources on save — a real customer page (36 resource IDs)
 lost 24 of them with no signal.** The lesson: any place that can drop `resourceIds`
@@ -145,7 +186,7 @@ before doing it — see `addResource()` / `handleViewModeChange()` in `MonitorEd
 UX; it stays silent by design (server-side normalization has no user to warn), so the
 client-side guards are load-bearing.
 
-Both views share one auto-scroll engine (`useSeamlessLoopScroll` in
+All three views share one auto-scroll engine (`useSeamlessLoopScroll` in
 `components/tvmonitor/useSeamlessLoopScroll.ts`): overflowing columns render their
 content twice and wrap `scrollTop` back by exactly one copy's height once the first
 copy scrolls past, so the loop never visibly jumps. Shared time/duration/grouping
@@ -331,4 +372,5 @@ into the response.
   mechanism, sized for always-on TVs.
 - Tests: `__tests__/lib/tvmonitor-config.test.ts`, `__tests__/lib/tvmonitor-weather.test.ts`,
   `__tests__/lib/tvmonitor-access.test.ts`, `__tests__/api/tvmonitor-routes.test.ts`,
-  `__tests__/lib/tvmonitor-legacy.test.ts`, `__tests__/lib/tvmonitor-legacy-render.test.ts`.
+  `__tests__/lib/tvmonitor-legacy.test.ts`, `__tests__/lib/tvmonitor-legacy-render.test.ts`,
+  `__tests__/lib/tvmonitor-groups.test.ts`.

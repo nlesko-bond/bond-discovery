@@ -8,12 +8,14 @@ import MonitorPreview, { BASE_SIZES } from '@/components/tvmonitor/studio/Monito
 import MediaInput from '@/components/tvmonitor/studio/MediaInput';
 import { ColorInput, Field, NumberInput, SectionCard, Select, TextInput, Toggle } from '@/components/tvmonitor/studio/fields';
 import { TV_DESIGN_PRESETS } from '@/lib/tvmonitor-templates';
-import { resourceIdCapFor } from '@/lib/tvmonitor-config';
+import { MAX_TV_SCHEDULE_GROUPS, resourceIdCapFor } from '@/lib/tvmonitor-config';
 import type {
   ITvMonitorPage,
   TvMonitorAdAsset,
   TvMonitorAdSlot,
   TvMonitorConfig,
+  TvMonitorScheduleGroup,
+  TvMonitorScheduleViewMode,
   TvMonitorSpace,
 } from '@/types/tvmonitor';
 
@@ -191,6 +193,8 @@ export default function MonitorEditor({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ facilityName: string; spaces: TvMonitorSpace[] } | null>(null);
   const [resourceInput, setResourceInput] = useState('');
+  /** Grouped view: the pending paste-box text for each group, keyed by group id. */
+  const [groupInputs, setGroupInputs] = useState<Record<string, string>>({});
   const [tickerMessageInput, setTickerMessageInput] = useState('');
   const [copied, setCopied] = useState(false);
 
@@ -230,7 +234,7 @@ export default function MonitorEditor({
   function handleOrgIdChange(nextOrgId: number) {
     setOrganizationId(nextOrgId);
     setFacilityId(0);
-    patchSchedule({ resourceIds: [], primaryResourceId: null });
+    patchSchedule({ resourceIds: [], primaryResourceId: null, groups: [] });
     setTestResult(null);
     setSaveState('dirty');
   }
@@ -291,27 +295,137 @@ export default function MonitorEditor({
     }
   }
 
-  function addResource() {
-    const ids = resourceInput
+  function parseResourceIds(text: string): number[] {
+    return text
       .split(/[,\s]+/)
       .map((s) => parseInt(s.trim(), 10))
       .filter((n) => Number.isFinite(n) && n > 0);
-    if (!ids.length) return;
+  }
+
+  /**
+   * Merges IDs into the page's resource inventory, warning if the view's cap
+   * would drop any. Returns the IDs that actually made it in, so callers that
+   * also need to file them into a group don't file a resource the inventory
+   * rejected. Never truncate silently — this exact bug shipped once already
+   * (a 36-ID paste in feed mode quietly became 12, with no signal to the
+   * person editing, and they lost hours chasing a "no events" ghost).
+   */
+  function mergeResourceIds(ids: number[]): number[] {
     const cap = resourceIdCapFor(config.schedule.viewMode);
     const combined = Array.from(new Set([...config.schedule.resourceIds, ...ids]));
     const merged = combined.slice(0, cap);
     if (combined.length > cap) {
-      // Never truncate silently — this exact bug shipped once already (a
-      // 36-ID paste in feed mode quietly became 12, with no signal to the
-      // person editing, and they lost hours chasing a "no events" ghost).
       alert(
         `Only the first ${cap} resources are kept in ${config.schedule.viewMode} view — ` +
           `${combined.length - cap} of the ${combined.length} you now have were NOT added. ` +
           `Remove some existing resources first if you need the later ones.`,
       );
     }
-    patchSchedule({ resourceIds: merged });
+    return merged;
+  }
+
+  function addResource() {
+    const ids = parseResourceIds(resourceInput);
+    if (!ids.length) return;
+    patchSchedule({ resourceIds: mergeResourceIds(ids) });
     setResourceInput('');
+  }
+
+  /**
+   * Removing a resource from the inventory must also unfile it from any
+   * group — normalizeTvMonitorConfig prunes dangling group references on
+   * save anyway, but leaving a stale chip on screen until then would make
+   * the editor disagree with what the board will actually render.
+   */
+  function removeResource(resourceId: number) {
+    patchSchedule({
+      resourceIds: config.schedule.resourceIds.filter((r) => r !== resourceId),
+      groups: config.schedule.groups.map((group) => ({
+        ...group,
+        resourceIds: group.resourceIds.filter((r) => r !== resourceId),
+      })),
+      primaryResourceId: config.schedule.primaryResourceId === resourceId ? null : config.schedule.primaryResourceId,
+    });
+  }
+
+  // -- Grouped view: named columns, each a feed over a subset of resources --
+
+  function patchGroups(groups: TvMonitorScheduleGroup[]) {
+    patchSchedule({ groups });
+  }
+
+  function addGroup() {
+    if (config.schedule.groups.length >= MAX_TV_SCHEDULE_GROUPS) return;
+    patchGroups([
+      ...config.schedule.groups,
+      {
+        id: `group-${Math.random().toString(36).slice(2, 9)}`,
+        label: `Group ${config.schedule.groups.length + 1}`,
+        resourceIds: [],
+      },
+    ]);
+  }
+
+  /**
+   * Dropping a group leaves its resources in the inventory rather than
+   * deleting them — they resurface under "Unassigned" here and in an "Other"
+   * column on the board, so the action is always recoverable and never
+   * quietly shrinks what the TV shows.
+   */
+  function removeGroup(groupId: string) {
+    patchGroups(config.schedule.groups.filter((group) => group.id !== groupId));
+  }
+
+  function renameGroup(groupId: string, label: string) {
+    patchGroups(config.schedule.groups.map((group) => (group.id === groupId ? { ...group, label } : group)));
+  }
+
+  function moveGroup(groupId: string, delta: number) {
+    const groups = [...config.schedule.groups];
+    const from = groups.findIndex((group) => group.id === groupId);
+    const to = from + delta;
+    if (from < 0 || to < 0 || to >= groups.length) return;
+    [groups[from], groups[to]] = [groups[to], groups[from]];
+    patchGroups(groups);
+  }
+
+  /** Files resources into one group, unfiling them from every other so a resource never renders in two columns. */
+  function assignResourcesToGroup(groupId: string, resourceIds: number[]) {
+    if (!resourceIds.length) return;
+    const moving = new Set(resourceIds);
+    patchGroups(
+      config.schedule.groups.map((group) =>
+        group.id === groupId
+          ? { ...group, resourceIds: [...group.resourceIds.filter((r) => !moving.has(r)), ...resourceIds] }
+          : { ...group, resourceIds: group.resourceIds.filter((r) => !moving.has(r)) },
+      ),
+    );
+  }
+
+  /** A group's paste box adds to the page inventory and files into that group in one action. */
+  function addResourcesToGroup(groupId: string) {
+    const ids = parseResourceIds(groupInputs[groupId] ?? '');
+    if (!ids.length) return;
+    const merged = mergeResourceIds(ids);
+    const accepted = ids.filter((id) => merged.includes(id));
+    const moving = new Set(accepted);
+    patchSchedule({
+      resourceIds: merged,
+      groups: config.schedule.groups.map((group) =>
+        group.id === groupId
+          ? { ...group, resourceIds: [...group.resourceIds.filter((r) => !moving.has(r)), ...accepted] }
+          : { ...group, resourceIds: group.resourceIds.filter((r) => !moving.has(r)) },
+      ),
+    });
+    setGroupInputs((prev) => ({ ...prev, [groupId]: '' }));
+  }
+
+  function unassignResource(groupId: string, resourceId: number) {
+    patchGroups(
+      config.schedule.groups.map((group) =>
+        group.id === groupId ? { ...group, resourceIds: group.resourceIds.filter((r) => r !== resourceId) } : group,
+      ),
+    );
   }
 
   function addTickerMessage() {
@@ -325,18 +439,36 @@ export default function MonitorEditor({
     setTickerMessageInput('');
   }
 
-  function handleViewModeChange(nextViewMode: 'columns' | 'feed') {
+  function handleViewModeChange(nextViewMode: TvMonitorScheduleViewMode) {
     const cap = resourceIdCapFor(nextViewMode);
     const current = config.schedule.resourceIds;
+    // Seed grouped view with a single group holding everything, so the board
+    // is valid the instant the mode is switched (identical to feed) and the
+    // user splits it from there rather than starting from a blank screen.
+    const seedGroups: TvMonitorScheduleGroup[] =
+      nextViewMode === 'grouped' && config.schedule.groups.length === 0
+        ? [{ id: `group-${Math.random().toString(36).slice(2, 9)}`, label: 'All resources', resourceIds: [...current] }]
+        : config.schedule.groups;
+
     if (current.length > cap) {
       alert(
         `Switching to ${nextViewMode} view keeps only the first ${cap} of your ${current.length} resources — ` +
-          `the rest will be dropped. Re-add them if you switch back.`,
+          `the rest will be dropped${config.schedule.groups.length > 0 ? ', along with their group assignments' : ''}. ` +
+          `Re-add them if you switch back.`,
       );
-      patchSchedule({ viewMode: nextViewMode, resourceIds: current.slice(0, cap) });
+      const kept = current.slice(0, cap);
+      const keptSet = new Set(kept);
+      patchSchedule({
+        viewMode: nextViewMode,
+        resourceIds: kept,
+        groups: seedGroups.map((group) => ({
+          ...group,
+          resourceIds: group.resourceIds.filter((r) => keptSet.has(r)),
+        })),
+      });
       return;
     }
-    patchSchedule({ viewMode: nextViewMode });
+    patchSchedule({ viewMode: nextViewMode, groups: seedGroups });
   }
 
   // Status chips for the collapsed section headers — neutral for state,
@@ -358,6 +490,24 @@ export default function MonitorEditor({
     config.header.weather.enabled && 'weather',
   ].filter(Boolean);
 
+  const grouped = config.schedule.viewMode === 'grouped';
+  // Both of these render side-by-side columns, so both expose the
+  // synchronized-vs-independent scroll choice that a single feed can't use.
+  const multiColumnView = config.schedule.viewMode === 'columns' || grouped;
+  const viewModeLabel =
+    config.schedule.viewMode === 'feed' ? 'Feed' : grouped ? 'Grouped' : 'Columns';
+  /** Resources in the inventory that no group has claimed — they render in an "Other" column. */
+  const unassignedResourceIds = grouped
+    ? config.schedule.resourceIds.filter(
+        (id) => !config.schedule.groups.some((group) => group.resourceIds.includes(id)),
+      )
+    : [];
+  const groupedSummarySuffix = !grouped
+    ? ''
+    : unassignedResourceIds.length > 0
+      ? ` · ${unassignedResourceIds.length} unassigned`
+      : ` · ${config.schedule.groups.length} group${config.schedule.groups.length === 1 ? '' : 's'}`;
+
   const summaries = {
     page: `${isActive ? 'Live' : 'Off'} · ${config.screenRatio === 'fill' ? 'fills screen' : config.screenRatio}${
       config.legacyBrowserMode
@@ -377,7 +527,7 @@ export default function MonitorEditor({
         : headerBits.join(' · ') || 'Empty',
     schedule: !config.schedule.enabled
       ? 'Hidden'
-      : `${config.schedule.viewMode === 'feed' ? 'Feed' : 'Columns'} · Next ${config.schedule.futureHoursLimit}h${config.schedule.autoScroll ? ` · ${config.schedule.viewMode === 'columns' ? (config.schedule.scrollMode === 'synchronized' ? 'synced' : 'independent') + ' scroll' : 'scrolling'}` : ''}`,
+      : `${viewModeLabel}${groupedSummarySuffix} · Next ${config.schedule.futureHoursLimit}h${config.schedule.autoScroll ? ` · ${multiColumnView ? (config.schedule.scrollMode === 'synchronized' ? 'synced' : 'independent') + ' scroll' : 'scrolling'}` : ''}`,
     ads:
       enabledAdSlots.length === 0
         ? 'None'
@@ -402,6 +552,9 @@ export default function MonitorEditor({
     ],
     [config.ads],
   );
+
+  /** Real space name once "Test connection" has resolved it, else the raw ID. */
+  const resourceLabel = (id: number) => testResult?.spaces.find((s) => s.id === id)?.name ?? `#${id}`;
 
   const primaryResourceOptions = useMemo(
     () => [
@@ -576,15 +729,17 @@ export default function MonitorEditor({
               hint={
                 config.schedule.viewMode === 'feed'
                   ? `Up to ${resourceIdCapFor('feed')} — merged into one scrolling feed, each event tagged with its resource.`
-                  : `Up to ${resourceIdCapFor('columns')} — one schedule column each, in this order.`
+                  : grouped
+                    ? `Up to ${resourceIdCapFor('grouped')} — every resource on this page. Sort them into columns under Schedule block → Groups.`
+                    : `Up to ${resourceIdCapFor('columns')} — one schedule column each, in this order.`
               }
             >
               <div className="flex flex-wrap gap-2">
                 {config.schedule.resourceIds.map((id) => (
                   <span key={id} className="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm">
-                    {testResult?.spaces.find((s) => s.id === id)?.name ?? `#${id}`}
+                    {resourceLabel(id)}
                     <button
-                      onClick={() => patchSchedule({ resourceIds: config.schedule.resourceIds.filter((r) => r !== id) })}
+                      onClick={() => removeResource(id)}
                       className="text-gray-400 hover:text-red-500"
                       aria-label={`Remove resource ${id}`}
                     >
@@ -777,18 +932,143 @@ export default function MonitorEditor({
                   hint={
                     config.schedule.viewMode === 'feed'
                       ? 'All resources merged into one scrolling list, sorted by time, with the location shown on each event.'
-                      : 'One column per resource, side by side.'
+                      : grouped
+                        ? 'One column per group, each a scrolling list merging that group’s resources — e.g. Courts on the left, Pool Lanes on the right.'
+                        : 'One column per resource, side by side.'
                   }
                 >
                   <Select
                     value={config.schedule.viewMode}
-                    onChange={(v) => handleViewModeChange(v as 'columns' | 'feed')}
+                    onChange={(v) => handleViewModeChange(v as TvMonitorScheduleViewMode)}
                     options={[
                       { value: 'columns', label: 'Columns — one per resource' },
-                      { value: 'feed', label: "Feed — everything today, one scrolling list" },
+                      { value: 'feed', label: 'Feed — everything today, one scrolling list' },
+                      { value: 'grouped', label: 'Grouped — a feed per group of resources' },
                     ]}
                   />
                 </Field>
+                {grouped && (
+                  <Field
+                    label="Groups"
+                    hint={`Up to ${MAX_TV_SCHEDULE_GROUPS} columns. Paste space IDs straight into a group — they're added to the page's resource list automatically.`}
+                  >
+                    <div className="space-y-3">
+                      {config.schedule.groups.map((group, index) => (
+                        <div key={group.id} className="rounded-lg border border-gray-200 p-3">
+                          <div className="flex items-center gap-2">
+                            <TextInput
+                              value={group.label}
+                              onChange={(e) => renameGroup(group.id, e.target.value)}
+                              placeholder="Column name, e.g. Courts"
+                            />
+                            <button
+                              onClick={() => moveGroup(group.id, -1)}
+                              disabled={index === 0}
+                              className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-30"
+                              aria-label={`Move ${group.label} left`}
+                            >
+                              ↑
+                            </button>
+                            <button
+                              onClick={() => moveGroup(group.id, 1)}
+                              disabled={index === config.schedule.groups.length - 1}
+                              className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-30"
+                              aria-label={`Move ${group.label} right`}
+                            >
+                              ↓
+                            </button>
+                            <button
+                              onClick={() => removeGroup(group.id)}
+                              className="rounded-lg border border-gray-300 px-2 py-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                              aria-label={`Remove group ${group.label}`}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                          {group.resourceIds.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {group.resourceIds.map((id) => (
+                                <span key={id} className="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm">
+                                  {resourceLabel(id)}
+                                  <button
+                                    onClick={() => unassignResource(group.id, id)}
+                                    className="text-gray-400 hover:text-red-500"
+                                    aria-label={`Remove resource ${id} from ${group.label}`}
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <div className="mt-2 flex gap-2">
+                            <TextInput
+                              value={groupInputs[group.id] ?? ''}
+                              onChange={(e) => setGroupInputs((prev) => ({ ...prev, [group.id]: e.target.value }))}
+                              placeholder="Space IDs, e.g. 2191, 2192"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addResourcesToGroup(group.id);
+                                }
+                              }}
+                            />
+                            <button
+                              onClick={() => addResourcesToGroup(group.id)}
+                              className="rounded-lg border border-gray-300 px-3 text-sm hover:bg-gray-50"
+                            >
+                              Add
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {config.schedule.groups.length < MAX_TV_SCHEDULE_GROUPS && (
+                        <button
+                          onClick={addGroup}
+                          className="flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                        >
+                          <Plus size={14} /> Add group
+                        </button>
+                      )}
+
+                      {unassignedResourceIds.length > 0 && (
+                        <div className="rounded-lg bg-amber-50 p-3">
+                          <p className="text-xs font-medium text-amber-900">
+                            ⚠️ {unassignedResourceIds.length} resource
+                            {unassignedResourceIds.length === 1 ? '' : 's'} not in any group — they’ll show on the board
+                            in an extra “Other” column until you file them.
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {unassignedResourceIds.map((id) => (
+                              <span
+                                key={id}
+                                className="flex items-center gap-1 rounded-full border border-amber-300 bg-white px-2 py-1 text-sm"
+                              >
+                                {resourceLabel(id)}
+                                {config.schedule.groups.length > 0 && (
+                                  <select
+                                    value=""
+                                    onChange={(e) => e.target.value && assignResourcesToGroup(e.target.value, [id])}
+                                    className="ml-1 rounded border border-gray-300 bg-white px-1 py-0.5 text-xs"
+                                    aria-label={`Add resource ${id} to a group`}
+                                  >
+                                    <option value="">Add to…</option>
+                                    {config.schedule.groups.map((group) => (
+                                      <option key={group.id} value={group.id}>
+                                        {group.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </Field>
+                )}
                 <Field label="Hours ahead to show (1–24)">
                   <NumberInput value={config.schedule.futureHoursLimit} min={1} max={24} onChange={(n) => patchSchedule({ futureHoursLimit: n })} />
                 </Field>
@@ -882,7 +1162,7 @@ export default function MonitorEditor({
                         className="w-full accent-toca-navy"
                       />
                     </Field>
-                    {config.schedule.viewMode === 'columns' && (
+                    {multiColumnView && (
                       <Field label="Scroll style">
                         <Select
                           value={config.schedule.scrollMode}

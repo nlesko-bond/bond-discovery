@@ -4,7 +4,7 @@
  * unified chronological feed view (TvScheduleFeed).
  */
 
-import type { TvMonitorScheduleBlock, TvMonitorSlot } from '@/types/tvmonitor';
+import type { TvMonitorScheduleBlock, TvMonitorSlot, TvMonitorSpace } from '@/types/tvmonitor';
 
 export interface GroupedScheduleSlot extends TvMonitorSlot {
   children: TvMonitorSlot[];
@@ -81,4 +81,93 @@ const RESOURCE_PALETTE = [
 
 export function resourceColorFor(index: number): string {
   return RESOURCE_PALETTE[index % RESOURCE_PALETTE.length];
+}
+
+/**
+ * Space id → palette color, assigned by position in the fetched `spaces`
+ * array (which getTvMonitorSchedule orders by the page's resourceIds).
+ * Grouped view needs colors keyed by id rather than by position within a
+ * column: two columns each starting at palette[0] would paint unrelated
+ * resources the same color on one screen.
+ */
+export function buildResourceColors(spaces: TvMonitorSpace[]): Map<number, string> {
+  return new Map(spaces.map((space, index) => [space.id, resourceColorFor(index)]));
+}
+
+/** A feed row: one grouped slot, tagged with the resource it belongs to. */
+export interface FeedScheduleItem extends GroupedScheduleSlot {
+  spaceName: string;
+  spaceColor: string;
+}
+
+/**
+ * Merges several resources' slots into one chronologically-sorted feed.
+ * Shared by the full-width 'feed' view, each column of the 'grouped' view,
+ * and the zero-JS legacy renderer, so all three stay in lock-step on
+ * filtering, parent/child nesting, and sort order.
+ */
+export function buildFeedItems(
+  spaces: TvMonitorSpace[],
+  settings: TvMonitorScheduleBlock,
+  colors: Map<number, string>,
+): FeedScheduleItem[] {
+  const items: FeedScheduleItem[] = [];
+  spaces.forEach((space) => {
+    const spaceColor = colors.get(space.id) ?? resourceColorFor(0);
+    groupScheduleSlots(space.slots, settings).forEach((event) => {
+      items.push({ ...event, spaceName: space.name, spaceColor });
+    });
+  });
+  return items.sort((a, b) => slotStartTimestamp(a) - slotStartTimestamp(b));
+}
+
+/** One rendered column of the 'grouped' view. */
+export interface ScheduleGroupColumn {
+  /** Stable React/DOM key — the group's config id, or UNGROUPED_COLUMN_KEY. */
+  key: string;
+  label: string;
+  spaces: TvMonitorSpace[];
+}
+
+export const UNGROUPED_COLUMN_KEY = '__ungrouped__';
+export const UNGROUPED_COLUMN_LABEL = 'Other';
+
+/**
+ * Splits the fetched spaces into the grouped view's columns.
+ *
+ * Resources not claimed by any group land in a trailing "Other" column
+ * instead of being dropped. That's deliberate: this feature's whole config
+ * surface is "which resources go in which column", and a resource silently
+ * vanishing from a board because nobody assigned it is exactly the failure
+ * mode that shipped once already with the shared resource-ID cap (a real
+ * customer page lost 24 of 36 IDs with no signal). A visibly odd extra column
+ * is recoverable; an invisible omission is not.
+ *
+ * Groups whose resources returned no spaces still render as empty columns —
+ * a "this group is misconfigured" signal on screen, and it keeps column
+ * widths stable as events come and go through the day.
+ */
+export function buildScheduleGroupColumns(
+  spaces: TvMonitorSpace[],
+  settings: TvMonitorScheduleBlock,
+): ScheduleGroupColumn[] {
+  const spaceById = new Map(spaces.map((space) => [space.id, space]));
+  const claimed = new Set<number>();
+
+  const columns: ScheduleGroupColumn[] = settings.groups.map((group) => ({
+    key: group.id,
+    label: group.label,
+    spaces: group.resourceIds.reduce<TvMonitorSpace[]>((acc, id) => {
+      claimed.add(id);
+      const space = spaceById.get(id);
+      if (space) acc.push(space);
+      return acc;
+    }, []),
+  }));
+
+  const unassigned = spaces.filter((space) => !claimed.has(space.id));
+  if (unassigned.length > 0) {
+    columns.push({ key: UNGROUPED_COLUMN_KEY, label: UNGROUPED_COLUMN_LABEL, spaces: unassigned });
+  }
+  return columns;
 }

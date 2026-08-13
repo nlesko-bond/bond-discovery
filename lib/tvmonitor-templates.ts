@@ -100,6 +100,7 @@ function baseConfig(): TvMonitorConfig {
       enabled: true,
       viewMode: 'columns',
       resourceIds: [],
+      groups: [],
       primaryResourceId: null,
       wayfindingLabel: 'YOU ARE HERE',
       cardStyle: 'cards',

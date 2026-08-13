@@ -87,8 +87,28 @@ export interface TvMonitorHeaderBlock {
  *             sorted scrolling list, with each event's resource called out
  *             on the card. For "everything happening today at the facility"
  *             boards where columns-per-rink isn't the point.
+ * 'grouped' — the middle ground: several side-by-side columns, each one a
+ *             'feed' over its own named group of resources (e.g. "Courts"
+ *             on the left, "Pool Lanes" on the right). Cards are identical
+ *             to 'feed' cards, resource pill and all — only the set of
+ *             resources merged into each column differs.
  */
-export type TvMonitorScheduleViewMode = 'columns' | 'feed';
+export type TvMonitorScheduleViewMode = 'columns' | 'feed' | 'grouped';
+
+/**
+ * One column of the 'grouped' view: a display name plus the subset of
+ * `resourceIds` merged into it. Groups reference the page's resource
+ * inventory rather than owning it — `resourceIds` stays the single source
+ * of truth for what gets fetched from Bond in every view mode, so grouping
+ * never touches the fetch scope or its cache key.
+ */
+export interface TvMonitorScheduleGroup {
+  id: string;
+  /** Column header text, e.g. "Courts". */
+  label: string;
+  /** Subset of the page's resourceIds shown in this column. */
+  resourceIds: number[];
+}
 
 /** 'cards' — bordered event cards (default). 'plain' — centered stacked text, no card chrome. */
 export type TvMonitorScheduleCardStyle = 'cards' | 'plain';
@@ -98,6 +118,14 @@ export interface TvMonitorScheduleBlock {
   viewMode: TvMonitorScheduleViewMode;
   /** Bond space/resource IDs to display — one column per resource in 'columns' view. */
   resourceIds: number[];
+  /**
+   * 'grouped' view only: named columns, each merging its own subset of
+   * `resourceIds` into a feed. Preserved when the page is switched to
+   * another view mode, so grouped → feed → grouped round-trips without
+   * losing the grouping. Any resourceId not claimed by a group renders in a
+   * trailing "Other" column rather than silently vanishing.
+   */
+  groups: TvMonitorScheduleGroup[];
   /**
    * Highlights one resource column as "you are here" with a wayfinding
    * banner above it and muted styling on the others. 'columns' view only —

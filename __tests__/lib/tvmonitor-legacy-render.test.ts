@@ -108,6 +108,61 @@ describe('renderTvMonitorLegacyHtml', () => {
     expect(html).toContain('Stick N Puck');
   });
 
+  it('renders the grouped view as one labelled column per group, each a feed', () => {
+    const html = render({
+      schedule: {
+        viewMode: 'grouped',
+        resourceIds: [1, 2],
+        groups: [
+          { id: 'east', label: 'East Side', resourceIds: [1] },
+          { id: 'west', label: 'West Side', resourceIds: [2] },
+        ],
+      },
+    });
+    expect(html).toContain('East Side');
+    expect(html).toContain('West Side');
+    // Feed cards keep the resource pill, so a merged column stays readable.
+    expect(html).toContain('East Rink');
+    expect(html).toContain('Stick N Puck');
+    // Empty group still renders its column rather than collapsing the layout.
+    expect(html).toContain('No events scheduled');
+    // Same absolute-positioned column geometry as the columns view — a
+    // calc()'d flex height here would collapse the scroll region on the
+    // Chromium 38 hardware this whole path exists for.
+    expect(html).not.toMatch(/height:calc\(100% - \d+px\)/);
+    expect(html).toMatch(/position:absolute;top:\d+px;left:0;right:0;bottom:0;overflow:hidden;/);
+  });
+
+  it('renders unassigned resources in an "Other" column instead of dropping them', () => {
+    // Give the ungrouped resource an event of its own — a resource with no
+    // events produces no feed cards at all, so its name would never appear
+    // and the assertion couldn't tell "rendered empty" from "dropped".
+    const scheduleWithWestEvent: TvMonitorSchedulePayload = {
+      ...SCHEDULE,
+      spaces: [
+        SCHEDULE.spaces[0],
+        {
+          ...SCHEDULE.spaces[1],
+          slots: [{ ...SCHEDULE.spaces[0].slots[0], slotId: 99, reservationName: 'Open Skate', spaceId: 2 }],
+        },
+      ],
+    };
+    const html = render(
+      {
+        schedule: {
+          viewMode: 'grouped',
+          resourceIds: [1, 2],
+          groups: [{ id: 'east', label: 'East Side', resourceIds: [1] }],
+        },
+      },
+      scheduleWithWestEvent,
+    );
+    expect(html).toContain('East Side');
+    expect(html).toContain('>Other<');
+    expect(html).toContain('West Rink');
+    expect(html).toContain('Open Skate');
+  });
+
   it('renders the wayfinding banner only for a resolvable primaryResourceId', () => {
     const html = render({ schedule: { resourceIds: [1, 2], primaryResourceId: 1, wayfindingLabel: 'YOU ARE HERE' } });
     expect(html).toContain('YOU ARE HERE');

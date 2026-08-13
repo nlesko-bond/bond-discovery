@@ -37,12 +37,15 @@
  */
 
 import {
+  buildFeedItems,
+  buildResourceColors,
+  buildScheduleGroupColumns,
   formatEventDuration,
   formatEventTime,
   groupScheduleSlots,
   isSlotHappeningNow,
-  resourceColorFor,
-  slotStartTimestamp,
+  UNGROUPED_COLUMN_KEY,
+  type FeedScheduleItem,
   type GroupedScheduleSlot,
 } from '@/lib/tvmonitor-schedule-format';
 import {
@@ -362,6 +365,30 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
     );
   }
 
+  /**
+   * A feed row: the resource's color strip + name pill, then the same event
+   * card the columns view uses. Shared by the 'feed' and 'grouped' branches
+   * so a grouped column is literally a feed over a subset of resources.
+   */
+  function renderFeedItemHtml(event: FeedScheduleItem): string {
+    return (
+      `<div style="margin-bottom:16px;display:flex;">` +
+      `<div style="width:6px;border-radius:999px;background:${event.spaceColor};flex-shrink:0;margin-right:16px;"></div>` +
+      `<div style="flex:1 1 0;min-width:0;">` +
+      `<span style="display:inline-flex;align-items:center;padding:4px 12px;border-radius:999px;border:1px solid ${cardBorder};font-weight:600;">` +
+      `<span style="width:10px;height:10px;border-radius:999px;background:${event.spaceColor};margin-right:8px;display:inline-block;"></span>` +
+      `${escapeHtml(event.spaceName)}</span>` +
+      `${renderEventCard(event)}</div></div>`
+    );
+  }
+
+  function renderFeedListHtml(items: FeedScheduleItem[]): string {
+    if (items.length === 0) {
+      return `<div style="padding:24px 0;color:${secondary};">No events scheduled</div>`;
+    }
+    return items.map((event) => renderFeedItemHtml(event)).join('');
+  }
+
   // topOffsetPx is the space a preceding sibling (e.g. a column's name
   // header) takes up within the *positioned* parent (the per-column div,
   // or scheduleWrapper directly for feed mode) — this wrapper is itself
@@ -396,26 +423,35 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
         : 'No events returned for the configured resources.';
     scheduleAreaHtml = `<div style="display:flex;height:100%;align-items:center;justify-content:center;font-size:24px;color:${secondary};text-align:center;padding:0 32px;">${escapeHtml(message)}</div>`;
   } else if (scheduleBlock.viewMode === 'feed') {
-    const items: Array<GroupedScheduleSlot & { spaceName: string; spaceColor: string }> = [];
-    spaces.forEach((space, index) => {
-      groupScheduleSlots(space.slots, scheduleBlock).forEach((event) => {
-        items.push({ ...event, spaceName: space.name, spaceColor: resourceColorFor(index) });
-      });
-    });
-    items.sort((a, b) => slotStartTimestamp(a) - slotStartTimestamp(b));
-    const listHtml = items
-      .map(
-        (event) =>
-          `<div style="margin-bottom:16px;display:flex;">` +
-          `<div style="width:6px;border-radius:999px;background:${event.spaceColor};flex-shrink:0;margin-right:16px;"></div>` +
-          `<div style="flex:1 1 0;min-width:0;">` +
-          `<span style="display:inline-flex;align-items:center;padding:4px 12px;border-radius:999px;border:1px solid ${cardBorder};font-weight:600;">` +
-          `<span style="width:10px;height:10px;border-radius:999px;background:${event.spaceColor};margin-right:8px;display:inline-block;"></span>` +
-          `${escapeHtml(event.spaceName)}</span>` +
-          `${renderEventCard(event)}</div></div>`,
-      )
+    const items = buildFeedItems(spaces, scheduleBlock, buildResourceColors(spaces));
+    scheduleAreaHtml = marqueeWrap(`<div>${renderFeedListHtml(items)}</div>`, items.length, 0);
+  } else if (scheduleBlock.viewMode === 'grouped') {
+    // Same column geometry as the 'columns' branch below — a flex row of
+    // position:relative columns, each with a fixed-height label header and a
+    // position:absolute marquee filling everything beneath it. The only
+    // difference is what goes inside: a merged feed per group instead of one
+    // resource's event list. See marqueeWrap's note on why the scrolling
+    // region is absolutely positioned rather than a calc()'d flex height.
+    const colors = buildResourceColors(spaces);
+    const columnMarqueeTopPx = NAME_HEADER_CONTENT_HEIGHT_PX + NAME_HEADER_MARGIN_PX;
+    const columnsHtml = buildScheduleGroupColumns(spaces, scheduleBlock)
+      .map((column) => {
+        const items = buildFeedItems(column.spaces, scheduleBlock, colors);
+        // The "Other" bucket isn't a group the user named — mute it so it
+        // reads as a state to fix, not as a real column.
+        const labelColor = column.key === UNGROUPED_COLUMN_KEY ? secondary : design.fontColor;
+        const labelHtml =
+          `<div style="height:${NAME_HEADER_CONTENT_HEIGHT_PX}px;overflow:hidden;margin-bottom:${NAME_HEADER_MARGIN_PX}px;padding-bottom:8px;border-bottom:2px solid ${accent};">` +
+          `<h2 style="margin:0;font-size:26px;font-weight:700;color:${labelColor};">${escapeHtml(column.label)}</h2></div>`;
+        return (
+          `<div style="position:relative;flex:1 1 0;min-width:0;display:flex;flex-direction:column;margin-left:12px;margin-right:12px;">` +
+          `${labelHtml}${marqueeWrap(`<div>${renderFeedListHtml(items)}</div>`, items.length, columnMarqueeTopPx)}</div>`
+        );
+      })
       .join('');
-    scheduleAreaHtml = marqueeWrap(`<div>${listHtml}</div>`, items.length, 0);
+    scheduleAreaHtml =
+      `<div style="position:relative;height:100%;">` +
+      `<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;">${columnsHtml}</div></div>`;
   } else {
     const hasWayfinding =
       spaces.length > 1 &&
