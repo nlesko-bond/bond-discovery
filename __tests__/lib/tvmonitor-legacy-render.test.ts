@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderTvMonitorLegacyHtml } from '@/lib/tvmonitor-legacy-render';
 import { normalizeTvMonitorConfig } from '@/lib/tvmonitor-config';
+import { buildMansfieldSchedule, MANSFIELD_RESOURCE_IDS } from '@/__tests__/fixtures/tvmonitor-mansfield';
 import type { TvMonitorSchedulePayload, TvMonitorWeatherPayload } from '@/types/tvmonitor';
 
 const NOW = new Date('2026-01-15T16:30:00Z');
@@ -161,6 +162,75 @@ describe('renderTvMonitorLegacyHtml', () => {
     expect(html).toContain('>Other<');
     expect(html).toContain('West Rink');
     expect(html).toContain('Open Skate');
+  });
+
+  describe('mergeDuplicateBookings', () => {
+    // End-to-end through the real renderer: counts how many times the duplicated
+    // reservation actually reaches the HTML. Covers the shared merge layer AND
+    // legacy presentation in one pure-string assertion, with no DOM.
+    function countTav(viewMode: string, merge: boolean, groups: unknown[] = []) {
+      const config = normalizeTvMonitorConfig({
+        legacyBrowserMode: true,
+        schedule: {
+          viewMode,
+          resourceIds: MANSFIELD_RESOURCE_IDS,
+          mergeDuplicateBookings: merge,
+          groups,
+          autoScroll: false, // marqueeWrap duplicates content when scrolling
+        },
+      });
+      const html = renderTvMonitorLegacyHtml({
+        config,
+        schedule: buildMansfieldSchedule(),
+        weather: null,
+        now: NOW,
+        pageName: 'Mansfield',
+      });
+      return (html.match(/TAV Volleyball/g) ?? []).length;
+    }
+
+    it('collapses the feed to a single card', () => {
+      expect(countTav('feed', false)).toBe(6);
+      expect(countTav('feed', true)).toBe(1);
+    });
+
+    it('collapses within each column but keeps the booking in every column it occupies', () => {
+      // Court 6 x1 + Court 7 x4 + Court 8 x1 -> one card in each of the 3 columns.
+      expect(countTav('columns', false)).toBe(6);
+      expect(countTav('columns', true)).toBe(3);
+    });
+
+    it('renders one card per group column', () => {
+      const groups = [
+        { id: 'low', label: 'Courts 1-6', resourceIds: [8009, 8010, 8013, 8014] },
+        { id: 'high', label: 'Courts 7-8', resourceIds: [8015, 8016] },
+      ];
+      expect(countTav('grouped', false, groups)).toBe(6);
+      expect(countTav('grouped', true, groups)).toBe(2);
+    });
+
+    it('annotates a merged columns card with the other resources it occupies', () => {
+      const config = normalizeTvMonitorConfig({
+        legacyBrowserMode: true,
+        schedule: {
+          viewMode: 'columns',
+          resourceIds: MANSFIELD_RESOURCE_IDS,
+          mergeDuplicateBookings: true,
+          autoScroll: false,
+        },
+      });
+      const html = renderTvMonitorLegacyHtml({
+        config,
+        schedule: buildMansfieldSchedule(),
+        weather: null,
+        now: NOW,
+        pageName: 'Mansfield',
+      });
+      expect(html).toContain('also on');
+      // Still a zero-JS page with no calc()'d flex height.
+      expect(html).not.toContain('<script');
+      expect(html).not.toMatch(/height:calc\(100% - \d+px\)/);
+    });
   });
 
   it('renders the wayfinding banner only for a resolvable primaryResourceId', () => {

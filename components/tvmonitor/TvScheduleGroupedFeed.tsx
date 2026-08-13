@@ -5,6 +5,7 @@ import {
   buildFeedItems,
   buildResourceColors,
   buildScheduleGroupColumns,
+  buildSpaceNameIndex,
   UNGROUPED_COLUMN_KEY,
 } from '@/lib/tvmonitor-schedule-format';
 import TvFeedList from '@/components/tvmonitor/TvFeedList';
@@ -41,9 +42,13 @@ export default function TvScheduleGroupedFeed({
 
   const columns = useMemo(() => {
     const colors = buildResourceColors(spaces);
+    // Name index is page-wide (so a booked sub-space still resolves), but each
+    // column merges over only its own spaces — that's what makes a grouped
+    // column name the resources it occupies *within that group*.
+    const spaceNames = buildSpaceNameIndex(spaces);
     return buildScheduleGroupColumns(spaces, settings).map((column) => ({
       ...column,
-      items: buildFeedItems(column.spaces, settings, colors),
+      items: buildFeedItems(column.spaces, settings, colors, spaceNames),
     }));
   }, [spaces, settings]);
 

@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Wrench } from 'lucide-react';
 import {
+  buildResourceEvents,
+  buildSpaceNameIndex,
   formatEventDuration,
   formatEventTime,
-  groupScheduleSlots,
+  formatOccupancyLabel,
   isSlotHappeningNow,
 } from '@/lib/tvmonitor-schedule-format';
 import { useSeamlessLoopScroll } from '@/components/tvmonitor/useSeamlessLoopScroll';
@@ -36,10 +38,32 @@ export default function TvScheduleGrid({
     return () => clearInterval(timer);
   }, []);
 
-  const grouped = useMemo(
-    () => spaces.map((space) => ({ space, events: groupScheduleSlots(space.slots, settings) })),
-    [spaces, settings],
-  );
+  const grouped = useMemo(() => {
+    const spaceNames = buildSpaceNameIndex(spaces);
+    return spaces.map((space) => ({ space, events: buildResourceEvents(space, settings, spaceNames) }));
+  }, [spaces, settings]);
+
+  /**
+   * Which other resources a booking also occupies, page-wide.
+   *
+   * The merge itself is scoped to a single column here, so a card's own
+   * `occupancy` is just that column's name — useless as an annotation. This
+   * index is deliberately page-wide instead, and the chip says "also on" to
+   * make the wider scope explicit rather than implying the column contains them.
+   */
+  const alsoOnByKey = useMemo(() => {
+    if (!settings.mergeDuplicateBookings) return new Map<string, string[]>();
+    const index = new Map<string, string[]>();
+    grouped.forEach(({ space, events }) => {
+      events.forEach((event) => {
+        if (!event.key.startsWith('res:')) return;
+        const seen = index.get(event.key) ?? [];
+        if (!seen.includes(space.name)) seen.push(space.name);
+        index.set(event.key, seen);
+      });
+    });
+    return index;
+  }, [grouped, settings.mergeDuplicateBookings]);
 
   const scrollSignature = `${compact}|${settings.notesSize}|${grouped.map((g) => `${g.space.id}:${g.events.length}`).join(',')}`;
   const loopingColumns = useSeamlessLoopScroll(columnRefs, settings, scrollSignature);
@@ -109,6 +133,18 @@ export default function TvScheduleGrid({
                     ? settings.maintenanceLabel
                     : event.reservationName;
 
+                // Hoisted so both the plain and cards branches below can drop it
+                // in, matching how notes/children are already handled here.
+                const alsoOnLabel = formatOccupancyLabel(
+                  (alsoOnByKey.get(event.key) ?? []).filter((name) => name !== space.name),
+                  2,
+                );
+                const alsoOn = alsoOnLabel && (
+                  <div className={`mt-1 text-xs ${plain ? 'text-center' : ''}`} style={{ color: 'var(--tv-secondary)' }}>
+                    also on {alsoOnLabel}
+                  </div>
+                );
+
                 const notes = settings.showNotes && event.notes && !event.isPrivate && (
                   <div
                     className={`mt-1 line-clamp-4 whitespace-pre-line leading-snug ${notesSize}`}
@@ -157,7 +193,7 @@ export default function TvScheduleGrid({
                 if (plain) {
                   return (
                     <div
-                      key={event.slotId}
+                      key={event.key}
                       className="mb-5 border-b pb-4 text-center last:border-b-0"
                       style={{ borderColor: 'var(--tv-card-border)' }}
                     >
@@ -181,6 +217,7 @@ export default function TvScheduleGrid({
                         {title}
                       </div>
                       {notes}
+                      {alsoOn}
                       {children}
                     </div>
                   );
@@ -188,7 +225,7 @@ export default function TvScheduleGrid({
 
                 return (
                   <div
-                    key={event.slotId}
+                    key={event.key}
                     className="mb-4 rounded-xl border p-4"
                     style={{
                       background: 'var(--tv-card-bg)',
@@ -223,6 +260,7 @@ export default function TvScheduleGrid({
                       {title}
                     </div>
                     {notes}
+                    {alsoOn}
                     {children}
                   </div>
                 );

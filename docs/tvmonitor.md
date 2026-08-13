@@ -170,6 +170,48 @@ between them. The legacy zero-JS renderer calls the same `buildFeedItems()` /
   by position within a column — two columns each starting at `palette[0]` would paint
   unrelated resources the same color on one screen.
 
+**Combining duplicate bookings** (`schedule.mergeDuplicateBookings`, default off):
+Bond models dependent and parent/child spaces, so slots-schedule returns **one slot
+per (reservation × space)** — a booking reappears under every space it blocks. A real
+facility (673 Mansfield, 36 resources) returned **33 slot rows for 4 actual
+reservations**, one of them 20 times, including **4 times inside a single column**
+because it was booked on 4 sub-spaces that all cascade into the same court.
+
+With the toggle on, copies of the same reservation render as one card annotated with
+the resources it occupies. Collapse counts on that data: **feed 33 → 4**,
+**grouped 13 → 4 per column**, **columns 33 → 26** (columns reduces least by design —
+each column stays a truthful picture of that resource, so only the within-column
+duplication goes).
+
+Key mechanics (`lib/tvmonitor-schedule-format.ts`):
+- **Key** = `reservationId|reservationName|date|endDate|startTime|endTime`. `slotId`
+  cannot be used — the duplicate copies each carry their own. `reservationKeyOf()`
+  returns `null` when `reservationId` is null and those slots are **never merged**,
+  since name+time alone can collide across genuinely different bookings.
+- **Occupancy is scope-derived, not page-wide.** It is a property of a reservation
+  *within the set being merged*, so the caller's scope decides what a card claims:
+  feed passes every space, each grouped column passes only its own, columns passes a
+  single space. A page-wide map would put building-wide half-courts on a card sitting
+  under a "Court 1" header.
+- **Two different space ids are in play.** `slot.spaceId` is where the booking was
+  *made*; the space it is nested under is where it *displays*. Occupancy prefers the
+  booked name and falls back per-slot to the containing space when the booked
+  sub-space isn't one of the page's configured resources (which is common — operators
+  configure courts, not the half-court a booking landed on).
+- Merge runs **after** `groupScheduleSlots` (hidden slots never contribute a name) and
+  **before** the chronological sort, so the surviving representative and the occupancy
+  order both follow `resourceIds` order rather than Bond's cascade order.
+- **`isPrivate` is OR across copies** — conservative, because first-wins could print a
+  reservation name Bond marked private. **`notes` is first non-null.** **Children are
+  deduped by the same key**, not unioned — each duplicated parent brings its own copy
+  of the same child, so a union just moves the duplication one level down.
+- Cards spanning several resources drop the colour strip/dot to neutral: it encodes
+  *one* resource as a deliberate colour-blind-safe cue, and a merged card wearing one
+  space's colour would be actively wrong.
+- The columns view's "also on …" chip is the one place using page-wide occupancy —
+  within a single-space scope a card's own occupancy is just that column — hence the
+  explicit "also on" wording.
+
 **Resource ID cap is per-view, not shared** (`resourceIdCapFor()` in
 `lib/tvmonitor-config.ts`): `MAX_TV_RESOURCES_COLUMNS = 12` (a display constraint —
 side-by-side columns stop being readable past a dozen) vs `MAX_TV_RESOURCES_FEED = 60`
@@ -373,4 +415,6 @@ into the response.
 - Tests: `__tests__/lib/tvmonitor-config.test.ts`, `__tests__/lib/tvmonitor-weather.test.ts`,
   `__tests__/lib/tvmonitor-access.test.ts`, `__tests__/api/tvmonitor-routes.test.ts`,
   `__tests__/lib/tvmonitor-legacy.test.ts`, `__tests__/lib/tvmonitor-legacy-render.test.ts`,
-  `__tests__/lib/tvmonitor-groups.test.ts`.
+  `__tests__/lib/tvmonitor-groups.test.ts`, `__tests__/lib/tvmonitor-merge-bookings.test.ts`
+  (with `__tests__/fixtures/tvmonitor-mansfield.ts`, a reduced-scale reproduction of the
+  real dependent-space duplication).

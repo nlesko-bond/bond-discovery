@@ -4,8 +4,10 @@ import { Wrench } from 'lucide-react';
 import {
   formatEventDuration,
   formatEventTime,
+  formatOccupancyLabel,
   isSlotHappeningNow,
   type FeedScheduleItem,
+  type MergeableScheduleSlot,
 } from '@/lib/tvmonitor-schedule-format';
 import type { TvMonitorScheduleBlock } from '@/types/tvmonitor';
 
@@ -33,7 +35,7 @@ export default function TvFeedList({
   size = 'normal',
   now,
 }: {
-  items: FeedScheduleItem[];
+  items: MergeableScheduleSlot<FeedScheduleItem>[];
   settings: TvMonitorScheduleBlock;
   size?: TvFeedListSize;
   /** null until the client clock mounts — keeps SSR and first paint identical. */
@@ -74,9 +76,15 @@ export default function TvFeedList({
           : isMaintenanceCard
             ? settings.maintenanceLabel
             : event.reservationName;
+        // A merged card stands for several resources, so the single-resource
+        // color cue would be actively wrong — fall back to a neutral strip/dot
+        // and let the multi-name pill carry the location on its own.
+        const spansMultiple = event.occupancy.length > 1;
+        const cueColor = spansMultiple ? 'var(--tv-card-border)' : event.spaceColor;
+        const locationLabel = formatOccupancyLabel(event.occupancy, 2) ?? event.spaceName;
         return (
           <div
-            key={event.slotId}
+            key={event.key}
             className={plain ? 'mb-5 flex gap-4 border-b pb-4 last:border-b-0' : 'mb-4 flex gap-4 rounded-xl border p-4'}
             style={
               plain
@@ -85,7 +93,7 @@ export default function TvFeedList({
             }
           >
             {/* Color-coded resource strip — first of the two location cues. */}
-            <div className="w-1.5 shrink-0 rounded-full" style={{ background: event.spaceColor }} />
+            <div className="w-1.5 shrink-0 rounded-full" style={{ background: cueColor }} />
 
             <div
               className={`flex w-28 shrink-0 flex-col items-start justify-center border-r pr-4 ${timeWidthModifier}`}
@@ -125,8 +133,8 @@ export default function TvFeedList({
                     className={`flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 font-semibold ${compact ? 'text-sm' : 'text-base'}`}
                     style={{ borderColor: 'var(--tv-card-border)' }}
                   >
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: event.spaceColor }} />
-                    {event.spaceName}
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: cueColor }} />
+                    {locationLabel}
                   </span>
                 </div>
               </div>

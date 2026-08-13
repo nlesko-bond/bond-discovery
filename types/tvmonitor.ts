@@ -157,6 +157,16 @@ export interface TvMonitorScheduleBlock {
   notesBold: boolean;
   showMaintenance: boolean;
   showPrivateEvents: boolean;
+  /**
+   * Collapses the duplicate rows Bond returns for dependent / parent-child
+   * spaces. Bond's slots-schedule endpoint emits one slot per
+   * (reservation x space), so a single booking reappears under every space it
+   * blocks — a real facility returned 33 rows for 4 actual reservations, one
+   * of them 20 times. With this on, copies sharing a reservation are rendered
+   * as one card annotated with the spaces it occupies. Off by default so
+   * existing boards are untouched.
+   */
+  mergeDuplicateBookings: boolean;
   privateEventLabel: string;
   /** Label used for maintenance child slots (e.g. "Ice Cut", "Maintenance"). */
   maintenanceLabel: string;

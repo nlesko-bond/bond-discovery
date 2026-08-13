@@ -39,14 +39,17 @@
 import {
   buildFeedItems,
   buildResourceColors,
+  buildResourceEvents,
   buildScheduleGroupColumns,
+  buildSpaceNameIndex,
   formatEventDuration,
   formatEventTime,
-  groupScheduleSlots,
+  formatOccupancyLabel,
   isSlotHappeningNow,
   UNGROUPED_COLUMN_KEY,
   type FeedScheduleItem,
   type GroupedScheduleSlot,
+  type MergeableScheduleSlot,
 } from '@/lib/tvmonitor-schedule-format';
 import {
   escapeHtml,
@@ -326,7 +329,7 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
   const notesFontSize = scheduleBlock.notesSize === 'large' ? 22 : scheduleBlock.notesSize === 'medium' ? 18 : 14;
   const plain = scheduleBlock.cardStyle === 'plain';
 
-  function renderEventCard(event: GroupedScheduleSlot): string {
+  function renderEventCard(event: GroupedScheduleSlot, alsoOnLabel?: string | null): string {
     const live = isSlotHappeningNow(event, nowForLiveCheck);
     const isMaintenance = event.slotType === 'maintenance';
     const title = event.isPrivate
@@ -347,13 +350,18 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
     const nowChipHtml = live
       ? `<span style="margin-left:8px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;background:${accent};color:${design.bgColor1};">Now</span>`
       : '';
+    // Mirrors the React columns view: says "also on" because these names come
+    // from page-wide occupancy, not from this column.
+    const alsoOnHtml = alsoOnLabel
+      ? `<div style="margin-top:4px;font-size:12px;color:${secondary};">also on ${escapeHtml(alsoOnLabel)}</div>`
+      : '';
 
     if (plain) {
       return (
         `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid ${cardBorder};text-align:center;">` +
         `<div>${timeRowHtml}${nowChipHtml}</div>` +
         `<div style="margin-top:4px;font-size:20px;font-weight:700;">${escapeHtml(title)}</div>` +
-        `${notesHtml}</div>`
+        `${notesHtml}${alsoOnHtml}</div>`
       );
     }
     return (
@@ -361,7 +369,7 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
       `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">` +
       `<div>${timeRowHtml}</div><div>${nowChipHtml}${durationChipHtml}</div></div>` +
       `<div style="font-size:20px;font-weight:700;">${escapeHtml(title)}</div>` +
-      `${notesHtml}</div>`
+      `${notesHtml}${alsoOnHtml}</div>`
     );
   }
 
@@ -370,19 +378,23 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
    * card the columns view uses. Shared by the 'feed' and 'grouped' branches
    * so a grouped column is literally a feed over a subset of resources.
    */
-  function renderFeedItemHtml(event: FeedScheduleItem): string {
+  function renderFeedItemHtml(event: MergeableScheduleSlot<FeedScheduleItem>): string {
+    // A merged card stands for several resources, so the single-resource color
+    // cue would be wrong — go neutral and let the multi-name pill carry it.
+    const cueColor = event.occupancy.length > 1 ? cardBorder : event.spaceColor;
+    const locationLabel = formatOccupancyLabel(event.occupancy, 2) ?? event.spaceName;
     return (
       `<div style="margin-bottom:16px;display:flex;">` +
-      `<div style="width:6px;border-radius:999px;background:${event.spaceColor};flex-shrink:0;margin-right:16px;"></div>` +
+      `<div style="width:6px;border-radius:999px;background:${cueColor};flex-shrink:0;margin-right:16px;"></div>` +
       `<div style="flex:1 1 0;min-width:0;">` +
       `<span style="display:inline-flex;align-items:center;padding:4px 12px;border-radius:999px;border:1px solid ${cardBorder};font-weight:600;">` +
-      `<span style="width:10px;height:10px;border-radius:999px;background:${event.spaceColor};margin-right:8px;display:inline-block;"></span>` +
-      `${escapeHtml(event.spaceName)}</span>` +
+      `<span style="width:10px;height:10px;border-radius:999px;background:${cueColor};margin-right:8px;display:inline-block;"></span>` +
+      `${escapeHtml(locationLabel)}</span>` +
       `${renderEventCard(event)}</div></div>`
     );
   }
 
-  function renderFeedListHtml(items: FeedScheduleItem[]): string {
+  function renderFeedListHtml(items: MergeableScheduleSlot<FeedScheduleItem>[]): string {
     if (items.length === 0) {
       return `<div style="padding:24px 0;color:${secondary};">No events scheduled</div>`;
     }
@@ -433,10 +445,12 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
     // resource's event list. See marqueeWrap's note on why the scrolling
     // region is absolutely positioned rather than a calc()'d flex height.
     const colors = buildResourceColors(spaces);
+    // Page-wide name index, per-column merge scope — see TvScheduleGroupedFeed.
+    const groupedSpaceNames = buildSpaceNameIndex(spaces);
     const columnMarqueeTopPx = NAME_HEADER_CONTENT_HEIGHT_PX + NAME_HEADER_MARGIN_PX;
     const columnsHtml = buildScheduleGroupColumns(spaces, scheduleBlock)
       .map((column) => {
-        const items = buildFeedItems(column.spaces, scheduleBlock, colors);
+        const items = buildFeedItems(column.spaces, scheduleBlock, colors, groupedSpaceNames);
         // The "Other" bucket isn't a group the user named — mute it so it
         // reads as a state to fix, not as a real column.
         const labelColor = column.key === UNGROUPED_COLUMN_KEY ? secondary : design.fontColor;
@@ -480,14 +494,41 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
     // area is position:absolute rather than a calc()'d flex height.
     const columnsRowTopPx = hasWayfinding ? WAYFINDING_ROW_CONTENT_HEIGHT_PX + WAYFINDING_ROW_MARGIN_PX : 0;
 
-    const columnsHtml = spaces
-      .map((space) => {
-        const events = groupScheduleSlots(space.slots, scheduleBlock);
+    // Merge is scoped to one space, so a card's own occupancy is just this
+    // column's name. Build a page-wide index of every column a booking appears
+    // in, so the "also on" chip can name the others — same approach as the
+    // React grid.
+    const columnSpaceNames = buildSpaceNameIndex(spaces);
+    const columnEvents = spaces.map((space) => ({
+      space,
+      events: buildResourceEvents(space, scheduleBlock, columnSpaceNames),
+    }));
+    const alsoOnByKey = new Map<string, string[]>();
+    if (scheduleBlock.mergeDuplicateBookings) {
+      columnEvents.forEach(({ space, events }) => {
+        events.forEach((event) => {
+          if (!event.key.startsWith('res:')) return;
+          const seen = alsoOnByKey.get(event.key) ?? [];
+          if (!seen.includes(space.name)) seen.push(space.name);
+          alsoOnByKey.set(event.key, seen);
+        });
+      });
+    }
+
+    const columnsHtml = columnEvents
+      .map(({ space, events }) => {
         const muted = hasWayfinding && space.id !== scheduleBlock.primaryResourceId;
         const listHtml =
           events.length === 0
             ? `<div style="padding:24px 0;color:${secondary};">No upcoming events</div>`
-            : `<div>${events.map((event) => renderEventCard(event)).join('')}</div>`;
+            : `<div>${events
+                .map((event) =>
+                  renderEventCard(
+                    event,
+                    formatOccupancyLabel((alsoOnByKey.get(event.key) ?? []).filter((n) => n !== space.name), 2),
+                  ),
+                )
+                .join('')}</div>`;
         const nameHtml = !hideSpaceNames
           ? `<div style="height:${NAME_HEADER_CONTENT_HEIGHT_PX}px;overflow:hidden;margin-bottom:${NAME_HEADER_MARGIN_PX}px;padding-bottom:8px;border-bottom:2px solid ${accent};">` +
             `<h2 style="margin:0;font-size:26px;font-weight:700;text-align:${plain ? 'center' : 'left'};">${escapeHtml(space.name)}</h2></div>`

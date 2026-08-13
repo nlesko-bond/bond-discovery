@@ -68,7 +68,11 @@ async function fetchSlotsScheduleFromBond(
       const rawSlots = Array.isArray(rec.slots) ? rec.slots : [];
       return {
         id: Number(rec.id) || 0,
-        name: typeof rec.name === 'string' ? rec.name : `Space ${rec.id}`,
+        // Guard the empty string too, not just a non-string: Bond can return
+        // name: "", which passes a bare typeof check and then renders as a blank
+        // column header — or, once names are joined into an occupancy list, as
+        // a stray ", , Court 3".
+        name: typeof rec.name === 'string' && rec.name.trim() ? rec.name : `Space ${rec.id}`,
         slots: rawSlots.map((slot) => normalizeSlot(slot as Record<string, unknown>)),
       };
     });

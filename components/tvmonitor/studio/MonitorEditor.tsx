@@ -527,7 +527,7 @@ export default function MonitorEditor({
         : headerBits.join(' · ') || 'Empty',
     schedule: !config.schedule.enabled
       ? 'Hidden'
-      : `${viewModeLabel}${groupedSummarySuffix} · Next ${config.schedule.futureHoursLimit}h${config.schedule.autoScroll ? ` · ${multiColumnView ? (config.schedule.scrollMode === 'synchronized' ? 'synced' : 'independent') + ' scroll' : 'scrolling'}` : ''}`,
+      : `${viewModeLabel}${groupedSummarySuffix} · Next ${config.schedule.futureHoursLimit}h${config.schedule.mergeDuplicateBookings ? ' · combined' : ''}${config.schedule.autoScroll ? ` · ${multiColumnView ? (config.schedule.scrollMode === 'synchronized' ? 'synced' : 'independent') + ' scroll' : 'scrolling'}` : ''}`,
     ads:
       enabledAdSlots.length === 0
         ? 'None'
@@ -1143,6 +1143,17 @@ export default function MonitorEditor({
                   </Field>
                 )}
                 <Toggle label="Show private events" checked={config.schedule.showPrivateEvents} onChange={(v) => patchSchedule({ showPrivateEvents: v })} />
+                <Toggle
+                  label="Combine duplicate bookings"
+                  checked={config.schedule.mergeDuplicateBookings}
+                  onChange={(v) => patchSchedule({ mergeDuplicateBookings: v })}
+                />
+                {config.schedule.mergeDuplicateBookings && (
+                  <p className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                    Bond returns one row per booked space, so a booking on a shared court reappears under every space it
+                    blocks. This shows it once, listing the spaces it occupies.
+                  </p>
+                )}
                 {config.schedule.showPrivateEvents && (
                   <Field label="Private event label">
                     <TextInput value={config.schedule.privateEventLabel} onChange={(e) => patchSchedule({ privateEventLabel: e.target.value })} />
