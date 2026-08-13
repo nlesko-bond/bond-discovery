@@ -115,6 +115,7 @@ function baseConfig(): TvMonitorConfig {
       showPrivateEvents: true,
       // Off by default: turning it on changes what an existing board renders.
       mergeDuplicateBookings: false,
+      listAllSpacesInFeed: false,
       privateEventLabel: 'Private event',
       maintenanceLabel: 'Maintenance',
       autoScroll: true,

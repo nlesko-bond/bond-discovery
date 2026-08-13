@@ -33,11 +33,18 @@ export default function TvFeedList({
   items,
   settings,
   size = 'normal',
+  occupancyLimit = 2,
   now,
 }: {
   items: MergeableScheduleSlot<FeedScheduleItem>[];
   settings: TvMonitorScheduleBlock;
   size?: TvFeedListSize;
+  /**
+   * How many booked resources to name before collapsing the rest into "+N".
+   * The full-width feed can raise this (see schedule.listAllSpacesInFeed);
+   * grouped columns keep the default, since each is a fraction of the screen.
+   */
+  occupancyLimit?: number;
   /** null until the client clock mounts — keeps SSR and first paint identical. */
   now: Date | null;
 }) {
@@ -81,7 +88,7 @@ export default function TvFeedList({
         // and let the multi-name pill carry the location on its own.
         const spansMultiple = event.occupancy.length > 1;
         const cueColor = spansMultiple ? 'var(--tv-card-border)' : event.spaceColor;
-        const locationLabel = formatOccupancyLabel(event.occupancy, 2) ?? event.spaceName;
+        const locationLabel = formatOccupancyLabel(event.occupancy, occupancyLimit) ?? event.spaceName;
         return (
           <div
             key={event.key}

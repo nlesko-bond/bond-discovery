@@ -57,7 +57,16 @@ export default function TvScheduleFeed({
 
   // 'compact'/'normal' only — the tighter 'narrow' tier is exclusive to grouped
   // columns, so this view keeps rendering exactly what live boards render today.
-  const list = <TvFeedList items={feedItems} settings={settings} size={compact ? 'compact' : 'normal'} now={now} />;
+  const list = (
+    <TvFeedList
+      items={feedItems}
+      settings={settings}
+      size={compact ? 'compact' : 'normal'}
+      // Full width, so it can list every booked resource outright when asked.
+      occupancyLimit={settings.listAllSpacesInFeed ? Number.POSITIVE_INFINITY : 2}
+      now={now}
+    />
+  );
 
   return (
     <div className="relative h-full min-h-0">

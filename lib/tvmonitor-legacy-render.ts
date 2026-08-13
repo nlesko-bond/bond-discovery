@@ -378,11 +378,11 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
    * card the columns view uses. Shared by the 'feed' and 'grouped' branches
    * so a grouped column is literally a feed over a subset of resources.
    */
-  function renderFeedItemHtml(event: MergeableScheduleSlot<FeedScheduleItem>): string {
+  function renderFeedItemHtml(event: MergeableScheduleSlot<FeedScheduleItem>, occupancyLimit: number): string {
     // A merged card stands for several resources, so the single-resource color
     // cue would be wrong — go neutral and let the multi-name pill carry it.
     const cueColor = event.occupancy.length > 1 ? cardBorder : event.spaceColor;
-    const locationLabel = formatOccupancyLabel(event.occupancy, 2) ?? event.spaceName;
+    const locationLabel = formatOccupancyLabel(event.occupancy, occupancyLimit) ?? event.spaceName;
     return (
       `<div style="margin-bottom:16px;display:flex;">` +
       `<div style="width:6px;border-radius:999px;background:${cueColor};flex-shrink:0;margin-right:16px;"></div>` +
@@ -394,11 +394,11 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
     );
   }
 
-  function renderFeedListHtml(items: MergeableScheduleSlot<FeedScheduleItem>[]): string {
+  function renderFeedListHtml(items: MergeableScheduleSlot<FeedScheduleItem>[], occupancyLimit = 2): string {
     if (items.length === 0) {
       return `<div style="padding:24px 0;color:${secondary};">No events scheduled</div>`;
     }
-    return items.map((event) => renderFeedItemHtml(event)).join('');
+    return items.map((event) => renderFeedItemHtml(event, occupancyLimit)).join('');
   }
 
   // topOffsetPx is the space a preceding sibling (e.g. a column's name
@@ -436,7 +436,13 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
     scheduleAreaHtml = `<div style="display:flex;height:100%;align-items:center;justify-content:center;font-size:24px;color:${secondary};text-align:center;padding:0 32px;">${escapeHtml(message)}</div>`;
   } else if (scheduleBlock.viewMode === 'feed') {
     const items = buildFeedItems(spaces, scheduleBlock, buildResourceColors(spaces));
-    scheduleAreaHtml = marqueeWrap(`<div>${renderFeedListHtml(items)}</div>`, items.length, 0);
+    // Full width, so it can list every booked resource outright when asked.
+    const feedOccupancyLimit = scheduleBlock.listAllSpacesInFeed ? Number.POSITIVE_INFINITY : 2;
+    scheduleAreaHtml = marqueeWrap(
+      `<div>${renderFeedListHtml(items, feedOccupancyLimit)}</div>`,
+      items.length,
+      0,
+    );
   } else if (scheduleBlock.viewMode === 'grouped') {
     // Same column geometry as the 'columns' branch below — a flex row of
     // position:relative columns, each with a fixed-height label header and a

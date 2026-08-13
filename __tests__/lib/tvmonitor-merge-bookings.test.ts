@@ -175,6 +175,23 @@ describe('mergeDuplicateBookings — occupancy naming', () => {
   });
 });
 
+describe('listAllSpacesInFeed', () => {
+  it('caps the pill at two names by default', () => {
+    const tav = feed(ON).find((i) => i.reservationName === 'TAV Volleyball')!;
+    expect(formatOccupancyLabel(tav.occupancy, 2)).toBe('Court 6, Court 7 +1');
+  });
+
+  it('lists every booked resource when uncapped', () => {
+    const tav = feed(ON).find((i) => i.reservationName === 'TAV Volleyball')!;
+    expect(formatOccupancyLabel(tav.occupancy, Number.POSITIVE_INFINITY)).toBe('Court 6, Court 7, Court 8');
+  });
+
+  it('defaults off so an existing feed board keeps the capped pill', () => {
+    expect(OFF.listAllSpacesInFeed).toBe(false);
+    expect(normalizeTvMonitorConfig({}).schedule.listAllSpacesInFeed).toBe(false);
+  });
+});
+
 describe('formatOccupancyLabel', () => {
   it('joins up to max and counts the rest', () => {
     expect(formatOccupancyLabel(['Court 1', 'Court 2'], 2)).toBe('Court 1, Court 2');

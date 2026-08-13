@@ -1149,10 +1149,19 @@ export default function MonitorEditor({
                   onChange={(v) => patchSchedule({ mergeDuplicateBookings: v })}
                 />
                 {config.schedule.mergeDuplicateBookings && (
-                  <p className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-600">
-                    Bond returns one row per booked space, so a booking on a shared court reappears under every space it
-                    blocks. This shows it once, listing the spaces it occupies.
-                  </p>
+                  <div className="ml-3 space-y-2 border-l-2 border-gray-100 pl-3">
+                    <p className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                      Bond returns one row per booked space, so a booking on a shared court reappears under every space
+                      it blocks. This shows it once, listing the spaces it occupies.
+                    </p>
+                    {config.schedule.viewMode === 'feed' && (
+                      <Toggle
+                        label="List every booked space"
+                        checked={config.schedule.listAllSpacesInFeed}
+                        onChange={(v) => patchSchedule({ listAllSpacesInFeed: v })}
+                      />
+                    )}
+                  </div>
                 )}
                 {config.schedule.showPrivateEvents && (
                   <Field label="Private event label">

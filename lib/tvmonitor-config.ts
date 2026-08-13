@@ -278,6 +278,7 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
       showMaintenance: asBool(schedule.showMaintenance, defaults.schedule.showMaintenance),
       showPrivateEvents: asBool(schedule.showPrivateEvents, defaults.schedule.showPrivateEvents),
       mergeDuplicateBookings: asBool(schedule.mergeDuplicateBookings, defaults.schedule.mergeDuplicateBookings),
+      listAllSpacesInFeed: asBool(schedule.listAllSpacesInFeed, defaults.schedule.listAllSpacesInFeed),
       privateEventLabel: asString(schedule.privateEventLabel, defaults.schedule.privateEventLabel),
       maintenanceLabel: asString(schedule.maintenanceLabel, defaults.schedule.maintenanceLabel),
       autoScroll: asBool(schedule.autoScroll, defaults.schedule.autoScroll),

@@ -211,6 +211,10 @@ Key mechanics (`lib/tvmonitor-schedule-format.ts`):
 - The columns view's "also on …" chip is the one place using page-wide occupancy —
   within a single-space scope a card's own occupancy is just that column — hence the
   explicit "also on" wording.
+- **`schedule.listAllSpacesInFeed`** (default off, feed view only): names every booked
+  resource instead of the first two plus "+N". The feed is full-width so it can usually
+  afford the whole list; grouped and columns stay capped at two regardless, since their
+  cards are a fraction of the screen. The editor only offers the toggle in feed view.
 
 **Resource ID cap is per-view, not shared** (`resourceIdCapFor()` in
 `lib/tvmonitor-config.ts`): `MAX_TV_RESOURCES_COLUMNS = 12` (a display constraint —

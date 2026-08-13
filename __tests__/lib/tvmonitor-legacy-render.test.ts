@@ -209,6 +209,31 @@ describe('renderTvMonitorLegacyHtml', () => {
       expect(countTav('grouped', true, groups)).toBe(2);
     });
 
+    it('lists every booked space in the feed when listAllSpacesInFeed is on', () => {
+      function feedPill(listAll: boolean) {
+        const config = normalizeTvMonitorConfig({
+          legacyBrowserMode: true,
+          schedule: {
+            viewMode: 'feed',
+            resourceIds: MANSFIELD_RESOURCE_IDS,
+            mergeDuplicateBookings: true,
+            listAllSpacesInFeed: listAll,
+            autoScroll: false,
+          },
+        });
+        return renderTvMonitorLegacyHtml({
+          config,
+          schedule: buildMansfieldSchedule(),
+          weather: null,
+          now: NOW,
+          pageName: 'Mansfield',
+        });
+      }
+      expect(feedPill(false)).toContain('Court 6, Court 7 +1');
+      expect(feedPill(true)).toContain('Court 6, Court 7, Court 8');
+      expect(feedPill(true)).not.toContain('+1');
+    });
+
     it('annotates a merged columns card with the other resources it occupies', () => {
       const config = normalizeTvMonitorConfig({
         legacyBrowserMode: true,

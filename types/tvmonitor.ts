@@ -167,6 +167,14 @@ export interface TvMonitorScheduleBlock {
    * existing boards are untouched.
    */
   mergeDuplicateBookings: boolean;
+  /**
+   * Feed view only: list every space a combined booking occupies instead of
+   * the first two plus a "+N" count. The feed is full-width so it can usually
+   * afford the whole list; grouped and columns views stay capped regardless,
+   * since their cards are a fraction of the screen. Only meaningful with
+   * `mergeDuplicateBookings` on.
+   */
+  listAllSpacesInFeed: boolean;
   privateEventLabel: string;
   /** Label used for maintenance child slots (e.g. "Ice Cut", "Maintenance"). */
   maintenanceLabel: string;
