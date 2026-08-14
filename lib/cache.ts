@@ -13,6 +13,15 @@ interface CacheOptions {
   ttl?: number; // Time to live in seconds
   staleTtl?: number; // Lifetime in seconds of the SWR stale shadow key (default: ttl * STALE_GRACE_FACTOR)
   tags?: string[]; // Cache tags for invalidation
+  /**
+   * Keep the value in this process only, never writing it to KV.
+   *
+   * For payloads that must not outlive the process or be readable from another
+   * deployment -- production KV is shared with preview and local, so anything
+   * written there is visible well beyond the environment that cached it. Used
+   * for staff-mode roster payloads, which carry participant PII.
+   */
+  memoryOnly?: boolean;
 }
 
 export type DiscoveryRefreshPolicy = '5min' | '15min' | '30min' | '60min';
@@ -56,7 +65,13 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
   if (kvPromise) {
     try {
       const kv = await kvPromise;
-      return await kv.get<T>(key);
+      const hit = await kv.get<T>(key);
+      if (hit !== null && hit !== undefined) {
+        return hit;
+      }
+      // Fall through on a KV miss: the value may live in memory only, either
+      // because an earlier KV write failed or because it was cached with
+      // `memoryOnly` (see CacheOptions).
     } catch (error) {
       console.error('KV get error:', error);
     }
@@ -85,7 +100,7 @@ export async function cacheSet<T>(
 ): Promise<void> {
   const ttl = options.ttl || DEFAULT_TTL;
 
-  const kvPromise = getKV();
+  const kvPromise = options.memoryOnly ? null : getKV();
   if (kvPromise) {
     try {
       const kv = await kvPromise;
@@ -112,13 +127,13 @@ export async function cacheDelete(key: string): Promise<void> {
     try {
       const kv = await kvPromise;
       await kv.del(key);
-      return;
     } catch (error) {
       console.error('KV delete error:', error);
     }
   }
 
-  // Fallback to memory cache
+  // Always clear memory too -- a value may be held there only (see cacheSet's
+  // `memoryOnly`), so returning early after the KV delete would strand it.
   memoryCache.delete(key);
 }
 
@@ -258,6 +273,51 @@ export async function invalidateDiscoveryResponseCache(
 /**
  * Membership cache keys
  */
+/**
+ * Roster cache keys.
+ *
+ * Kept in their own `roster:*` namespace and never mixed into `discovery:*`,
+ * whose payloads are deliberately shared across slugs by scope group.
+ *
+ * Participant keys carry the viewer mode, so a public read can never be served
+ * a payload built for staff. Staff payloads additionally must NOT be written to
+ * KV at all — production KV is shared with preview and local deployments — so
+ * callers pass `{ memoryOnly: true }` for those; see cacheSet.
+ */
+export function rosterScopeCacheKey(slug: string): string {
+  return `roster:scope:${slug}`;
+}
+
+export function rosterGroupsCacheKey(slug: string, sessionId: number | string): string {
+  return `roster:groups:${slug}:${sessionId}`;
+}
+
+export function rosterParticipantsCacheKey(
+  slug: string,
+  sessionId: number | string,
+  groupId: number | string,
+  mode: string
+): string {
+  return `roster:participants:${slug}:${sessionId}:${groupId}:${mode}`;
+}
+
+export function rosterEventParticipantsCacheKey(
+  slug: string,
+  sessionId: number | string,
+  eventId: number | string,
+  mode: string
+): string {
+  return `roster:eventParticipants:${slug}:${sessionId}:${eventId}:${mode}`;
+}
+
+/** Drop every cached payload for a roster page, including SWR shadow keys. */
+export async function invalidateRosterCache(slug: string): Promise<void> {
+  await cacheDeletePattern(`roster:*:${slug}:*`);
+  await cacheDeletePattern(`swr:roster:*:${slug}:*`);
+  await cacheDelete(rosterScopeCacheKey(slug));
+  await cacheDelete(`swr:${rosterScopeCacheKey(slug)}`);
+}
+
 export function membershipsCacheKey(slug: string): string {
   return `memberships:${slug}`;
 }

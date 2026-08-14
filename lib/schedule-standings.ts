@@ -31,3 +31,26 @@ export function eventShowsStandingsLink(event: CalendarEvent, config: DiscoveryC
   const programType = event.programType || event.type;
   return programType === 'league' && Boolean(getLeagueStandingsUrl(event.linkSEO));
 }
+
+/**
+ * Deep link from a league event to its roster page — the mirror of the
+ * standings link. Returns undefined unless the page opts in and names a roster
+ * page, so nothing appears by accident.
+ *
+ * Only ever a URL: roster data stays out of the discovery payload entirely.
+ */
+export function getRostersUrlForEvent(
+  event: CalendarEvent,
+  config: DiscoveryConfig
+): string | undefined {
+  if (config.features.showRostersLink !== true) return undefined;
+
+  const slug = config.features.rostersPageSlug?.trim();
+  if (!slug) return undefined;
+
+  const programType = event.programType || event.type;
+  if (programType !== 'league') return undefined;
+
+  const sessionId = event.sessionId;
+  return sessionId ? `/rosters/${slug}?session=${sessionId}` : `/rosters/${slug}`;
+}

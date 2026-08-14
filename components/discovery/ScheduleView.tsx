@@ -55,6 +55,7 @@ import {
   VALID_SCHEDULE_VIEW_MODES,
 } from '@/lib/schedule-view-resolution';
 import { parseHomeAwayFromEventTitle } from '@/lib/parse-league-event-title';
+import { downloadCsv, toCsv } from '@/lib/csv';
 
 type ViewMode = 'list' | 'table' | 'day' | 'week' | 'month';
 
@@ -438,20 +439,9 @@ export function ScheduleView({
           event.spaceName || '',
           home,
           away,
-        ]
-          .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
-          .join(',');
+        ];
       });
-      const csv = [headers.join(','), ...rows].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'league-schedule.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadCsv('league-schedule.csv', toCsv(headers, rows));
       setShowExportMenu(false);
       return;
     }
@@ -487,19 +477,10 @@ export function ScheduleView({
         event.spotsRemaining !== undefined ? `${event.spotsRemaining} available` : '',
         price,
         link,
-      ].map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',');
+      ];
     });
-    
-    const csv = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'schedule.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+
+    downloadCsv('schedule.csv', toCsv(headers, rows));
     setShowExportMenu(false);
   }, [allEvents, leagueTableMode, config.features.spaceColumnLabel]);
   

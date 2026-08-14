@@ -60,7 +60,10 @@ const nextConfig = {
     return [
       // Discovery pages - cache with revalidation
       {
-        source: '/:slug((?!admin|api|documentation(?:/|$)|embed|portal|form-responses|reporting|reservations|tvmonitor|_next).*)',
+        // `rosters` must stay in this exclusion list: these pages can carry
+        // participant PII, and the discovery header block below sets
+        // `frame-ancestors *`, which would let any site embed one.
+        source: '/:slug((?!admin|api|documentation(?:/|$)|embed|portal|form-responses|reporting|reservations|rosters|tvmonitor|_next).*)',
         headers: [
           {
             key: 'Cache-Control',
@@ -73,6 +76,31 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: 'frame-ancestors *',
+          },
+        ],
+      },
+      // Roster pages - can carry participant PII, so the opposite of discovery:
+      // never shared-cached, never embeddable. Indexing is controlled per page
+      // via the route's own robots metadata (allow_indexing), not here, because
+      // these static rules cannot vary by config.
+      {
+        source: '/rosters/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, no-store, max-age=0, must-revalidate',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'none'",
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'same-origin',
           },
         ],
       },

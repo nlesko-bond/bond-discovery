@@ -551,6 +551,18 @@ export interface FeatureConfig {
    */
   showLeagueStandingsLink?: boolean;
   /**
+   * When true, league events show a "Team rosters" link pointing at a roster
+   * page — the mirror of the standings link above. Requires `rostersPageSlug`.
+   *
+   * Only a link: no roster data enters the discovery payload, so participant
+   * PII never reaches the shared `discovery:response:{slug}` cache or the
+   * partner iframe. Deliberately absent from `updateAffectsDiscoveryPayload`
+   * for the same reason — it changes no fetched data.
+   */
+  showRostersLink?: boolean;
+  /** Slug of the roster page the link points at, e.g. 'coppermine'. */
+  rostersPageSlug?: string;
+  /**
    * Redesigned discovery template (plan 009). Only 'v2' changes rendering;
    * absent/'current'/unknown values keep the existing templates byte-identical.
    */

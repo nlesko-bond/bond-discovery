@@ -15,6 +15,7 @@ import {
   BarChart3,
   CreditCard,
   CalendarDays,
+  ClipboardCheck,
   ClipboardList,
   ListChecks,
   MonitorPlay,
@@ -179,6 +180,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </NavLink>
             <NavLink pathname={pathname} href="/admin/form-pages" icon={ClipboardList} collapsed={navCollapsed}>
               Form responses
+            </NavLink>
+            <NavLink pathname={pathname} href="/admin/rosters" icon={ClipboardCheck} collapsed={navCollapsed}>
+              Rosters
             </NavLink>
             <NavLink
               pathname={pathname}
