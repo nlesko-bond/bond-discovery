@@ -7,12 +7,25 @@
  * are doubled, and records are separated by CRLF.
  */
 
-/** Quote a single field, only when it actually needs it. */
+/**
+ * Cells Excel and Sheets would evaluate as a formula rather than display.
+ *
+ * Export values come from participant records — names, team names, product
+ * names — which are supplied at registration by people outside the org, and
+ * the file's whole purpose is to be opened in a spreadsheet on a staff machine.
+ */
+const FORMULA_PREFIX = /^[=+\-@\t\r]/;
+
+/**
+ * Quote a single field, only when it actually needs it, and neutralize
+ * spreadsheet formula injection by prefixing an apostrophe.
+ */
 export function csvEscape(value: string): string {
-  if (/[",\n\r]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
+  const safe = FORMULA_PREFIX.test(value) ? `'${value}` : value;
+  if (/[",\n\r]/.test(safe)) {
+    return `"${safe.replace(/"/g, '""')}"`;
   }
-  return value;
+  return safe;
 }
 
 export type CsvCell = string | number | null | undefined;

@@ -7,6 +7,7 @@
  * mode. See lib/roster-privacy.ts for the redaction itself.
  */
 
+import { resolveBondEnv } from '@/lib/bond-env';
 import { createBondClient } from '@/lib/bond-client';
 import {
   cacheGet,
@@ -47,7 +48,7 @@ export const MAX_BULK_EVENTS = 60;
 const FETCH_CONCURRENCY = 3;
 
 function clientFor(config: RosterPageConfig) {
-  return createBondClient(config.apiKey, config.bondEnv as never);
+  return createBondClient(config.apiKey, resolveBondEnv(config.bondEnv));
 }
 
 /**
@@ -55,9 +56,17 @@ function clientFor(config: RosterPageConfig) {
  * — production KV is shared with preview and local deployments, and anything
  * written there outlives the request in a place other environments can read.
  */
-function participantCacheOptions(mode: RosterViewerMode) {
-  return mode === 'staff'
-    ? { ttl: PARTICIPANTS_STAFF_TTL, memoryOnly: true }
+function participantCacheOptions(config: RosterPageConfig, mode: RosterViewerMode) {
+  if (mode === 'staff') {
+    return { ttl: PARTICIPANTS_STAFF_TTL, memoryOnly: true };
+  }
+  // A gated page's roster is not public, and once names are shown the payload
+  // identifies people. Only a genuinely public, de-identified roster is safe to
+  // persist in KV that preview and local deployments can read.
+  const identifying =
+    config.pageAccess !== 'public' || config.fieldVisibility.nameMode !== 'numberOnly';
+  return identifying
+    ? { ttl: PARTICIPANTS_PUBLIC_TTL, memoryOnly: true }
     : { ttl: PARTICIPANTS_PUBLIC_TTL };
 }
 
@@ -86,17 +95,28 @@ export async function loadRosterScope(config: RosterPageConfig): Promise<RosterS
   const cached = await cacheGet<RosterSessionRef[]>(key);
   if (cached) return cached;
 
+  // A page with no orgs can never resolve anything. Failing here gives the
+  // operator a real error instead of an empty page that reads as "no seasons
+  // published yet" -- which sends them to check Bond rather than the config.
+  if (config.organizationIds.length === 0) {
+    throw new Error(
+      `Roster page "${config.slug}" has no organization IDs configured.`
+    );
+  }
+
   const client = clientFor(config);
   const programs: Program[] = [];
   const sessionsByProgramId = new Map<number, Session[]>();
+  const orgByProgramId = new Map<number, number>();
 
   for (const orgId of config.organizationIds) {
-    const response = await client.getPrograms(String(orgId), {
+    const response = await client.getAllPrograms(String(orgId), {
       expand: 'sessions',
     });
     for (const raw of response.data || []) {
       const program = transformProgram(raw);
       programs.push(program);
+      orgByProgramId.set(Number(program.id), orgId);
       const sessions = (raw as unknown as { sessions?: Session[] }).sessions;
       if (Array.isArray(sessions)) {
         sessionsByProgramId.set(Number(program.id), sessions);
@@ -104,7 +124,26 @@ export async function loadRosterScope(config: RosterPageConfig): Promise<RosterS
     }
   }
 
-  const sessions = resolveRosterSessions(config, programs, sessionsByProgramId);
+  const sessions = resolveRosterSessions(
+    config,
+    programs,
+    sessionsByProgramId,
+    new Date(),
+    orgByProgramId
+  );
+
+  // Log rather than silently caching an empty scope for 15 minutes: zero
+  // sessions from a non-zero program list almost always means the program
+  // filter or the date window is wrong, not that nothing is published.
+  if (sessions.length === 0) {
+    console.warn('[roster-scope] resolved zero sessions', {
+      slug: config.slug,
+      orgIds: config.organizationIds,
+      programsFetched: programs.length,
+      filterMode: config.programFilter.mode,
+    });
+  }
+
   await cacheSet(key, sessions, { ttl: SCOPE_TTL });
   return sessions;
 }
@@ -131,7 +170,7 @@ export async function loadRosterGroups(
 
   const client = clientFor(config);
   const response = await client.getSessionGroups(
-    config.organizationIds[0],
+    session.organizationId,
     session.programId,
     session.sessionId,
     { expand: ['teamIdentity', 'facility'] }
@@ -166,7 +205,7 @@ export async function loadGroupParticipants(
   const client = clientFor(config);
   const expand = resolveExpand(mode, config.fieldVisibility);
   const response = await client.getGroupParticipants(
-    config.organizationIds[0],
+    session.organizationId,
     session.programId,
     session.sessionId,
     groupId,
@@ -179,7 +218,7 @@ export async function loadGroupParticipants(
       .map((raw) => redactParticipant(raw, config.fieldVisibility, mode))
   );
 
-  await cacheSet(key, participants, participantCacheOptions(mode));
+  await cacheSet(key, participants, participantCacheOptions(config, mode));
   return participants;
 }
 
@@ -197,7 +236,7 @@ export async function loadEventParticipants(
   const client = clientFor(config);
   const expand = resolveExpand(mode, config.fieldVisibility);
   const response = await client.getEventParticipants(
-    config.organizationIds[0],
+    session.organizationId,
     session.programId,
     session.sessionId,
     eventId,
@@ -208,7 +247,7 @@ export async function loadEventParticipants(
     .filter((raw) => !raw.deletedAt)
     .map((raw) => redactParticipant(raw, config.fieldVisibility, mode));
 
-  await cacheSet(key, participants, participantCacheOptions(mode));
+  await cacheSet(key, participants, participantCacheOptions(config, mode));
   return participants;
 }
 
@@ -230,7 +269,7 @@ export async function loadSessionEvents(
 
   const client = clientFor(config);
   const response = await client.getEvents(
-    String(config.organizationIds[0]),
+    String(session.organizationId),
     String(session.programId),
     String(session.sessionId)
   );

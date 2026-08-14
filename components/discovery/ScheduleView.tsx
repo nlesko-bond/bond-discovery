@@ -30,7 +30,11 @@ import { WeekSchedule, DaySchedule, CalendarEvent, DiscoveryConfig, DiscoveryFil
 import { formatDate, formatTime, formatPrice, getSportLabel, getProgramTypeLabel, buildRegistrationUrl, cn } from '@/lib/utils';
 import { bondAnalytics } from '@/lib/analytics';
 import { eventShowsRedeemPass, getPunchPassRedeemUrl, trackRedeemPassClick } from '@/lib/schedule-redeem';
-import { eventShowsStandingsLink, getLeagueStandingsUrl } from '@/lib/schedule-standings';
+import {
+  eventShowsStandingsLink,
+  getLeagueStandingsUrl,
+  getRostersUrlForEvent,
+} from '@/lib/schedule-standings';
 import { format, parseISO, startOfMonth, addMonths, subMonths, isToday, isSameDay } from 'date-fns';
 import { DayView, WeekGridView, MonthView } from './calendar';
 import { ScheduleTableFilterBar } from './ScheduleTableFilterBar';
@@ -1370,6 +1374,18 @@ function EventCard({
                   Standings <Trophy size={12} />
                 </a>
               )}
+              {getRostersUrlForEvent(event, config) && (
+                <a
+                  href={getRostersUrlForEvent(event, config)}
+                  target={linkTarget}
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 font-medium hover:opacity-80"
+                  style={{ color: secondaryColor }}
+                >
+                  Team rosters <Users size={12} />
+                </a>
+              )}
               {eventShowsRedeemPass(event, config) && (
                 <a
                   href={getPunchPassRedeemUrl(config)}
@@ -1605,7 +1621,7 @@ function EventDetailModal({
         </div>
 
         {/* Footer */}
-        {(!hideRegistrationLinks && event.linkSEO) || eventShowsStandingsLink(event, config) || eventShowsRedeemPass(event, config) ? (
+        {(!hideRegistrationLinks && event.linkSEO) || eventShowsStandingsLink(event, config) || Boolean(getRostersUrlForEvent(event, config)) || eventShowsRedeemPass(event, config) ? (
           <div className="p-4 border-t border-gray-200 bg-white flex flex-col sm:flex-row gap-2">
             {!hideRegistrationLinks && event.linkSEO && (
               <a 
@@ -1648,6 +1664,18 @@ function EventDetailModal({
               >
                 <Trophy size={18} />
                 Standings
+              </a>
+            )}
+            {getRostersUrlForEvent(event, config) && (
+              <a
+                href={getRostersUrlForEvent(event, config)}
+                target={linkTarget}
+                rel="noopener noreferrer"
+                className="flex-1 min-w-0 py-3.5 font-semibold rounded-xl flex items-center justify-center gap-2 border-2 hover:opacity-90 transition-opacity"
+                style={{ color: secondaryColor, borderColor: secondaryColor, backgroundColor: `${secondaryColor}08` }}
+              >
+                <Users size={18} />
+                Team rosters
               </a>
             )}
             {eventShowsRedeemPass(event, config) && (

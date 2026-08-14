@@ -11,6 +11,7 @@ export default function AdminRostersPage() {
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
+  const [apiKey, setApiKey] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -35,7 +36,7 @@ export default function AdminRostersPage() {
       const response = await fetch('/api/admin/rosters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, slug }),
+        body: JSON.stringify({ name, slug, apiKey: apiKey || null }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -44,6 +45,7 @@ export default function AdminRostersPage() {
       }
       setName('');
       setSlug('');
+      setApiKey('');
       await load();
     } finally {
       setCreating(false);
@@ -94,6 +96,18 @@ export default function AdminRostersPage() {
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             placeholder="coppermine"
+          />
+        </div>
+        <div className="min-w-[12rem] flex-1">
+          <label htmlFor="roster-api-key" className="label">
+            Bond API key
+          </label>
+          <input
+            id="roster-api-key"
+            className="input"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="Required — the page cannot load data without one"
           />
         </div>
         <button

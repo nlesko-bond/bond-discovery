@@ -313,10 +313,7 @@
 }
 
 @media print {
-  .roster-print-root,
-  .roster-print-mode-team,
-  .roster-print-mode-signin,
-  .roster-print-mode-waiver {
+  .roster-print-root {
     page: roster-portrait;
   }
 
@@ -398,11 +395,6 @@
     height: 0.26in;
   }
 
-  /* Signature rows hold handwriting, so they need roughly double the height of
-     a tick row -- about 7-12 rows per page instead of 30. */
-  .roster-print-mode-signin .roster-print-table tbody td {
-    height: 0.49in;
-  }
 
   .roster-print-sheet {
     break-after: page;

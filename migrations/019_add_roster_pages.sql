@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS roster_pages (
 
   branding JSONB NOT NULL DEFAULT '{
     "primaryColor": "#1A1A1A",
-    "accentColor": "#C47B2B",
+    "accentColor": "#9A5B18",
     "accentColorLight": "#E8A84C",
     "bgColor": "#F7F7F5",
     "fontHeading": "Bebas Neue",

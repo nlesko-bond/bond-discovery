@@ -39,17 +39,23 @@ not "attended". Do not relabel either without a Bond API change behind it.
 2. **`resolveExpand` decides what we ask Bond for.** In public mode we don't request `contact`,
    `primary`, `primaryContact` or `registration`, so that PII never enters the process. Defence in
    depth: invariant 1 alone would suffice, but a bug in it still cannot leak a phone number.
-3. **Viewer mode comes from a verified cookie, never from a request parameter.** `resolveViewerMode`
+3. **Every id is bounded to the page's scope before any fetch.** `sessionId` against
+   `loadRosterScope`, and `groupId`/`eventId` against that session's own tree or event list via
+   `assertGroupsInSession` / `assertEventInSession`. The session check alone is not enough — the
+   group and event ids are what actually select the data, and Bond's path nesting is not a control
+   this repo owns or tests.
+4. **Viewer mode comes from a verified cookie, never from a request parameter.** `resolveViewerMode`
    in `lib/roster-access.ts` is the only source of `'staff'`. Routes must go through
    `resolveRosterRequest`, which runs the four gates in order.
-4. **Staff payloads are never written to KV.** Production KV is shared with preview and local
-   deployments. `loadGroupParticipants` passes `memoryOnly` for staff mode; the cache key also
-   carries the mode, so a public read can never be served a staff payload.
-5. **Roster data never touches `discovery:*` keys.** Those payloads are shared across slugs by scope
+5. **Identifying payloads are never written to KV.** Production KV is shared with preview and local
+   deployments. `participantCacheOptions` passes `memoryOnly` for staff mode **and** for any page
+   that is gated or shows names — only a genuinely public, jersey-number-only roster reaches KV.
+   The cache key also carries the mode, so a public read can never be served a staff payload.
+6. **Roster data never touches `discovery:*` keys.** Those payloads are shared across slugs by scope
    group. The `roster:*` namespace is separate and must stay so.
-6. **`rosters` stays in the `next.config.js` header exclusion.** Otherwise these pages inherit
+7. **`rosters` stays in the `next.config.js` header exclusion.** Otherwise these pages inherit
    discovery's `frame-ancestors *`, letting any site embed a page carrying PII.
-7. **Indexing is opt-in.** `allow_indexing` defaults false and the route emits `noindex` unless it
+8. **Indexing is opt-in.** `allow_indexing` defaults false and the route emits `noindex` unless it
    is set. Removing a page carrying names from search results after the fact does not reliably work.
 
 ## Privacy model
@@ -98,7 +104,9 @@ or per event, so:
 
 - loading is lazy: participants only when a team opens or a sheet/export is requested
 - bulk fan-out runs at concurrency 3
-- hard caps of 60 groups and 60 events, **reported in the UI when hit** — never silently truncated
+- hard caps of 60 groups and 60 events. The matrix reports truncation in the UI; **the CSV export
+  refuses with a 413 rather than handing over a file that looks complete and is not**
+- per-IP rate limits on unlock and the bulk read paths (`lib/roster-rate-limit.ts`)
 
 | Cache key | TTL | Store |
 |---|---|---|
@@ -115,10 +123,9 @@ a bare rule would force one orientation on every printable surface in the app.
 
 | Mode | Orientation |
 |---|---|
-| `roster-print-mode-team` | portrait |
+| `roster-print-root` | portrait — team rosters and the page shell |
 | `roster-print-mode-checkin` | portrait; `.is-wide` switches to landscape past 14 date columns |
-| `roster-print-mode-signin` | portrait, ~0.49in rows for handwriting |
-| `roster-print-mode-waiver` | portrait |
+
 
 Portrait is the default deliberately: a typical season is 8–12 sessions with 10–16 players, which
 fits portrait. Landscape would make the common case look sparse and waste a sheet.
@@ -147,11 +154,11 @@ historically been patchy — verify in the target browser rather than trusting t
 
 1. Apply `migrations/019_add_roster_pages.sql`.
 2. `/admin/rosters` → create a page, set organization IDs.
-3. Give the page an `api_key`, or a partner group that has one. There is **no** deployment-wide
-   fallback — a page with no key returns 503 rather than borrowing another org's.
+3. Give the page its own `api_key` in the editor. Roster pages do **not** inherit from a partner
+   group and there is no deployment-wide fallback; the editor blocks publishing without one.
 4. Check the field settings, then publish. New pages start unpublished and name-free.
 5. Set `ROSTER_ACCESS_SECRET` if using password or staff gating (falls back to
-   `RESERVATION_PAGE_ACCESS_SECRET`).
+   `RESERVATION_PAGE_ACCESS_SECRET`). `npm run check:env` reports it.
 
 ## Linking from discovery
 

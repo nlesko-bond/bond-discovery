@@ -151,8 +151,21 @@ export class BondClient {
     }
   }
 
-  private getTotalPages(response: APIResponse<unknown[]>): number {
+  /**
+   * Page count from whichever pagination shape Bond returned.
+   *
+   * Falls back to 1 for an unrecognized shape, and warns when it does: a silent
+   * fallback here is indistinguishable from a genuine single-page response, and
+   * on a roster that means quietly dropping players.
+   */
+  private getTotalPages(response: APIResponse<unknown[]>, endpoint?: string): number {
     if (!response.meta || typeof response.meta !== 'object') {
+      if (endpoint) {
+        console.warn('[bond-client] no pagination meta, assuming single page', {
+          endpoint,
+          itemsReturned: Array.isArray(response.data) ? response.data.length : undefined,
+        });
+      }
       return 1;
     }
 
@@ -170,6 +183,13 @@ export class BondClient {
       return response.meta.pagination.lastPage;
     }
 
+    if (endpoint) {
+      console.warn('[bond-client] unrecognized pagination shape, assuming single page', {
+        endpoint,
+        metaKeys: Object.keys(response.meta),
+        itemsReturned: Array.isArray(response.data) ? response.data.length : undefined,
+      });
+    }
     return 1;
   }
 
@@ -214,7 +234,7 @@ export class BondClient {
 
     const first = await this.fetch<APIResponse<T[]>>(endpoint, { ...baseParams, page: '1' });
     const items: T[] = [...(first.data || [])];
-    const totalPages = this.getTotalPages(first);
+    const totalPages = this.getTotalPages(first, endpoint);
 
     if (totalPages > 1) {
       const remaining = await this.fetchRemainingPages<T>(endpoint, baseParams, totalPages);
@@ -265,6 +285,25 @@ export class BondClient {
     }
 
     return this.fetch<APIResponse<Program[]>>(`/organization/${orgId}/programs`, params);
+  }
+
+  /**
+   * Every program for an organization, across all pages.
+   *
+   * `getPrograms` reads a single page (default 100). Callers that need a
+   * complete list — roster scope resolution, for instance — must use this, or
+   * an org with more than one page of programs silently loses the remainder.
+   */
+  async getAllPrograms(
+    orgId: string,
+    options?: { expand?: string; facilityId?: string; status?: string }
+  ): Promise<APIResponse<Program[]>> {
+    return this.fetchAllPages<Program>(`/organization/${orgId}/programs`, {
+      expand: options?.expand || 'sessions,sessions.products,sessions.products.prices',
+      facility_id: options?.facilityId,
+      status: options?.status,
+      per_page: 100,
+    });
   }
 
   /**

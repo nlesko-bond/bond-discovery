@@ -149,19 +149,36 @@ export async function cacheDeletePattern(pattern: string): Promise<void> {
       if (keys.length > 0) {
         await kv.del(...keys);
       }
-      return;
     } catch (error) {
       console.error('KV delete pattern error:', error);
     }
   }
 
-  // Fallback to memory cache - delete matching keys
-  const regex = new RegExp(pattern.replace('*', '.*'));
+  // Always sweep memory too, exactly as cacheDelete does. Values written with
+  // `memoryOnly` live nowhere else, so returning after the KV delete would
+  // strand them -- and those are the roster staff payloads carrying PII.
+  const regex = globToRegExp(pattern);
   for (const key of memoryCache.keys()) {
     if (regex.test(key)) {
       memoryCache.delete(key);
     }
   }
+}
+
+/**
+ * Translate a KV glob into an anchored RegExp.
+ *
+ * Every `*` becomes `.*` and every other character is escaped, so a pattern
+ * with more than one wildcard (`roster:*:{slug}:*`) matches correctly. A plain
+ * `String.replace('*', '.*')` only converts the first wildcard and leaves the
+ * rest to be read as regex quantifiers.
+ */
+function globToRegExp(pattern: string): RegExp {
+  const escaped = pattern
+    .split('*')
+    .map((segment) => segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('.*');
+  return new RegExp(`^${escaped}$`);
 }
 
 /**

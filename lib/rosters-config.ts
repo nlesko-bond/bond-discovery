@@ -3,12 +3,23 @@
  *
  * `normalizeRosterConfig` runs on every read and deep-defaults everything, so
  * rows written before a field existed keep working — the same rule the TV
- * monitor config follows. Password hashes and API keys never leave this module
- * in a config object; callers get `hasViewerPassword` / `hasStaffPassword`
- * booleans instead.
+ * monitor config follows.
+ *
+ * Password hashes never leave this module: callers get `hasViewerPassword` /
+ * `hasStaffPassword` booleans instead. The Bond `apiKey` *is* on the config
+ * object, because the admin editor has to display and update it — the same
+ * arrangement as lib/config.ts. It is therefore admin-gated, and must never be
+ * passed to a client component on the public surface.
  */
 
+import { cache as reactCache } from 'react';
 import { getSupabaseAdmin } from '@/lib/supabase';
+
+// React's `cache` exists in Next.js' server runtime but not in the plain React
+// build the test environment uses -- fall back to identity, as lib/config.ts does.
+const cache: typeof reactCache =
+  typeof reactCache === 'function' ? reactCache : (fn) => fn;
+import { isBondEnv } from '@/lib/bond-env';
 import { hashViewerPassword } from '@/lib/reservation-page-password';
 import {
   DEFAULT_ROSTER_FIELD_VISIBILITY,
@@ -29,7 +40,10 @@ const RESERVED_SLUGS = new Set(['api', 'admin', 'new', 'studio']);
 
 export const DEFAULT_ROSTER_BRANDING: RosterBranding = {
   primaryColor: '#1A1A1A',
-  accentColor: '#C47B2B',
+  // Darker than the reservation-page accent it was copied from: this one is
+  // rendered behind white text, and #C47B2B gives 3.38:1 -- below the 4.5:1
+  // WCAG AA threshold. #9A5B18 gives 5.41:1.
+  accentColor: '#9A5B18',
   accentColorLight: '#E8A84C',
   bgColor: '#F7F7F5',
   fontHeading: 'Bebas Neue',
@@ -45,6 +59,15 @@ export const DEFAULT_SESSION_WINDOW: RosterSessionWindow = { pastDays: 90, futur
 
 function asString(value: unknown, fallback: string): string {
   return typeof value === 'string' && value.length > 0 ? value : fallback;
+}
+
+/**
+ * A hex colour, or the fallback. Branding is DB-supplied and reaches CSS custom
+ * properties; a malformed value makes the declaration invalid at computed-value
+ * time, which renders as white text on a transparent background.
+ */
+function asHexColor(value: unknown, fallback: string): string {
+  return typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
 }
 
 function asNullableString(value: unknown): string | null {
@@ -89,10 +112,10 @@ function asRecord(value: unknown): Record<string, unknown> {
 export function normalizeBranding(value: unknown): RosterBranding {
   const raw = asRecord(value);
   return {
-    primaryColor: asString(raw.primaryColor, DEFAULT_ROSTER_BRANDING.primaryColor),
-    accentColor: asString(raw.accentColor, DEFAULT_ROSTER_BRANDING.accentColor),
-    accentColorLight: asString(raw.accentColorLight, DEFAULT_ROSTER_BRANDING.accentColorLight),
-    bgColor: asString(raw.bgColor, DEFAULT_ROSTER_BRANDING.bgColor),
+    primaryColor: asHexColor(raw.primaryColor, DEFAULT_ROSTER_BRANDING.primaryColor),
+    accentColor: asHexColor(raw.accentColor, DEFAULT_ROSTER_BRANDING.accentColor),
+    accentColorLight: asHexColor(raw.accentColorLight, DEFAULT_ROSTER_BRANDING.accentColorLight),
+    bgColor: asHexColor(raw.bgColor, DEFAULT_ROSTER_BRANDING.bgColor),
     fontHeading: asString(raw.fontHeading, DEFAULT_ROSTER_BRANDING.fontHeading),
     fontBody: asString(raw.fontBody, DEFAULT_ROSTER_BRANDING.fontBody),
     logoUrl: asNullableString(raw.logoUrl),
@@ -186,7 +209,10 @@ export function normalizeRosterConfig(row: Record<string, unknown>): RosterPageC
     hasViewerPassword: typeof row.viewer_password_hash === 'string' && row.viewer_password_hash.length > 0,
     hasStaffPassword: typeof row.staff_password_hash === 'string' && row.staff_password_hash.length > 0,
     apiKey: asNullableString(row.api_key) ?? undefined,
-    bondEnv: asNullableString(row.bond_env) ?? undefined,
+    // Normalized through the env union rather than kept as a bare string: an
+    // unrecognized value would otherwise reach getBondBaseUrl and produce an
+    // `undefined/organization/...` request URL.
+    bondEnv: isBondEnv(row.bond_env) ? row.bond_env : undefined,
     createdAt: String(row.created_at ?? ''),
     updatedAt: String(row.updated_at ?? ''),
   };
@@ -202,7 +228,11 @@ export function isReservedRosterSlug(slug: string): boolean {
 
 // --- reads ----------------------------------------------------------------
 
-export async function getRosterPageBySlug(slug: string): Promise<RosterPageConfig | null> {
+/**
+ * Request-memoized: the page route reads this twice (generateMetadata and the
+ * page body), and lib/config.ts sets the same precedent for discovery pages.
+ */
+export const getRosterPageBySlug = cache(async (slug: string): Promise<RosterPageConfig | null> => {
   const db = getSupabaseAdmin();
   const { data, error } = await db.from(TABLE).select('*').eq('slug', slug).maybeSingle();
 
@@ -211,7 +241,7 @@ export async function getRosterPageBySlug(slug: string): Promise<RosterPageConfi
     return null;
   }
   return normalizeRosterConfig(data as Record<string, unknown>);
-}
+});
 
 export async function getAllRosterPages(): Promise<RosterPageConfig[]> {
   const db = getSupabaseAdmin();

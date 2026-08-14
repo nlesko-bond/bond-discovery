@@ -61,9 +61,9 @@ export function SheetGrid({
 
   return (
     <div
-      className={`roster-print-sheet ${
-        kind === 'matrix' ? 'roster-print-mode-checkin' : 'roster-print-mode-checkin'
-      } ${isWide ? 'is-wide' : ''}`}
+      // Both sheets share the check-in print geometry: participants down the
+      // left, dates across the top, portrait until the columns stop fitting.
+      className={`roster-print-sheet roster-print-mode-checkin ${isWide ? 'is-wide' : ''}`}
     >
       <header className="mb-3">
         <h2 className="text-lg font-semibold text-gray-900">{heading}</h2>
@@ -129,12 +129,17 @@ export function SheetGrid({
                 return (
                   <tr key={p.id}>
                     <td className="px-2 py-1.5 tabular-nums">{p.jerseyNumber || EMPTY}</td>
-                    <td className="notranslate px-2 py-1.5 font-medium text-gray-900">
+                    <th scope="row" className="notranslate px-2 py-1.5 text-left font-medium text-gray-900">
                       {p.displayName}
-                    </td>
+                    </th>
                     {columns.map((column) => (
                       <td key={column.key} className="roster-print-tick px-1 py-1.5 text-center">
-                        {kind === 'matrix' && marked.has(column.key) ? '✓' : ''}
+                        {kind === 'matrix' && marked.has(column.key) && (
+                          <>
+                            <span aria-hidden="true">✓</span>
+                            <span className="sr-only">Registered</span>
+                          </>
+                        )}
                       </td>
                     ))}
                     <td className="roster-print-tick px-2 py-1.5 text-center tabular-nums">

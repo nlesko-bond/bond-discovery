@@ -98,6 +98,12 @@ export function RosterPage(props: Props) {
       setError(null);
       try {
         const response = await fetch(`/api/rosters/${slug}/scope`);
+        // The cookie can lapse while the tab is open; send the viewer back to
+        // the password form instead of a dead-end error.
+        if (response.status === 401) {
+          if (!cancelled) setIsUnlocked(false);
+          return;
+        }
         if (!response.ok) throw new Error('scope');
         const data: ScopeResponse = await response.json();
         if (cancelled) return;
@@ -172,7 +178,10 @@ export function RosterPage(props: Props) {
           setViewerMode(data.mode);
         }
       } catch {
-        if (!cancelled) setError('Could not load this roster.');
+        if (!cancelled) {
+          setParticipants(null);
+          setError('Could not load this roster.');
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -187,9 +196,13 @@ export function RosterPage(props: Props) {
   useEffect(() => {
     if (view === 'browse' || !sessionId) {
       setSheet(null);
+      setError(null);
       return;
     }
-    if (view === 'checkin' && !groupId) return;
+    if (view === 'checkin' && !groupId) {
+      setSheet(null);
+      return;
+    }
 
     let cancelled = false;
     (async () => {
@@ -235,6 +248,10 @@ export function RosterPage(props: Props) {
   }
 
   function selectGroup(next: number | null) {
+    // Clear first: otherwise the previous team's rows stay on screen under the
+    // new team's heading while the fetch runs, and window.print() would
+    // capture that -- a paper sheet with the wrong team's PII.
+    setParticipants(null);
     setGroupId(next);
     syncUrl(sessionId, next);
   }
@@ -300,6 +317,8 @@ export function RosterPage(props: Props) {
             <button
               type="button"
               onClick={() => setShowStaffUnlock((v) => !v)}
+              aria-expanded={showStaffUnlock}
+              aria-controls="roster-staff-unlock"
               className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
             >
               Staff view
@@ -329,7 +348,7 @@ export function RosterPage(props: Props) {
       </header>
 
       {showStaffUnlock && viewerMode !== 'staff' && (
-        <div className="roster-no-print border-b border-gray-200 bg-white">
+        <div id="roster-staff-unlock" className="roster-no-print border-b border-gray-200 bg-white">
           <UnlockForm
             slug={slug}
             scope="staff"
@@ -337,8 +356,8 @@ export function RosterPage(props: Props) {
             description="Unlocks contact details, ages and waiver status."
             onUnlocked={() => {
               setShowStaffUnlock(false);
-              // Re-fetch through the effects so the server decides the mode.
-              setGroupId((current) => current);
+              // Full reload so the server re-resolves the viewer mode from the
+              // freshly-set cookie. The URL already carries session and group.
               window.location.reload();
             }}
           />
@@ -369,10 +388,7 @@ export function RosterPage(props: Props) {
                 type="button"
                 aria-pressed={view === value}
                 onClick={() => setView(value)}
-                disabled={value === 'checkin' && !groupId}
-                title={
-                  value === 'checkin' && !groupId ? 'Open a team first' : undefined
-                }
+                aria-disabled={value === 'checkin' && !groupId}
                 className={`rounded-lg border px-3 py-1.5 text-sm disabled:opacity-40 ${
                   view === value
                     ? 'border-transparent text-white'
@@ -477,13 +493,13 @@ export function RosterPage(props: Props) {
                       {division.name}
                     </h2>
                     <span className="text-xs text-gray-500">
-                      {division.children.length || 1} team
-                      {division.children.length === 1 ? '' : 's'}
+                      {(division.isTeam ? 1 : flattenTeams(division.children).length)} team
+                      {(division.isTeam ? 1 : flattenTeams(division.children).length) === 1 ? '' : 's'}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {(division.children.length ? division.children : [division]).map((team) => (
+                    {(division.isTeam ? [division] : flattenTeams(division.children)).map((team) => (
                       <button
                         key={team.id}
                         type="button"
@@ -491,6 +507,7 @@ export function RosterPage(props: Props) {
                         className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 text-left transition-shadow hover:shadow-sm"
                       >
                         <span
+                          aria-hidden="true"
                           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
                           style={{ backgroundColor: 'var(--roster-accent)' }}
                         >

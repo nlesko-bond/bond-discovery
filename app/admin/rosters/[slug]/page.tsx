@@ -171,13 +171,36 @@ export default function AdminRosterEditor() {
           A rolling window, so new seasons appear without editing this page.
         </p>
 
+        <label className="label" htmlFor="apiKey">
+          Bond API key
+        </label>
+        <input
+          id="apiKey"
+          className="input"
+          value={config.apiKey ?? ''}
+          onChange={(e) => patch({ apiKey: e.target.value || undefined })}
+          placeholder="Required"
+        />
+        <p className="mb-3 mt-1 text-xs text-gray-500">
+          Roster pages do not inherit a key. Without one, every view returns an error.
+        </p>
+
+        {!config.apiKey && (
+          <p className="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <AlertTriangle size={14} className="mt-0.5 shrink-0" aria-hidden />
+            This page has no Bond API key, so it cannot load any data. Add one before publishing.
+          </p>
+        )}
+
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
             checked={config.isActive}
             onChange={(e) => patch({ isActive: e.target.checked })}
+            disabled={!config.apiKey}
           />
           Published — live at /rosters/{config.slug}
+          {!config.apiKey && <span className="text-xs text-gray-400">(needs an API key)</span>}
         </label>
       </section>
 

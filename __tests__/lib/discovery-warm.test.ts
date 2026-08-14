@@ -18,7 +18,9 @@ vi.mock('@/lib/discovery-events', () => ({
 const getProgramsMock = vi.fn();
 vi.mock('@/lib/bond-client', () => ({
   createBondClient: () => ({ getPrograms: getProgramsMock }),
-  resolveBondApiKey: (explicit?: string) => explicit || 'test-env-key',
+  // Mirrors production exactly: no fallback. A mock that returned a default
+  // here would make the fail-closed path unreachable under test.
+  resolveBondApiKey: (explicit?: string) => explicit || undefined,
 }));
 
 function makeConfig(slug: string): DiscoveryConfig {
@@ -26,6 +28,8 @@ function makeConfig(slug: string): DiscoveryConfig {
     id: slug,
     name: slug,
     slug,
+    // Every real page must carry a key (or inherit one): there is no fallback.
+    apiKey: 'test-page-key',
     organizationIds: ['100'],
     branding: { companyName: 'Test', primaryColor: '#000', secondaryColor: '#111' },
     features: { enableFilters: [], programFilterMode: 'all' },

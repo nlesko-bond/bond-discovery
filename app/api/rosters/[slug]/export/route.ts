@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { toCsv, type CsvCell } from '@/lib/csv';
 import { loadGroupParticipants, loadRosterGroups, loadRosterScope, loadRostersForGroups } from '@/lib/roster-data';
-import { numericParam, resolveRosterRequest } from '@/lib/roster-request';
+import {
+  assertGroupsInSession,
+  findSessionInScope,
+  numericParam,
+  resolveRosterRequest,
+} from '@/lib/roster-request';
 import { flattenTeams, findGroupNode } from '@/lib/roster-tree';
 import type { RosterParticipant, RosterViewerMode } from '@/types/rosters';
 
 export const dynamic = 'force-dynamic';
+// A whole-session export is one Bond request per team.
+export const maxDuration = 60;
 
 interface Ctx {
   params: Promise<{ slug: string }>;
@@ -92,7 +99,7 @@ export async function GET(request: NextRequest, context: Ctx) {
 
   try {
     const sessions = await loadRosterScope(config);
-    const session = sessions.find((s) => s.sessionId === sessionId);
+    const session = findSessionInScope(sessions, sessionId);
     if (!session) {
       return NextResponse.json({ error: 'Session not available on this page' }, { status: 404 });
     }
@@ -100,9 +107,12 @@ export async function GET(request: NextRequest, context: Ctx) {
     const groups = await loadRosterGroups(config, session);
     let participants: Array<RosterParticipant & { teamName?: string }>;
     let label: string;
-    let truncatedNote: string | null = null;
 
     if (groupId) {
+      // Bound the group to this session before exporting its PII.
+      const bounded = assertGroupsInSession(groups.tree, [groupId]);
+      if (!bounded.ok) return bounded.response;
+
       participants = await loadGroupParticipants(config, session, groupId, mode);
       label = findGroupNode(groups.tree, groupId)?.name ?? `group-${groupId}`;
     } else {
@@ -120,7 +130,17 @@ export async function GET(request: NextRequest, context: Ctx) {
       );
       label = session.sessionName;
       if (bulk.truncated) {
-        truncatedNote = `Only the first ${bulk.truncated.loaded} of ${bulk.truncated.requested} teams are included (cap ${bulk.truncated.cap}).`;
+        // Refuse rather than hand over a file that looks complete and is not.
+        // The download is a plain anchor, so a response header would never be
+        // seen -- and a silently short roster of record is the worse failure.
+        return NextResponse.json(
+          {
+            error: `This session has ${bulk.truncated.requested} teams; export is limited to ${bulk.truncated.cap} at a time. Export one division or team at a time.`,
+            teamCount: bulk.truncated.requested,
+            cap: bulk.truncated.cap,
+          },
+          { status: 413 }
+        );
       }
     }
 
@@ -137,7 +157,6 @@ export async function GET(request: NextRequest, context: Ctx) {
         'Content-Disposition': `attachment; filename="${safe}-roster-${date}.csv"`,
         // Never let a CDN or proxy hold an export that may contain PII.
         'Cache-Control': 'private, no-store',
-        ...(truncatedNote ? { 'X-Roster-Truncated': truncatedNote } : {}),
       },
     });
   } catch (error) {

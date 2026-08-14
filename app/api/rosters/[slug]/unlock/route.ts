@@ -6,6 +6,7 @@ import {
   rosterAccessCookieOptions,
   type RosterAccessScope,
 } from '@/lib/roster-access';
+import { consumeRosterRateLimit } from '@/lib/roster-rate-limit';
 import { getRosterPageSecrets } from '@/lib/rosters-config';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,14 @@ interface Ctx {
  */
 export async function POST(request: NextRequest, context: Ctx) {
   const { slug } = await context.params;
+
+  const limited = consumeRosterRateLimit(request, slug, 'unlock');
+  if (limited.blocked) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(limited.retryAfterSeconds) } }
+    );
+  }
 
   let body: { password?: string; scope?: string };
   try {
@@ -48,7 +57,20 @@ export async function POST(request: NextRequest, context: Ctx) {
     return NextResponse.json({ error: 'Incorrect password' }, { status: 401 });
   }
 
-  const { value, maxAgeSeconds } = createRosterAccessCookieValue(scope, slug);
+  let value: string;
+  let maxAgeSeconds: number;
+  try {
+    ({ value, maxAgeSeconds } = createRosterAccessCookieValue(scope, slug));
+  } catch (error) {
+    // ROSTER_ACCESS_SECRET missing in a deployed env. Without this the correct
+    // password would surface to the user as a generic 500 -- reported as "the
+    // password stopped working", with the real cause only in a stack trace.
+    console.error(`[rosters/${slug}/unlock] cannot mint access cookie`, error);
+    return NextResponse.json(
+      { error: 'Server configuration error' },
+      { status: 503 }
+    );
+  }
   const response = NextResponse.json({ ok: true, scope });
   response.cookies.set(
     rosterAccessCookieName(scope, slug),
@@ -58,16 +80,3 @@ export async function POST(request: NextRequest, context: Ctx) {
   return response;
 }
 
-/** Sign out of a scope — used by the "lock" control on shared machines. */
-export async function DELETE(request: NextRequest, context: Ctx) {
-  const { slug } = await context.params;
-  const scope: RosterAccessScope =
-    request.nextUrl.searchParams.get('scope') === 'staff' ? 'staff' : 'viewer';
-
-  const response = NextResponse.json({ ok: true });
-  response.cookies.set(rosterAccessCookieName(scope, slug), '', {
-    ...rosterAccessCookieOptions(0),
-    maxAge: 0,
-  });
-  return response;
-}

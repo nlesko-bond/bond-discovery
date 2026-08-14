@@ -9,8 +9,6 @@ const EMPTY = '—';
 interface Props {
   participants: RosterParticipant[];
   mode: RosterViewerMode;
-  /** Show only participants without a signed waiver. */
-  unsignedOnly?: boolean;
 }
 
 function initials(name: string): string {
@@ -42,17 +40,13 @@ function WaiverCell({ participant }: { participant: RosterParticipant }) {
   );
 }
 
-export function RosterTable({ participants, mode, unsignedOnly = false }: Props) {
-  const rows = unsignedOnly
-    ? participants.filter((p) => p.waiverSigned === false)
-    : participants;
+export function RosterTable({ participants, mode }: Props) {
+  const rows = participants;
 
   if (rows.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500">
-        {unsignedOnly
-          ? 'Every participant on this roster has signed.'
-          : 'No participants on this roster yet.'}
+        No participants on this roster yet.
       </p>
     );
   }
@@ -64,8 +58,14 @@ export function RosterTable({ participants, mode, unsignedOnly = false }: Props)
   return (
     <>
       {/* Desktop and print: full table. Staff mode is wide, so it scrolls. */}
+      {/*
+        `print:block` is load-bearing, not decoration. Letter portrait minus
+        0.5in margins is 720px, below Tailwind's 768px `md` breakpoint, so
+        `md:block` does not match when printing and the table would stay
+        display:none -- a blank page.
+      */}
       <div
-        className={`roster-print-table-wrap hidden md:block ${isStaff ? 'overflow-x-auto' : ''}`}
+        className={`roster-print-table-wrap hidden md:block print:block ${isStaff ? 'overflow-x-auto' : ''}`}
       >
         <table className="roster-print-table w-full border-collapse text-sm">
           <caption className="sr-only">
@@ -118,14 +118,16 @@ export function RosterTable({ participants, mode, unsignedOnly = false }: Props)
                         className="h-8 w-8 rounded-full object-cover object-top"
                       />
                     ) : (
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-[10px] font-medium text-gray-500">
+                      <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-[10px] font-medium text-gray-500">
                         {initials(p.displayName)}
                       </span>
                     )}
                   </td>
                 )}
                 {/* notranslate: team and player names should not be machine-translated. */}
-                <td className="notranslate px-3 py-2 font-medium text-gray-900">{p.displayName}</td>
+                <th scope="row" className="notranslate px-3 py-2 text-left font-medium text-gray-900">
+                  {p.displayName}
+                </th>
                 <td className="px-3 py-2 text-gray-600">{p.position || EMPTY}</td>
                 <td className="px-3 py-2 text-gray-600">{p.teamRole || EMPTY}</td>
                 {isStaff && (

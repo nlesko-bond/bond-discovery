@@ -1,3 +1,5 @@
+import type { BondEnv } from '@/lib/bond-env';
+
 /**
  * Rosters — Bond public API DTOs and page-config types.
  *
@@ -20,16 +22,6 @@ export type BondGroupType =
   | 'age_group'
   | 'skill_level'
   | 'group';
-
-export const BOND_GROUP_TYPES: BondGroupType[] = [
-  'division',
-  'team',
-  'conference',
-  'level',
-  'age_group',
-  'skill_level',
-  'group',
-];
 
 export type BondRegistrationAccess = 'open' | 'invite_link_only';
 
@@ -85,6 +77,12 @@ export interface BondGroup {
   restrictions?: BondGroupRestrictions;
   teamIdentity?: BondTeamIdentity;
   invitedPlayerRegistrationEnd?: string | null;
+  /** Present only when `expand=facility`; the source of the session timezone. */
+  facility?: {
+    id?: number;
+    name?: string;
+    timezone?: string | null;
+  };
 }
 
 export type BondGroupExpand =
@@ -164,13 +162,6 @@ export type BondParticipantExpand =
   | 'primaryContact'
   | 'registration'
   | 'playerInfo';
-
-export interface BondEventContext {
-  eventId: number;
-  eventName?: string | null;
-  startDate?: string | null;
-  endDate?: string | null;
-}
 
 // ============================================
 // Our types — privacy
@@ -275,10 +266,6 @@ export interface RosterParticipant {
 
 export type RosterPageAccess = 'public' | 'password' | 'staff';
 
-export type RosterViewType = 'browse' | 'team' | 'checkin' | 'matrix';
-
-export const ROSTER_VIEW_TYPES: RosterViewType[] = ['browse', 'team', 'checkin', 'matrix'];
-
 export interface RosterBranding {
   primaryColor: string;
   accentColor: string;
@@ -323,13 +310,21 @@ export interface RosterPageConfig {
   hasViewerPassword: boolean;
   hasStaffPassword: boolean;
   apiKey?: string;
-  bondEnv?: string;
+  bondEnv?: BondEnv;
   createdAt: string;
   updatedAt: string;
 }
 
 /** One session a viewer can pick, resolved from the page's scope. */
 export interface RosterSessionRef {
+  /**
+   * The organization this session was discovered under.
+   *
+   * Carried explicitly because a page may be scoped to several organizations:
+   * every downstream fetch must use the org the session actually belongs to,
+   * not the page's first configured org.
+   */
+  organizationId: number;
   programId: number;
   programName: string;
   sessionId: number;

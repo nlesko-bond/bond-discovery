@@ -70,8 +70,9 @@ export function isSessionInWindow(session: Pick<Session, 'startDate' | 'endDate'
   return effectiveStart <= window.to && effectiveEnd >= window.from;
 }
 
-function toSessionRef(program: Program, session: Session): RosterSessionRef {
+function toSessionRef(program: Program, session: Session, organizationId: number): RosterSessionRef {
   return {
+    organizationId,
     programId: Number(program.id),
     programName: program.name,
     sessionId: Number(session.id),
@@ -107,7 +108,9 @@ export function resolveRosterSessions(
   config: Pick<RosterPageConfig, 'programFilter' | 'pinnedSessions' | 'sessionWindow'>,
   programs: Program[],
   sessionsByProgramId: Map<number, Session[]>,
-  now = new Date()
+  now = new Date(),
+  /** Program id -> the org it was fetched under. Falls back to the program's own field. */
+  orgByProgramId?: Map<number, number>
 ): RosterSessionRef[] {
   const pinned = config.pinnedSessions ?? [];
   const usePins = pinned.length > 0;
@@ -132,7 +135,11 @@ export function resolveRosterSessions(
         ? pinnedKeys.has(`${programId}:${sessionId}`)
         : isSessionInWindow(session, window);
 
-      if (keep) refs.push(toSessionRef(program, session));
+      if (keep) {
+        const organizationId =
+          orgByProgramId?.get(programId) ?? Number(program.organizationId) ?? 0;
+        refs.push(toSessionRef(program, session, organizationId));
+      }
     }
   }
 
