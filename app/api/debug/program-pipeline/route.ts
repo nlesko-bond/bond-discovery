@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
+import { createBondClient, resolveBondApiKey } from '@/lib/bond-client';
 import { getConfigBySlug } from '@/lib/config';
 import { transformProgram } from '@/lib/transformers';
 import {
@@ -29,7 +29,10 @@ export async function GET(request: Request) {
   }
 
   const today = new Date().toISOString().split('T')[0];
-  const apiKey = config.apiKey || DEFAULT_API_KEY;
+  const apiKey = resolveBondApiKey(config.apiKey);
+  if (!apiKey) {
+    return NextResponse.json({ error: 'Bond API key not configured' }, { status: 503 });
+  }
   const client = createBondClient(apiKey, config.features.bondEnv);
   const orgId = config.organizationIds[0];
 

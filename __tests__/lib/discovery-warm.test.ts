@@ -18,7 +18,7 @@ vi.mock('@/lib/discovery-events', () => ({
 const getProgramsMock = vi.fn();
 vi.mock('@/lib/bond-client', () => ({
   createBondClient: () => ({ getPrograms: getProgramsMock }),
-  DEFAULT_API_KEY: 'test-default-key',
+  resolveBondApiKey: (explicit?: string) => explicit || 'test-env-key',
 }));
 
 function makeConfig(slug: string): DiscoveryConfig {

@@ -1,4 +1,4 @@
-import { createBondClient, DEFAULT_API_KEY, DEFAULT_ORG_IDS } from '@/lib/bond-client';
+import { createBondClient, DEFAULT_ORG_IDS, resolveBondApiKey } from '@/lib/bond-client';
 import { getConfigBySlug } from '@/lib/config';
 import {
   getDiscoveryExcludedProgramIds,
@@ -212,7 +212,7 @@ async function runWithConcurrency<T, R>(
 
 async function buildContext(request: DiscoveryEventsRequest): Promise<DiscoveryEventsContext> {
   const slug = request.slug || 'adhoc';
-  let apiKey = request.apiKey || DEFAULT_API_KEY;
+  let apiKey = request.apiKey || undefined;
   let bondEnv = request.bondEnv || DEFAULT_BOND_ENV;
   let orgIds = request.orgIds && request.orgIds.length > 0 ? request.orgIds : DEFAULT_ORG_IDS;
   let programFilterMode: 'all' | 'exclude' | 'include' = 'all';
@@ -239,6 +239,15 @@ async function buildContext(request: DiscoveryEventsRequest): Promise<DiscoveryE
     }
   }
 
+  // Resolved after the config merge so a page's own key still wins over the
+  // the key inherited from its partner group.
+  const resolvedApiKey = resolveBondApiKey(apiKey);
+  if (!resolvedApiKey) {
+    throw new Error(
+      `No Bond API key for "${slug}": give the page an api_key, or a partner group that has one.`
+    );
+  }
+
   const lookbackDays = clampEventLookbackDays(config?.features?.eventLookbackDays);
   const lookbackStart =
     lookbackDays > 0 ? getEventLookbackStartDate(lookbackDays) : undefined;
@@ -258,8 +267,8 @@ async function buildContext(request: DiscoveryEventsRequest): Promise<DiscoveryE
 
   return {
     slug,
-    apiKey,
-    apiKeyScope: hashScope(apiKey || 'default'),
+    apiKey: resolvedApiKey,
+    apiKeyScope: hashScope(resolvedApiKey),
     bondEnv,
     bondApiBaseUrl: getBondBaseUrl(bondEnv),
     orgIds,

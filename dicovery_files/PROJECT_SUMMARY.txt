@@ -132,7 +132,7 @@ API CONFIGURATION
 ================================================================================
 
 Base URL: https://public.api.bondsports.co/v1
-API Key: zhoZODDEKuaexCBkvumrU7c84TbC3zsC4hENkjlz
+API Key: set via the BOND_API_KEY environment variable (never hardcoded)
 Auth: x-api-key header
 
 Organizations (default: all 12)

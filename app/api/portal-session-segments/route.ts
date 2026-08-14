@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
+import { createBondClient, resolveBondApiKey } from '@/lib/bond-client';
 import { getConfigBySlug } from '@/lib/config';
 import { fetchEnrichedPortalSessionSegments } from '@/lib/host-shell/portal-session-segment-detail';
 
@@ -78,7 +78,9 @@ export async function GET(request: Request) {
   );
 
   try {
-    const client = createBondClient(pageConfig.apiKey || DEFAULT_API_KEY, pageConfig.features.bondEnv);
+    // createBondClient throws when the page has no key of its own and none to
+    // inherit; this whole block is already inside a try/catch.
+    const client = createBondClient(pageConfig.apiKey, pageConfig.features.bondEnv);
     const context = {
       name: sessionName,
       programName,

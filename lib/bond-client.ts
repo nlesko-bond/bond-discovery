@@ -9,6 +9,13 @@ import {
   Organization
 } from '@/types';
 import { DEFAULT_BOND_ENV, getBondBaseUrl, type BondEnv } from '@/lib/bond-env';
+import type {
+  BondGroup,
+  BondGroupExpand,
+  BondGroupType,
+  BondParticipant,
+  BondParticipantExpand,
+} from '@/types/rosters';
 
 const DEFAULT_BOND_API_BASE_URL = getBondBaseUrl(DEFAULT_BOND_ENV);
 
@@ -25,7 +32,7 @@ interface BondApiStats {
   errors: number;
 }
 
-const BOND_EVENT_PAGE_FETCH_CONCURRENCY = 3;
+const BOND_PAGE_FETCH_CONCURRENCY = 3;
 
 let bondApiStats: BondApiStats = {
   totalRequests: 0,
@@ -166,18 +173,18 @@ export class BondClient {
     return 1;
   }
 
-  private async fetchRemainingEventPages(
+  private async fetchRemainingPages<T>(
     endpoint: string,
     baseParams: Record<string, string>,
     totalPages: number
-  ): Promise<APIResponse<SessionEvent[]>[]> {
-    const responses: APIResponse<SessionEvent[]>[] = [];
+  ): Promise<APIResponse<T[]>[]> {
+    const responses: APIResponse<T[]>[] = [];
 
-    for (let page = 2; page <= totalPages; page += BOND_EVENT_PAGE_FETCH_CONCURRENCY) {
+    for (let page = 2; page <= totalPages; page += BOND_PAGE_FETCH_CONCURRENCY) {
       const batch = Array.from(
-        { length: Math.min(BOND_EVENT_PAGE_FETCH_CONCURRENCY, totalPages - page + 1) },
+        { length: Math.min(BOND_PAGE_FETCH_CONCURRENCY, totalPages - page + 1) },
         (_, index) =>
-          this.fetch<APIResponse<SessionEvent[]>>(endpoint, {
+          this.fetch<APIResponse<T[]>>(endpoint, {
             ...baseParams,
             page: String(page + index),
           })
@@ -187,6 +194,47 @@ export class BondClient {
     }
 
     return responses;
+  }
+
+  /**
+   * Read every page of a paginated list endpoint and flatten them into a single
+   * synthetic one-page response: page 1 first to learn the page count, then the
+   * remainder BOND_PAGE_FETCH_CONCURRENCY at a time.
+   */
+  protected async fetchAllPages<T>(
+    endpoint: string,
+    params?: Record<string, string | number | undefined>
+  ): Promise<APIResponse<T[]>> {
+    const baseParams: Record<string, string> = {};
+    for (const [key, value] of Object.entries(params || {})) {
+      if (value !== undefined && value !== null) {
+        baseParams[key] = String(value);
+      }
+    }
+
+    const first = await this.fetch<APIResponse<T[]>>(endpoint, { ...baseParams, page: '1' });
+    const items: T[] = [...(first.data || [])];
+    const totalPages = this.getTotalPages(first);
+
+    if (totalPages > 1) {
+      const remaining = await this.fetchRemainingPages<T>(endpoint, baseParams, totalPages);
+      for (const r of remaining) {
+        if (r.data) items.push(...r.data);
+      }
+    }
+
+    return {
+      data: items,
+      meta: {
+        pagination: {
+          total: items.length,
+          perPage: items.length,
+          currentPage: 1,
+          lastPage: 1,
+          hasMore: false,
+        },
+      },
+    };
   }
 
   /**
@@ -279,33 +327,10 @@ export class BondClient {
     sessionId: string,
     options?: { expand?: string }
   ): Promise<APIResponse<SessionEvent[]>> {
-    const endpoint = `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/events`;
-    const baseParams: Record<string, string> = {};
-    if (options?.expand) baseParams.expand = options.expand;
-
-    const first = await this.fetch<APIResponse<SessionEvent[]>>(endpoint, { ...baseParams, page: '1' });
-    const allEvents: SessionEvent[] = [...(first.data || [])];
-    const totalPages = this.getTotalPages(first);
-
-    if (totalPages > 1) {
-      const remaining = await this.fetchRemainingEventPages(endpoint, baseParams, totalPages);
-      for (const r of remaining) {
-        if (r.data) allEvents.push(...r.data);
-      }
-    }
-
-    return {
-      data: allEvents,
-      meta: { 
-        pagination: { 
-          total: allEvents.length, 
-          perPage: allEvents.length, 
-          currentPage: 1, 
-          lastPage: 1, 
-          hasMore: false 
-        } 
-      }
-    };
+    return this.fetchAllPages<SessionEvent>(
+      `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/events`,
+      { expand: options?.expand }
+    );
   }
 
   /**
@@ -340,33 +365,92 @@ export class BondClient {
     segmentId: string,
     options?: { expand?: string }
   ): Promise<APIResponse<SessionEvent[]>> {
-    const endpoint = `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/segments/${segmentId}/events`;
-    const baseParams: Record<string, string> = {};
-    if (options?.expand) baseParams.expand = options.expand;
+    return this.fetchAllPages<SessionEvent>(
+      `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/segments/${segmentId}/events`,
+      { expand: options?.expand }
+    );
+  }
 
-    const first = await this.fetch<APIResponse<SessionEvent[]>>(endpoint, { ...baseParams, page: '1' });
-    const allEvents: SessionEvent[] = [...(first.data || [])];
-    const totalPages = this.getTotalPages(first);
-
-    if (totalPages > 1) {
-      const remaining = await this.fetchRemainingEventPages(endpoint, baseParams, totalPages);
-      for (const r of remaining) {
-        if (r.data) allEvents.push(...r.data);
-      }
+  /**
+   * Get every group (division, team, conference, level, …) in a published
+   * session. Bond returns a flat list carrying `parentId`, so one call is
+   * enough to build the whole division/team tree — see lib/roster-tree.ts.
+   *
+   * Only published sessions have groups; Bond 404s otherwise.
+   */
+  async getSessionGroups(
+    orgId: string | number,
+    programId: string | number,
+    sessionId: string | number,
+    options?: {
+      expand?: BondGroupExpand[];
+      groupTypes?: BondGroupType[];
+      parentIds?: number[];
+      isTeam?: boolean;
+      hasPlayers?: boolean;
+      search?: string;
+      itemsPerPage?: number;
     }
-
-    return {
-      data: allEvents,
-      meta: { 
-        pagination: { 
-          total: allEvents.length, 
-          perPage: allEvents.length, 
-          currentPage: 1, 
-          lastPage: 1, 
-          hasMore: false 
-        } 
+  ): Promise<APIResponse<BondGroup[]>> {
+    return this.fetchAllPages<BondGroup>(
+      `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/groups`,
+      {
+        expand: options?.expand?.length ? options.expand.join(',') : undefined,
+        groupTypes: options?.groupTypes?.length ? options.groupTypes.join(',') : undefined,
+        parentIds: options?.parentIds?.length ? options.parentIds.join(',') : undefined,
+        isTeam: options?.isTeam === undefined ? undefined : String(options.isTeam),
+        hasPlayers: options?.hasPlayers === undefined ? undefined : String(options.hasPlayers),
+        search: options?.search,
+        itemsPerPage: options?.itemsPerPage ?? 100,
       }
-    };
+    );
+  }
+
+  /**
+   * Get the roster of one group.
+   *
+   * `expand` decides how much PII Bond sends back — always pass the result of
+   * `resolveExpand()` from lib/roster-privacy.ts rather than a literal list, so
+   * a public request never pulls contact or registration data into this
+   * process in the first place.
+   */
+  async getGroupParticipants(
+    orgId: string | number,
+    programId: string | number,
+    sessionId: string | number,
+    groupId: string | number,
+    options?: { expand?: BondParticipantExpand[]; itemsPerPage?: number }
+  ): Promise<APIResponse<BondParticipant[]>> {
+    return this.fetchAllPages<BondParticipant>(
+      `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/groups/${groupId}/participants`,
+      {
+        expand: options?.expand?.length ? options.expand.join(',') : undefined,
+        itemsPerPage: options?.itemsPerPage ?? 100,
+      }
+    );
+  }
+
+  /**
+   * Get the participants attached to one event.
+   *
+   * Note this is who is *registered for or assigned to* the event — Bond
+   * exposes no check-in or attendance state, so nothing here can be presented
+   * as attendance. Same `expand` rule as getGroupParticipants.
+   */
+  async getEventParticipants(
+    orgId: string | number,
+    programId: string | number,
+    sessionId: string | number,
+    eventId: string | number,
+    options?: { expand?: BondParticipantExpand[]; itemsPerPage?: number }
+  ): Promise<APIResponse<BondParticipant[]>> {
+    return this.fetchAllPages<BondParticipant>(
+      `/organization/${orgId}/programs/${programId}/sessions/${sessionId}/events/${eventId}/participants`,
+      {
+        expand: options?.expand?.length ? options.expand.join(',') : undefined,
+        itemsPerPage: options?.itemsPerPage ?? 100,
+      }
+    );
   }
 
   /**
@@ -385,22 +469,40 @@ export class BondClient {
 }
 
 /**
- * Create a Bond client with the default API key from environment
+ * Resolve the Bond API key for a request.
+ *
+ * A key comes from exactly one place: the page's own `api_key`, or the one it
+ * inherits from its partner group (see `rowToConfig` in lib/config.ts). There
+ * is deliberately **no** deployment-wide or hardcoded fallback.
+ *
+ * Two reasons. Rotation: a key lives on one partner group, so rotating it is a
+ * single edit that every page under that group picks up, rather than a hunt
+ * across pages and environments. And attribution: Bond provisions keys per
+ * organization and meters usage per organization, so a shared fallback let a
+ * page silently read another customer's data on that customer's quota — which
+ * is exactly what happened here before this was removed.
+ *
+ * Returns undefined when no key is configured, so callers fail closed with a
+ * clear error instead of borrowing one.
+ */
+export function resolveBondApiKey(explicit?: string | null): string | undefined {
+  return typeof explicit === 'string' && explicit.length > 0 ? explicit : undefined;
+}
+
+/**
+ * Create a Bond client. Throws when no key can be resolved.
  */
 export function createBondClient(apiKey?: string, bondEnv?: BondEnv): BondClient {
-  const key = apiKey || process.env.BOND_API_KEY;
-  
+  const key = resolveBondApiKey(apiKey);
+
   if (!key) {
-    throw new Error('BOND_API_KEY environment variable is required');
+    throw new Error(
+      'No Bond API key: give the page an api_key, or a partner group that has one.'
+    );
   }
 
   return new BondClient({ apiKey: key, bondEnv: bondEnv || DEFAULT_BOND_ENV });
 }
-
-/**
- * Default API key for development (move to env in production)
- */
-export const DEFAULT_API_KEY = 'zhoZODDEKuaexCBkvumrU7c84TbC3zsC4hENkjlz';
 
 export { DEFAULT_BOND_API_BASE_URL };
 

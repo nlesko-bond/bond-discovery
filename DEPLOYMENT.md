@@ -270,7 +270,7 @@ git push origin `git subtree split --prefix dist`:gh-pages --force
 Create `.env.production`:
 ```bash
 VITE_API_URL=https://public.api.bondsports.co/v1
-VITE_API_KEY=zhoZODDEKuaexCBkvumrU7c84TbC3zsC4hENkjlz
+BOND_API_KEY=your-bond-api-key
 VITE_APP_NAME=Bond Discovery
 ```
 

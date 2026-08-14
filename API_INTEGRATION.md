@@ -10,7 +10,7 @@ This document details how the Bond Sports Program Discovery Platform integrates 
 ```typescript
 // src/api/bondClient.ts
 const BASE_URL = 'https://public.api.bondsports.co/v1';
-const API_KEY = 'zhoZODDEKuaexCBkvumrU7c84TbC3zsC4hENkjlz';
+const API_KEY = process.env.BOND_API_KEY; // never hardcode a key
 ```
 
 ### Authentication
