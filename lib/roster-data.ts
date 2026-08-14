@@ -117,9 +117,14 @@ export async function loadRosterScope(config: RosterPageConfig): Promise<RosterS
       const program = transformProgram(raw);
       programs.push(program);
       orgByProgramId.set(Number(program.id), orgId);
-      const sessions = (raw as unknown as { sessions?: Session[] }).sessions;
-      if (Array.isArray(sessions)) {
-        sessionsByProgramId.set(Number(program.id), sessions);
+
+      // Read the transformed program, not the raw payload. Bond returns
+      // `expand=sessions` as a `{ meta, data }` envelope rather than a bare
+      // array, and `transformProgram` already unwraps it via `normalizeArray`.
+      // Reaching back into `raw` and testing `Array.isArray` silently produced
+      // zero sessions for every program.
+      if (program.sessions?.length) {
+        sessionsByProgramId.set(Number(program.id), program.sessions);
       }
     }
   }

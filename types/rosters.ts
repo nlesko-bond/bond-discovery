@@ -309,7 +309,13 @@ export interface RosterPageConfig {
   isYouth: boolean;
   hasViewerPassword: boolean;
   hasStaffPassword: boolean;
+  /** The customer this page belongs to; the usual source of the API key. */
+  partnerGroupId?: string;
+  partnerGroupName?: string;
+  /** Resolved: the page's own key, else the partner group's. */
   apiKey?: string;
+  /** True when `apiKey` came from the group rather than this page. */
+  apiKeyInherited?: boolean;
   bondEnv?: BondEnv;
   createdAt: string;
   updatedAt: string;

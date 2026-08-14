@@ -3,15 +3,41 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { AlertTriangle, ChevronLeft } from 'lucide-react';
-import {
-  ROSTER_NAME_MODE_LABELS,
-  ROSTER_NAME_MODES,
-  type RosterNameMode,
-  type RosterPageConfig,
-} from '@/types/rosters';
+import { ChevronLeft, ExternalLink } from 'lucide-react';
+import type { RosterPageConfig } from '@/types/rosters';
+import { RosterEditorSectionNav } from './components/RosterEditorSectionNav';
+import { RosterAccessSection } from './sections/RosterAccessSection';
+import { RosterAppearanceSection } from './sections/RosterAppearanceSection';
+import { RosterPageSection } from './sections/RosterPageSection';
+import { RosterPrivacySection } from './sections/RosterPrivacySection';
+import { RosterProgramsSection } from './sections/RosterProgramsSection';
+import type { PartnerGroupOption, RosterEditorSectionId } from './roster-editor-types';
 
 type SaveState = 'clean' | 'dirty' | 'saving' | 'saved' | 'error';
+
+/** `programId:sessionId` per line — the shape the pinned-sessions textarea uses. */
+function parsePinned(text: string): Array<{ programId: number; sessionId: number }> {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [p, s] = line.split(':').map((v) => Number.parseInt(v.trim(), 10));
+      return { programId: p, sessionId: s };
+    })
+    .filter((p) => Number.isFinite(p.programId) && Number.isFinite(p.sessionId));
+}
+
+function formatPinned(pins: Array<{ programId: number; sessionId: number }>): string {
+  return pins.map((p) => `${p.programId}:${p.sessionId}`).join('\n');
+}
+
+function parseIds(text: string): number[] {
+  return text
+    .split(',')
+    .map((v) => Number.parseInt(v.trim(), 10))
+    .filter((n) => Number.isFinite(n));
+}
 
 export default function AdminRosterEditor() {
   const params = useParams<{ slug: string }>();
@@ -19,10 +45,27 @@ export default function AdminRosterEditor() {
   const slug = params.slug;
 
   const [config, setConfig] = useState<RosterPageConfig | null>(null);
+  const [partnerGroups, setPartnerGroups] = useState<PartnerGroupOption[]>([]);
+  const [section, setSection] = useState<RosterEditorSectionId>('page');
   const [saveState, setSaveState] = useState<SaveState>('clean');
   const [error, setError] = useState<string | null>(null);
+
+  // Free-text mirrors: editing a comma or colon list character by character
+  // would otherwise destroy what you are half-way through typing.
+  const [slugInput, setSlugInput] = useState('');
+  const [organizationIdsInput, setOrganizationIdsInput] = useState('');
+  const [programIdsInput, setProgramIdsInput] = useState('');
+  const [pinnedInput, setPinnedInput] = useState('');
   const [viewerPassword, setViewerPassword] = useState('');
   const [staffPassword, setStaffPassword] = useState('');
+
+  const hydrate = useCallback((page: RosterPageConfig) => {
+    setConfig(page);
+    setSlugInput(page.slug);
+    setOrganizationIdsInput(page.organizationIds.join(', '));
+    setProgramIdsInput(page.programFilter.programIds.join(', '));
+    setPinnedInput(formatPinned(page.pinnedSessions));
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -31,15 +74,50 @@ export default function AdminRosterEditor() {
         setError('Could not load this page.');
         return;
       }
-      const data = await response.json();
-      setConfig(data.page);
+      hydrate((await response.json()).page);
+
+      const list = await fetch('/api/admin/rosters');
+      if (list.ok) setPartnerGroups((await list.json()).partnerGroups ?? []);
     })();
-  }, [slug]);
+  }, [slug, hydrate]);
 
   const patch = useCallback((updates: Partial<RosterPageConfig>) => {
     setConfig((current) => (current ? { ...current, ...updates } : current));
     setSaveState('dirty');
   }, []);
+
+  // Mirror the free-text fields back into config as they are edited.
+  useEffect(() => {
+    if (!config) return;
+    const ids = parseIds(organizationIdsInput);
+    if (ids.join(',') !== config.organizationIds.join(',')) patch({ organizationIds: ids });
+  }, [organizationIdsInput]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!config) return;
+    const ids = parseIds(programIdsInput);
+    if (ids.join(',') !== config.programFilter.programIds.join(',')) {
+      patch({ programFilter: { ...config.programFilter, programIds: ids } });
+    }
+  }, [programIdsInput]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!config) return;
+    const pins = parsePinned(pinnedInput);
+    if (formatPinned(pins) !== formatPinned(config.pinnedSessions)) patch({ pinnedSessions: pins });
+  }, [pinnedInput]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (config && slugInput !== config.slug) setSaveState('dirty');
+  }, [slugInput, config]);
+
+  // Guard against losing password and privacy edits to a stray navigation.
+  useEffect(() => {
+    if (saveState !== 'dirty') return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [saveState]);
 
   async function save() {
     if (!config) return;
@@ -48,9 +126,11 @@ export default function AdminRosterEditor() {
 
     const body: Record<string, unknown> = {
       name: config.name,
+      slug: slugInput,
       isActive: config.isActive,
       organizationIds: config.organizationIds,
       programFilter: config.programFilter,
+      pinnedSessions: config.pinnedSessions,
       sessionWindow: config.sessionWindow,
       branding: config.branding,
       pageAccess: config.pageAccess,
@@ -58,7 +138,9 @@ export default function AdminRosterEditor() {
       allowIndexing: config.allowIndexing,
       allowPrint: config.allowPrint,
       isYouth: config.isYouth,
-      apiKey: config.apiKey ?? null,
+      partnerGroupId: config.partnerGroupId ?? null,
+      // Only send a key that is genuinely this page's own override.
+      ...(config.apiKeyInherited ? {} : { apiKey: config.apiKey ?? null }),
     };
     if (viewerPassword) body.viewerPassword = viewerPassword;
     if (staffPassword) body.staffPassword = staffPassword;
@@ -75,10 +157,14 @@ export default function AdminRosterEditor() {
       setSaveState('error');
       return;
     }
-    setConfig(data.page);
+
+    hydrate(data.page);
     setViewerPassword('');
     setStaffPassword('');
     setSaveState('saved');
+
+    // The slug is the URL, so a rename has to move the editor with it.
+    if (data.page.slug !== slug) router.replace(`/admin/rosters/${data.page.slug}`);
   }
 
   async function remove() {
@@ -87,283 +173,107 @@ export default function AdminRosterEditor() {
     if (response.ok) router.push('/admin/rosters');
   }
 
-  if (error && !config) {
-    return <p className="text-sm text-red-700">{error}</p>;
-  }
-  if (!config) {
-    return <p className="text-sm text-gray-500">Loading…</p>;
-  }
+  if (error && !config) return <p className="text-sm text-red-700">{error}</p>;
+  if (!config) return <p className="text-sm text-gray-500">Loading…</p>;
 
-  const fv = config.fieldVisibility;
-  const namesArePublic = config.pageAccess === 'public' && fv.nameMode !== 'numberOnly';
+  const sectionProps = { config, patch };
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <header className="flex flex-wrap items-center gap-3">
+    <div className="max-w-5xl">
+      <header className="mb-6 flex flex-wrap items-center gap-3">
         <Link href="/admin/rosters" className="inline-flex items-center gap-1 text-sm text-gray-600">
           <ChevronLeft size={16} aria-hidden />
           Rosters
         </Link>
-        <h1 className="flex-1 text-xl font-semibold text-gray-900">{config.name}</h1>
-        <span className="text-sm text-gray-500">
-          {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'dirty' ? 'Unsaved changes' : ''}
+
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-xl font-semibold text-gray-900">{config.name}</h1>
+          <p className="truncate text-xs text-gray-500">
+            {config.partnerGroupName ? `${config.partnerGroupName} · ` : ''}
+            /rosters/{config.slug}
+          </p>
+        </div>
+
+        <a
+          href={`/rosters/${config.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+        >
+          View live
+          <ExternalLink size={14} aria-hidden />
+        </a>
+
+        <span className="text-sm text-gray-500" role="status">
+          {saveState === 'saving'
+            ? 'Saving…'
+            : saveState === 'saved'
+              ? 'Saved'
+              : saveState === 'dirty'
+                ? 'Unsaved changes'
+                : ''}
         </span>
-        <button type="button" onClick={save} disabled={saveState === 'saving'} className="btn-primary">
+
+        <button
+          type="button"
+          onClick={save}
+          disabled={saveState === 'saving'}
+          className="btn-primary"
+        >
           Save changes
         </button>
       </header>
 
       {error && (
-        <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p role="alert" className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
       )}
 
-      {/* --- Page & scope --- */}
-      <section className="card p-4">
-        <h2 className="mb-3 font-medium text-gray-900">Page &amp; scope</h2>
+      <div className="flex flex-col gap-6 md:flex-row">
+        <aside className="md:w-64 md:shrink-0">
+          <RosterEditorSectionNav activeSection={section} onSectionChange={setSection} />
 
-        <label className="label" htmlFor="name">Name</label>
-        <input id="name" className="input mb-3" value={config.name} onChange={(e) => patch({ name: e.target.value })} />
-
-        <label className="label" htmlFor="orgs">Organization IDs (comma separated)</label>
-        <input
-          id="orgs"
-          className="input mb-3"
-          value={config.organizationIds.join(', ')}
-          onChange={(e) =>
-            patch({
-              organizationIds: e.target.value
-                .split(',')
-                .map((v) => Number.parseInt(v.trim(), 10))
-                .filter((n) => Number.isFinite(n)),
-            })
-          }
-        />
-
-        <div className="mb-3 grid grid-cols-2 gap-3">
-          <div>
-            <label className="label" htmlFor="past">Include sessions started within (days)</label>
-            <input
-              id="past"
-              type="number"
-              className="input"
-              value={config.sessionWindow.pastDays}
-              onChange={(e) =>
-                patch({ sessionWindow: { ...config.sessionWindow, pastDays: Number(e.target.value) } })
-              }
-            />
+          <div className="mt-6 rounded-xl border border-red-200 p-3">
+            <button type="button" onClick={remove} className="text-sm text-red-700 hover:underline">
+              Delete this page
+            </button>
           </div>
-          <div>
-            <label className="label" htmlFor="future">…and starting within (days)</label>
-            <input
-              id="future"
-              type="number"
-              className="input"
-              value={config.sessionWindow.futureDays}
-              onChange={(e) =>
-                patch({ sessionWindow: { ...config.sessionWindow, futureDays: Number(e.target.value) } })
-              }
+        </aside>
+
+        <div className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white p-5">
+          {section === 'page' && (
+            <RosterPageSection
+              {...sectionProps}
+              partnerGroups={partnerGroups}
+              organizationIdsInput={organizationIdsInput}
+              setOrganizationIdsInput={setOrganizationIdsInput}
+              slugInput={slugInput}
+              setSlugInput={setSlugInput}
             />
-          </div>
-        </div>
-        <p className="mb-3 text-xs text-gray-500">
-          A rolling window, so new seasons appear without editing this page.
-        </p>
-
-        <label className="label" htmlFor="apiKey">
-          Bond API key
-        </label>
-        <input
-          id="apiKey"
-          className="input"
-          value={config.apiKey ?? ''}
-          onChange={(e) => patch({ apiKey: e.target.value || undefined })}
-          placeholder="Required"
-        />
-        <p className="mb-3 mt-1 text-xs text-gray-500">
-          Roster pages do not inherit a key. Without one, every view returns an error.
-        </p>
-
-        {!config.apiKey && (
-          <p className="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            <AlertTriangle size={14} className="mt-0.5 shrink-0" aria-hidden />
-            This page has no Bond API key, so it cannot load any data. Add one before publishing.
-          </p>
-        )}
-
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={config.isActive}
-            onChange={(e) => patch({ isActive: e.target.checked })}
-            disabled={!config.apiKey}
-          />
-          Published — live at /rosters/{config.slug}
-          {!config.apiKey && <span className="text-xs text-gray-400">(needs an API key)</span>}
-        </label>
-      </section>
-
-      {/* --- Privacy & fields --- */}
-      <section className="card p-4">
-        <h2 className="mb-1 font-medium text-gray-900">Privacy &amp; fields</h2>
-        <p className="mb-3 text-xs text-gray-500">
-          These control what leaves the server. Hidden fields are never sent to the browser, not
-          merely hidden in the page.
-        </p>
-
-        <label className="flex items-center gap-2 pb-3 text-sm">
-          <input
-            type="checkbox"
-            checked={config.isYouth}
-            onChange={(e) => patch({ isYouth: e.target.checked })}
-          />
-          This page covers participants under 18
-        </label>
-
-        <label className="label" htmlFor="nameMode">Names shown publicly</label>
-        <select
-          id="nameMode"
-          className="input mb-2"
-          value={fv.nameMode}
-          onChange={(e) => patch({ fieldVisibility: { ...fv, nameMode: e.target.value as RosterNameMode } })}
-        >
-          {ROSTER_NAME_MODES.map((mode) => (
-            <option key={mode} value={mode}>
-              {ROSTER_NAME_MODE_LABELS[mode]}
-            </option>
-          ))}
-        </select>
-
-        {namesArePublic && (
-          <p className="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            <AlertTriangle size={14} className="mt-0.5 shrink-0" aria-hidden />
-            <span>
-              This page will show participant names to anyone with the link.
-              {config.isYouth && (
-                <>
-                  {' '}
-                  For under-18 participants, publishing names normally requires written consent from
-                  a parent or guardian.
-                </>
-              )}{' '}
-              No comparable platform publishes full names by default.
-            </span>
-          </p>
-        )}
-
-        <div className="mb-3 space-y-1.5 text-sm">
-          {([
-            ['showPhoto', 'Show participant photos'],
-            ['showJerseyNumber', 'Show jersey numbers'],
-            ['showPosition', 'Show positions'],
-            ['showTeamRole', 'Show team roles'],
-          ] as const).map(([key, label]) => (
-            <label key={key} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={fv[key]}
-                onChange={(e) => patch({ fieldVisibility: { ...fv, [key]: e.target.checked } })}
-              />
-              {label}
-            </label>
-          ))}
-        </div>
-
-        <h3 className="mb-1 mt-4 text-sm font-medium text-gray-900">Staff view only</h3>
-        <p className="mb-2 text-xs text-gray-500">
-          Shown only to someone who has entered the staff password.
-        </p>
-        <div className="space-y-1.5 text-sm">
-          {([
-            ['staffShowContact', 'Contact details'],
-            ['staffShowBirthDate', 'Date of birth and age'],
-            ['staffShowGender', 'Gender'],
-            ['staffShowWaiver', 'Waiver status'],
-            ['staffShowRegistration', 'Registration date and products'],
-            ['staffShowGuardian', 'Guardian name'],
-          ] as const).map(([key, label]) => (
-            <label key={key} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={fv[key]}
-                onChange={(e) => patch({ fieldVisibility: { ...fv, [key]: e.target.checked } })}
-              />
-              {label}
-            </label>
-          ))}
-        </div>
-
-        {config.isYouth ? (
-          <p className="mt-3 text-xs text-gray-500">
-            Contact details will show the guardian&rsquo;s, not the participant&rsquo;s — enforced for
-            youth pages regardless of this setting.
-          </p>
-        ) : (
-          <label className="mt-3 flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={fv.contactSource === 'primary'}
-              onChange={(e) =>
-                patch({ fieldVisibility: { ...fv, contactSource: e.target.checked ? 'primary' : 'participant' } })
-              }
+          )}
+          {section === 'programs' && (
+            <RosterProgramsSection
+              {...sectionProps}
+              programIdsInput={programIdsInput}
+              setProgramIdsInput={setProgramIdsInput}
+              pinnedInput={pinnedInput}
+              setPinnedInput={setPinnedInput}
             />
-            Show the guardian&rsquo;s contact details rather than the participant&rsquo;s
-          </label>
-        )}
-      </section>
-
-      {/* --- Access & export --- */}
-      <section className="card p-4">
-        <h2 className="mb-3 font-medium text-gray-900">Access &amp; export</h2>
-
-        <label className="label" htmlFor="access">Who can open this page</label>
-        <select
-          id="access"
-          className="input mb-3"
-          value={config.pageAccess}
-          onChange={(e) => patch({ pageAccess: e.target.value as RosterPageConfig['pageAccess'] })}
-        >
-          <option value="public">Anyone with the link</option>
-          <option value="password">Anyone with the viewer password</option>
-          <option value="staff">Staff only</option>
-        </select>
-
-        <label className="label" htmlFor="vpw">
-          Viewer password {config.hasViewerPassword && <span className="text-gray-400">(set — type to replace)</span>}
-        </label>
-        <input id="vpw" type="password" className="input mb-3" value={viewerPassword} onChange={(e) => setViewerPassword(e.target.value)} />
-
-        <label className="label" htmlFor="spw">
-          Staff password {config.hasStaffPassword && <span className="text-gray-400">(set — type to replace)</span>}
-        </label>
-        <input id="spw" type="password" className="input mb-3" value={staffPassword} onChange={(e) => setStaffPassword(e.target.value)} />
-
-        <label className="mb-2 flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={config.allowPrint} onChange={(e) => patch({ allowPrint: e.target.checked })} />
-          Allow printing and export
-        </label>
-
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={config.allowIndexing}
-            onChange={(e) => patch({ allowIndexing: e.target.checked })}
-          />
-          Allow search engines to index this page
-        </label>
-        <p className="mt-1 text-xs text-gray-500">
-          Off by default. Once a page carrying names is indexed, removing it from search results is
-          slow and unreliable.
-        </p>
-      </section>
-
-      <section className="card border-red-200 p-4">
-        <h2 className="mb-2 font-medium text-red-900">Delete</h2>
-        <button type="button" onClick={remove} className="btn-secondary text-red-700">
-          Delete this roster page
-        </button>
-      </section>
+          )}
+          {section === 'appearance' && <RosterAppearanceSection {...sectionProps} />}
+          {section === 'privacy' && <RosterPrivacySection {...sectionProps} />}
+          {section === 'access' && (
+            <RosterAccessSection
+              {...sectionProps}
+              viewerPassword={viewerPassword}
+              setViewerPassword={setViewerPassword}
+              staffPassword={staffPassword}
+              setStaffPassword={setStaffPassword}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
