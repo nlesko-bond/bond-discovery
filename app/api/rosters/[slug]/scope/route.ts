@@ -4,6 +4,12 @@ import { resolveRosterRequest } from '@/lib/roster-request';
 
 export const dynamic = 'force-dynamic';
 
+/** Varies by cookie and can describe a gated page's structure. */
+const NO_STORE = {
+  'Cache-Control': 'private, no-store',
+  Vary: 'Cookie',
+};
+
 interface Ctx {
   params: Promise<{ slug: string }>;
 }
@@ -29,7 +35,7 @@ export async function GET(_request: NextRequest, context: Ctx) {
         isYouth: config.isYouth,
         hasStaffPassword: config.hasStaffPassword,
       },
-    });
+    }, { headers: NO_STORE });
   } catch (error) {
     console.error(`[rosters/${slug}/scope]`, error);
     return NextResponse.json({ error: 'Failed to load sessions' }, { status: 502 });

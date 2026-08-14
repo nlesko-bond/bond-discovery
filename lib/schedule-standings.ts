@@ -51,6 +51,14 @@ export function getRostersUrlForEvent(
   const programType = event.programType || event.type;
   if (programType !== 'league') return undefined;
 
-  const sessionId = event.sessionId;
-  return sessionId ? `/rosters/${slug}?session=${sessionId}` : `/rosters/${slug}`;
+  // Absolute, like every sibling link in this footer. A relative URL combined
+  // with an `in_frame` page's target="_self" would navigate the partner iframe
+  // to /rosters/{slug} -- which this app serves with `frame-ancestors 'none'`,
+  // so the embed would simply go blank.
+  const origin =
+    typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_ORIGIN || '');
+  const path = event.sessionId
+    ? `/rosters/${slug}?session=${event.sessionId}`
+    : `/rosters/${slug}`;
+  return `${origin}${path}`;
 }

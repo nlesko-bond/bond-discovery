@@ -25,7 +25,6 @@ interface Props {
   mode: RosterViewerMode;
   allowPrint: boolean;
   hasStaffPassword: boolean;
-  isYouth: boolean;
 }
 
 interface ScopeResponse {
@@ -389,7 +388,7 @@ export function RosterPage(props: Props) {
                 aria-pressed={view === value}
                 onClick={() => setView(value)}
                 aria-disabled={value === 'checkin' && !groupId}
-                className={`rounded-lg border px-3 py-1.5 text-sm disabled:opacity-40 ${
+                className={`rounded-lg border px-3 py-1.5 text-sm aria-disabled:opacity-40 ${
                   view === value
                     ? 'border-transparent text-white'
                     : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'

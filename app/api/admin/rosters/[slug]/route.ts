@@ -72,11 +72,11 @@ export async function PATCH(request: NextRequest, context: Ctx) {
 
     return NextResponse.json({ page });
   } catch (error) {
-    console.error('[admin/rosters] update failed:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to update roster page' },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : 'Failed to update roster page';
+    // A refused publish is a client error, not a server fault.
+    const status = message.startsWith('Cannot publish') ? 400 : 500;
+    if (status === 500) console.error('[admin/rosters] update failed:', error);
+    return NextResponse.json({ error: message }, { status });
   }
 }
 

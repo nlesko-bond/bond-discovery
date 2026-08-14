@@ -332,6 +332,16 @@
     background: #fff !important;
   }
 
+  /*
+    Force-visible in print. The wrapper carries `hidden md:block`, and letter
+    portrait minus margins is 720px -- below the 768px `md` breakpoint -- so
+    without this the table is display:none on paper. Stated here rather than
+    relying on Tailwind's variant ordering for the `print:block` utility.
+  */
+  .roster-print-table-wrap {
+    display: block !important;
+  }
+
   /* Un-cap scroll containers so the whole table prints, not just the viewport. */
   .roster-print-table-wrap {
     max-height: none !important;

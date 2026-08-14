@@ -55,7 +55,6 @@ export default async function RosterSlugPage({ params }: Props) {
       mode={mode}
       allowPrint={config.allowPrint}
       hasStaffPassword={config.hasStaffPassword}
-      isYouth={config.isYouth}
     />
   );
 }

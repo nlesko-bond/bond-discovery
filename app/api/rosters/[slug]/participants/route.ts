@@ -45,7 +45,9 @@ export async function GET(request: NextRequest, context: Ctx) {
   if (!resolved.ok) return resolved.response;
 
 
-  const limited = consumeRosterRateLimit(request, slug, 'bulk');
+  // Charge the number of upstream calls this request will make, not just 1.
+  const fanOut = Math.max(1, (request.nextUrl.searchParams.get('groupIds') || '').split(',').filter(Boolean).length);
+  const limited = consumeRosterRateLimit(request, slug, 'bulk', fanOut);
   if (limited.blocked) {
     return NextResponse.json(
       { error: 'Too many requests' },

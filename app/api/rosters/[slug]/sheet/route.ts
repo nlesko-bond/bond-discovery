@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  MAX_BULK_EVENTS,
   loadGroupParticipants,
   loadParticipantMatrix,
   loadRosterGroups,
@@ -46,7 +47,13 @@ export async function GET(request: NextRequest, context: Ctx) {
   if (!resolved.ok) return resolved.response;
 
 
-  const limited = consumeRosterRateLimit(request, slug, 'bulk');
+  // The matrix fans out one call per event; charge it accordingly.
+  const limited = consumeRosterRateLimit(
+    request,
+    slug,
+    'bulk',
+    request.nextUrl.searchParams.get('kind') === 'matrix' ? MAX_BULK_EVENTS : 1
+  );
   if (limited.blocked) {
     return NextResponse.json(
       { error: 'Too many requests' },

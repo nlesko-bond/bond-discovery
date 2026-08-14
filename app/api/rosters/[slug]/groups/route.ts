@@ -5,6 +5,12 @@ import { isSessionInScope } from '@/lib/roster-scope';
 
 export const dynamic = 'force-dynamic';
 
+/** Varies by cookie and can describe a gated page's structure. */
+const NO_STORE = {
+  'Cache-Control': 'private, no-store',
+  Vary: 'Cookie',
+};
+
 interface Ctx {
   params: Promise<{ slug: string }>;
 }
@@ -33,7 +39,7 @@ export async function GET(request: NextRequest, context: Ctx) {
     }
 
     const groups = await loadRosterGroups(config, session);
-    return NextResponse.json({ session, ...groups });
+    return NextResponse.json({ session, ...groups }, { headers: NO_STORE });
   } catch (error) {
     console.error(`[rosters/${slug}/groups]`, error);
     // Bond 404s a session that is not published; that is an empty state for us,

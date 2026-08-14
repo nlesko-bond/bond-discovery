@@ -142,6 +142,10 @@ export async function loadRosterScope(config: RosterPageConfig): Promise<RosterS
       programsFetched: programs.length,
       filterMode: config.programFilter.mode,
     });
+    // Deliberately not cached: an empty scope is nearly always a bad program
+    // filter or date window, and caching it hides the misconfiguration for a
+    // further 15 minutes after someone fixes it.
+    return sessions;
   }
 
   await cacheSet(key, sessions, { ttl: SCOPE_TTL });

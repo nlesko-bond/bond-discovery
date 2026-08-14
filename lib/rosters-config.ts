@@ -67,7 +67,9 @@ function asString(value: unknown, fallback: string): string {
  * time, which renders as white text on a transparent background.
  */
 function asHexColor(value: unknown, fallback: string): string {
-  return typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
+  return typeof value === 'string' && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value)
+    ? value
+    : fallback;
 }
 
 function asNullableString(value: unknown): string | null {
@@ -316,6 +318,11 @@ function toRow(input: RosterPageInput, isYouth: boolean): Record<string, unknown
 
 export async function createRosterPage(input: RosterPageInput & { name: string; slug: string }): Promise<RosterPageConfig> {
   const db = getSupabaseAdmin();
+
+  if (input.isActive && !input.apiKey) {
+    throw new Error('Cannot publish a roster page without a Bond API key.');
+  }
+
   const row = toRow(input, input.isYouth ?? false);
 
   const { data, error } = await db.from(TABLE).insert(row).select().single();
@@ -336,6 +343,15 @@ export async function updateRosterPage(
   const existing = await getRosterPageBySlug(slug);
   if (!existing) return null;
   const isYouth = input.isYouth ?? existing.isYouth;
+
+  // Enforced here, not only in the editor: a direct PATCH could otherwise
+  // publish a keyless page that errors on every view. Evaluated against the
+  // row's resulting state, so clearing the key on a live page is also caught.
+  const nextActive = input.isActive ?? existing.isActive;
+  const nextKey = input.apiKey !== undefined ? input.apiKey : existing.apiKey;
+  if (nextActive && !nextKey) {
+    throw new Error('Cannot publish a roster page without a Bond API key.');
+  }
 
   const row = toRow(input, isYouth);
   if (Object.keys(row).length === 0) return existing;

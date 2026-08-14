@@ -302,7 +302,10 @@ export async function invalidateDiscoveryResponseCache(
  * callers pass `{ memoryOnly: true }` for those; see cacheSet.
  */
 export function rosterScopeCacheKey(slug: string): string {
-  return `roster:scope:${slug}`;
+  // v2: entries written before RosterSessionRef gained `organizationId` would
+  // resolve to `/organization/undefined/...` on read. Bumping the key retires
+  // them instead of requiring a manual flush at deploy time.
+  return `roster:scope:v2:${slug}`;
 }
 
 export function rosterGroupsCacheKey(slug: string, sessionId: number | string): string {

@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { toCsv, type CsvCell } from '@/lib/csv';
-import { loadGroupParticipants, loadRosterGroups, loadRosterScope, loadRostersForGroups } from '@/lib/roster-data';
+import {
+  MAX_BULK_GROUPS,
+  loadGroupParticipants,
+  loadRosterGroups,
+  loadRosterScope,
+  loadRostersForGroups,
+} from '@/lib/roster-data';
+import { consumeRosterRateLimit } from '@/lib/roster-rate-limit';
 import {
   assertGroupsInSession,
   findSessionInScope,
@@ -83,6 +90,20 @@ export async function GET(request: NextRequest, context: Ctx) {
   const resolved = await resolveRosterRequest(slug);
   if (!resolved.ok) return resolved.response;
 
+  // A whole-session export is the largest fan-out on the surface.
+  const limited = consumeRosterRateLimit(
+    request,
+    slug,
+    'bulk',
+    request.nextUrl.searchParams.get('groupId') ? 1 : MAX_BULK_GROUPS
+  );
+  if (limited.blocked) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(limited.retryAfterSeconds) } }
+    );
+  }
+
   const { config, mode } = resolved.context;
 
   // An org can withhold export entirely, the same control LeagueApps ships.
@@ -116,8 +137,21 @@ export async function GET(request: NextRequest, context: Ctx) {
       participants = await loadGroupParticipants(config, session, groupId, mode);
       label = findGroupNode(groups.tree, groupId)?.name ?? `group-${groupId}`;
     } else {
-      // Whole session: one request per team, capped and reported.
       const teams = flattenTeams(groups.tree);
+
+      // Checked before loading anything: refusing after the fan-out would pay
+      // the full per-team cost only to throw the result away.
+      if (teams.length > MAX_BULK_GROUPS) {
+        return NextResponse.json(
+          {
+            error: `This session has ${teams.length} teams; export is limited to ${MAX_BULK_GROUPS} at a time. Export one division or team at a time.`,
+            teamCount: teams.length,
+            cap: MAX_BULK_GROUPS,
+          },
+          { status: 413 }
+        );
+      }
+
       const bulk = await loadRostersForGroups(
         config,
         session,
@@ -129,19 +163,6 @@ export async function GET(request: NextRequest, context: Ctx) {
         r.participants.map((p) => ({ ...p, teamName: nameById.get(r.groupId) ?? '' }))
       );
       label = session.sessionName;
-      if (bulk.truncated) {
-        // Refuse rather than hand over a file that looks complete and is not.
-        // The download is a plain anchor, so a response header would never be
-        // seen -- and a silently short roster of record is the worse failure.
-        return NextResponse.json(
-          {
-            error: `This session has ${bulk.truncated.requested} teams; export is limited to ${bulk.truncated.cap} at a time. Export one division or team at a time.`,
-            teamCount: bulk.truncated.requested,
-            cap: bulk.truncated.cap,
-          },
-          { status: 413 }
-        );
-      }
     }
 
     const { headers, rows } = buildRows(participants, mode, !groupId);

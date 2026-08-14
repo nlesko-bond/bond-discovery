@@ -136,8 +136,25 @@ export function resolveRosterSessions(
         : isSessionInWindow(session, window);
 
       if (keep) {
-        const organizationId =
-          orgByProgramId?.get(programId) ?? Number(program.organizationId) ?? 0;
+        // `??` does not catch NaN, so a program with no usable organizationId
+        // would otherwise produce `/organization/NaN/...`. Drop the session
+        // instead: a request we cannot address correctly must not be made.
+        const fromMap = orgByProgramId?.get(programId);
+        const fromProgram = Number(program.organizationId);
+        const organizationId = Number.isFinite(fromMap)
+          ? (fromMap as number)
+          : Number.isFinite(fromProgram)
+            ? fromProgram
+            : undefined;
+
+        if (organizationId === undefined) {
+          console.warn('[roster-scope] skipping session with no resolvable organization', {
+            programId,
+            sessionId,
+          });
+          continue;
+        }
+
         refs.push(toSessionRef(program, session, organizationId));
       }
     }

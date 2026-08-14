@@ -22,7 +22,7 @@ const config = (over: Partial<ScopeConfig> = {}): ScopeConfig => ({
 });
 
 const program = (id: number, name: string, over: Partial<Program> = {}): Program =>
-  ({ id: String(id), name, sport: 'soccer', ...over }) as Program;
+  ({ id: String(id), name, sport: 'soccer', organizationId: '516', ...over }) as Program;
 
 const session = (id: number, programId: number, name: string, over: Partial<Session> = {}): Session =>
   ({ id: String(id), programId: String(programId), name, ...over }) as Session;
@@ -158,6 +158,37 @@ describe('resolveRosterSessions', () => {
 
   it('ignores programs with no sessions loaded', () => {
     expect(resolveRosterSessions(config(), programs, new Map(), NOW)).toEqual([]);
+  });
+});
+
+describe('organization resolution', () => {
+  it('carries the org the session was discovered under, not the page default', () => {
+    const multi = new Map<number, Session[]>([
+      [1, [session(10, 1, 'A', { startDate: '2026-09-01' })]],
+      [2, [session(20, 2, 'B', { startDate: '2026-09-01' })]],
+    ]);
+    const refs = resolveRosterSessions(
+      config(),
+      [program(1, 'P1'), program(2, 'P2')],
+      multi,
+      NOW,
+      new Map([[1, 516], [2, 999]])
+    );
+    expect(refs.find((r) => r.sessionId === 10)?.organizationId).toBe(516);
+    expect(refs.find((r) => r.sessionId === 20)?.organizationId).toBe(999);
+  });
+
+  it('drops a session whose organization cannot be resolved rather than emitting NaN', () => {
+    // `??` does not catch NaN; an unaddressable session must not produce a
+    // request to /organization/NaN/...
+    const refs = resolveRosterSessions(
+      config(),
+      [program(1, 'P1', { organizationId: undefined })],
+      new Map([[1, [session(10, 1, 'A', { startDate: '2026-09-01' })]]]),
+      NOW,
+      new Map()
+    );
+    expect(refs).toEqual([]);
   });
 });
 

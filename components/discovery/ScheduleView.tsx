@@ -1377,7 +1377,8 @@ function EventCard({
               {getRostersUrlForEvent(event, config) && (
                 <a
                   href={getRostersUrlForEvent(event, config)}
-                  target={linkTarget}
+                  // Always a new tab: roster pages refuse to be framed.
+                  target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
                   className="inline-flex items-center gap-1 font-medium hover:opacity-80"
@@ -1669,7 +1670,8 @@ function EventDetailModal({
             {getRostersUrlForEvent(event, config) && (
               <a
                 href={getRostersUrlForEvent(event, config)}
-                target={linkTarget}
+                // Always a new tab: roster pages refuse to be framed.
+                target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 min-w-0 py-3.5 font-semibold rounded-xl flex items-center justify-center gap-2 border-2 hover:opacity-90 transition-opacity"
                 style={{ color: secondaryColor, borderColor: secondaryColor, backgroundColor: `${secondaryColor}08` }}
