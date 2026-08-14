@@ -408,6 +408,54 @@ export function PageEditorProgramsSection({
             </span>
           </label>
 
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              className="mt-1 rounded border-gray-300"
+              checked={config.features.showRostersLink || false}
+              onChange={(event) =>
+                setConfig({
+                  ...config,
+                  features: {
+                    ...config.features,
+                    showRostersLink: event.target.checked,
+                  },
+                })
+              }
+            />
+            <span>
+              <span className="font-medium">Show team rosters link</span>
+              <p className="mt-0.5 text-xs text-gray-500">
+                League events get a Team rosters link pointing at a roster page. Only a link — no
+                participant data enters this page.
+              </p>
+            </span>
+          </label>
+
+          {config.features.showRostersLink && (
+            <label className="block pl-8">
+              <span className="text-sm font-medium text-gray-700">Roster page slug</span>
+              <input
+                type="text"
+                className="input mt-1"
+                value={config.features.rostersPageSlug || ''}
+                onChange={(event) =>
+                  setConfig({
+                    ...config,
+                    features: {
+                      ...config.features,
+                      rostersPageSlug: event.target.value,
+                    },
+                  })
+                }
+                placeholder="e.g. coppermine"
+              />
+              <p className="mt-0.5 text-xs text-gray-500">
+                The link is hidden until this names an existing roster page.
+              </p>
+            </label>
+          )}
+
           <label className="flex items-center gap-2 pt-2 text-sm text-gray-700">
             <input
               type="checkbox"

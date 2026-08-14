@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createBondClient, DEFAULT_API_KEY, DEFAULT_ORG_IDS } from '@/lib/bond-client';
+import { createBondClient, DEFAULT_ORG_IDS, resolveBondApiKey } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
 import { getConfigBySlug } from '@/lib/config';
 import { cachedSWR, programsCacheKey } from '@/lib/cache';
@@ -16,7 +16,15 @@ export async function GET(request: Request) {
   
   const slug = searchParams.get('slug');
   const pageConfig = slug ? await getConfigBySlug(slug) : null;
-  const apiKey = pageConfig?.apiKey || searchParams.get('apiKey') || DEFAULT_API_KEY;
+  // Deliberately no `apiKey` query parameter: accepting one made this route a
+  // proxy for any caller-supplied key against Bond.
+  const apiKey = resolveBondApiKey(pageConfig?.apiKey);
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: 'Bond API key not configured' },
+      { status: 503 }
+    );
+  }
   const bondEnv = pageConfig?.features?.bondEnv;
   
   const orgIdsParam = searchParams.get('orgIds');

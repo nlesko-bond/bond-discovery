@@ -30,6 +30,7 @@ npm run check:env    # report which env vars are set (never prints values)
 | `lib/config.ts` + Supabase `discovery_pages` | Page configs; saving invalidates + re-warms discovery caches |
 | `lib/admin-auth.ts` | `requireAdmin()` guard for admin API mutations |
 | `app/tvmonitor/` + `components/tvmonitor/` | TV Monitor displays (`/tvmonitor/{name}`) + builder studio; see `docs/tvmonitor.md` |
+| `app/rosters/` + `components/rosters/` + `lib/roster-*.ts` | Roster pages (`/rosters/{slug}`) — participant PII; see `docs/rosters.md` |
 
 ## Invariants — do not break
 

@@ -10,6 +10,7 @@ Agent/contributor onboarding lives at the repo root: [`CLAUDE.md`](../CLAUDE.md)
 | [runbook-discovery.md](./runbook-discovery.md) | On-call / support — stale pages, zero events, missing conversions, cron failures, admin lockout |
 | [environments.md](./environments.md) | Operators — env vars, local/preview/production matrix, staging setup, `npm run check:env` |
 | [tvmonitor.md](./tvmonitor.md) | Engineering + CS — TV Monitor pages (`/tvmonitor/{name}`), builder studio, access links, Bond slots-schedule caching |
+| [rosters.md](./rosters.md) | Engineering + CS — Roster pages (`/rosters/{slug}`), privacy model, check-in and registration grids, print/export |
 
 ## Partner-facing integration
 

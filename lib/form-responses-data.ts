@@ -1,4 +1,5 @@
 import { formatAnswerValue } from '@/lib/answer-value-format';
+import { toCsv } from '@/lib/csv';
 import { filterColumnsWithAnswersInRows } from '@/lib/form-question-visibility';
 import type { AnswerTitleRow } from '@/lib/forms-pg';
 import {
@@ -149,13 +150,6 @@ export async function loadFormResponsesForExport(
   return { columns: exportColumns, rows };
 }
 
-function csvEscape(value: string): string {
-  if (/[",\n\r]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
 function csvStatusLabel(r: FormResponseRow): string {
   const s = (r.staffStatus ?? 'pending') as StaffInquiryStatus;
   return STAFF_INQUIRY_STATUS_LABELS[s] ?? s;
@@ -176,7 +170,7 @@ export function formResponsesToCsv(
     'Phone',
     ...columns.map((c) => c.question || `Question ${c.id}`),
   ];
-  const lines = [headers.map(csvEscape).join(',')];
+  const bodyRows: string[][] = [];
   for (const r of rows) {
     const base = [
       r.createdAt,
@@ -192,7 +186,7 @@ export function formResponsesToCsv(
       if (a?.checkmark) return 'Yes';
       return a?.display ?? '';
     });
-    lines.push([...base, ...cells].map(csvEscape).join(','));
+    bodyRows.push([...base, ...cells]);
   }
-  return lines.join('\r\n');
+  return toCsv(headers, bodyRows);
 }

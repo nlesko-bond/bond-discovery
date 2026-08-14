@@ -113,6 +113,8 @@ export interface IPageConfig {
     spaceColumnLabel?: string;
     showLeagueScheduleTableAndExport?: boolean;
     showLeagueStandingsLink?: boolean;
+    showRostersLink?: boolean;
+    rostersPageSlug?: string;
     showWaitlist?: boolean;
     showScheduleEventType?: boolean;
   };

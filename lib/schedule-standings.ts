@@ -31,3 +31,34 @@ export function eventShowsStandingsLink(event: CalendarEvent, config: DiscoveryC
   const programType = event.programType || event.type;
   return programType === 'league' && Boolean(getLeagueStandingsUrl(event.linkSEO));
 }
+
+/**
+ * Deep link from a league event to its roster page — the mirror of the
+ * standings link. Returns undefined unless the page opts in and names a roster
+ * page, so nothing appears by accident.
+ *
+ * Only ever a URL: roster data stays out of the discovery payload entirely.
+ */
+export function getRostersUrlForEvent(
+  event: CalendarEvent,
+  config: DiscoveryConfig
+): string | undefined {
+  if (config.features.showRostersLink !== true) return undefined;
+
+  const slug = config.features.rostersPageSlug?.trim();
+  if (!slug) return undefined;
+
+  const programType = event.programType || event.type;
+  if (programType !== 'league') return undefined;
+
+  // Absolute, like every sibling link in this footer. A relative URL combined
+  // with an `in_frame` page's target="_self" would navigate the partner iframe
+  // to /rosters/{slug} -- which this app serves with `frame-ancestors 'none'`,
+  // so the embed would simply go blank.
+  const origin =
+    typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_ORIGIN || '');
+  const path = event.sessionId
+    ? `/rosters/${slug}?session=${event.sessionId}`
+    : `/rosters/${slug}`;
+  return `${origin}${path}`;
+}

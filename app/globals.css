@@ -144,7 +144,14 @@
     display: none !important;
   }
 
-  /* Wide staff tables: default to landscape */
+  /*
+    App-wide default: landscape, for the wide staff tables this was written for.
+    Deliberately a bare `@page` rather than a named one -- the `page` property
+    is unsupported in Firefox and only recently in Safari, so scoping it to a
+    named page silently dropped landscape for staff printing form responses
+    there. Roster sheets opt into portrait via a named page below, which
+    degrades to this default on those browsers rather than breaking anything.
+  */
   @page {
     margin: 10mm;
     size: landscape;
@@ -284,5 +291,142 @@
   .portal-age-dual-range::-moz-range-thumb {
     @apply pointer-events-auto box-border h-4 w-4 cursor-pointer rounded-full border-2 border-white bg-slate-500 shadow;
     border: 2px solid #ffffff;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Roster print
+   ---------------------------------------------------------------------------
+   Named pages let a roster sheet ask for portrait without disturbing the
+   app-wide landscape default above (which form-responses depends on). The
+   `page` property is unsupported in Firefox and only recent in Safari, so
+   there these sheets simply print landscape -- a cosmetic downgrade, not a
+   broken page.
+
+   Portrait is the default deliberately. A typical rec season is 8-12 sessions
+   with 10-16 players, which fits portrait; defaulting to landscape makes the
+   common case look sparse and wastes a sheet. The check-in grid opts into
+   landscape only when it has more date columns than portrait can hold.
+--------------------------------------------------------------------------- */
+@page roster-portrait {
+  size: letter portrait;
+  margin: 0.5in;
+}
+
+@page roster-landscape {
+  size: letter landscape;
+  margin: 0.4in;
+}
+
+@media print {
+  .roster-print-root {
+    page: roster-portrait;
+  }
+
+  /* `is-wide` is set by the check-in view when date columns exceed what
+     portrait can hold legibly (~14 at 0.30in each). */
+  .roster-print-mode-checkin.is-wide {
+    page: roster-landscape;
+  }
+
+  .roster-no-print,
+  .roster-print-root [class*='print:hidden'] {
+    display: none !important;
+  }
+
+  .roster-print-root {
+    background: #fff !important;
+  }
+
+  /*
+    Force-visible in print. The wrapper carries `hidden md:block`, and letter
+    portrait minus margins is 720px -- below the 768px `md` breakpoint -- so
+    without this the table is display:none on paper. Stated here rather than
+    relying on Tailwind's variant ordering for the `print:block` utility.
+  */
+  .roster-print-table-wrap {
+    display: block !important;
+  }
+
+  /* Un-cap scroll containers so the whole table prints, not just the viewport. */
+  .roster-print-table-wrap {
+    max-height: none !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Columns hidden on small screens come back in print: print is wide, phones
+     are narrow, and the same column set is wrong for both. */
+  .roster-print-table {
+    display: table !important;
+    width: 100%;
+    font-size: 9pt;
+    border-collapse: collapse;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Repeat the header on every page. Support has historically been patchy in
+     WebKit/Blink, so verify in the target browser rather than trusting this. */
+  .roster-print-table thead {
+    display: table-header-group;
+  }
+
+  .roster-print-table tfoot {
+    display: table-footer-group;
+  }
+
+  /* Never split a participant across a page break. */
+  .roster-print-table tbody tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Two rule weights total: a black rule under the header band, hairlines
+     everywhere else. That is the entire hierarchy system on real printed
+     attendance forms. */
+  .roster-print-table thead th {
+    border: none !important;
+    border-bottom: 1pt solid #000 !important;
+    padding: 6px 8px !important;
+    text-align: left !important;
+    font-weight: 600 !important;
+    vertical-align: bottom !important;
+  }
+
+  .roster-print-table tbody td {
+    border: none !important;
+    border-bottom: 0.5pt solid #b0b0b0 !important;
+    padding: 5px 8px !important;
+    vertical-align: top !important;
+    word-break: break-word !important;
+    color: #000 !important;
+  }
+
+  /* Tick cells in the check-in grid: a bordered box to mark by hand. */
+  .roster-print-tick {
+    border: 0.5pt solid #b0b0b0 !important;
+    width: 0.32in;
+    height: 0.26in;
+  }
+
+
+  .roster-print-sheet {
+    break-after: page;
+  }
+
+  .roster-print-sheet:last-child {
+    break-after: auto;
+  }
+
+  /* Every sheet says what it is and when it was printed; these travel. */
+  .roster-print-meta {
+    display: block !important;
+  }
+
+  .roster-print-table a {
+    color: inherit !important;
+    text-decoration: none !important;
   }
 }

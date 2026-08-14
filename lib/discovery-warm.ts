@@ -11,7 +11,7 @@ import {
   type FullDiscoveryEvent,
   type DiscoveryEventsResult,
 } from '@/lib/discovery-events';
-import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
+import { createBondClient, resolveBondApiKey } from '@/lib/bond-client';
 import {
   clampEventLookbackDays,
   getEventLookbackStartDate,
@@ -50,7 +50,12 @@ export async function warmScopeGroup(configs: DiscoveryConfig[]): Promise<WarmDe
 
   try {
     // Warm programs cache (shared across all slugs in this scope)
-    const apiKey = primary.apiKey || DEFAULT_API_KEY;
+    const apiKey = resolveBondApiKey(primary.apiKey);
+    if (!apiKey) {
+      throw new Error(
+        `No Bond API key for "${primary.slug}": give the page an api_key, or a partner group that has one.`
+      );
+    }
     const client = createBondClient(apiKey, primary.features.bondEnv);
     const programsTtl = Math.max(primary.cacheTtl || 0, 4 * 60 * 60);
     await Promise.all(

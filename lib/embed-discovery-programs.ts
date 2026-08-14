@@ -1,4 +1,4 @@
-import { createBondClient, DEFAULT_API_KEY } from '@/lib/bond-client';
+import { createBondClient, resolveBondApiKey } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
 import { cachedSWR, programsCacheKey } from '@/lib/cache';
 import {
@@ -69,7 +69,12 @@ async function fetchProgramsForOrg(
 export async function fetchProgramsForDiscoveryPage(
   config: DiscoveryConfig,
 ): Promise<Program[]> {
-  const apiKey = config.apiKey || DEFAULT_API_KEY;
+  const apiKey = resolveBondApiKey(config.apiKey);
+  if (!apiKey) {
+    throw new Error(
+      `No Bond API key for "${config.slug}": give the page an api_key, or a partner group that has one.`
+    );
+  }
   const bondEnv = config.features.bondEnv;
   const client = createBondClient(apiKey, bondEnv);
   const allPrograms: Program[] = [];

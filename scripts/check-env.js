@@ -66,6 +66,11 @@ const VARS = [
     desc: 'Upstash/Vercel KV REST token',
   },
   {
+    names: ['ROSTER_ACCESS_SECRET', 'RESERVATION_PAGE_ACCESS_SECRET'],
+    required: false,
+    desc: 'Signs roster/reservation viewer + staff access cookies (required for password-gated pages)',
+  },
+  {
     names: ['CRON_SECRET'],
     required: false,
     desc: 'Bearer token Vercel sends to /api/cron/* (required in deployed envs)',

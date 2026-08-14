@@ -6,7 +6,7 @@ import {
   type DiscoveryRefreshPolicy,
 } from '@/lib/cache';
 import { warmScopeGroup, type WarmDetail } from '@/lib/discovery-warm';
-import { DEFAULT_API_KEY, resetBondApiStats, getBondApiStats } from '@/lib/bond-client';
+import { resolveBondApiKey, resetBondApiStats, getBondApiStats } from '@/lib/bond-client';
 import {
   getDiscoveryExcludedProgramIds,
   getDiscoveryIncludedProgramIds,
@@ -24,7 +24,9 @@ export const maxDuration = 300;
  */
 function computeDataScope(config: DiscoveryConfig): string {
   const orgIds = config.organizationIds.slice().sort().join(',');
-  const apiKey = config.apiKey || DEFAULT_API_KEY;
+  // 'unset' keeps configs with no resolvable key in their own scope group, so
+  // they fail together rather than being grouped with a working key's configs.
+  const apiKey = resolveBondApiKey(config.apiKey) ?? 'unset';
   const filterMode = config.features?.programFilterMode || 'all';
   const excluded = getDiscoveryExcludedProgramIds(config).slice().sort().join(',');
   const included = getDiscoveryIncludedProgramIds(config).slice().sort().join(',');
