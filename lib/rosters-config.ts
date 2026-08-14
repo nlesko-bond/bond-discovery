@@ -35,6 +35,9 @@ import {
 
 const TABLE = 'roster_pages';
 
+/** Same join lib/config.ts uses; partner_groups is RLS-blocked for anon. */
+const SELECT_WITH_GROUP = '*, partner_group:partner_groups(id, name, api_key)';
+
 /** Reserved because they would collide with routes under /rosters. */
 const RESERVED_SLUGS = new Set(['api', 'admin', 'new', 'studio']);
 
@@ -189,6 +192,13 @@ export function normalizeFieldVisibility(value: unknown, isYouth = false): Roste
 
 export function normalizeRosterConfig(row: Record<string, unknown>): RosterPageConfig {
   const isYouth = asBool(row.is_youth, false);
+
+  // Key resolution mirrors discovery pages: the page's own key wins, else the
+  // partner group's. A page normally carries no key of its own at all.
+  const group = asRecord(row.partner_group);
+  const ownKey = asNullableString(row.api_key);
+  const groupKey = asNullableString(group.api_key);
+  const apiKey = ownKey ?? groupKey ?? undefined;
   const access = row.page_access;
   const pageAccess: RosterPageAccess =
     access === 'password' || access === 'staff' ? access : 'public';
@@ -210,7 +220,10 @@ export function normalizeRosterConfig(row: Record<string, unknown>): RosterPageC
     isYouth,
     hasViewerPassword: typeof row.viewer_password_hash === 'string' && row.viewer_password_hash.length > 0,
     hasStaffPassword: typeof row.staff_password_hash === 'string' && row.staff_password_hash.length > 0,
-    apiKey: asNullableString(row.api_key) ?? undefined,
+    partnerGroupId: asNullableString(row.partner_group_id) ?? undefined,
+    partnerGroupName: asNullableString(group.name) ?? undefined,
+    apiKey,
+    apiKeyInherited: !ownKey && Boolean(groupKey),
     // Normalized through the env union rather than kept as a bare string: an
     // unrecognized value would otherwise reach getBondBaseUrl and produce an
     // `undefined/organization/...` request URL.
@@ -228,6 +241,43 @@ export function isReservedRosterSlug(slug: string): boolean {
   return RESERVED_SLUGS.has(normalizeSlug(slug));
 }
 
+/** Partner groups an admin can attach a roster page to. */
+export async function getRosterPartnerGroups(): Promise<
+  Array<{ id: string; name: string; hasApiKey: boolean }>
+> {
+  const db = getSupabaseAdmin();
+  const { data, error } = await db
+    .from('partner_groups')
+    .select('id, name, api_key, is_active')
+    .order('name');
+
+  if (error) {
+    console.error('[rosters-config] partner groups:', error);
+    return [];
+  }
+  return (data || [])
+    .filter((g) => (g as Record<string, unknown>).is_active !== false)
+    .map((g) => {
+      const row = g as Record<string, unknown>;
+      return {
+        id: String(row.id),
+        name: String(row.name ?? ''),
+        hasApiKey: Boolean(asNullableString(row.api_key)),
+      };
+    });
+}
+
+/** Does this page have a usable key once inheritance is applied? */
+async function resolvesToAKey(
+  ownKey: string | null | undefined,
+  partnerGroupId: string | null | undefined
+): Promise<boolean> {
+  if (ownKey) return true;
+  if (!partnerGroupId) return false;
+  const groups = await getRosterPartnerGroups();
+  return groups.find((g) => g.id === partnerGroupId)?.hasApiKey ?? false;
+}
+
 // --- reads ----------------------------------------------------------------
 
 /**
@@ -236,7 +286,7 @@ export function isReservedRosterSlug(slug: string): boolean {
  */
 export const getRosterPageBySlug = cache(async (slug: string): Promise<RosterPageConfig | null> => {
   const db = getSupabaseAdmin();
-  const { data, error } = await db.from(TABLE).select('*').eq('slug', slug).maybeSingle();
+  const { data, error } = await db.from(TABLE).select(SELECT_WITH_GROUP).eq('slug', slug).maybeSingle();
 
   if (error || !data) {
     if (error) console.error('[rosters-config] by slug:', error);
@@ -247,7 +297,7 @@ export const getRosterPageBySlug = cache(async (slug: string): Promise<RosterPag
 
 export async function getAllRosterPages(): Promise<RosterPageConfig[]> {
   const db = getSupabaseAdmin();
-  const { data, error } = await db.from(TABLE).select('*').order('name');
+  const { data, error } = await db.from(TABLE).select(SELECT_WITH_GROUP).order('name');
 
   if (error) {
     console.error('[rosters-config] list error:', error);
@@ -273,6 +323,7 @@ export interface RosterPageInput {
   allowIndexing?: boolean;
   allowPrint?: boolean;
   isYouth?: boolean;
+  partnerGroupId?: string | null;
   apiKey?: string | null;
   bondEnv?: string | null;
   /** Empty string clears the password; undefined leaves it unchanged. */
@@ -302,6 +353,7 @@ function toRow(input: RosterPageInput, isYouth: boolean): Record<string, unknown
   if (input.allowIndexing !== undefined) row.allow_indexing = input.allowIndexing;
   if (input.allowPrint !== undefined) row.allow_print = input.allowPrint;
   if (input.isYouth !== undefined) row.is_youth = input.isYouth;
+  if (input.partnerGroupId !== undefined) row.partner_group_id = input.partnerGroupId || null;
   if (input.apiKey !== undefined) row.api_key = input.apiKey || null;
   if (input.bondEnv !== undefined) row.bond_env = input.bondEnv || null;
 
@@ -319,13 +371,15 @@ function toRow(input: RosterPageInput, isYouth: boolean): Record<string, unknown
 export async function createRosterPage(input: RosterPageInput & { name: string; slug: string }): Promise<RosterPageConfig> {
   const db = getSupabaseAdmin();
 
-  if (input.isActive && !input.apiKey) {
-    throw new Error('Cannot publish a roster page without a Bond API key.');
+  if (input.isActive && !(await resolvesToAKey(input.apiKey, input.partnerGroupId))) {
+    throw new Error(
+      'Cannot publish a roster page with no Bond API key: pick a partner group that has one, or set a key on the page.'
+    );
   }
 
   const row = toRow(input, input.isYouth ?? false);
 
-  const { data, error } = await db.from(TABLE).insert(row).select().single();
+  const { data, error } = await db.from(TABLE).insert(row).select(SELECT_WITH_GROUP).single();
   if (error || !data) {
     throw new Error(error?.message || 'Failed to create roster page');
   }
@@ -348,15 +402,20 @@ export async function updateRosterPage(
   // publish a keyless page that errors on every view. Evaluated against the
   // row's resulting state, so clearing the key on a live page is also caught.
   const nextActive = input.isActive ?? existing.isActive;
-  const nextKey = input.apiKey !== undefined ? input.apiKey : existing.apiKey;
-  if (nextActive && !nextKey) {
-    throw new Error('Cannot publish a roster page without a Bond API key.');
+  const nextOwnKey =
+    input.apiKey !== undefined ? input.apiKey : existing.apiKeyInherited ? null : existing.apiKey;
+  const nextGroup =
+    input.partnerGroupId !== undefined ? input.partnerGroupId : existing.partnerGroupId;
+  if (nextActive && !(await resolvesToAKey(nextOwnKey, nextGroup))) {
+    throw new Error(
+      'Cannot publish a roster page with no Bond API key: pick a partner group that has one, or set a key on the page.'
+    );
   }
 
   const row = toRow(input, isYouth);
   if (Object.keys(row).length === 0) return existing;
 
-  const { data, error } = await db.from(TABLE).update(row).eq('slug', slug).select().single();
+  const { data, error } = await db.from(TABLE).update(row).eq('slug', slug).select(SELECT_WITH_GROUP).single();
   if (error || !data) {
     throw new Error(error?.message || 'Failed to update roster page');
   }

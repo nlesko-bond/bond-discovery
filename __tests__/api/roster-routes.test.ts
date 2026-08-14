@@ -83,7 +83,13 @@ function seedBond() {
         id: '11551',
         name: 'Adult Soccer',
         organizationId: '516',
-        sessions: [{ id: '127956', programId: '11551', name: 'Fall', startDate: '2026-08-01' }],
+        // Bond returns expanded sessions as a { meta, data } envelope, not a
+        // bare array. Mirroring that here is the point of this fixture: a bare
+        // array would let an Array.isArray() bug pass unnoticed.
+        sessions: {
+          meta: { totalItems: 1 },
+          data: [{ id: '127956', programId: '11551', name: 'Fall', startDate: '2026-08-01' }],
+        },
       },
     ],
   });
@@ -124,6 +130,16 @@ beforeEach(async () => {
   canView = true;
   mockGetRosterPageBySlug.mockResolvedValue(config());
   seedBond();
+});
+
+describe('session resolution from Bond', () => {
+  it('reads sessions out of the { meta, data } envelope Bond actually returns', async () => {
+    const response = await GET_SCOPE(req(''), ctx);
+    const body = await response.json();
+    expect(body.sessions).toHaveLength(1);
+    expect(body.sessions[0].sessionId).toBe(127956);
+    expect(body.sessions[0].organizationId).toBe(516);
+  });
 });
 
 describe('page gating', () => {

@@ -4,6 +4,7 @@ import {
   createRosterPage,
   getAllRosterPages,
   getRosterPageBySlug,
+  getRosterPartnerGroups,
   isReservedRosterSlug,
   normalizeSlug,
   type RosterPageInput,
@@ -15,7 +16,11 @@ export async function GET() {
   const denied = await requireAdmin();
   if (denied) return denied;
 
-  return NextResponse.json({ pages: await getAllRosterPages() });
+  const [pages, partnerGroups] = await Promise.all([
+    getAllRosterPages(),
+    getRosterPartnerGroups(),
+  ]);
+  return NextResponse.json({ pages, partnerGroups });
 }
 
 export async function POST(request: NextRequest) {
