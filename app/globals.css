@@ -144,16 +144,20 @@
     display: none !important;
   }
 
-  /* Wide staff tables: landscape.
-     Scoped to a named page rather than a bare `@page`, which applied app-wide
-     and forced landscape on every printable surface. */
-  @page form-responses-landscape {
+  /*
+    App-wide default: landscape, for the wide staff tables this was written for.
+    Deliberately a bare `@page` rather than a named one -- the `page` property
+    is unsupported in Firefox and only recently in Safari, so scoping it to a
+    named page silently dropped landscape for staff printing form responses
+    there. Roster sheets opt into portrait via a named page below, which
+    degrades to this default on those browsers rather than breaking anything.
+  */
+  @page {
     margin: 10mm;
     size: landscape;
   }
 
   .form-responses-print-root {
-    page: form-responses-landscape;
     background: white !important;
   }
 
@@ -293,9 +297,11 @@
 /* ---------------------------------------------------------------------------
    Roster print
    ---------------------------------------------------------------------------
-   Named pages, not a bare `@page`: `@page` cannot be scoped by a selector, so
-   a bare rule would force one orientation on every printable surface in the
-   app. Each mode claims its own named page instead.
+   Named pages let a roster sheet ask for portrait without disturbing the
+   app-wide landscape default above (which form-responses depends on). The
+   `page` property is unsupported in Firefox and only recent in Safari, so
+   there these sheets simply print landscape -- a cosmetic downgrade, not a
+   broken page.
 
    Portrait is the default deliberately. A typical rec season is 8-12 sessions
    with 10-16 players, which fits portrait; defaulting to landscape makes the
