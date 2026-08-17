@@ -109,6 +109,8 @@ export interface IPageConfig {
     punchPassRedeemUrl?: string;
     showScheduleTableDateFilters?: boolean;
     bondEnv?: BondEnv;
+    facilityScheduleSlug?: string;
+    facilityScheduleSlotTypes?: string[];
     persistFiltersInLocalStorage?: boolean;
     spaceColumnLabel?: string;
     showLeagueScheduleTableAndExport?: boolean;

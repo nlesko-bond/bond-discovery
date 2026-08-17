@@ -39,6 +39,7 @@ import { HostPortalSessionList } from './HostPortalSessionList';
 import { HostPortalScheduleTab } from './HostPortalScheduleTab';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { useHostPortalEmbedResize } from './useHostPortalEmbedResize';
+import { useFacilityScheduleEvents } from './useFacilityScheduleEvents';
 
 const EMPTY_EVENTS: IDiscoveryApiEvent[] = [];
 const EVENTS_PAGE_LIMIT = 200;
@@ -139,15 +140,26 @@ export function HostPortalDiscoveryPage({
     [filteredPrograms, config],
   );
 
+  const facilityEvents = useFacilityScheduleEvents(
+    config,
+    viewMode === 'schedule' ||
+      (useSessionPortalShell && sessionLayout === PortalSessionLayoutEnum.LIST),
+  );
+
+  const mergedScheduleEvents = useMemo(
+    () => (facilityEvents.length ? [...apiEvents, ...facilityEvents] : apiEvents),
+    [apiEvents, facilityEvents],
+  );
+
   const filteredEvents = useMemo(
     () =>
       filterPortalScheduleEvents(
-        apiEvents,
+        mergedScheduleEvents,
         filters,
         initialPrograms,
         shouldApplyScheduleEventDateFilters(config.features),
       ),
-    [apiEvents, filters, initialPrograms, config.features],
+    [mergedScheduleEvents, filters, initialPrograms, config.features],
   );
 
   const scheduleData = useMemo(() => {
@@ -159,7 +171,7 @@ export function HostPortalDiscoveryPage({
 
   const scheduleSpaceOptions = useMemo(() => {
     const counts = new Map<string, number>();
-    apiEvents.forEach((event) => {
+    mergedScheduleEvents.forEach((event) => {
       const spaceName = (event.spaceName || '').trim();
       if (spaceName) {
         counts.set(spaceName, (counts.get(spaceName) || 0) + 1);
@@ -168,7 +180,7 @@ export function HostPortalDiscoveryPage({
     return Array.from(counts.entries())
       .map(([id, count]) => ({ id, name: id, count }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [apiEvents]);
+  }, [mergedScheduleEvents]);
 
   useEffect(() => {
     bondAnalytics.pageView({
@@ -489,7 +501,7 @@ export function HostPortalDiscoveryPage({
                 isLoading={eventsLoading}
                 error={eventsError}
                 totalEvents={filteredEvents.length}
-                totalServerEvents={totalServerEvents}
+                totalServerEvents={totalServerEvents + facilityEvents.length}
                 onLoadMore={loadMoreEvents}
                 loadingMore={loadingMore}
                 hasMultipleFacilities={filterOptions.hasMultipleFacilities}
@@ -522,7 +534,7 @@ export function HostPortalDiscoveryPage({
             isLoading={eventsLoading}
             error={eventsError}
             totalEvents={filteredEvents.length}
-            totalServerEvents={totalServerEvents}
+            totalServerEvents={totalServerEvents + facilityEvents.length}
             onLoadMore={loadMoreEvents}
             loadingMore={loadingMore}
             hasMultipleFacilities={filterOptions.hasMultipleFacilities}

@@ -36,6 +36,7 @@ import { isPortalSessionLayoutToggleAllowed } from '@/lib/host-shell/portal-sess
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { HostPortalScheduleTab } from '../HostPortalScheduleTab';
 import { useHostPortalEmbedResize } from '../useHostPortalEmbedResize';
+import { useFacilityScheduleEvents } from '../useFacilityScheduleEvents';
 import { HostPortalV2SessionsView } from './HostPortalV2SessionsView';
 import { HostPortalV2FilterBar } from './HostPortalV2FilterBar';
 import {
@@ -166,15 +167,27 @@ export function HostPortalV2Page({
   );
   const hasAnyCards = allSessionCards.length > 0;
 
+  // Facility slots only render on the schedule surface; 'list' card style
+  // shows the schedule inline (mirrors the v1 sessions-list shell).
+  const facilityEvents = useFacilityScheduleEvents(
+    config,
+    viewMode === 'schedule' || cardStyle === 'list',
+  );
+
+  const mergedScheduleEvents = useMemo(
+    () => (facilityEvents.length ? [...apiEvents, ...facilityEvents] : apiEvents),
+    [apiEvents, facilityEvents],
+  );
+
   const filteredEvents = useMemo(
     () =>
       filterPortalScheduleEvents(
-        apiEvents,
+        mergedScheduleEvents,
         filters,
         initialPrograms,
         shouldApplyScheduleEventDateFilters(config.features),
       ),
-    [apiEvents, filters, initialPrograms, config.features],
+    [mergedScheduleEvents, filters, initialPrograms, config.features],
   );
 
   const scheduleData = useMemo(() => {
@@ -473,7 +486,7 @@ export function HostPortalV2Page({
                 isLoading={eventsLoading}
                 error={eventsError}
                 totalEvents={filteredEvents.length}
-                totalServerEvents={totalServerEvents}
+                totalServerEvents={totalServerEvents + facilityEvents.length}
                 onLoadMore={loadMoreEvents}
                 loadingMore={loadingMore}
                 hasMultipleFacilities={filterOptions.hasMultipleFacilities}
@@ -616,7 +629,7 @@ export function HostPortalV2Page({
             isLoading={eventsLoading}
             error={eventsError}
             totalEvents={filteredEvents.length}
-            totalServerEvents={totalServerEvents}
+            totalServerEvents={totalServerEvents + facilityEvents.length}
             onLoadMore={loadMoreEvents}
             loadingMore={loadingMore}
             hasMultipleFacilities={filterOptions.hasMultipleFacilities}

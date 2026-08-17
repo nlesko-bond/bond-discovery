@@ -522,6 +522,19 @@ export interface FeatureConfig {
   eventLookbackDays?: number;
   // Bond public API environment for this discovery page
   bondEnv?: BondEnv;
+  /**
+   * Facility-schedule link: slug of a published facility-schedule-v2 page
+   * whose reservation slots should be blended into this page's schedule tab.
+   * Slots arrive with fsv2's data rules (privacy, rollups, approval) already
+   * applied; discovery's presentation rules apply on top.
+   */
+  facilityScheduleSlug?: string;
+  /**
+   * Which fsv2 slot types to blend in (default ['reservation']).
+   * Valid: reservation, maintenance. (program/league are rejected — they
+   * would double-render against discovery's own program pipeline.)
+   */
+  facilityScheduleSlotTypes?: string[];
   /** When true, show “Redeem pass” for events whose session has a punch-pass product */
   showPunchPassRedeemButton?: boolean;
   /** Override URL for redeem pass (default https://bondsports.co/user/passes) */
