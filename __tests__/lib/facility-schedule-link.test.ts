@@ -66,7 +66,7 @@ describe('getFacilityScheduleEvents', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it('maps feed slots into discovery events with a prefixed id and reservation type', async () => {
+  it('maps feed slots into discovery events with a prefixed id and rental type', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ version: 1, slug: 'map-fac', slots: [FEED_SLOT] }))
     );
@@ -83,7 +83,7 @@ describe('getFacilityScheduleEvents', () => {
         facilityId: '7',
         facilityName: 'Skate Zone',
         spaceName: 'Main Rink',
-        type: 'reservation',
+        type: 'rental',
       },
     ]);
   });
