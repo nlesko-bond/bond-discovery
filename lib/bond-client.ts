@@ -131,7 +131,9 @@ export class BondClient {
             if (response.status >= 500) {
               bondApiStats.serverErrors++;
             }
-            throw new Error(`API Error: ${response.status} ${response.statusText}`);
+            throw new Error(
+              `API Error: ${response.status} ${response.statusText} (${url.pathname})`
+            );
           }
 
           return (await response.json()) as T;

@@ -335,6 +335,9 @@ export interface RosterSessionRef {
   programName: string;
   sessionId: number;
   sessionName: string;
+  /** Bond program type ('league', 'class', …). Leagues get team rosters;
+   * everything else is an attendee list on the staff surface only. */
+  programType?: string;
   linkSEO?: string;
   startDate?: string;
   endDate?: string;

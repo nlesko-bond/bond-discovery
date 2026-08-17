@@ -243,7 +243,8 @@ export async function loadEventParticipants(
   if (cached) return cached;
 
   const client = clientFor(config);
-  const expand = resolveExpand(mode, config.fieldVisibility);
+  // 'event': this endpoint 400s on expand=group. See resolveExpand.
+  const expand = resolveExpand(mode, config.fieldVisibility, 'event');
   const response = await client.getEventParticipants(
     session.organizationId,
     session.programId,
