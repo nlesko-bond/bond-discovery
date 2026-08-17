@@ -62,9 +62,12 @@ export function resolveFacilityScheduleLink(
   return { slug, types: requested };
 }
 
-/** fsv2 slot event types → discovery ProgramType-compatible `type` values. */
+/**
+ * fsv2 slot event types pass through as the discovery `type`; 'reservation'
+ * renders a "Reservation" chip via getProgramTypeLabel's label map.
+ */
 function toDiscoveryEventType(feedEventType: string): string {
-  return feedEventType === 'reservation' ? 'rental' : feedEventType;
+  return feedEventType;
 }
 
 function toDiscoveryEvent(slot: FeedSlot): IDiscoveryApiEvent | null {

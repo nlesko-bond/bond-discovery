@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { WeekSchedule, DaySchedule, CalendarEvent, DiscoveryConfig, DiscoveryFilters } from '@/types';
 import { formatDate, formatTime, formatPrice, getSportLabel, getProgramTypeLabel, buildRegistrationUrl, cn } from '@/lib/utils';
+import { isFacilityScheduleEvent } from '@/lib/facility-slot-events';
 import { bondAnalytics } from '@/lib/analytics';
 import { eventShowsRedeemPass, getPunchPassRedeemUrl, trackRedeemPassClick } from '@/lib/schedule-redeem';
 import {
@@ -1610,8 +1611,8 @@ function EventDetailModal({
             </div>
           )}
           
-          {/* No pricing available message */}
-          {config.features.showPricing && event.startingPrice === undefined && !event.membershipRequired && (
+          {/* No pricing available message — not for facility reservations, which have no registration */}
+          {config.features.showPricing && event.startingPrice === undefined && !event.membershipRequired && !isFacilityScheduleEvent(event.id) && (
             <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
               <Tag className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
               <div>

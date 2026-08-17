@@ -32,7 +32,8 @@ fsv2  GET /api/schedule/{fsv2Slug}/slots?types=reservation   (versioned contract
   from fsv2 can't wipe the stale shadow; a genuinely emptied schedule
   converges to empty on the next cycle.
 - **Event mapping:** feed slots become `IDiscoveryApiEvent`s with id prefix
-  `fsched-`, `type: 'rental'` (renders the existing "Rental" chip), and no
+  `fsched-`, `type: 'reservation'` (renders a "Reservation" chip via the
+  program-type label map), no pricing block in the detail modal, and no
   `linkSEO`, so no register button appears (including under
   `customRegistrationUrl`).
 - **Isolation:** `/api/events` response shape and the `discovery:response:{slug}`
