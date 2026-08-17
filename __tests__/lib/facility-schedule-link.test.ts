@@ -104,6 +104,25 @@ describe('getFacilityScheduleEvents', () => {
     expect(events[0].sport).toBe('hockey');
   });
 
+  it('normalizes multi-word activity slugs to the program sport convention', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          version: 1,
+          slug: 'norm-fac',
+          slots: [
+            { ...FEED_SLOT, id: 'a', activityName: 'ice-skating' },
+            { ...FEED_SLOT, id: 'b', activityName: 'corporate event' },
+          ],
+        })
+      )
+    );
+    const events = await getFacilityScheduleEvents(
+      makeConfig({ facilityScheduleSlug: 'norm-fac' })
+    );
+    expect(events.map((e) => e.sport)).toEqual(['ice_skating', 'corporate_event']);
+  });
+
   it('rejects an unsupported feed version', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ version: 99, slug: 'ver-fac', slots: [] }))
