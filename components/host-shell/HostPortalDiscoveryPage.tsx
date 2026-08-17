@@ -22,7 +22,10 @@ import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
 import { cn } from '@/lib/utils';
 import { buildHostPortalSessionCards } from '@/lib/host-shell/session-card-model';
 import { filterProgramsForPortalSessions } from '@/lib/host-shell/portal-session-filters';
-import { buildPortalFilterOptions } from '@/lib/host-shell/portal-filter-options';
+import {
+  buildPortalFilterOptions,
+  extendPortalFilterOptionsWithFacilityEvents,
+} from '@/lib/host-shell/portal-filter-options';
 import {
   buildPortalScheduleWeeks,
   filterPortalScheduleEvents,
@@ -125,9 +128,19 @@ export function HostPortalDiscoveryPage({
   const scheduleThemeStyle =
     (config.features.scheduleThemeStyle as 'gradient' | 'solid') || 'solid';
 
+  const facilityEvents = useFacilityScheduleEvents(
+    config,
+    viewMode === 'schedule' ||
+      (useSessionPortalShell && sessionLayout === PortalSessionLayoutEnum.LIST),
+  );
+
   const filterOptions = useMemo(
-    () => buildPortalFilterOptions(initialPrograms),
-    [initialPrograms],
+    () =>
+      extendPortalFilterOptionsWithFacilityEvents(
+        buildPortalFilterOptions(initialPrograms),
+        facilityEvents,
+      ),
+    [initialPrograms, facilityEvents],
   );
 
   const filteredPrograms = useMemo(
@@ -138,12 +151,6 @@ export function HostPortalDiscoveryPage({
   const sessionCards = useMemo(
     () => buildHostPortalSessionCards(filteredPrograms, config),
     [filteredPrograms, config],
-  );
-
-  const facilityEvents = useFacilityScheduleEvents(
-    config,
-    viewMode === 'schedule' ||
-      (useSessionPortalShell && sessionLayout === PortalSessionLayoutEnum.LIST),
   );
 
   const mergedScheduleEvents = useMemo(

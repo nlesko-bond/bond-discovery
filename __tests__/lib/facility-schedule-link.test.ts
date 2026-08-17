@@ -88,6 +88,22 @@ describe('getFacilityScheduleEvents', () => {
     ]);
   });
 
+  it('maps the feed activity slug onto the event sport', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          version: 1,
+          slug: 'act-fac',
+          slots: [{ ...FEED_SLOT, activityName: 'hockey' }],
+        })
+      )
+    );
+    const events = await getFacilityScheduleEvents(
+      makeConfig({ facilityScheduleSlug: 'act-fac' })
+    );
+    expect(events[0].sport).toBe('hockey');
+  });
+
   it('rejects an unsupported feed version', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ version: 99, slug: 'ver-fac', slots: [] }))

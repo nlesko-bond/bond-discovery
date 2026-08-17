@@ -74,6 +74,46 @@ function resolveSessionFacility(
 /**
  * Builds filter option counts from sessions (session.facility, session.sport), not program-level only.
  */
+/**
+ * Fold blended facility-schedule events into the filter options so the
+ * filters stay honest on linked pages: their activities join the sports
+ * chips (same slug vocabulary as program sports) and a 'rental' entry joins
+ * the Type options so visitors can filter to/away from reservations.
+ * Returns `options` untouched when there are no facility events — pages
+ * without the facility-schedule link are unaffected.
+ */
+export function extendPortalFilterOptionsWithFacilityEvents(
+  options: IPortalFilterOptions,
+  facilityEvents: Array<{ sport?: string; type?: string }>,
+): IPortalFilterOptions {
+  if (facilityEvents.length === 0) return options;
+
+  const sports = new Map(options.sports.map((option) => [option.id, { ...option }]));
+  let rentalCount = 0;
+  facilityEvents.forEach((event) => {
+    if (event.type === 'rental') rentalCount += 1;
+    if (event.sport) {
+      const existing = sports.get(event.sport);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        sports.set(event.sport, { id: event.sport, label: event.sport, count: 1 });
+      }
+    }
+  });
+
+  const programTypes =
+    rentalCount > 0 && !options.programTypes.some((option) => option.id === 'rental')
+      ? [...options.programTypes, { id: 'rental', label: 'rental', count: rentalCount }]
+      : options.programTypes;
+
+  return {
+    ...options,
+    sports: Array.from(sports.values()).sort((a, b) => b.count - a.count),
+    programTypes,
+  };
+}
+
 export function buildPortalFilterOptions(programs: Program[]): IPortalFilterOptions {
   const facilities = new Map<string, IPortalFilterFacility>();
   const sports = new Map<string, number>();

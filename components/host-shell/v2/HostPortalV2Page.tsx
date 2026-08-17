@@ -11,7 +11,10 @@ import { resolvePortalBrandColors } from '@/lib/host-shell/portal-branding';
 import { buildHostPortalSessionCards } from '@/lib/host-shell/session-card-model';
 import { orderPortalSessionCards } from '@/lib/host-shell/portal-list-layout';
 import { filterProgramsForPortalSessions } from '@/lib/host-shell/portal-session-filters';
-import { buildPortalFilterOptions } from '@/lib/host-shell/portal-filter-options';
+import {
+  buildPortalFilterOptions,
+  extendPortalFilterOptionsWithFacilityEvents,
+} from '@/lib/host-shell/portal-filter-options';
 import {
   buildPortalScheduleWeeks,
   filterPortalScheduleEvents,
@@ -144,9 +147,20 @@ export function HostPortalV2Page({
   const scheduleThemeStyle =
     (config.features.scheduleThemeStyle as 'gradient' | 'solid') || 'solid';
 
+  // Facility slots only render on the schedule surface; 'list' card style
+  // shows the schedule inline (mirrors the v1 sessions-list shell).
+  const facilityEvents = useFacilityScheduleEvents(
+    config,
+    viewMode === 'schedule' || cardStyle === 'list',
+  );
+
   const filterOptions = useMemo(
-    () => buildPortalFilterOptions(initialPrograms),
-    [initialPrograms],
+    () =>
+      extendPortalFilterOptionsWithFacilityEvents(
+        buildPortalFilterOptions(initialPrograms),
+        facilityEvents,
+      ),
+    [initialPrograms, facilityEvents],
   );
 
   const filteredPrograms = useMemo(
@@ -166,13 +180,6 @@ export function HostPortalV2Page({
     [initialPrograms, config],
   );
   const hasAnyCards = allSessionCards.length > 0;
-
-  // Facility slots only render on the schedule surface; 'list' card style
-  // shows the schedule inline (mirrors the v1 sessions-list shell).
-  const facilityEvents = useFacilityScheduleEvents(
-    config,
-    viewMode === 'schedule' || cardStyle === 'list',
-  );
 
   const mergedScheduleEvents = useMemo(
     () => (facilityEvents.length ? [...apiEvents, ...facilityEvents] : apiEvents),

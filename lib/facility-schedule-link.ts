@@ -38,6 +38,8 @@ interface FeedSlot {
   facilityId?: number;
   facilityName?: string;
   publicNotes?: string;
+  /** Lowercase activity slug (e.g. 'hockey') — same vocabulary as program sports. */
+  activityName?: string;
 }
 
 interface SlotsFeed {
@@ -80,6 +82,8 @@ function toDiscoveryEvent(slot: FeedSlot): IDiscoveryApiEvent | null {
     facilityId: slot.facilityId !== undefined ? String(slot.facilityId) : undefined,
     facilityName: slot.facilityName,
     spaceName: slot.spaceName,
+    // Same slug vocabulary as program sports, so the activity filter applies.
+    sport: slot.activityName || undefined,
     type: toDiscoveryEventType(slot.eventType),
   };
 }
