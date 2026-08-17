@@ -80,3 +80,16 @@ export async function POST(request: NextRequest, context: Ctx) {
   return response;
 }
 
+/** Sign out of a scope — the staff tool's Lock control on shared machines. */
+export async function DELETE(request: NextRequest, context: Ctx) {
+  const { slug } = await context.params;
+  const scope: RosterAccessScope =
+    request.nextUrl.searchParams.get('scope') === 'staff' ? 'staff' : 'viewer';
+
+  const response = NextResponse.json({ ok: true });
+  response.cookies.set(rosterAccessCookieName(scope, slug), '', {
+    ...rosterAccessCookieOptions(0),
+    maxAge: 0,
+  });
+  return response;
+}

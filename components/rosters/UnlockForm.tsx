@@ -50,9 +50,9 @@ export function UnlockForm({ slug, scope, title, description, onUnlocked }: Prop
         <div className="mb-4 flex items-center gap-3">
           <span
             className="flex h-10 w-10 items-center justify-center rounded-full"
-            style={{ backgroundColor: 'var(--roster-accent-light)' }}
+            style={{ backgroundColor: 'var(--roster-accent-light, #e2e8f0)' }}
           >
-            <Lock size={18} style={{ color: 'var(--roster-primary)' }} />
+            <Lock size={18} style={{ color: 'var(--roster-primary, #0f172a)' }} />
           </span>
           <div>
             <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
@@ -85,7 +85,7 @@ export function UnlockForm({ slug, scope, title, description, onUnlocked }: Prop
             type="submit"
             disabled={submitting || password.length === 0}
             className="w-full rounded-lg px-3 py-2 text-sm font-medium text-white transition-opacity disabled:opacity-50"
-            style={{ backgroundColor: 'var(--roster-primary)' }}
+            style={{ backgroundColor: 'var(--roster-primary, #0f172a)' }}
           >
             {submitting ? 'Checking…' : 'Unlock'}
           </button>

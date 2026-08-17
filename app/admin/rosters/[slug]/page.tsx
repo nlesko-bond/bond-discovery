@@ -200,7 +200,16 @@ export default function AdminRosterEditor() {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
         >
-          View live
+          Public page
+          <ExternalLink size={14} aria-hidden />
+        </a>
+        <a
+          href={`/rosters/${config.slug}/staff`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+        >
+          Staff tool
           <ExternalLink size={14} aria-hidden />
         </a>
 

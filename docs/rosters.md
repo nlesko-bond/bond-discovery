@@ -5,14 +5,17 @@ group/participant endpoints. Configured in `/admin/rosters`, stored in Supabase 
 
 ## What it is
 
-One surface, four views, all URL-addressable so any of them can be shared or printed:
+Two surfaces per page, driven by one configuration — the same split the TV
+monitors use (display vs studio):
 
-| View | URL | What it shows |
+| Surface | URL | Audience |
 |---|---|---|
-| Browse | `?session={id}` | Divisions and teams as cards, with player counts |
-| Team roster | `?session={id}&group={id}` | One team's participants |
-| Check-in sheet | `?view=checkin` + a group | Participants × dates, **blank boxes** to mark by hand |
-| Registration grid | `?view=matrix` | Participants × dates, marked where **registered** |
+| **Consumer page** | `/rosters/{slug}` | Families and players. Branded (colors, fonts, logo, hero), browse divisions → teams → roster, standings link, print. Nothing operational — no staff controls exist here at all. |
+| **Staff tool** | `/rosters/{slug}/staff` | The front desk. Staff password is the front door; behind it: full permitted columns, waiver filter, printable check-in sheets, the registration grid, CSV export, and a Lock control for shared machines. Neutral chrome, never indexed. |
+
+A `pageAccess: 'staff'` page has no consumer audience — its consumer URL
+redirects straight to the staff tool. On the consumer surface the URL carries
+`?session={id}&group={id}`, so every roster is a shareable address.
 
 ## Bond endpoints
 

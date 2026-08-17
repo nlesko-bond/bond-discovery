@@ -223,7 +223,16 @@ export default function AdminRostersPage() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
                   >
-                    View
+                    Public
+                    <ExternalLink size={14} aria-hidden />
+                  </a>
+                  <a
+                    href={`/rosters/${page.slug}/staff`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+                  >
+                    Staff
                     <ExternalLink size={14} aria-hidden />
                   </a>
                 </li>

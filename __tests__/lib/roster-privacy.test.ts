@@ -228,6 +228,24 @@ describe('redactParticipant — staff mode', () => {
   });
 });
 
+describe('team role formatting', () => {
+  it('humanizes Bond role tokens instead of leaking the enum', () => {
+    const out = redactParticipant(RAW, named(), 'public');
+    // RAW carries teamRole: 'league_v2_player'
+    expect(out.teamRole).toBe('Player');
+  });
+
+  it('handles captain and invited variants', () => {
+    const captain = { ...RAW, playerInfo: { ...RAW.playerInfo, teamRole: 'league_v2_captain' } };
+    const invited = {
+      ...RAW,
+      playerInfo: { ...RAW.playerInfo, teamRole: 'league_v2_invited_player' },
+    };
+    expect(redactParticipant(captain, named(), 'public').teamRole).toBe('Captain');
+    expect(redactParticipant(invited, named(), 'public').teamRole).toBe('Invited player');
+  });
+});
+
 describe('redactParticipant — identity', () => {
   it('prefers the roster participant id', () => {
     expect(redactParticipant(RAW, named(), 'public').id).toBe('12345');

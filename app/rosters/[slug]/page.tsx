@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { RosterPage } from '@/components/rosters/RosterPage';
-import { canViewRosterPage, resolveViewerMode } from '@/lib/roster-access';
+import { canViewRosterPage } from '@/lib/roster-access';
 import { getRosterPageBySlug } from '@/lib/rosters-config';
 
 export const dynamic = 'force-dynamic';
@@ -37,13 +37,18 @@ export default async function RosterSlugPage({ params }: Props) {
     notFound();
   }
 
+  // A staff-only page has no consumer audience at all — its one surface is the
+  // staff tool, so send visitors straight there.
+  if (config.pageAccess === 'staff') {
+    redirect(`/rosters/${slug}/staff`);
+  }
+
   const unlocked = await canViewRosterPage(
     slug,
     config.pageAccess,
     config.hasViewerPassword,
     config.hasStaffPassword
   );
-  const mode = await resolveViewerMode(slug, config.hasStaffPassword);
 
   return (
     <RosterPage
@@ -52,9 +57,7 @@ export default async function RosterSlugPage({ params }: Props) {
       branding={config.branding}
       pageAccess={config.pageAccess}
       unlocked={unlocked}
-      mode={mode}
       allowPrint={config.allowPrint}
-      hasStaffPassword={config.hasStaffPassword}
     />
   );
 }
