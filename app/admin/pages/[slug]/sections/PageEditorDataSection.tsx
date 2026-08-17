@@ -272,6 +272,40 @@ export function PageEditorDataSection({ config, setConfig }: IPageEditorSectionP
       </div>
 
       <div>
+        <h3 className="mb-4 font-semibold text-gray-900">Facility schedule link</h3>
+        <div>
+          <label className="label">Facility schedule slug</label>
+          <input
+            type="text"
+            className="input"
+            placeholder="e.g. pbsz-facility"
+            value={config.features.facilityScheduleSlug ?? ''}
+            onChange={(event) => {
+              // Accept a pasted page URL and keep just the slug.
+              const value = event.target.value
+                .trim()
+                .replace(/^https?:\/\/[^/]+\//i, '')
+                .replace(/^schedule\//, '')
+                .replace(/[?#].*$/, '')
+                .replace(/\/+$/, '');
+              setConfig({
+                ...config,
+                features: {
+                  ...config.features,
+                  facilityScheduleSlug: value || undefined,
+                },
+              });
+            }}
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Optional. Slug of a published facility-schedule page (schedule.bondsports.co) whose
+            reservation slots are blended into this page&apos;s schedule tab. That page&apos;s
+            privacy and display rules are applied at the source. Leave blank for programs only.
+          </p>
+        </div>
+      </div>
+
+      <div>
         <h3 className="mb-4 font-semibold text-gray-900">Bond environment</h3>
         <div>
           <label className="label">Bond env</label>

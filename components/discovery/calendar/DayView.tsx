@@ -4,6 +4,7 @@ import { useMemo, useRef, useEffect } from 'react';
 import { Clock, MapPin, Users, ExternalLink, Ticket, Trophy } from 'lucide-react';
 import { CalendarEvent, DiscoveryConfig } from '@/types';
 import { formatTime, buildRegistrationUrl, cn, getHourInTimezone, getMinutesInTimezone } from '@/lib/utils';
+import { isFacilityScheduleEvent } from '@/lib/facility-slot-events';
 import { eventShowsRedeemPass, getPunchPassRedeemUrl, trackRedeemPassClick } from '@/lib/schedule-redeem';
 import { eventShowsStandingsLink, getLeagueStandingsUrl } from '@/lib/schedule-standings';
 import { format, parseISO, isSameDay, isToday } from 'date-fns';
@@ -246,7 +247,7 @@ function EventCard({
         </div>
 
         <div className="flex flex-shrink-0 items-center gap-1.5">
-          {!hideRegistrationLinks && registrationUrl && (
+          {!hideRegistrationLinks && registrationUrl && !isFacilityScheduleEvent(event.id) && (
             <a
               href={registrationUrl}
               target={linkTarget}

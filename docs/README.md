@@ -11,6 +11,7 @@ Agent/contributor onboarding lives at the repo root: [`CLAUDE.md`](../CLAUDE.md)
 | [environments.md](./environments.md) | Operators — env vars, local/preview/production matrix, staging setup, `npm run check:env` |
 | [tvmonitor.md](./tvmonitor.md) | Engineering + CS — TV Monitor pages (`/tvmonitor/{name}`), builder studio, access links, Bond slots-schedule caching |
 | [rosters.md](./rosters.md) | Engineering + CS — Roster pages (`/rosters/{slug}`), privacy model, check-in and registration grids, print/export |
+| [facility-schedule-link.md](./facility-schedule-link.md) | Engineering — blending facility-schedule-v2 reservation slots into a page's schedule tab (feed contract, caching, privacy) |
 
 ## Partner-facing integration
 

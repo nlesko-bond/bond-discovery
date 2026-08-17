@@ -36,6 +36,7 @@ import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skele
 import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
 import { programIdsFilterMatches } from '@/lib/program-ids-filter';
+import { useFacilityScheduleEvents } from '@/components/host-shell/useFacilityScheduleEvents';
 
 import { HorizontalFilterBar } from './HorizontalFilterBar';
 
@@ -529,6 +530,11 @@ export function DiscoveryPage({
 
   // State for real events from API
   const [apiEvents, setApiEvents] = useState<any[]>(initialScheduleEvents);
+  const facilityEvents = useFacilityScheduleEvents(config, viewMode === 'schedule');
+  const mergedScheduleEvents = useMemo(
+    () => (facilityEvents.length ? [...apiEvents, ...facilityEvents] : apiEvents),
+    [apiEvents, facilityEvents],
+  );
   const [eventsLoading, setEventsLoading] = useState(false);
   const [eventsError, setEventsError] = useState<string | null>(null);
   const [eventsFetched, setEventsFetched] = useState(initialEventsFetched);
@@ -701,8 +707,8 @@ export function DiscoveryPage({
 
   // Filter events based on current filters
   const filteredEvents = useMemo(() => {
-    let result = [...apiEvents];
-    
+    let result = [...mergedScheduleEvents];
+
     // Filter by program - match by ID first, then fallback to name+facility
     if (filters.programIds && filters.programIds.length > 0) {
       // Get selected programs with their facility info
@@ -906,7 +912,7 @@ export function DiscoveryPage({
     }
 
     return result;
-  }, [apiEvents, filters, initialPrograms, config.features]);
+  }, [mergedScheduleEvents, filters, initialPrograms, config.features]);
 
   const leagueTableMode = useMemo(
     () => isLeagueScheduleTableContext(config, filters, initialPrograms),
@@ -1060,14 +1066,14 @@ export function DiscoveryPage({
   /** Distinct space/resource labels from loaded schedule events (schedule filter only). */
   const scheduleSpaceOptions = useMemo(() => {
     const m = new Map<string, number>();
-    apiEvents.forEach((e: { spaceName?: string }) => {
+    mergedScheduleEvents.forEach((e: { spaceName?: string }) => {
       const sn = (e.spaceName || '').trim();
       if (sn) m.set(sn, (m.get(sn) || 0) + 1);
     });
     return Array.from(m.entries())
       .map(([id, count]) => ({ id, name: id, count }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [apiEvents]);
+  }, [mergedScheduleEvents]);
 
   // Update URL when filters or view mode change
   const updateUrl = useCallback((newFilters: DiscoveryFilters, newViewMode: ViewMode) => {
@@ -1499,7 +1505,7 @@ export function DiscoveryPage({
               isLoading={eventsLoading}
               error={eventsError}
               totalEvents={filteredEvents.length}
-              totalServerEvents={totalServerEvents}
+              totalServerEvents={totalServerEvents + facilityEvents.length}
               onLoadMore={loadMoreEvents}
               loadingMore={loadingMore}
               hasMultipleFacilities={filterOptions.hasMultipleFacilities}
