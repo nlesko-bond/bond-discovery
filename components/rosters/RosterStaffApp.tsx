@@ -52,11 +52,19 @@ interface SheetResponse {
 
 type StaffTab = 'roster' | 'checkin' | 'matrix';
 
-const TABS: Array<[StaffTab, string]> = [
+const LEAGUE_TABS: Array<[StaffTab, string]> = [
   ['roster', 'Roster'],
   ['checkin', 'Check-in sheet'],
   ['matrix', 'Registration grid'],
 ];
+
+/**
+ * Classes, lessons and other non-league programs have no teams, so team
+ * rosters and per-team check-in sheets do not apply. What staff need there is
+ * the attendee list: the session-wide participant × event grid, under
+ * "Attendees" language rather than roster/team language.
+ */
+const NON_LEAGUE_TABS: Array<[StaffTab, string]> = [['matrix', 'Attendees']];
 
 export function RosterStaffApp({ slug, name, staffUnlocked }: Props) {
   const [unlocked, setUnlocked] = useState(staffUnlocked);
@@ -96,7 +104,12 @@ export function RosterStaffApp({ slug, name, staffUnlocked }: Props) {
         const data = await response.json();
         if (cancelled) return;
         setSessions(data.sessions);
-        setSessionId(data.sessions[0]?.sessionId ?? null);
+        // Land on the newest league season when there is one — that's the
+        // roster workload; classes are reachable from the grouped dropdown.
+        const firstLeague = data.sessions.find(
+          (s: RosterSessionRef) => (s.programType ?? 'league') === 'league'
+        );
+        setSessionId((firstLeague ?? data.sessions[0])?.sessionId ?? null);
       } catch {
         if (!cancelled) setError('Could not load seasons.');
       } finally {
@@ -109,8 +122,28 @@ export function RosterStaffApp({ slug, name, staffUnlocked }: Props) {
     };
   }, [slug, unlocked, relock]);
 
+  const session = useMemo(
+    () => sessions?.find((s) => s.sessionId === sessionId) ?? null,
+    [sessions, sessionId]
+  );
+  // Missing programType (e.g. a scope payload cached before the field existed)
+  // is treated as a league so nothing loses tabs it had.
+  const isLeague = !session || (session.programType ?? 'league') === 'league';
+
+  // Non-league sessions have exactly one view; land on it. Coming back to a
+  // league, restore the roster tab if we're sitting on a hidden one.
+  useEffect(() => {
+    if (!isLeague) setTab('matrix');
+  }, [isLeague, sessionId]);
+
   useEffect(() => {
     if (!sessionId) return;
+    if (!isLeague) {
+      // No teams to load — the attendee grid is session-wide.
+      setGroups(null);
+      setGroupId(null);
+      return;
+    }
     let cancelled = false;
 
     (async () => {
@@ -141,7 +174,7 @@ export function RosterStaffApp({ slug, name, staffUnlocked }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [slug, sessionId, relock]);
+  }, [slug, sessionId, isLeague, relock]);
 
   useEffect(() => {
     if (!sessionId || !groupId) {
@@ -217,9 +250,13 @@ export function RosterStaffApp({ slug, name, staffUnlocked }: Props) {
     };
   }, [slug, sessionId, groupId, tab, relock]);
 
-  const session = useMemo(
-    () => sessions?.find((s) => s.sessionId === sessionId) ?? null,
-    [sessions, sessionId]
+  const leagueSessions = useMemo(
+    () => (sessions ?? []).filter((s) => (s.programType ?? 'league') === 'league'),
+    [sessions]
+  );
+  const otherSessions = useMemo(
+    () => (sessions ?? []).filter((s) => (s.programType ?? 'league') !== 'league'),
+    [sessions]
   );
   const teams = useMemo(() => (groups ? flattenTeams(groups.tree) : []), [groups]);
   const team = teams.find((t) => t.id === groupId) ?? null;
@@ -286,15 +323,28 @@ export function RosterStaffApp({ slug, name, staffUnlocked }: Props) {
               onChange={(e) => setSessionId(Number(e.target.value))}
               className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm"
             >
-              {(sessions ?? []).map((s) => (
-                <option key={s.sessionId} value={s.sessionId}>
-                  {s.programName} — {s.sessionName}
-                </option>
-              ))}
+              {leagueSessions.length > 0 && (
+                <optgroup label="Leagues">
+                  {leagueSessions.map((s) => (
+                    <option key={s.sessionId} value={s.sessionId}>
+                      {s.programName} — {s.sessionName}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {otherSessions.length > 0 && (
+                <optgroup label="Classes & programs">
+                  {otherSessions.map((s) => (
+                    <option key={s.sessionId} value={s.sessionId}>
+                      {s.programName} — {s.sessionName}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </div>
 
-          {tab !== 'matrix' && (
+          {isLeague && tab !== 'matrix' && (
             <div>
               <label htmlFor="staff-team" className="mb-1 block text-xs font-medium text-slate-500">
                 Team
@@ -315,7 +365,7 @@ export function RosterStaffApp({ slug, name, staffUnlocked }: Props) {
           )}
 
           <div role="group" aria-label="View" className="flex gap-1 rounded-lg bg-slate-100 p-1">
-            {TABS.map(([value, label]) => (
+            {(isLeague ? LEAGUE_TABS : NON_LEAGUE_TABS).map(([value, label]) => (
               <button
                 key={value}
                 type="button"
@@ -341,7 +391,7 @@ export function RosterStaffApp({ slug, name, staffUnlocked }: Props) {
               <Printer size={14} aria-hidden />
               Print
             </button>
-            {sessionId && (
+            {sessionId && isLeague && (
               <a
                 href={`/api/rosters/${slug}/export?sessionId=${sessionId}${
                   tab === 'roster' && groupId ? `&groupId=${groupId}` : ''
@@ -418,7 +468,9 @@ export function RosterStaffApp({ slug, name, staffUnlocked }: Props) {
               heading={
                 sheet.kind === 'checkin'
                   ? `Check-in — ${sheet.groupName ?? team?.name ?? 'Team'}`
-                  : `Registration grid — ${session?.sessionName ?? ''}`
+                  : isLeague
+                    ? `Registration grid — ${session?.sessionName ?? ''}`
+                    : `Attendees — ${session?.sessionName ?? ''}`
               }
               subheading={`${session?.programName ?? ''} · ${session?.sessionName ?? ''}`}
             />

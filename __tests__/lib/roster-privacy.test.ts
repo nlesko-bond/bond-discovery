@@ -136,6 +136,25 @@ describe('resolveExpand', () => {
     const expand = resolveExpand('staff', named());
     expect(expand.length).toBe(new Set(expand).size);
   });
+
+  // Regression: the event-participants endpoint rejects `expand=group` with a
+  // 400, so the 'event' target must never include it. Sending it broke every
+  // registration-grid build in production.
+  it("never requests 'group' for the event-participants target", () => {
+    expect(resolveExpand('public', named(), 'event')).not.toContain('group');
+    expect(resolveExpand('staff', named(), 'event')).not.toContain('group');
+  });
+
+  it("still requests 'group' for the group-participants target by default", () => {
+    expect(resolveExpand('public', named())).toContain('group');
+    expect(resolveExpand('staff', named(), 'group')).toContain('group');
+  });
+
+  it('keeps staff PII blocks intact for the event target', () => {
+    const expand = resolveExpand('staff', named({ contactSource: 'primary' }), 'event');
+    expect(expand).toContain('primary');
+    expect(expand).toContain('registration');
+  });
 });
 
 describe('redactParticipant — public mode', () => {

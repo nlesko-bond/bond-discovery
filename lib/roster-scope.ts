@@ -77,6 +77,7 @@ function toSessionRef(program: Program, session: Session, organizationId: number
     programName: program.name,
     sessionId: Number(session.id),
     sessionName: session.name || program.name,
+    programType: program.type,
     linkSEO: session.linkSEO,
     startDate: session.startDate,
     endDate: session.endDate,

@@ -33,12 +33,18 @@ const STAFF_ONLY_EXPANDS: BondParticipantExpand[] = [
 /**
  * Which `expand` values to send to Bond. Public viewers get only the blocks
  * needed to render a name, jersey number, position and group.
+ *
+ * `target` matters: the event-participants endpoint rejects `expand=group`
+ * with a 400 ("each value in expand must be a valid enum value") — it carries
+ * a top-level `groups` array instead. Verified against Bond directly; sending
+ * it broke every registration-grid build in production.
  */
 export function resolveExpand(
   mode: RosterViewerMode,
-  visibility: RosterFieldVisibility
+  visibility: RosterFieldVisibility,
+  target: 'group' | 'event' = 'group'
 ): BondParticipantExpand[] {
-  const expand: BondParticipantExpand[] = ['group'];
+  const expand: BondParticipantExpand[] = target === 'group' ? ['group'] : [];
 
   if (visibility.showJerseyNumber || visibility.showPosition || visibility.showTeamRole) {
     expand.push('playerInfo');
