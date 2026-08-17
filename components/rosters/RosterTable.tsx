@@ -9,6 +9,8 @@ const EMPTY = '—';
 interface Props {
   participants: RosterParticipant[];
   mode: RosterViewerMode;
+  /** Staff filter: show only participants whose waiver is explicitly unsigned. */
+  unsignedOnly?: boolean;
 }
 
 function initials(name: string): string {
@@ -40,13 +42,17 @@ function WaiverCell({ participant }: { participant: RosterParticipant }) {
   );
 }
 
-export function RosterTable({ participants, mode }: Props) {
-  const rows = participants;
+export function RosterTable({ participants, mode, unsignedOnly = false }: Props) {
+  const rows = unsignedOnly
+    ? participants.filter((p) => p.waiverSigned === false)
+    : participants;
 
   if (rows.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500">
-        No participants on this roster yet.
+        {unsignedOnly
+          ? 'Every participant on this roster has a signed waiver.'
+          : 'No participants on this roster yet.'}
       </p>
     );
   }

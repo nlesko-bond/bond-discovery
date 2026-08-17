@@ -149,7 +149,7 @@ export function redactParticipant(
     out.position = raw.playerInfo.position;
   }
   if (visibility.showTeamRole && raw.playerInfo?.teamRole) {
-    out.teamRole = raw.playerInfo.teamRole;
+    out.teamRole = formatTeamRole(raw.playerInfo.teamRole);
   }
 
   const group = raw.group;
@@ -209,6 +209,20 @@ export function redactParticipant(
   }
 
   return out;
+}
+
+/**
+ * Bond's team-role tokens are internal enums (`league_v2_invited_player`,
+ * `league_v2_captain`); no surface should render them raw. Formatted here, at
+ * the choke point, so the table, the sheets and the CSV all agree.
+ */
+export function formatTeamRole(role: string): string {
+  const cleaned = role
+    .replace(/^league(_v\d+)?_/, '')
+    .replace(/_/g, ' ')
+    .trim();
+  if (!cleaned) return role;
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
 
 /** Sort key for jersey numbers, which are strings and include values like "00". */
