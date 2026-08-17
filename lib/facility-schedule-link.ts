@@ -83,7 +83,11 @@ function toDiscoveryEvent(slot: FeedSlot): IDiscoveryApiEvent | null {
     facilityName: slot.facilityName,
     spaceName: slot.spaceName,
     // Same slug vocabulary as program sports, so the activity filter applies.
-    sport: slot.activityName || undefined,
+    // fsv2 uses hyphens/spaces in multi-word slugs ('ice-skating'); Bond
+    // program sports use underscores ('ice_skating') — normalize to merge.
+    sport: slot.activityName
+      ? slot.activityName.toLowerCase().replace(/[\s-]+/g, '_')
+      : undefined,
     type: toDiscoveryEventType(slot.eventType),
   };
 }
