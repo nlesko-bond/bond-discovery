@@ -198,8 +198,6 @@ export function getProgramTypeLabel(type?: ProgramType | string): string {
     club_team: 'Club Team',
     drop_in: 'Drop-In',
     rental: 'Rental',
-    // Facility-schedule link events (not a Bond program type)
-    reservation: 'Reservation',
   };
   return labels[type || ''] || type || 'Program';
 }
