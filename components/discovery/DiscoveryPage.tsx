@@ -37,6 +37,7 @@ import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagMana
 import { bondAnalytics } from '@/lib/analytics';
 import { programIdsFilterMatches } from '@/lib/program-ids-filter';
 import { useFacilityScheduleEvents } from '@/components/host-shell/useFacilityScheduleEvents';
+import { extendPortalFilterOptionsWithFacilityEvents } from '@/lib/host-shell/portal-filter-options';
 
 import { HorizontalFilterBar } from './HorizontalFilterBar';
 
@@ -1048,20 +1049,25 @@ export function DiscoveryPage({
     });
 
     const facilitiesList = Array.from(facilities.values()).sort((a, b) => a.name.localeCompare(b.name));
-    
-    return {
-      facilities: facilitiesList,
-      hasMultipleFacilities: facilitiesList.length > 1,
-      sports: Array.from(sports.entries())
-        .map(([id, count]) => ({ id, label: id, count }))
-        .sort((a, b) => b.count - a.count),
-      programTypes: Array.from(programTypes.entries())
-        .map(([id, count]) => ({ id, label: id, count }))
-        .sort((a, b) => b.count - a.count),
-      programs: programs.sort((a, b) => a.name.localeCompare(b.name)),
-      sessions: sessions.sort((a, b) => a.name.localeCompare(b.name)),
-    };
-  }, [initialPrograms]);
+
+    // Fold blended facility reservations into the options (rental type +
+    // reservation activities) so the filters stay honest on linked pages.
+    return extendPortalFilterOptionsWithFacilityEvents(
+      {
+        facilities: facilitiesList,
+        hasMultipleFacilities: facilitiesList.length > 1,
+        sports: Array.from(sports.entries())
+          .map(([id, count]) => ({ id, label: id, count }))
+          .sort((a, b) => b.count - a.count),
+        programTypes: Array.from(programTypes.entries())
+          .map(([id, count]) => ({ id, label: id, count }))
+          .sort((a, b) => b.count - a.count),
+        programs: programs.sort((a, b) => a.name.localeCompare(b.name)),
+        sessions: sessions.sort((a, b) => a.name.localeCompare(b.name)),
+      },
+      facilityEvents,
+    );
+  }, [initialPrograms, facilityEvents]);
 
   /** Distinct space/resource labels from loaded schedule events (schedule filter only). */
   const scheduleSpaceOptions = useMemo(() => {
