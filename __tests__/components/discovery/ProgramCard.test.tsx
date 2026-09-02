@@ -487,6 +487,52 @@ describe('ProgramCard', () => {
       expect(screen.getByText('Spring session for youth soccer')).toBeInTheDocument();
     });
 
+    it('renders both short and long descriptions when they are distinct', () => {
+      const program = {
+        ...mockProgram,
+        sessions: [
+          {
+            ...mockSession,
+            description: 'Short blurb',
+            longDescription: 'A much longer explanation of the class content.',
+          },
+        ],
+      };
+      render(<ProgramCard program={program} config={configWithSessionDescriptions} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getByText('Short blurb')).toBeInTheDocument();
+      expect(screen.getByText('A much longer explanation of the class content.')).toBeInTheDocument();
+    });
+
+    it('drops the short description when the long one extends it', () => {
+      const program = {
+        ...mockProgram,
+        sessions: [
+          {
+            ...mockSession,
+            description: 'Intro',
+            longDescription: 'Intro with much more detail afterwards.',
+          },
+        ],
+      };
+      render(<ProgramCard program={program} config={configWithSessionDescriptions} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.queryByText('Intro')).not.toBeInTheDocument();
+      expect(screen.getByText('Intro with much more detail afterwards.')).toBeInTheDocument();
+    });
+
+    it('shows the long description only once when it equals the short one', () => {
+      const program = {
+        ...mockProgram,
+        sessions: [
+          { ...mockSession, description: 'Same text', longDescription: 'Same text' },
+        ],
+      };
+      render(<ProgramCard program={program} config={configWithSessionDescriptions} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getAllByText('Same text')).toHaveLength(1);
+    });
+
     it('renders sanitized rich-text descriptionHtml when present', () => {
       const programWithHtmlDescription = {
         ...mockProgram,
@@ -504,6 +550,83 @@ describe('ProgramCard', () => {
       fireEvent.click(screen.getByRole('button', { name: /Details/i }));
       const bold = screen.getByText('fundamentals');
       expect(bold.tagName).toBe('STRONG');
+    });
+  });
+
+  describe('showFullProgramDescription', () => {
+    it('clamps the program description to 2 lines by default', () => {
+      render(<ProgramCard program={mockProgram} config={mockConfig} />);
+      const desc = screen.getByText('Learn soccer fundamentals in a fun environment');
+      expect(desc.className).toContain('line-clamp-2');
+    });
+
+    it('removes the clamp when enabled', () => {
+      const config = {
+        ...mockConfig,
+        features: { ...mockConfig.features, showFullProgramDescription: true },
+      };
+      render(<ProgramCard program={mockProgram} config={config} />);
+      const desc = screen.getByText('Learn soccer fundamentals in a fun environment');
+      expect(desc.className).not.toContain('line-clamp-2');
+    });
+  });
+
+  describe('availability badge for uncapped sessions', () => {
+    const uncappedSession = {
+      ...mockSession,
+      capacity: undefined,
+      maxParticipants: undefined,
+      currentEnrollment: undefined,
+      spotsRemaining: undefined,
+    };
+
+    it('shows green Available when no capacity is set and registration is open', () => {
+      const program = { ...mockProgram, sessions: [uncappedSession] };
+      render(<ProgramCard program={program} config={mockConfig} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      const badge = screen.getByText('Available');
+      expect(badge.className).toContain('bg-green-100');
+    });
+
+    it('still hides the badge when registration is closed', () => {
+      const program = {
+        ...mockProgram,
+        sessions: [{ ...uncappedSession, registrationWindowStatus: 'closed' }],
+      };
+      render(<ProgramCard program={program} config={mockConfig} />);
+      fireEvent.click(screen.getAllByRole('button', { name: /Details/i })[0]);
+      expect(screen.queryByText('Available')).not.toBeInTheDocument();
+      expect(screen.getByText('Registration Closed')).toBeInTheDocument();
+    });
+
+    it('does not show the badge when availability display is disabled', () => {
+      const config = {
+        ...mockConfig,
+        features: { ...mockConfig.features, showAvailability: false },
+      };
+      const program = { ...mockProgram, sessions: [uncappedSession] };
+      render(<ProgramCard program={program} config={config} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.queryByText('Available')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('programCtaLabel', () => {
+    it('uses the default CTA label when not configured', () => {
+      render(<ProgramCard program={mockProgram} config={mockConfig} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getByText('View Program & Register')).toBeInTheDocument();
+    });
+
+    it('uses the custom CTA label when configured', () => {
+      const config = {
+        ...mockConfig,
+        features: { ...mockConfig.features, programCtaLabel: 'View Program Descriptions' },
+      };
+      render(<ProgramCard program={mockProgram} config={config} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getByText('View Program Descriptions')).toBeInTheDocument();
+      expect(screen.queryByText('View Program & Register')).not.toBeInTheDocument();
     });
   });
 });

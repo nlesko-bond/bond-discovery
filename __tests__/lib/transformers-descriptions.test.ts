@@ -36,7 +36,18 @@ describe('description handling in transformers', () => {
   it('leaves descriptionHtml undefined when the description is empty', () => {
     const session = transformSession({ id: 10, programId: 1, name: 'No copy' });
     expect(session.descriptionHtml).toBeUndefined();
+    expect(session.longDescriptionHtml).toBeUndefined();
     expect(session.description).toBeUndefined();
+  });
+
+  it('populates sanitized longDescriptionHtml on sessions', () => {
+    const session = transformSession({
+      id: 10,
+      programId: 1,
+      name: 'Ballerz',
+      longDescription: '<p>Full details with <em>emphasis</em></p><script>x()</script>',
+    });
+    expect(session.longDescriptionHtml).toBe('<p>Full details with <em>emphasis</em></p>');
   });
 
   it('flows session descriptionHtml through transformProgram', () => {
