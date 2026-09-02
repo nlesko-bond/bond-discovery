@@ -324,7 +324,7 @@ export function PageEditorProgramsSection({
               { key: 'showPricing', label: 'Show pricing information' },
               { key: 'alwaysShowDetailsButton', label: 'Keep Details button when pricing is hidden' },
               { key: 'showSessionDescriptions', label: 'Show session descriptions in program details' },
-              { key: 'showFullProgramDescription', label: 'Show full program description (no 2-line clamp)' },
+              { key: 'showFullProgramDescription', label: 'Add "Read more" to expand the program description' },
               { key: 'showAvailability', label: 'Show availability / spots remaining' },
               { key: 'showMembershipBadges', label: 'Show membership badges' },
               { key: 'showAgeGender', label: 'Show age and gender restrictions' },
