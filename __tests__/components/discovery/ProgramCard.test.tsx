@@ -553,21 +553,104 @@ describe('ProgramCard', () => {
     });
   });
 
-  describe('showFullProgramDescription', () => {
-    it('clamps the program description to 2 lines by default', () => {
+  describe('showFullProgramDescription (Read more)', () => {
+    const configExpandable = {
+      ...mockConfig,
+      features: { ...mockConfig.features, showFullProgramDescription: true },
+    };
+
+    // Simulate clamped content overflowing (jsdom reports 0 for both by default)
+    const mockOverflow = () => {
+      Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+        configurable: true,
+        get: () => 200,
+      });
+      Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+        configurable: true,
+        get: () => 100,
+      });
+    };
+    afterEach(() => {
+      delete (HTMLElement.prototype as any).scrollHeight;
+      delete (HTMLElement.prototype as any).clientHeight;
+    });
+
+    it('clamps the program description to 2 lines by default with no toggle', () => {
+      mockOverflow();
       render(<ProgramCard program={mockProgram} config={mockConfig} />);
       const desc = screen.getByText('Learn soccer fundamentals in a fun environment');
       expect(desc.className).toContain('line-clamp-2');
+      expect(screen.queryByRole('button', { name: 'Read more' })).not.toBeInTheDocument();
     });
 
-    it('removes the clamp when enabled', () => {
-      const config = {
-        ...mockConfig,
-        features: { ...mockConfig.features, showFullProgramDescription: true },
-      };
-      render(<ProgramCard program={mockProgram} config={config} />);
+    it('shows Read more when enabled and the text overflows, and expands on click', () => {
+      mockOverflow();
+      render(<ProgramCard program={mockProgram} config={configExpandable} />);
       const desc = screen.getByText('Learn soccer fundamentals in a fun environment');
+      expect(desc.className).toContain('line-clamp-2');
+      const toggle = screen.getByRole('button', { name: 'Read more' });
+      fireEvent.click(toggle);
       expect(desc.className).not.toContain('line-clamp-2');
+      expect(screen.getByRole('button', { name: 'Show less' })).toBeInTheDocument();
+    });
+
+    it('shows no toggle when the text does not overflow', () => {
+      render(<ProgramCard program={mockProgram} config={configExpandable} />);
+      expect(screen.queryByRole('button', { name: 'Read more' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('session long description View more', () => {
+    const configWithDescriptions = {
+      ...mockConfig,
+      features: { ...mockConfig.features, showSessionDescriptions: true },
+    };
+    const programLongDesc = {
+      ...mockProgram,
+      sessions: [
+        {
+          ...mockSession,
+          description: 'Short blurb',
+          longDescription: 'A very long body of text describing everything about this class.',
+        },
+      ],
+    };
+
+    afterEach(() => {
+      delete (HTMLElement.prototype as any).scrollHeight;
+      delete (HTMLElement.prototype as any).clientHeight;
+    });
+
+    it('clamps the long description with a View more toggle when it overflows', () => {
+      Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+        configurable: true,
+        get: () => 200,
+      });
+      Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+        configurable: true,
+        get: () => 100,
+      });
+      render(<ProgramCard program={programLongDesc} config={configWithDescriptions} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      const body = screen.getByText(
+        'A very long body of text describing everything about this class.',
+      );
+      expect(body.parentElement?.className).toContain('line-clamp-4');
+      const toggle = screen.getByRole('button', { name: 'View more' });
+      fireEvent.click(toggle);
+      expect(body.parentElement?.className).not.toContain('line-clamp-4');
+      expect(screen.getByRole('button', { name: 'View less' })).toBeInTheDocument();
+      // Short description stays fully visible with no toggle of its own
+      expect(screen.getByText('Short blurb')).toBeInTheDocument();
+    });
+
+    it('shows no View more toggle when the long description fits', () => {
+      render(<ProgramCard program={programLongDesc} config={configWithDescriptions} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(
+        screen.getByText('A very long body of text describing everything about this class.'),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'View more' })).not.toBeInTheDocument();
     });
   });
 

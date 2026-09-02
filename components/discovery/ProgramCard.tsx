@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { 
   ChevronDown, 
   Users, 
@@ -190,14 +190,26 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
           </p>
         )}
 
-        {/* Description (clamped to 2 lines unless showFullProgramDescription) */}
+        {/* Description: clamped to 2 lines; showFullProgramDescription adds a
+            Read more toggle (shown only when the text actually overflows) */}
         {program.description && (
-          <p className={cn(
-            'text-sm text-gray-600 mb-4',
-            !config.features.showFullProgramDescription && 'line-clamp-2'
-          )}>
-            {program.description}
-          </p>
+          config.features.showFullProgramDescription ? (
+            <div className="mb-4">
+              <ExpandableText
+                clampClass="line-clamp-2"
+                className="text-sm text-gray-600"
+                accentColor={secondaryColor}
+                moreLabel="Read more"
+                lessLabel="Show less"
+              >
+                {program.description}
+              </ExpandableText>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+              {program.description}
+            </p>
+          )
         )}
 
         {/* Stats Row */}
@@ -325,8 +337,69 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
   );
 }
 
+/**
+ * Clamped text with a View more / View less toggle. The toggle renders only
+ * when the collapsed content actually overflows its clamp, so short copy shows
+ * no control at all. When `html` is set it renders via dangerouslySetInnerHTML
+ * (callers must pass sanitized markup from lib/safe-html.ts); otherwise
+ * children render as-is.
+ */
+function ExpandableText({
+  clampClass,
+  className,
+  accentColor,
+  moreLabel,
+  lessLabel,
+  html,
+  children,
+}: {
+  clampClass: string;
+  className?: string;
+  accentColor: string;
+  moreLabel: string;
+  lessLabel: string;
+  html?: string;
+  children?: React.ReactNode;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [overflows, setOverflows] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (expanded) return; // keep the toggle visible while expanded
+    const el = contentRef.current;
+    if (!el) return;
+    const check = () => setOverflows(el.scrollHeight > el.clientHeight + 1);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, [expanded]);
+
+  const contentClass = cn(className, !expanded && clampClass);
+
+  return (
+    <div>
+      {html ? (
+        <div ref={contentRef} className={contentClass} dangerouslySetInnerHTML={{ __html: html }} />
+      ) : (
+        <div ref={contentRef} className={contentClass}>{children}</div>
+      )}
+      {(overflows || expanded) && (
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="mt-1 text-xs font-semibold hover:opacity-80"
+          style={{ color: accentColor }}
+        >
+          {expanded ? lessLabel : moreLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // Session card component
-function SessionCard({ 
+function SessionCard({
   session,
   config,
   programLinkSEO,
@@ -526,14 +599,16 @@ function SessionCard({
             )
           )}
           {showLongDescription && (
-            session.longDescriptionHtml ? (
-              <div
-                className="space-y-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_ul]:list-disc [&_ul]:pl-4"
-                dangerouslySetInnerHTML={{ __html: session.longDescriptionHtml }}
-              />
-            ) : (
+            <ExpandableText
+              clampClass="line-clamp-4"
+              className="space-y-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_ul]:list-disc [&_ul]:pl-4"
+              accentColor={secondaryColor}
+              moreLabel="View more"
+              lessLabel="View less"
+              html={session.longDescriptionHtml}
+            >
               <p>{longDescription}</p>
-            )
+            </ExpandableText>
           )}
         </div>
       )}
