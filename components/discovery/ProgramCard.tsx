@@ -190,9 +190,12 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
           </p>
         )}
 
-        {/* Description */}
+        {/* Description (clamped to 2 lines unless showFullProgramDescription) */}
         {program.description && (
-          <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+          <p className={cn(
+            'text-sm text-gray-600 mb-4',
+            !config.features.showFullProgramDescription && 'line-clamp-2'
+          )}>
             {program.description}
           </p>
         )}
@@ -311,7 +314,7 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
                   });
                 }}
               >
-                <span>{allSessionsClosed ? 'View Program' : 'View Program & Register'}</span>
+                <span>{config.features.programCtaLabel || (allSessionsClosed ? 'View Program' : 'View Program & Register')}</span>
                 <ExternalLink size={16} />
               </a>
             </div>
@@ -347,9 +350,24 @@ function SessionCard({
   const pathname = usePathname();
   // Auto-expand pricing if there's only one session (autoExpandPricing=true)
   const [showPricing, setShowPricing] = useState(autoExpandPricing);
-  const availability = getAvailabilityInfo(session.spotsRemaining, session.maxParticipants || session.capacity);
+  const sessionCapacity = session.maxParticipants || session.capacity;
+  const availability = getAvailabilityInfo(session.spotsRemaining, sessionCapacity);
+  // No capacity configured means unlimited enrollment — surface it as Available
+  // (the registration-window guard on the badge still applies).
+  const availabilityBadge = sessionCapacity === undefined
+    ? { label: 'Available', color: 'green' as const }
+    : availability;
   const products = (session.products || []).filter((p) => !isCompedProduct(p));
-  
+
+  // Session descriptions: show both, but drop the short one when the long one
+  // repeats or extends it (same dedup rule as the v2 portal), and drop the
+  // long one when it just duplicates the short.
+  const shortDescription = session.description?.trim();
+  const longDescription = session.longDescription?.trim();
+  const showLongDescription = !!longDescription && longDescription !== shortDescription;
+  const showShortDescription =
+    !!shortDescription && !(showLongDescription && longDescription!.startsWith(shortDescription));
+
   // Dynamic colors from config
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
   
@@ -400,15 +418,15 @@ function SessionCard({
                 Coming Soon
               </span>
             )}
-            {config.features.showAvailability && availability.label && !isRegistrationUnavailable && (
+            {config.features.showAvailability && availabilityBadge.label && !isRegistrationUnavailable && (
               <span className={cn(
                 'text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap',
-                availability.color === 'red' && 'bg-red-100 text-red-700',
-                availability.color === 'yellow' && 'bg-amber-100 text-amber-700',
-                availability.color === 'green' && 'bg-green-100 text-green-700',
-                availability.color === 'gray' && 'bg-gray-100 text-gray-600'
+                availabilityBadge.color === 'red' && 'bg-red-100 text-red-700',
+                availabilityBadge.color === 'yellow' && 'bg-amber-100 text-amber-700',
+                availabilityBadge.color === 'green' && 'bg-green-100 text-green-700',
+                availabilityBadge.color === 'gray' && 'bg-gray-100 text-gray-600'
               )}>
-                {isWaitlistJoinable ? 'Waitlist Open' : availability.label}
+                {isWaitlistJoinable ? 'Waitlist Open' : availabilityBadge.label}
               </span>
             )}
           </div>
@@ -492,17 +510,30 @@ function SessionCard({
         </div>
       </div>
 
-      {/* Session Description (opt-in via showSessionDescriptions) */}
-      {config.features.showSessionDescriptions && (session.descriptionHtml || session.description) && (
-        <div className="mt-2 text-xs leading-relaxed text-gray-600">
-          {session.descriptionHtml ? (
-            <div
-              className="space-y-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_ul]:list-disc [&_ul]:pl-4"
-              // Sanitized allowlist HTML from lib/safe-html.ts, never raw Bond API markup
-              dangerouslySetInnerHTML={{ __html: session.descriptionHtml }}
-            />
-          ) : (
-            <p>{session.description}</p>
+      {/* Session Descriptions (opt-in via showSessionDescriptions): full short +
+          long text, deduplicated when the long one repeats or extends the short. */}
+      {config.features.showSessionDescriptions && (showShortDescription || showLongDescription) && (
+        <div className="mt-2 space-y-1.5 text-xs leading-relaxed text-gray-600">
+          {showShortDescription && (
+            session.descriptionHtml ? (
+              <div
+                className="space-y-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_ul]:list-disc [&_ul]:pl-4"
+                // Sanitized allowlist HTML from lib/safe-html.ts, never raw Bond API markup
+                dangerouslySetInnerHTML={{ __html: session.descriptionHtml }}
+              />
+            ) : (
+              <p>{shortDescription}</p>
+            )
+          )}
+          {showLongDescription && (
+            session.longDescriptionHtml ? (
+              <div
+                className="space-y-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_ul]:list-disc [&_ul]:pl-4"
+                dangerouslySetInnerHTML={{ __html: session.longDescriptionHtml }}
+              />
+            ) : (
+              <p>{longDescription}</p>
+            )
           )}
         </div>
       )}

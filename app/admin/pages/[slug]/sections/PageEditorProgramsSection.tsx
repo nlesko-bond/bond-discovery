@@ -324,6 +324,7 @@ export function PageEditorProgramsSection({
               { key: 'showPricing', label: 'Show pricing information' },
               { key: 'alwaysShowDetailsButton', label: 'Keep Details button when pricing is hidden' },
               { key: 'showSessionDescriptions', label: 'Show session descriptions in program details' },
+              { key: 'showFullProgramDescription', label: 'Show full program description (no 2-line clamp)' },
               { key: 'showAvailability', label: 'Show availability / spots remaining' },
               { key: 'showMembershipBadges', label: 'Show membership badges' },
               { key: 'showAgeGender', label: 'Show age and gender restrictions' },
@@ -361,6 +362,29 @@ export function PageEditorProgramsSection({
               </label>
             );
           })}
+
+          <label className="block pt-2 text-sm text-gray-700">
+            Program details button label
+            <input
+              type="text"
+              className="input mt-1"
+              value={config.features.programCtaLabel || ''}
+              onChange={(event) =>
+                setConfig({
+                  ...config,
+                  features: {
+                    ...config.features,
+                    programCtaLabel: event.target.value.trim() ? event.target.value : undefined,
+                  },
+                })
+              }
+              placeholder="View Program & Register"
+            />
+            <p className="mt-0.5 text-xs text-gray-500">
+              Bottom button in expanded program details. Empty = default (&quot;View Program&quot; when
+              registration is closed). A custom label is used in both states.
+            </p>
+          </label>
 
           <label className="flex items-start gap-3">
             <input

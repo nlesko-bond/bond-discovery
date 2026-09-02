@@ -101,6 +101,8 @@ export interface Session {
    * built by lib/safe-html.ts) — safe for dangerouslySetInnerHTML.
    */
   descriptionHtml?: string;
+  /** Sanitized rich-text HTML of `longDescription`, same contract as descriptionHtml. */
+  longDescriptionHtml?: string;
 
   // Links
   linkSEO?: string;
@@ -467,10 +469,21 @@ export interface FeatureConfig {
    */
   alwaysShowDetailsButton?: boolean;
   /**
-   * Renders each session's short description inside the expanded program
-   * details list on the classic template. Default false (hidden).
+   * Renders each session's descriptions (short + long, deduplicated) inside
+   * the expanded program details list on the classic template. Default false.
    */
   showSessionDescriptions?: boolean;
+  /**
+   * Removes the 2-line clamp on the program-card description so the full
+   * short description shows. Default false (clamped, legacy behavior).
+   */
+  showFullProgramDescription?: boolean;
+  /**
+   * Custom label for the CTA at the bottom of expanded program details.
+   * Default: "View Program & Register" ("View Program" when every session's
+   * registration is closed). When set, the custom label is used in both states.
+   */
+  programCtaLabel?: string;
   showAvailability: boolean;
   showMembershipBadges: boolean;
   showAgeGender: boolean;

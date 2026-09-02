@@ -37,8 +37,12 @@ export interface IPageConfig {
     showPricing: boolean;
     /** Keeps the program-card Details expander when showPricing is off. */
     alwaysShowDetailsButton?: boolean;
-    /** Shows each session's short description inside expanded program details. */
+    /** Shows each session's descriptions inside expanded program details. */
     showSessionDescriptions?: boolean;
+    /** Removes the 2-line clamp on the program-card description. */
+    showFullProgramDescription?: boolean;
+    /** Custom label for the expanded-details CTA (default "View Program & Register"). */
+    programCtaLabel?: string;
     showAvailability: boolean;
     showMembershipBadges: boolean;
     showAgeGender: boolean;

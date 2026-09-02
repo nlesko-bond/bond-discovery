@@ -156,6 +156,7 @@ export function transformSession(raw: any): Session {
     description: stripHtml(raw.description),
     longDescription: stripHtml(raw.longDescription),
     descriptionHtml: sanitizeDescriptionHtml(raw.description),
+    longDescriptionHtml: sanitizeDescriptionHtml(raw.longDescription),
 
     // Registration link
     linkSEO: raw.linkSEO,
