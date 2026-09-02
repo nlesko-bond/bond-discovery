@@ -432,14 +432,26 @@ function SessionCard({
     : availability;
   const products = (session.products || []).filter((p) => !isCompedProduct(p));
 
-  // Session descriptions: show both, but drop the short one when the long one
-  // repeats or extends it (same dedup rule as the v2 portal), and drop the
-  // long one when it just duplicates the short.
+  // Session descriptions: short and long are independently toggleable, with
+  // the legacy showSessionDescriptions acting as the fallback for both. When
+  // both render, dedup like the v2 portal: identical texts show once, and a
+  // long text that extends the short one replaces it.
+  const legacySessionDescriptions = config.features.showSessionDescriptions === true;
+  const shortEnabled =
+    config.features.showSessionShortDescription ?? legacySessionDescriptions;
+  const longEnabled =
+    config.features.showSessionLongDescription ?? legacySessionDescriptions;
   const shortDescription = session.description?.trim();
   const longDescription = session.longDescription?.trim();
-  const showLongDescription = !!longDescription && longDescription !== shortDescription;
-  const showShortDescription =
-    !!shortDescription && !(showLongDescription && longDescription!.startsWith(shortDescription));
+  let showShortDescription = shortEnabled && !!shortDescription;
+  let showLongDescription = longEnabled && !!longDescription;
+  if (showShortDescription && showLongDescription) {
+    if (longDescription === shortDescription) {
+      showLongDescription = false;
+    } else if (longDescription!.startsWith(shortDescription!)) {
+      showShortDescription = false;
+    }
+  }
 
   // Dynamic colors from config
   const secondaryColor = config.branding.secondaryColor || '#6366F1';
@@ -583,9 +595,8 @@ function SessionCard({
         </div>
       </div>
 
-      {/* Session Descriptions (opt-in via showSessionDescriptions): full short +
-          long text, deduplicated when the long one repeats or extends the short. */}
-      {config.features.showSessionDescriptions && (showShortDescription || showLongDescription) && (
+      {/* Session Descriptions (opt-in via the session description checkboxes) */}
+      {(showShortDescription || showLongDescription) && (
         <div className="mt-2 space-y-1.5 text-xs leading-relaxed text-gray-600">
           {showShortDescription && (
             session.descriptionHtml ? (

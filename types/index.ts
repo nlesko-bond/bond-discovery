@@ -469,10 +469,21 @@ export interface FeatureConfig {
    */
   alwaysShowDetailsButton?: boolean;
   /**
-   * Renders each session's descriptions (short + long, deduplicated) inside
-   * the expanded program details list on the classic template. Default false.
+   * Legacy master switch for session descriptions in expanded program
+   * details. Acts as the fallback for the two granular flags below when they
+   * are unset. Default false.
    */
   showSessionDescriptions?: boolean;
+  /**
+   * Shows each session's short description in expanded program details.
+   * Unset falls back to `showSessionDescriptions`.
+   */
+  showSessionShortDescription?: boolean;
+  /**
+   * Shows each session's long description (4-line clamp with View more) in
+   * expanded program details. Unset falls back to `showSessionDescriptions`.
+   */
+  showSessionLongDescription?: boolean;
   /**
    * Removes the 2-line clamp on the program-card description so the full
    * short description shows. Default false (clamped, legacy behavior).

@@ -323,7 +323,8 @@ export function PageEditorProgramsSection({
             [
               { key: 'showPricing', label: 'Show pricing information' },
               { key: 'alwaysShowDetailsButton', label: 'Keep Details button when pricing is hidden' },
-              { key: 'showSessionDescriptions', label: 'Show session descriptions in program details' },
+              { key: 'showSessionShortDescription', label: 'Show session short description in program details' },
+              { key: 'showSessionLongDescription', label: 'Show session long description in program details' },
               { key: 'showFullProgramDescription', label: 'Add "Read more" to expand the program description' },
               { key: 'showAvailability', label: 'Show availability / spots remaining' },
               { key: 'showMembershipBadges', label: 'Show membership badges' },
@@ -344,7 +345,12 @@ export function PageEditorProgramsSection({
               option.key === 'showWaitlist' ||
               option.key === 'showScheduleEventType'
                 ? config.features[option.key] !== false
-                : Boolean(config.features[option.key]);
+                : option.key === 'showSessionShortDescription' ||
+                    option.key === 'showSessionLongDescription'
+                  ? Boolean(
+                      config.features[option.key] ?? config.features.showSessionDescriptions,
+                    )
+                  : Boolean(config.features[option.key]);
             return (
               <label key={option.key} className="flex items-center gap-3">
                 <input
