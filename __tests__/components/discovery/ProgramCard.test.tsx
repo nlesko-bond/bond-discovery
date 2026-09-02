@@ -533,6 +533,77 @@ describe('ProgramCard', () => {
       expect(screen.getAllByText('Same text')).toHaveLength(1);
     });
 
+    it('shows only the short description when just the short checkbox is on', () => {
+      const config = {
+        ...mockConfig,
+        features: { ...mockConfig.features, showSessionShortDescription: true },
+      };
+      const program = {
+        ...mockProgram,
+        sessions: [
+          { ...mockSession, description: 'Short blurb', longDescription: 'Long body text here.' },
+        ],
+      };
+      render(<ProgramCard program={program} config={config} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getByText('Short blurb')).toBeInTheDocument();
+      expect(screen.queryByText('Long body text here.')).not.toBeInTheDocument();
+    });
+
+    it('shows only the long description when just the long checkbox is on', () => {
+      const config = {
+        ...mockConfig,
+        features: { ...mockConfig.features, showSessionLongDescription: true },
+      };
+      const program = {
+        ...mockProgram,
+        sessions: [
+          { ...mockSession, description: 'Short blurb', longDescription: 'Long body text here.' },
+        ],
+      };
+      render(<ProgramCard program={program} config={config} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.queryByText('Short blurb')).not.toBeInTheDocument();
+      expect(screen.getByText('Long body text here.')).toBeInTheDocument();
+    });
+
+    it('long-only mode still shows text identical to the short description', () => {
+      const config = {
+        ...mockConfig,
+        features: { ...mockConfig.features, showSessionLongDescription: true },
+      };
+      const program = {
+        ...mockProgram,
+        sessions: [
+          { ...mockSession, description: 'Same text', longDescription: 'Same text' },
+        ],
+      };
+      render(<ProgramCard program={program} config={config} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getAllByText('Same text')).toHaveLength(1);
+    });
+
+    it('explicit granular value overrides the legacy master switch', () => {
+      const config = {
+        ...mockConfig,
+        features: {
+          ...mockConfig.features,
+          showSessionDescriptions: true,
+          showSessionLongDescription: false,
+        },
+      };
+      const program = {
+        ...mockProgram,
+        sessions: [
+          { ...mockSession, description: 'Short blurb', longDescription: 'Long body text here.' },
+        ],
+      };
+      render(<ProgramCard program={program} config={config} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getByText('Short blurb')).toBeInTheDocument();
+      expect(screen.queryByText('Long body text here.')).not.toBeInTheDocument();
+    });
+
     it('renders sanitized rich-text descriptionHtml when present', () => {
       const programWithHtmlDescription = {
         ...mockProgram,

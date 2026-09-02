@@ -37,8 +37,12 @@ export interface IPageConfig {
     showPricing: boolean;
     /** Keeps the program-card Details expander when showPricing is off. */
     alwaysShowDetailsButton?: boolean;
-    /** Shows each session's descriptions inside expanded program details. */
+    /** Legacy master switch for session descriptions; fallback for the granular flags. */
     showSessionDescriptions?: boolean;
+    /** Shows each session's short description (falls back to showSessionDescriptions). */
+    showSessionShortDescription?: boolean;
+    /** Shows each session's long description (falls back to showSessionDescriptions). */
+    showSessionLongDescription?: boolean;
     /** Adds a Read more toggle to the clamped program-card description. */
     showFullProgramDescription?: boolean;
     /** Custom label for the expanded-details CTA (default "View Program & Register"). */
