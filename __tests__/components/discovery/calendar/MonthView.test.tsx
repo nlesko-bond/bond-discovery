@@ -82,9 +82,10 @@ describe('MonthView', () => {
         />
       );
       
-      // Today's date should be present
+      // Today's date should be present - use getAllByText since adjacent-month
+      // cells can repeat the same day number (e.g. Sep 2 and Oct 2)
       const todayNum = String(today.getDate());
-      expect(screen.getByText(todayNum)).toBeInTheDocument();
+      expect(screen.getAllByText(todayNum).length).toBeGreaterThan(0);
     });
   });
 

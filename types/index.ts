@@ -96,7 +96,12 @@ export interface Session {
   name?: string;
   description?: string;
   longDescription?: string;
-  
+  /**
+   * Sanitized rich-text HTML of `description` (allowlisted bare tags only,
+   * built by lib/safe-html.ts) — safe for dangerouslySetInnerHTML.
+   */
+  descriptionHtml?: string;
+
   // Links
   linkSEO?: string;
   
@@ -455,6 +460,17 @@ export enum PortalSessionLayoutEnum {
 
 export interface FeatureConfig {
   showPricing: boolean;
+  /**
+   * Keeps the program-card "Details" expander visible when `showPricing` is
+   * off. Default false = legacy behavior, where hiding pricing also removed
+   * the Details button (and with it access to the sessions list).
+   */
+  alwaysShowDetailsButton?: boolean;
+  /**
+   * Renders each session's short description inside the expanded program
+   * details list on the classic template. Default false (hidden).
+   */
+  showSessionDescriptions?: boolean;
   showAvailability: boolean;
   showMembershipBadges: boolean;
   showAgeGender: boolean;

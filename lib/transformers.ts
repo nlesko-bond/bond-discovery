@@ -9,6 +9,7 @@ import {
   WeekSchedule,
   Media
 } from '@/types';
+import { sanitizeDescriptionHtml } from '@/lib/safe-html';
 import { 
   format, 
   parseISO, 
@@ -154,7 +155,8 @@ export function transformSession(raw: any): Session {
     name: raw.name,
     description: stripHtml(raw.description),
     longDescription: stripHtml(raw.longDescription),
-    
+    descriptionHtml: sanitizeDescriptionHtml(raw.description),
+
     // Registration link
     linkSEO: raw.linkSEO,
     
@@ -545,6 +547,9 @@ export function buildWeekSchedules(events: CalendarEvent[], weeksToShow: number 
 
 function stripHtml(html?: string): string | undefined {
   if (!html) return undefined;
+  // The first six replacements are the long-standing chain — kept verbatim so
+  // existing live-page text is byte-identical. The appended replacements only
+  // decode entities that previously rendered literally (e.g. "&ndash;").
   return html
     .replace(/<[^>]*>/g, '')
     .replace(/&nbsp;/g, ' ')
@@ -553,6 +558,26 @@ function stripHtml(html?: string): string | undefined {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/&ndash;/g, '–')
+    .replace(/&mdash;/g, '—')
+    .replace(/&lsquo;/g, '‘')
+    .replace(/&rsquo;/g, '’')
+    .replace(/&ldquo;/g, '“')
+    .replace(/&rdquo;/g, '”')
+    .replace(/&hellip;/g, '…')
+    .replace(/&bull;/g, '•')
+    .replace(/&#(\d+);/g, (match, dec: string) => {
+      const code = Number.parseInt(dec, 10);
+      return Number.isFinite(code) && code > 0 && code <= 0x10ffff
+        ? String.fromCodePoint(code)
+        : match;
+    })
+    .replace(/&#x([0-9a-fA-F]+);/g, (match, hex: string) => {
+      const code = Number.parseInt(hex, 16);
+      return Number.isFinite(code) && code > 0 && code <= 0x10ffff
+        ? String.fromCodePoint(code)
+        : match;
+    })
     .trim() || undefined;
 }
 

@@ -216,12 +216,12 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
           )}
         </div>
 
-        {/* Pricing Section */}
-        {config.features.showPricing && (
+        {/* Pricing Section (alwaysShowDetailsButton keeps the Details expander when pricing is hidden) */}
+        {(config.features.showPricing || config.features.alwaysShowDetailsButton) && (
           <div className="pt-4 border-t border-gray-100">
             <div className="flex items-end justify-between">
               <div>
-                {pricingInfo.hasPrice ? (
+                {config.features.showPricing && (pricingInfo.hasPrice ? (
                   <div className="space-y-1">
                     {/* Regular price */}
                     <div className="flex items-baseline gap-2">
@@ -248,7 +248,7 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
                   </div>
                 ) : (
                   <span className="text-sm text-gray-500">See pricing options</span>
-                )}
+                ))}
               </div>
               
               <button
@@ -491,6 +491,21 @@ function SessionCard({
           )}
         </div>
       </div>
+
+      {/* Session Description (opt-in via showSessionDescriptions) */}
+      {config.features.showSessionDescriptions && (session.descriptionHtml || session.description) && (
+        <div className="mt-2 text-xs leading-relaxed text-gray-600">
+          {session.descriptionHtml ? (
+            <div
+              className="space-y-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_ul]:list-disc [&_ul]:pl-4"
+              // Sanitized allowlist HTML from lib/safe-html.ts, never raw Bond API markup
+              dangerouslySetInnerHTML={{ __html: session.descriptionHtml }}
+            />
+          ) : (
+            <p>{session.description}</p>
+          )}
+        </div>
+      )}
 
       {/* Products/Pricing Carousel - Show when toggled via "View Pricing" button */}
       {config.features.showPricing && showPricing && products.length > 0 && (

@@ -429,4 +429,81 @@ describe('ProgramCard', () => {
       expect(screen.queryByText(/\d+ spots? left/)).not.toBeInTheDocument();
     });
   });
+
+  describe('alwaysShowDetailsButton', () => {
+    const configPricingHidden = {
+      ...mockConfig,
+      features: { ...mockConfig.features, showPricing: false },
+    };
+    const configDetailsWithoutPricing = {
+      ...mockConfig,
+      features: {
+        ...mockConfig.features,
+        showPricing: false,
+        alwaysShowDetailsButton: true,
+      },
+    };
+
+    it('legacy behavior: hiding pricing also hides the Details button', () => {
+      render(<ProgramCard program={mockProgram} config={configPricingHidden} />);
+      expect(screen.queryByRole('button', { name: /Details/i })).not.toBeInTheDocument();
+      expect(screen.queryByText('From')).not.toBeInTheDocument();
+    });
+
+    it('keeps the Details button without any price when enabled', () => {
+      render(<ProgramCard program={mockProgram} config={configDetailsWithoutPricing} />);
+      expect(screen.queryByText('From')).not.toBeInTheDocument();
+      expect(screen.queryByText('$99.99')).not.toBeInTheDocument();
+      expect(screen.queryByText('See pricing options')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Details/i })).toBeInTheDocument();
+    });
+
+    it('expands sessions via Details while pricing stays hidden', () => {
+      render(<ProgramCard program={mockProgram} config={configDetailsWithoutPricing} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getByText('Spring 2026 Session')).toBeInTheDocument();
+      // No per-session pricing toggle or inline prices either
+      expect(screen.queryByRole('button', { name: /Pricing/ })).not.toBeInTheDocument();
+      expect(screen.queryByText('$99.99')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('showSessionDescriptions', () => {
+    const configWithSessionDescriptions = {
+      ...mockConfig,
+      features: { ...mockConfig.features, showSessionDescriptions: true },
+    };
+
+    it('does not render session descriptions by default', () => {
+      render(<ProgramCard program={mockProgram} config={mockConfig} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getByText('Spring 2026 Session')).toBeInTheDocument();
+      expect(screen.queryByText('Spring session for youth soccer')).not.toBeInTheDocument();
+    });
+
+    it('renders the plain-text session description when enabled', () => {
+      render(<ProgramCard program={mockProgram} config={configWithSessionDescriptions} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getByText('Spring session for youth soccer')).toBeInTheDocument();
+    });
+
+    it('renders sanitized rich-text descriptionHtml when present', () => {
+      const programWithHtmlDescription = {
+        ...mockProgram,
+        sessions: [
+          {
+            ...mockSession,
+            description: 'Ages 5–7 fundamentals',
+            descriptionHtml: '<p>Ages 5–7 <strong>fundamentals</strong></p>',
+          },
+        ],
+      };
+      render(
+        <ProgramCard program={programWithHtmlDescription} config={configWithSessionDescriptions} />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      const bold = screen.getByText('fundamentals');
+      expect(bold.tagName).toBe('STRONG');
+    });
+  });
 });
