@@ -35,6 +35,10 @@ export interface IPageConfig {
   gtmId?: string;
   features: {
     showPricing: boolean;
+    /** Keeps the program-card Details expander when showPricing is off. */
+    alwaysShowDetailsButton?: boolean;
+    /** Shows each session's short description inside expanded program details. */
+    showSessionDescriptions?: boolean;
     showAvailability: boolean;
     showMembershipBadges: boolean;
     showAgeGender: boolean;

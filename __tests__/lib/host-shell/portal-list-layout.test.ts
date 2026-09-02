@@ -41,8 +41,12 @@ function makeAgeCard(
 
 describe('derivePortalEventHorizonMonths', () => {
   it('extends horizon when sessions end beyond the default window', () => {
+    // Relative to now so the fixture never drifts inside the default window
+    // as real time advances (a fixed 2026 date rotted this test before).
+    const sixMonthsOut = new Date();
+    sixMonthsOut.setMonth(sixMonthsOut.getMonth() + 6);
     const horizon = derivePortalEventHorizonMonths([
-      makeCard('2026-11-07T00:00:00.000Z'),
+      makeCard(sixMonthsOut.toISOString()),
     ]);
     expect(horizon).toBeGreaterThan(3);
   });
