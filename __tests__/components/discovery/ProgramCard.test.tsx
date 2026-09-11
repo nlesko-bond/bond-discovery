@@ -765,6 +765,155 @@ describe('ProgramCard', () => {
     });
   });
 
+  describe('program card title (programCardFullTitle)', () => {
+    it('clamps the program name to 2 lines by default', () => {
+      render(<ProgramCard program={mockProgram} config={mockConfig} />);
+      const title = screen.getByText('Youth Soccer Camp').closest('h3');
+      expect(title?.className).toContain('line-clamp-2');
+    });
+
+    it('drops the clamp when programCardFullTitle is on', () => {
+      const config = {
+        ...mockConfig,
+        features: { ...mockConfig.features, programCardFullTitle: true },
+      };
+      render(<ProgramCard program={mockProgram} config={config} />);
+      const title = screen.getByText('Youth Soccer Camp').closest('h3');
+      expect(title?.className).not.toContain('line-clamp-2');
+    });
+  });
+
+  describe('session card title (sessionCardFullTitle)', () => {
+    it('truncates session titles to one line by default', () => {
+      render(<ProgramCard program={mockProgram} config={mockConfig} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getByText('Spring 2026 Session').className).toContain('truncate');
+    });
+
+    it('wraps session titles full-width above the Register row when sessionCardFullTitle is on', () => {
+      const config = {
+        ...mockConfig,
+        features: { ...mockConfig.features, sessionCardFullTitle: true },
+      };
+      render(<ProgramCard program={mockProgram} config={config} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      const title = screen.getByText('Spring 2026 Session');
+      expect(title.className).not.toContain('truncate');
+      expect(title.className).toContain('break-words');
+      // Rendered once, as a direct child of the card (not inside the flex row
+      // that shares width with the Register button).
+      expect(screen.getAllByText('Spring 2026 Session')).toHaveLength(1);
+      const registerLink = screen.getAllByRole('link', { name: /Register/i })[0];
+      expect(title.parentElement).toBe(registerLink.closest('.flex.items-center.justify-between')?.parentElement);
+    });
+  });
+
+  describe('session card age range (sessionCardShowAgeRange)', () => {
+    it('shows no age range on session cards by default', () => {
+      render(<ProgramCard program={mockProgram} config={mockConfig} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.queryByTestId('session-age-range')).not.toBeInTheDocument();
+    });
+
+    it('shows the session age range, falling back to the program range', () => {
+      const config = {
+        ...mockConfig,
+        features: { ...mockConfig.features, sessionCardShowAgeRange: true },
+      };
+      const program = {
+        ...mockProgram,
+        sessions: [
+          { ...mockSession, minAge: 8, maxAge: 10 },
+          mockSessionFull, // no session ages → program's 5-12
+        ],
+      };
+      render(<ProgramCard program={program} config={config} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      const ranges = screen.getAllByTestId('session-age-range').map((el) => el.textContent);
+      expect(ranges).toEqual(['8 yrs - 10 yrs', '5 yrs - 12 yrs']);
+    });
+  });
+
+  describe('session card facility (sessionCardShowFacility)', () => {
+    it('shows the session facility by default', () => {
+      render(<ProgramCard program={mockProgram} config={mockConfig} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getAllByText('Main Field').length).toBeGreaterThan(0);
+    });
+
+    it('hides the session facility when turned off', () => {
+      const config = {
+        ...mockConfig,
+        features: { ...mockConfig.features, sessionCardShowFacility: false },
+      };
+      render(<ProgramCard program={mockProgram} config={config} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.queryByText('Main Field')).not.toBeInTheDocument();
+      // Program-level facility line is unaffected
+      expect(screen.getByText('Main Sports Complex')).toBeInTheDocument();
+    });
+  });
+
+  describe('session card price (sessionCardPriceMode)', () => {
+    // mockSession has two products (no inline price by default); mockSessionFull has one.
+    const twoOptionProgram = { ...mockProgram, sessions: [mockSession] };
+    const oneOptionProgram = { ...mockProgram, sessions: [mockSessionFull] };
+    const withMode = (mode: string) => ({
+      ...mockConfig,
+      features: { ...mockConfig.features, sessionCardPriceMode: mode as never },
+    });
+
+    it('default: inline price only when the session has a single option', () => {
+      render(<ProgramCard program={oneOptionProgram} config={mockConfig} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getByTestId('session-inline-price')).toHaveTextContent('$99.99');
+    });
+
+    it('default: no inline price when the session has several options', () => {
+      render(<ProgramCard program={twoOptionProgram} config={mockConfig} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.queryByTestId('session-inline-price')).not.toBeInTheDocument();
+      // The Pricing options toggle is still there
+      expect(screen.getByRole('button', { name: /Pricing/ })).toBeInTheDocument();
+    });
+
+    it('hidden: removes the inline price but keeps the Pricing toggle', () => {
+      render(<ProgramCard program={oneOptionProgram} config={withMode('hidden')} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.queryByTestId('session-inline-price')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Pricing/ })).toBeInTheDocument();
+    });
+
+    it('range: summarizes public options across the session', () => {
+      const program = {
+        ...mockProgram,
+        sessions: [
+          {
+            ...mockSession,
+            products: [
+              { ...mockSession.products![0], prices: [{ ...mockSession.products![0].prices[0], price: 50, amount: 50 }] },
+              { ...mockSession.products![0], id: 'product-9', prices: [{ ...mockSession.products![0].prices[0], id: 'p9', price: 120, amount: 120 }] },
+              mockSession.products![1], // member product, ignored
+            ],
+          },
+        ],
+      };
+      render(<ProgramCard program={program} config={withMode('range')} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getByTestId('session-inline-price')).toHaveTextContent('$50 – $120');
+    });
+
+    it('never shows an inline price when showPricing is off', () => {
+      const config = {
+        ...mockConfig,
+        features: { ...mockConfig.features, showPricing: false, alwaysShowDetailsButton: true, sessionCardPriceMode: 'range' as const },
+      };
+      render(<ProgramCard program={oneOptionProgram} config={config} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.queryByTestId('session-inline-price')).not.toBeInTheDocument();
+    });
+  });
+
   describe('programCtaLabel', () => {
     it('uses the default CTA label when not configured', () => {
       render(<ProgramCard program={mockProgram} config={mockConfig} />);

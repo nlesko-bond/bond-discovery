@@ -1,6 +1,7 @@
 import { createBondClient, resolveBondApiKey } from '@/lib/bond-client';
 import { transformProgram } from '@/lib/transformers';
 import { cachedSWR, programsCacheKey } from '@/lib/cache';
+import { sortProgramsForDisplay } from '@/lib/program-sort';
 import {
   filterProgramsByPageConfig,
   filterProgramsWithActiveSessions,
@@ -102,5 +103,7 @@ export async function fetchProgramsForDiscoveryPage(
 
   filtered = filterProgramsByPageConfig(filtered, config);
 
-  return filtered;
+  // Display order is applied after the per-org cache so the cached payload
+  // stays in Bond's order and a config change never needs invalidation.
+  return sortProgramsForDisplay(filtered, config.features);
 }

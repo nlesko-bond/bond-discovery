@@ -67,16 +67,44 @@ export interface Program {
   facility?: Facility;
 }
 
-export type ProgramType = 
-  | 'class' 
-  | 'clinic' 
-  | 'camp' 
-  | 'lesson' 
-  | 'league' 
-  | 'tournament' 
-  | 'club_team' 
+export type ProgramType =
+  | 'class'
+  | 'clinic'
+  | 'camp'
+  | 'lesson'
+  | 'league'
+  | 'tournament'
+  | 'club_team'
   | 'drop_in'
   | 'rental';
+
+/**
+ * Program-card ordering on discovery pages. 'default' keeps Bond's response
+ * order (alphabetical by name in practice). 'program_type' orders by
+ * `FeatureConfig.programTypeOrder`, keeping Bond order within each type.
+ */
+export type ProgramSortMode =
+  | 'default'
+  | 'start_date_asc'
+  | 'start_date_desc'
+  | 'name_asc'
+  | 'name_desc'
+  | 'program_type';
+
+/**
+ * Inline price shown on session cards inside expanded program details.
+ * 'default' = legacy: the single product's price when a session has exactly
+ * one pricing option, nothing otherwise. The other modes summarize every
+ * public (non-member) pricing option on the session.
+ */
+export type SessionCardPriceMode =
+  | 'default'
+  | 'hidden'
+  | 'range'
+  | 'max'
+  | 'min'
+  | 'range_excluding_free'
+  | 'min_excluding_free';
 
 export type Gender = 'all' | 'male' | 'female' | 'coed';
 
@@ -495,6 +523,40 @@ export interface FeatureConfig {
    * registration is closed). When set, the custom label is used in both states.
    */
   programCtaLabel?: string;
+  /**
+   * Removes the 2-line clamp on the program-card title so long program names
+   * wrap in full. Default false (clamped, legacy behavior).
+   */
+  programCardFullTitle?: boolean;
+  /**
+   * Order of program cards. Applied server-side to the programs list shared by
+   * every discovery template. Default 'default' = Bond's response order.
+   */
+  programSort?: ProgramSortMode;
+  /**
+   * Program-type order used when `programSort` is 'program_type'. Types not
+   * listed (and programs without a type) sort after the listed ones.
+   */
+  programTypeOrder?: ProgramType[];
+  /**
+   * Wraps long session titles on session cards (expanded program details)
+   * instead of truncating them to one line. Default false (truncate).
+   */
+  sessionCardFullTitle?: boolean;
+  /**
+   * Shows the session's age range on session cards. Default false (legacy:
+   * session cards never showed ages; the program card carries the range).
+   */
+  sessionCardShowAgeRange?: boolean;
+  /**
+   * Shows the session's facility on session cards. Default true (legacy).
+   */
+  sessionCardShowFacility?: boolean;
+  /**
+   * How the inline price on session cards is summarized. Default 'default'
+   * (legacy: single-product price only). Requires `showPricing`.
+   */
+  sessionCardPriceMode?: SessionCardPriceMode;
   showAvailability: boolean;
   showMembershipBadges: boolean;
   showAgeGender: boolean;

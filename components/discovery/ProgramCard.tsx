@@ -16,6 +16,10 @@ import {
 } from 'lucide-react';
 import { Program, Session, Product, DiscoveryConfig } from '@/types';
 import { isCompedProduct } from '@/lib/host-shell/session-card-model';
+import {
+  resolveSessionCardPriceLabel,
+  resolveSessionCardPriceMode,
+} from '@/lib/session-card-price';
 import { 
   formatPrice, 
   formatDateRange, 
@@ -168,8 +172,12 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
       {/* Content */}
       <div className="p-5">
         {/* Title */}
-        <h3 
-          className="text-lg font-bold text-gray-900 mb-1 line-clamp-2 transition-colors"
+        <h3
+          className={cn(
+            'text-lg font-bold text-gray-900 mb-1 transition-colors',
+            // programCardFullTitle lets long program names wrap instead of clamping to 2 lines
+            !config.features.programCardFullTitle && 'line-clamp-2',
+          )}
           style={{ '--hover-color': secondaryColor } as React.CSSProperties}
         >
           <span className="group-hover:opacity-80">{program.name}</span>
@@ -295,6 +303,8 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
                   programLinkSEO={program.linkSEO}
                   programId={program.id}
                   programName={program.name}
+                  programAgeMin={program.ageMin}
+                  programAgeMax={program.ageMax}
                   autoExpandPricing={sessions.length === 1}
                   linkTarget={linkTarget}
                   hideRegistrationLinks={hideRegistrationLinks}
@@ -405,16 +415,20 @@ function SessionCard({
   programLinkSEO,
   programId,
   programName,
+  programAgeMin,
+  programAgeMax,
   autoExpandPricing = false,
   linkTarget = '_blank',
   hideRegistrationLinks = false,
   customRegistrationUrl,
-}: { 
-  session: Session; 
+}: {
+  session: Session;
   config: DiscoveryConfig;
   programLinkSEO?: string;
   programId: string;
   programName: string;
+  programAgeMin?: number;
+  programAgeMax?: number;
   autoExpandPricing?: boolean;
   linkTarget?: '_blank' | '_top' | '_self';
   hideRegistrationLinks?: boolean;
@@ -463,17 +477,33 @@ function SessionCard({
   const isRegistrationUnavailable = isRegistrationClosed || isRegistrationNotYetOpen;
   const isWaitlistJoinable = Boolean(session.isWaitlistEnabled && session.isFull && isRegistrationOpen);
   
-  const facilityName = session.facility?.name;
+  // Session-card display flags (all default to the legacy rendering)
+  const wrapSessionTitle = config.features.sessionCardFullTitle === true;
+  const showSessionFacility = config.features.sessionCardShowFacility !== false;
+  const sessionAgeRange = config.features.sessionCardShowAgeRange
+    ? formatAgeRange(
+        session.minAge ?? session.ageMin ?? programAgeMin,
+        session.maxAge ?? session.ageMax ?? programAgeMax,
+      )
+    : '';
+
+  const facilityName = showSessionFacility ? session.facility?.name : undefined;
   const baseLink = session.linkSEO || programLinkSEO;
-  
+
   // For single product, deep link directly to that product
   const singleProduct = products.length === 1 ? products[0] : null;
-  const registrationLink = singleProduct 
+  const registrationLink = singleProduct
     ? buildRegistrationUrl(baseLink, { productId: singleProduct.id, isRegistrationOpen })
     : buildRegistrationUrl(baseLink, { isRegistrationOpen });
-  
-  // Get price for single product
+
+  // Price for the single product (analytics) and the inline label per sessionCardPriceMode
   const singleProductPrice = singleProduct?.prices?.[0]?.price ?? singleProduct?.prices?.[0]?.amount;
+  const inlinePriceLabel = config.features.showPricing
+    ? resolveSessionCardPriceLabel(
+        products,
+        resolveSessionCardPriceMode(config.features.sessionCardPriceMode),
+      )
+    : undefined;
   
   // Build schedule link with program AND session filter - links to list view
   const scheduleLink = `${pathname}?viewMode=schedule&scheduleView=list&programIds=${programId}&sessionIds=${session.id}`;
@@ -486,13 +516,24 @@ function SessionCard({
       )}
       style={(!session.isFull || isWaitlistJoinable) ? { '--hover-border': `${secondaryColor}50` } as React.CSSProperties : undefined}
     >
+      {/* sessionCardFullTitle: the title takes the full card width above the
+          badge/date/Register row so long names wrap edge to edge; Register
+          stays aligned with the badge and date lines exactly as today. */}
+      {wrapSessionTitle && (
+        <p className="mb-1.5 break-words font-bold text-gray-900 text-sm">
+          {session.name || 'Session'}
+        </p>
+      )}
+
       {/* Session Header with Register Button */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-bold text-gray-900 text-sm truncate">
-              {session.name || 'Session'}
-            </p>
+            {!wrapSessionTitle && (
+              <p className="font-bold text-gray-900 text-sm truncate">
+                {session.name || 'Session'}
+              </p>
+            )}
             {isRegistrationClosed && (
               <span className="text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-gray-100 text-gray-600">
                 Registration Closed
@@ -528,6 +569,12 @@ function SessionCard({
                 {facilityName}
               </span>
             )}
+            {sessionAgeRange && (
+              <span className="flex items-center gap-1" data-testid="session-age-range">
+                <Users size={12} className="text-gray-400" />
+                {sessionAgeRange}
+              </span>
+            )}
             {/* Schedule & Pricing links inline */}
             <span className="flex items-center gap-2">
               <Link 
@@ -557,10 +604,10 @@ function SessionCard({
         
         {/* Price + Register Button in Header */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Show price inline when single product */}
-          {config.features.showPricing && singleProduct && singleProductPrice !== undefined && (
-            <span className="text-sm font-bold text-gray-900">
-              {formatPrice(singleProductPrice)}
+          {/* Inline price: legacy single-product price, or a summary per sessionCardPriceMode */}
+          {inlinePriceLabel && (
+            <span className="text-sm font-bold text-gray-900" data-testid="session-inline-price">
+              {inlinePriceLabel}
             </span>
           )}
           
