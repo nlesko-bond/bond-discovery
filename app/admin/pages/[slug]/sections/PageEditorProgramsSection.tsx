@@ -80,7 +80,7 @@ const SESSION_CARD_OPTIONS: ReadonlyArray<IFeatureCheckboxOption> = [
   {
     key: 'showSessionPricing',
     label: 'Show session pricing',
-    hint: 'The inline price and the "Pricing" options toggle on session cards. Independent of the program price; unset follows it.',
+    hint: 'The inline price and the "Show packages" toggle on session cards. Independent of the program price; unset follows it.',
     fallbackKey: 'showPricing',
   },
   {
@@ -690,7 +690,7 @@ export function PageEditorProgramsSection({
             </select>
             <p className="mt-0.5 text-xs text-gray-500">
               The price shown next to Register on each session card. Summaries use the
-              session&apos;s public (non-member) pricing options. The &quot;Pricing&quot; toggle that
+              session&apos;s public (non-member) pricing options. The &quot;Show packages&quot; toggle that
               lists every option is unaffected.
               {!sessionPricingOn && ' Turn on Show session pricing above to enable.'}
             </p>

@@ -11,7 +11,6 @@ import {
   Sparkles,
   Shield,
   ExternalLink,
-  DollarSign,
   Star
 } from 'lucide-react';
 import { Program, Session, Product, DiscoveryConfig } from '@/types';
@@ -630,8 +629,8 @@ function SessionCard({
                     className="flex items-center gap-1 font-medium hover:opacity-80"
                     style={{ color: secondaryColor }}
                   >
-                    <DollarSign size={12} />
-                    {showPricing ? 'Hide' : ''} Pricing
+                    <Tag size={12} />
+                    {showPricing ? 'Hide packages' : 'Show packages'}
                   </button>
                 </>
               )}
@@ -712,13 +711,13 @@ function SessionCard({
         </div>
       )}
 
-      {/* Products/Pricing Carousel - Show when toggled via "View Pricing" button */}
+      {/* Products carousel - shown when toggled via the "Show packages" link */}
       {sessionPricingEnabled && showPricing && products.length > 0 && (
         <div className="mt-3 pt-3 border-t border-gray-100 animate-fade-in">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
-              <DollarSign size={12} />
-              {products.length} pricing option{products.length !== 1 ? 's' : ''}
+              <Tag size={12} />
+              {products.length} package{products.length !== 1 ? 's' : ''}
             </p>
           </div>
           <PricingCarousel 

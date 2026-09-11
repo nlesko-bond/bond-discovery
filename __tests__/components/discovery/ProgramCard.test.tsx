@@ -463,7 +463,7 @@ describe('ProgramCard', () => {
       fireEvent.click(screen.getByRole('button', { name: /Details/i }));
       expect(screen.getByText('Spring 2026 Session')).toBeInTheDocument();
       // No per-session pricing toggle or inline prices either
-      expect(screen.queryByRole('button', { name: /Pricing/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /packages/i })).not.toBeInTheDocument();
       expect(screen.queryByText('$99.99')).not.toBeInTheDocument();
     });
   });
@@ -885,14 +885,14 @@ describe('ProgramCard', () => {
       fireEvent.click(screen.getByRole('button', { name: /Details/i }));
       expect(screen.queryByTestId('session-inline-price')).not.toBeInTheDocument();
       // The Pricing options toggle is still there
-      expect(screen.getByRole('button', { name: /Pricing/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /packages/i })).toBeInTheDocument();
     });
 
     it('hidden: removes the inline price but keeps the Pricing toggle', () => {
       render(<ProgramCard program={oneOptionProgram} config={withMode('hidden')} />);
       fireEvent.click(screen.getByRole('button', { name: /Details/i }));
       expect(screen.queryByTestId('session-inline-price')).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Pricing/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /packages/i })).toBeInTheDocument();
     });
 
     it('range: summarizes public options across the session', () => {
@@ -922,7 +922,7 @@ describe('ProgramCard', () => {
       render(<ProgramCard program={oneOptionProgram} config={config} />);
       fireEvent.click(screen.getByRole('button', { name: /Details/i }));
       expect(screen.queryByTestId('session-inline-price')).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /Pricing/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /packages/i })).not.toBeInTheDocument();
     });
 
     it('shows session pricing independently of the program price', () => {
@@ -941,7 +941,7 @@ describe('ProgramCard', () => {
       expect(screen.queryByText('From')).not.toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: /Details/i }));
       expect(screen.getByTestId('session-inline-price')).toHaveTextContent('$99.99');
-      expect(screen.getByRole('button', { name: /Pricing/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /packages/i })).toBeInTheDocument();
     });
 
     it('hides session pricing while the program price stays on', () => {
@@ -953,7 +953,7 @@ describe('ProgramCard', () => {
       expect(screen.getByText('From')).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: /Details/i }));
       expect(screen.queryByTestId('session-inline-price')).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /Pricing/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /packages/i })).not.toBeInTheDocument();
     });
   });
 
