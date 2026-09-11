@@ -64,6 +64,10 @@ export interface IPageConfig {
     sessionCardShowFacility?: boolean;
     /** Inline price summary on session cards (default: legacy single-product price). */
     sessionCardPriceMode?: SessionCardPriceMode;
+    /** Session-card pricing switch; unset inherits showPricing. */
+    showSessionPricing?: boolean;
+    /** Skip $0 options when computing the program card "From" price. */
+    programCardPriceExcludeFree?: boolean;
     showAvailability: boolean;
     showMembershipBadges: boolean;
     showAgeGender: boolean;

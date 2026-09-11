@@ -903,7 +903,7 @@ describe('ProgramCard', () => {
       expect(screen.getByTestId('session-inline-price')).toHaveTextContent('$50 – $120');
     });
 
-    it('never shows an inline price when showPricing is off', () => {
+    it('inherits the program price switch when showSessionPricing is unset', () => {
       const config = {
         ...mockConfig,
         features: { ...mockConfig.features, showPricing: false, alwaysShowDetailsButton: true, sessionCardPriceMode: 'range' as const },
@@ -911,6 +911,68 @@ describe('ProgramCard', () => {
       render(<ProgramCard program={oneOptionProgram} config={config} />);
       fireEvent.click(screen.getByRole('button', { name: /Details/i }));
       expect(screen.queryByTestId('session-inline-price')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Pricing/ })).not.toBeInTheDocument();
+    });
+
+    it('shows session pricing independently of the program price', () => {
+      const config = {
+        ...mockConfig,
+        features: {
+          ...mockConfig.features,
+          showPricing: false,
+          alwaysShowDetailsButton: true,
+          showSessionPricing: true,
+          sessionCardPriceMode: 'range' as const,
+        },
+      };
+      render(<ProgramCard program={twoOptionProgram} config={config} />);
+      // Program card "From" block stays hidden
+      expect(screen.queryByText('From')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getByTestId('session-inline-price')).toHaveTextContent('$99.99');
+      expect(screen.getByRole('button', { name: /Pricing/ })).toBeInTheDocument();
+    });
+
+    it('hides session pricing while the program price stays on', () => {
+      const config = {
+        ...mockConfig,
+        features: { ...mockConfig.features, showSessionPricing: false },
+      };
+      render(<ProgramCard program={oneOptionProgram} config={config} />);
+      expect(screen.getByText('From')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.queryByTestId('session-inline-price')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Pricing/ })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('programCardPriceExcludeFree', () => {
+    const freeAndPaid = {
+      ...mockProgram,
+      sessions: [
+        {
+          ...mockSession,
+          products: [
+            { ...mockSession.products![0], id: 'free', prices: [{ ...mockSession.products![0].prices[0], id: 'f', price: 0, amount: 0 }] },
+            { ...mockSession.products![0], id: 'paid', prices: [{ ...mockSession.products![0].prices[0], id: 'p', price: 45, amount: 45 }] },
+          ],
+        },
+      ],
+    };
+
+    it('shows From FREE by default when a $0 option exists', () => {
+      render(<ProgramCard program={freeAndPaid} config={mockConfig} />);
+      expect(screen.getByText('FREE')).toBeInTheDocument();
+    });
+
+    it('skips $0 options for the From price when enabled', () => {
+      const config = {
+        ...mockConfig,
+        features: { ...mockConfig.features, programCardPriceExcludeFree: true },
+      };
+      render(<ProgramCard program={freeAndPaid} config={config} />);
+      expect(screen.queryByText('FREE')).not.toBeInTheDocument();
+      expect(screen.getByText('$45')).toBeInTheDocument();
     });
   });
 

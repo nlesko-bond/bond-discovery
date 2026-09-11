@@ -554,9 +554,21 @@ export interface FeatureConfig {
   sessionCardShowFacility?: boolean;
   /**
    * How the inline price on session cards is summarized. Default 'default'
-   * (legacy: single-product price only). Requires `showPricing`.
+   * (legacy: single-product price only). Requires session pricing to be on
+   * (`showSessionPricing`, which inherits `showPricing` when unset).
    */
   sessionCardPriceMode?: SessionCardPriceMode;
+  /**
+   * Session-card pricing (inline price + the "Pricing" options toggle),
+   * independent of the program card's "From" price. Unset inherits
+   * `showPricing` (legacy: one switch for both).
+   */
+  showSessionPricing?: boolean;
+  /**
+   * Skips $0 pricing options when computing the program card's "From" price
+   * (and member price). Default false (legacy: $0 shows as "From FREE").
+   */
+  programCardPriceExcludeFree?: boolean;
   showAvailability: boolean;
   showMembershipBadges: boolean;
   showAgeGender: boolean;

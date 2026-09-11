@@ -29,10 +29,15 @@ interface IFeatureCheckboxOption {
 const PROGRAM_CARD_OPTIONS: ReadonlyArray<IFeatureCheckboxOption> = [
   {
     key: 'showPricing',
-    label: 'Show pricing',
-    hint: 'The program "From" price and every session price. Off hides all prices on the page.',
+    label: 'Show program price',
+    hint: 'The "From $X" block on the program card. Session card pricing has its own switch below.',
   },
-  { key: 'alwaysShowDetailsButton', label: 'Keep Details button when pricing is hidden' },
+  {
+    key: 'programCardPriceExcludeFree',
+    label: 'Exclude $0 options from the program price',
+    hint: 'The "From" price skips free pricing options instead of showing "From FREE".',
+  },
+  { key: 'alwaysShowDetailsButton', label: 'Keep Details button when program price is hidden' },
   {
     key: 'programCardFullTitle',
     label: 'Show full program names',
@@ -64,6 +69,12 @@ const SESSION_CARD_OPTIONS: ReadonlyArray<IFeatureCheckboxOption> = [
     label: 'Show facility',
     hint: 'Default on.',
     defaultOn: true,
+  },
+  {
+    key: 'showSessionPricing',
+    label: 'Show session pricing',
+    hint: 'The inline price and the "Pricing" options toggle on session cards. Independent of the program price; unset follows it.',
+    fallbackKey: 'showPricing',
   },
   {
     key: 'showSessionShortDescription',
@@ -220,6 +231,7 @@ export function PageEditorProgramsSection({
   updateTableColumns,
 }: IPageEditorProgramsSectionProps) {
   const enabledTabs = config.features.enabledTabs || ['programs', 'schedule'];
+  const sessionPricingOn = config.features.showSessionPricing ?? config.features.showPricing;
 
   const setFeature = <K extends keyof PageFeatures>(key: K, value: PageFeatures[K]) =>
     setConfig({ ...config, features: { ...config.features, [key]: value } });
@@ -615,7 +627,7 @@ export function PageEditorProgramsSection({
             <select
               className="input mt-1"
               value={config.features.sessionCardPriceMode || 'default'}
-              disabled={!config.features.showPricing}
+              disabled={!sessionPricingOn}
               onChange={(event) =>
                 setFeature('sessionCardPriceMode', event.target.value as SessionCardPriceMode)
               }
@@ -630,7 +642,7 @@ export function PageEditorProgramsSection({
               The price shown next to Register on each session card. Summaries use the
               session&apos;s public (non-member) pricing options. The &quot;Pricing&quot; toggle that
               lists every option is unaffected.
-              {!config.features.showPricing && ' Turn on Show pricing above to enable.'}
+              {!sessionPricingOn && ' Turn on Show session pricing above to enable.'}
             </p>
           </label>
         </div>
