@@ -10,6 +10,7 @@ import type {
   PortalRowRegisterBehavior,
   PortalSessionSortEnum,
   PortalTemplate,
+  ProgramCardPriceMode,
   ProgramSortMode,
   ProgramType,
   SessionCardPriceMode,
@@ -66,8 +67,12 @@ export interface IPageConfig {
     sessionCardPriceMode?: SessionCardPriceMode;
     /** Session-card pricing switch; unset inherits showPricing. */
     showSessionPricing?: boolean;
-    /** Skip $0 options when computing the program card "From" price. */
+    /** Skip $0 options when computing the program card price. */
     programCardPriceExcludeFree?: boolean;
+    /** Program card price summary (default: legacy "From" + lowest price). */
+    programCardPriceMode?: ProgramCardPriceMode;
+    /** Skip $0 options when computing the session card inline price. */
+    sessionCardPriceExcludeFree?: boolean;
     showAvailability: boolean;
     showMembershipBadges: boolean;
     showAgeGender: boolean;

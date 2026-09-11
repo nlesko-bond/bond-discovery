@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { Product } from '@/types';
 import {
+  formatCardPriceSummary,
+  resolveProgramCardPriceMode,
   resolveSessionCardPriceLabel,
   resolveSessionCardPriceMode,
+  resolveSessionCardPriceSettings,
+  summarizePriceAmounts,
 } from '@/lib/session-card-price';
 
 function product(id: string, amounts: number[], isMemberProduct = false): Product {
@@ -22,11 +26,60 @@ const single = [product('a', [99.99])];
 const several = [product('a', [50, 75]), product('b', [120]), product('c', [0])];
 const withMember = [product('a', [100]), product('m', [60], true)];
 
-describe('resolveSessionCardPriceMode', () => {
-  it('accepts known modes and falls back to default', () => {
-    expect(resolveSessionCardPriceMode('range_excluding_free')).toBe('range_excluding_free');
-    expect(resolveSessionCardPriceMode(undefined)).toBe('default');
-    expect(resolveSessionCardPriceMode('nope')).toBe('default');
+describe('summarizePriceAmounts (shared program/session wording)', () => {
+  it('returns nothing for no amounts', () => {
+    expect(summarizePriceAmounts([], 'range')).toBeUndefined();
+  });
+
+  it('drops the prefix when every price is the same, in every mode', () => {
+    expect(summarizePriceAmounts([160, 160], 'range')).toEqual({ amount: '$160' });
+    expect(summarizePriceAmounts([160], 'min')).toEqual({ amount: '$160' });
+    expect(summarizePriceAmounts([160], 'max')).toEqual({ amount: '$160' });
+  });
+
+  it('uses range / From / Up to when prices differ', () => {
+    expect(summarizePriceAmounts([50, 120], 'range')).toEqual({ amount: '$50 – $120' });
+    expect(summarizePriceAmounts([50, 120], 'min')).toEqual({ prefix: 'From', amount: '$50' });
+    expect(summarizePriceAmounts([50, 120], 'max')).toEqual({ prefix: 'Up to', amount: '$120' });
+  });
+
+  it('formats prefix + amount as one label', () => {
+    expect(formatCardPriceSummary({ prefix: 'From', amount: '$50' })).toBe('From $50');
+    expect(formatCardPriceSummary({ amount: '$50 – $120' })).toBe('$50 – $120');
+  });
+});
+
+describe('resolveProgramCardPriceMode', () => {
+  it('accepts summary modes and falls back to default', () => {
+    expect(resolveProgramCardPriceMode('range')).toBe('range');
+    expect(resolveProgramCardPriceMode('max')).toBe('max');
+    expect(resolveProgramCardPriceMode(undefined)).toBe('default');
+    expect(resolveProgramCardPriceMode('hidden')).toBe('default');
+  });
+});
+
+describe('resolveSessionCardPriceSettings', () => {
+  it('reads mode and exclude flag, falling back to default', () => {
+    expect(resolveSessionCardPriceSettings({})).toEqual({ mode: 'default', excludeFree: false });
+    expect(
+      resolveSessionCardPriceSettings({ sessionCardPriceMode: 'max', sessionCardPriceExcludeFree: true }),
+    ).toEqual({ mode: 'max', excludeFree: true });
+    expect(resolveSessionCardPriceSettings({ sessionCardPriceMode: 'nope' as never })).toEqual({
+      mode: 'default',
+      excludeFree: false,
+    });
+  });
+
+  it('maps the legacy excluding-free modes onto mode + flag', () => {
+    expect(resolveSessionCardPriceSettings({ sessionCardPriceMode: 'range_excluding_free' })).toEqual({
+      mode: 'range',
+      excludeFree: true,
+    });
+    expect(resolveSessionCardPriceSettings({ sessionCardPriceMode: 'min_excluding_free' })).toEqual({
+      mode: 'min',
+      excludeFree: true,
+    });
+    expect(resolveSessionCardPriceMode('min_excluding_free')).toBe('min');
   });
 });
 
@@ -42,6 +95,11 @@ describe('resolveSessionCardPriceLabel', () => {
 
     it('shows nothing without products', () => {
       expect(resolveSessionCardPriceLabel([], 'default')).toBeUndefined();
+    });
+
+    it('hides a lone $0 price when free is excluded', () => {
+      expect(resolveSessionCardPriceLabel([product('f', [0])], 'default')).toBe('FREE');
+      expect(resolveSessionCardPriceLabel([product('f', [0])], 'default', true)).toBeUndefined();
     });
   });
 
@@ -59,20 +117,20 @@ describe('resolveSessionCardPriceLabel', () => {
       expect(resolveSessionCardPriceLabel(single, 'range')).toBe('$99.99');
     });
 
-    it('excludes $0 options in the excluding-free variant', () => {
+    it('excludes $0 options with the flag or the legacy mode', () => {
+      expect(resolveSessionCardPriceLabel(several, 'range', true)).toBe('$50 – $120');
       expect(resolveSessionCardPriceLabel(several, 'range_excluding_free')).toBe('$50 – $120');
     });
 
     it('returns nothing when every option is free and free is excluded', () => {
-      expect(
-        resolveSessionCardPriceLabel([product('f', [0])], 'range_excluding_free'),
-      ).toBeUndefined();
+      expect(resolveSessionCardPriceLabel([product('f', [0])], 'range', true)).toBeUndefined();
     });
   });
 
   describe('min / max', () => {
     it('prefixes From when there are several distinct prices', () => {
       expect(resolveSessionCardPriceLabel(several, 'min')).toBe('From FREE');
+      expect(resolveSessionCardPriceLabel(several, 'min', true)).toBe('From $50');
       expect(resolveSessionCardPriceLabel(several, 'min_excluding_free')).toBe('From $50');
     });
 

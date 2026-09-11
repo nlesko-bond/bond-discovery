@@ -92,17 +92,32 @@ export type ProgramSortMode =
   | 'program_type';
 
 /**
+ * Shared price summary shapes for program and session cards, rendered with
+ * the same words at both levels: 'range' → "$50 – $120", 'min' → "From $50",
+ * 'max' → "Up to $120" (the prefix drops when every price is the same).
+ */
+export type CardPriceSummaryMode = 'range' | 'min' | 'max';
+
+/**
+ * Program-card "From" block. 'default' = legacy: "From" + lowest public
+ * price, always with the From label.
+ */
+export type ProgramCardPriceMode = 'default' | CardPriceSummaryMode;
+
+/**
  * Inline price shown on session cards inside expanded program details.
  * 'default' = legacy: the single product's price when a session has exactly
- * one pricing option, nothing otherwise. The other modes summarize every
- * public (non-member) pricing option on the session.
+ * one pricing option, nothing otherwise. The summary modes read every public
+ * (non-member) pricing option on the session.
+ *
+ * 'range_excluding_free' / 'min_excluding_free' are legacy stored values kept
+ * for pages saved before `sessionCardPriceExcludeFree` existed; they resolve
+ * to 'range' / 'min' with the exclude flag on.
  */
 export type SessionCardPriceMode =
   | 'default'
   | 'hidden'
-  | 'range'
-  | 'max'
-  | 'min'
+  | CardPriceSummaryMode
   | 'range_excluding_free'
   | 'min_excluding_free';
 
@@ -565,10 +580,20 @@ export interface FeatureConfig {
    */
   showSessionPricing?: boolean;
   /**
-   * Skips $0 pricing options when computing the program card's "From" price
+   * Skips $0 pricing options when computing the program card's price
    * (and member price). Default false (legacy: $0 shows as "From FREE").
    */
   programCardPriceExcludeFree?: boolean;
+  /**
+   * How the program card's price block is summarized. Default 'default'
+   * (legacy "From" + lowest price).
+   */
+  programCardPriceMode?: ProgramCardPriceMode;
+  /**
+   * Skips $0 pricing options when computing the session card's inline price.
+   * Default false (legacy: $0 shows as FREE).
+   */
+  sessionCardPriceExcludeFree?: boolean;
   showAvailability: boolean;
   showMembershipBadges: boolean;
   showAgeGender: boolean;

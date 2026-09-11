@@ -17,8 +17,10 @@ import {
 import { Program, Session, Product, DiscoveryConfig } from '@/types';
 import { isCompedProduct } from '@/lib/host-shell/session-card-model';
 import {
+  resolveProgramCardPriceMode,
   resolveSessionCardPriceLabel,
-  resolveSessionCardPriceMode,
+  resolveSessionCardPriceSettings,
+  summarizePriceAmounts,
 } from '@/lib/session-card-price';
 import { 
   formatPrice, 
@@ -86,6 +88,18 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
     sessions,
     config.features.programCardPriceExcludeFree === true,
   );
+  // programCardPriceMode: 'default' keeps the legacy "From" + lowest price;
+  // the summary modes share wording with session cards (range / From / Up to).
+  const programPriceMode = resolveProgramCardPriceMode(config.features.programCardPriceMode);
+  const programPriceSummary =
+    programPriceMode === 'default'
+      ? undefined
+      : summarizePriceAmounts(
+          pricingInfo.regularAmounts.length > 0
+            ? pricingInfo.regularAmounts
+            : pricingInfo.memberAmounts,
+          programPriceMode,
+        );
   
   // Get availability info across all sessions
   const totalSpots = sessions.reduce((sum, s) => sum + (s.maxParticipants || s.capacity || 0), 0);
@@ -249,12 +263,27 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
               <div>
                 {config.features.showPricing && (pricingInfo.hasPrice ? (
                   <div className="space-y-1">
-                    {/* Regular price */}
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xs text-gray-500 uppercase tracking-wide">From</span>
-                      <span className="text-2xl font-bold text-gray-900">
-                        {formatPrice(pricingInfo.regularPrice!)}
-                      </span>
+                    {/* Regular price: legacy "From" block, or the shared summary wording */}
+                    <div className="flex items-baseline gap-2" data-testid="program-price">
+                      {programPriceMode === 'default' ? (
+                        <>
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">From</span>
+                          <span className="text-2xl font-bold text-gray-900">
+                            {formatPrice(pricingInfo.regularPrice!)}
+                          </span>
+                        </>
+                      ) : programPriceSummary ? (
+                        <>
+                          {programPriceSummary.prefix && (
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">
+                              {programPriceSummary.prefix}
+                            </span>
+                          )}
+                          <span className="text-2xl font-bold text-gray-900">
+                            {programPriceSummary.amount}
+                          </span>
+                        </>
+                      ) : null}
                     </div>
                     
                     {/* Member price */}
@@ -504,10 +533,12 @@ function SessionCard({
 
   // Price for the single product (analytics) and the inline label per sessionCardPriceMode
   const singleProductPrice = singleProduct?.prices?.[0]?.price ?? singleProduct?.prices?.[0]?.amount;
+  const sessionPriceSettings = resolveSessionCardPriceSettings(config.features);
   const inlinePriceLabel = sessionPricingEnabled
     ? resolveSessionCardPriceLabel(
         products,
-        resolveSessionCardPriceMode(config.features.sessionCardPriceMode),
+        sessionPriceSettings.mode,
+        sessionPriceSettings.excludeFree,
       )
     : undefined;
   
@@ -776,12 +807,18 @@ interface PricingInfo {
   regularPrice?: number;
   memberPrice?: number;
   hasMemberPricing: boolean;
+  /** Every public (non-member) price amount, for the range / min / max summaries. */
+  regularAmounts: number[];
+  /** Every member price amount (summary fallback when nothing is public). */
+  memberAmounts: number[];
 }
 
 function getPricingInfo(sessions: Session[], excludeFree = false): PricingInfo {
   let regularPrice: number | undefined;
   let memberPrice: number | undefined;
   let hasMemberPricing = false;
+  const regularAmounts: number[] = [];
+  const memberAmounts: number[] = [];
 
   sessions.forEach(session => {
     (session.products || []).filter((p) => !isCompedProduct(p)).forEach(product => {
@@ -796,10 +833,12 @@ function getPricingInfo(sessions: Session[], excludeFree = false): PricingInfo {
 
         if (isMember) {
           hasMemberPricing = true;
+          memberAmounts.push(priceValue);
           if (memberPrice === undefined || priceValue < memberPrice) {
             memberPrice = priceValue;
           }
         } else {
+          regularAmounts.push(priceValue);
           if (regularPrice === undefined || priceValue < regularPrice) {
             regularPrice = priceValue;
           }
@@ -813,5 +852,7 @@ function getPricingInfo(sessions: Session[], excludeFree = false): PricingInfo {
     regularPrice,
     memberPrice,
     hasMemberPricing,
+    regularAmounts,
+    memberAmounts,
   };
 }
