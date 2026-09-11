@@ -10,6 +10,9 @@ import type {
   PortalRowRegisterBehavior,
   PortalSessionSortEnum,
   PortalTemplate,
+  ProgramSortMode,
+  ProgramType,
+  SessionCardPriceMode,
 } from '@/types';
 import type { BondEnv } from '@/lib/bond-env';
 
@@ -47,6 +50,20 @@ export interface IPageConfig {
     showFullProgramDescription?: boolean;
     /** Custom label for the expanded-details CTA (default "View Program & Register"). */
     programCtaLabel?: string;
+    /** Lets long program names wrap instead of clamping to 2 lines. */
+    programCardFullTitle?: boolean;
+    /** Program-card order (default: Bond's response order). */
+    programSort?: ProgramSortMode;
+    /** Type order used when programSort is 'program_type'. */
+    programTypeOrder?: ProgramType[];
+    /** Wraps long session titles instead of truncating to one line. */
+    sessionCardFullTitle?: boolean;
+    /** Shows the age range on session cards (default off). */
+    sessionCardShowAgeRange?: boolean;
+    /** Shows the facility on session cards (default on). */
+    sessionCardShowFacility?: boolean;
+    /** Inline price summary on session cards (default: legacy single-product price). */
+    sessionCardPriceMode?: SessionCardPriceMode;
     showAvailability: boolean;
     showMembershipBadges: boolean;
     showAgeGender: boolean;

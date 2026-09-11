@@ -1,7 +1,217 @@
 'use client';
 
-import { ALL_FILTERS, TABLE_COLUMNS, type IPageEditorProgramsSectionProps } from '../page-config-types';
+import { ArrowDown, ArrowUp } from 'lucide-react';
+import type { ProgramSortMode, ProgramType, SessionCardPriceMode } from '@/types';
+import { resolveProgramTypeOrder } from '@/lib/program-sort';
+import { getProgramTypeLabel } from '@/lib/utils';
+import {
+  ALL_FILTERS,
+  TABLE_COLUMNS,
+  type IPageConfig,
+  type IPageEditorProgramsSectionProps,
+} from '../page-config-types';
 import { SurfaceBadge } from '../components/SurfaceBadge';
+
+type PageFeatures = IPageConfig['features'];
+
+/**
+ * Boolean feature toggle. `defaultOn` flags are stored as `false` to turn off
+ * (unset = on); `fallbackKey` flags inherit a legacy master switch when unset.
+ */
+interface IFeatureCheckboxOption {
+  key: keyof PageFeatures;
+  label: string;
+  hint?: string;
+  defaultOn?: boolean;
+  fallbackKey?: keyof PageFeatures;
+}
+
+const PROGRAM_CARD_OPTIONS: ReadonlyArray<IFeatureCheckboxOption> = [
+  {
+    key: 'showPricing',
+    label: 'Show pricing',
+    hint: 'The program "From" price and every session price. Off hides all prices on the page.',
+  },
+  { key: 'alwaysShowDetailsButton', label: 'Keep Details button when pricing is hidden' },
+  {
+    key: 'programCardFullTitle',
+    label: 'Show full program names',
+    hint: 'Long names wrap instead of being clamped to two lines.',
+  },
+  { key: 'showFullProgramDescription', label: 'Add "Read more" to expand the program description' },
+  {
+    key: 'showAvailability',
+    label: 'Show availability / spots remaining',
+    hint: 'Also controls the availability badge on session cards.',
+  },
+  { key: 'showMembershipBadges', label: 'Show membership badges' },
+  { key: 'showAgeGender', label: 'Show age and gender restrictions' },
+];
+
+const SESSION_CARD_OPTIONS: ReadonlyArray<IFeatureCheckboxOption> = [
+  {
+    key: 'sessionCardFullTitle',
+    label: 'Show full session titles',
+    hint: 'Wrap long titles instead of cutting them off on one line (most visible on mobile).',
+  },
+  {
+    key: 'sessionCardShowAgeRange',
+    label: 'Show age range',
+    hint: "The session's age range (falls back to the program's). Default off.",
+  },
+  {
+    key: 'sessionCardShowFacility',
+    label: 'Show facility',
+    hint: 'Default on.',
+    defaultOn: true,
+  },
+  {
+    key: 'showSessionShortDescription',
+    label: 'Show session short description',
+    fallbackKey: 'showSessionDescriptions',
+  },
+  {
+    key: 'showSessionLongDescription',
+    label: 'Show session long description',
+    hint: 'Clamped to 4 lines with a View more toggle.',
+    fallbackKey: 'showSessionDescriptions',
+  },
+];
+
+const PAGE_OPTIONS: ReadonlyArray<IFeatureCheckboxOption> = [
+  { key: 'showSearch', label: 'Show search bar', defaultOn: true },
+  { key: 'showShareButton', label: 'Show share / copy link button', defaultOn: true },
+  { key: 'showRegisterIcon', label: 'Show icon on Register buttons', defaultOn: true },
+  { key: 'allowViewToggle', label: 'Allow switching between Programs and Schedule view' },
+  { key: 'showTableView', label: 'Show Table view option on desktop' },
+  {
+    key: 'showWaitlist',
+    label: 'Show waitlist badges and Join Waitlist button on schedule',
+    defaultOn: true,
+  },
+  {
+    key: 'showScheduleEventType',
+    label: 'Show event type tag on schedule (e.g. Drop-in, Class)',
+    defaultOn: true,
+  },
+];
+
+const PROGRAM_SORT_OPTIONS: ReadonlyArray<{ value: ProgramSortMode; label: string }> = [
+  { value: 'default', label: 'Default (Bond order)' },
+  { value: 'start_date_asc', label: 'Start date — soonest first' },
+  { value: 'start_date_desc', label: 'Start date — latest first' },
+  { value: 'name_asc', label: 'Name — A to Z' },
+  { value: 'name_desc', label: 'Name — Z to A' },
+  { value: 'program_type', label: 'Program type — custom order' },
+];
+
+const SESSION_CARD_PRICE_OPTIONS: ReadonlyArray<{ value: SessionCardPriceMode; label: string }> = [
+  { value: 'default', label: 'Default — price only when the session has one pricing option' },
+  { value: 'hidden', label: 'Hide price on session card' },
+  { value: 'range', label: 'Full price range (e.g. $50 – $120)' },
+  { value: 'max', label: 'Maximum price' },
+  { value: 'min', label: 'Minimum price' },
+  { value: 'range_excluding_free', label: 'Price range, excluding $0 options' },
+  { value: 'min_excluding_free', label: 'Minimum price, excluding $0 options' },
+];
+
+function resolveFeatureChecked(
+  features: PageFeatures,
+  option: IFeatureCheckboxOption,
+): boolean {
+  const value = features[option.key];
+  if (option.defaultOn) {
+    return value !== false;
+  }
+  if (option.fallbackKey) {
+    return Boolean(value ?? features[option.fallbackKey]);
+  }
+  return Boolean(value);
+}
+
+function FeatureCheckbox({
+  option,
+  checked,
+  onChange,
+}: {
+  option: IFeatureCheckboxOption;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex items-start gap-3">
+      <input
+        type="checkbox"
+        className="mt-1 rounded border-gray-300"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span>
+        <span className={option.hint ? 'font-medium' : undefined}>{option.label}</span>
+        {option.hint && <p className="mt-0.5 text-xs text-gray-500">{option.hint}</p>}
+      </span>
+    </label>
+  );
+}
+
+function ProgramTypeOrderEditor({
+  order,
+  onChange,
+}: {
+  order: ProgramType[];
+  onChange: (next: ProgramType[]) => void;
+}) {
+  const move = (index: number, delta: -1 | 1) => {
+    const target = index + delta;
+    if (target < 0 || target >= order.length) return;
+    const next = [...order];
+    [next[index], next[target]] = [next[target], next[index]];
+    onChange(next);
+  };
+
+  return (
+    <div className="ml-7 rounded-lg border border-gray-200 bg-gray-50 p-3">
+      <p className="text-sm font-medium text-gray-900">Program type order</p>
+      <p className="mb-2 mt-0.5 text-xs text-gray-500">
+        Programs are grouped by type in this order. Within a type they keep Bond&apos;s order.
+        Programs without a type go last.
+      </p>
+      <ol className="space-y-1" data-testid="program-type-order">
+        {order.map((type, index) => (
+          <li
+            key={type}
+            className="flex items-center justify-between gap-2 rounded-md bg-white px-3 py-1.5 text-sm text-gray-800 ring-1 ring-gray-200"
+          >
+            <span>
+              <span className="mr-2 text-xs tabular-nums text-gray-400">{index + 1}.</span>
+              {getProgramTypeLabel(type)}
+            </span>
+            <span className="flex gap-1">
+              <button
+                type="button"
+                className="rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30"
+                aria-label={`Move ${getProgramTypeLabel(type)} up`}
+                disabled={index === 0}
+                onClick={() => move(index, -1)}
+              >
+                <ArrowUp size={14} />
+              </button>
+              <button
+                type="button"
+                className="rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30"
+                aria-label={`Move ${getProgramTypeLabel(type)} down`}
+                disabled={index === order.length - 1}
+                onClick={() => move(index, 1)}
+              >
+                <ArrowDown size={14} />
+              </button>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
 
 export function PageEditorProgramsSection({
   config,
@@ -10,6 +220,9 @@ export function PageEditorProgramsSection({
   updateTableColumns,
 }: IPageEditorProgramsSectionProps) {
   const enabledTabs = config.features.enabledTabs || ['programs', 'schedule'];
+
+  const setFeature = <K extends keyof PageFeatures>(key: K, value: PageFeatures[K]) =>
+    setConfig({ ...config, features: { ...config.features, [key]: value } });
 
   return (
     <div className="space-y-8">
@@ -317,57 +530,45 @@ export function PageEditorProgramsSection({
       </div>
 
       <div>
-        <h3 className="mb-4 font-semibold text-gray-900">Display options</h3>
+        <h3 className="mb-1 font-semibold text-gray-900">Program cards</h3>
+        <p className="mb-4 text-sm text-gray-600">
+          The cards on the Programs tab. Defaults match how pages render today.
+        </p>
         <div className="space-y-3">
-          {(
-            [
-              { key: 'showPricing', label: 'Show pricing information' },
-              { key: 'alwaysShowDetailsButton', label: 'Keep Details button when pricing is hidden' },
-              { key: 'showSessionShortDescription', label: 'Show session short description in program details' },
-              { key: 'showSessionLongDescription', label: 'Show session long description in program details' },
-              { key: 'showFullProgramDescription', label: 'Add "Read more" to expand the program description' },
-              { key: 'showAvailability', label: 'Show availability / spots remaining' },
-              { key: 'showMembershipBadges', label: 'Show membership badges' },
-              { key: 'showAgeGender', label: 'Show age and gender restrictions' },
-              { key: 'showSearch', label: 'Show search bar', defaultOn: true },
-              { key: 'showShareButton', label: 'Show share / copy link button', defaultOn: true },
-              { key: 'showRegisterIcon', label: 'Show icon on Register buttons', defaultOn: true },
-              { key: 'allowViewToggle', label: 'Allow switching between Programs and Schedule view' },
-              { key: 'showTableView', label: 'Show Table view option on desktop' },
-              { key: 'showWaitlist', label: 'Show waitlist badges and Join Waitlist button on schedule', defaultOn: true },
-              { key: 'showScheduleEventType', label: 'Show event type tag on schedule (e.g. Drop-in, Class)', defaultOn: true },
-            ] as const
-          ).map((option) => {
-            const checked =
-              option.key === 'showSearch' ||
-              option.key === 'showShareButton' ||
-              option.key === 'showRegisterIcon' ||
-              option.key === 'showWaitlist' ||
-              option.key === 'showScheduleEventType'
-                ? config.features[option.key] !== false
-                : option.key === 'showSessionShortDescription' ||
-                    option.key === 'showSessionLongDescription'
-                  ? Boolean(
-                      config.features[option.key] ?? config.features.showSessionDescriptions,
-                    )
-                  : Boolean(config.features[option.key]);
-            return (
-              <label key={option.key} className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  className="rounded border-gray-300"
-                  checked={checked}
-                  onChange={(event) =>
-                    setConfig({
-                      ...config,
-                      features: { ...config.features, [option.key]: event.target.checked },
-                    })
-                  }
-                />
-                <span>{option.label}</span>
-              </label>
-            );
-          })}
+          {PROGRAM_CARD_OPTIONS.map((option) => (
+            <FeatureCheckbox
+              key={option.key}
+              option={option}
+              checked={resolveFeatureChecked(config.features, option)}
+              onChange={(checked) => setFeature(option.key, checked)}
+            />
+          ))}
+
+          <label className="block pt-2 text-sm text-gray-700">
+            <span className="font-medium">Program order</span>
+            <select
+              className="input mt-1"
+              value={config.features.programSort || 'default'}
+              onChange={(event) => setFeature('programSort', event.target.value as ProgramSortMode)}
+            >
+              {PROGRAM_SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-0.5 text-xs text-gray-500">
+              Default keeps Bond&apos;s order (alphabetical in practice). Start date uses each
+              program&apos;s earliest session that hasn&apos;t ended; programs with no dates sort last.
+            </p>
+          </label>
+
+          {config.features.programSort === 'program_type' && (
+            <ProgramTypeOrderEditor
+              order={resolveProgramTypeOrder(config.features.programTypeOrder)}
+              onChange={(next) => setFeature('programTypeOrder', next)}
+            />
+          )}
 
           <label className="block pt-2 text-sm text-gray-700">
             Program details button label
@@ -391,6 +592,62 @@ export function PageEditorProgramsSection({
               registration is closed). A custom label is used in both states.
             </p>
           </label>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-1 font-semibold text-gray-900">Session cards</h3>
+        <p className="mb-4 text-sm text-gray-600">
+          The session rows shown after a visitor expands a program&apos;s Details.
+        </p>
+        <div className="space-y-3">
+          {SESSION_CARD_OPTIONS.map((option) => (
+            <FeatureCheckbox
+              key={option.key}
+              option={option}
+              checked={resolveFeatureChecked(config.features, option)}
+              onChange={(checked) => setFeature(option.key, checked)}
+            />
+          ))}
+
+          <label className="block pt-2 text-sm text-gray-700">
+            <span className="font-medium">Session card price</span>
+            <select
+              className="input mt-1"
+              value={config.features.sessionCardPriceMode || 'default'}
+              disabled={!config.features.showPricing}
+              onChange={(event) =>
+                setFeature('sessionCardPriceMode', event.target.value as SessionCardPriceMode)
+              }
+            >
+              {SESSION_CARD_PRICE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-0.5 text-xs text-gray-500">
+              The price shown next to Register on each session card. Summaries use the
+              session&apos;s public (non-member) pricing options. The &quot;Pricing&quot; toggle that
+              lists every option is unaffected.
+              {!config.features.showPricing && ' Turn on Show pricing above to enable.'}
+            </p>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-1 font-semibold text-gray-900">Page &amp; schedule options</h3>
+        <p className="mb-4 text-sm text-gray-600">Header controls, view switching, and schedule tab display.</p>
+        <div className="space-y-3">
+          {PAGE_OPTIONS.map((option) => (
+            <FeatureCheckbox
+              key={option.key}
+              option={option}
+              checked={resolveFeatureChecked(config.features, option)}
+              onChange={(checked) => setFeature(option.key, checked)}
+            />
+          ))}
 
           <label className="flex items-start gap-3">
             <input
