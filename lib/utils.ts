@@ -21,7 +21,10 @@ export function formatPrice(
   if (!amountInDollars || !isFinite(amountInDollars)) {
     return 'FREE';
   }
-  const minimumFractionDigits = options?.minimumFractionDigits ?? 0;
+  // Whole dollars stay "$160"; anything with cents always shows two digits
+  // ("$247.50", never "$247.5"). Callers can still force digits explicitly.
+  const minimumFractionDigits =
+    options?.minimumFractionDigits ?? (Number.isInteger(amountInDollars) ? 0 : 2);
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,

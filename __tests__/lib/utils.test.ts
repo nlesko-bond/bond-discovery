@@ -42,10 +42,14 @@ describe('formatPrice', () => {
     expect(formatPrice(1000)).toBe('$1,000');
   });
 
-  it('formats decimal amounts', () => {
+  it('formats decimal amounts with two digits, whole dollars with none', () => {
     expect(formatPrice(99.99)).toBe('$99.99');
-    // Note: minimumFractionDigits: 0 means trailing zeros aren't added
-    expect(formatPrice(10.5)).toBe('$10.5');
+    // Cents always pad to two digits so "$247.50" never renders as "$247.5"
+    expect(formatPrice(10.5)).toBe('$10.50');
+    expect(formatPrice(247.5)).toBe('$247.50');
+    expect(formatPrice(160)).toBe('$160');
+    // Explicit digits still win
+    expect(formatPrice(160, 'USD', { minimumFractionDigits: 2 })).toBe('$160.00');
   });
 
   it('uses USD by default', () => {
