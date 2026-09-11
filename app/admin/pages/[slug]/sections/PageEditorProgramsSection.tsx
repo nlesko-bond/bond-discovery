@@ -1,8 +1,15 @@
 'use client';
 
 import { ArrowDown, ArrowUp } from 'lucide-react';
-import type { ProgramSortMode, ProgramType, SessionCardPriceMode } from '@/types';
+import type {
+  CardPriceSummaryMode,
+  ProgramCardPriceMode,
+  ProgramSortMode,
+  ProgramType,
+  SessionCardPriceMode,
+} from '@/types';
 import { resolveProgramTypeOrder } from '@/lib/program-sort';
+import { resolveSessionCardPriceSettings } from '@/lib/session-card-price';
 import { getProgramTypeLabel } from '@/lib/utils';
 import {
   ALL_FILTERS,
@@ -34,8 +41,8 @@ const PROGRAM_CARD_OPTIONS: ReadonlyArray<IFeatureCheckboxOption> = [
   },
   {
     key: 'programCardPriceExcludeFree',
-    label: 'Exclude $0 options from the program price',
-    hint: 'The "From" price skips free pricing options instead of showing "From FREE".',
+    label: 'Hide $0 options in the program price',
+    hint: 'Free pricing options are skipped instead of showing "FREE".',
   },
   { key: 'alwaysShowDetailsButton', label: 'Keep Details button when program price is hidden' },
   {
@@ -116,14 +123,25 @@ const PROGRAM_SORT_OPTIONS: ReadonlyArray<{ value: ProgramSortMode; label: strin
   { value: 'program_type', label: 'Program type — custom order' },
 ];
 
-const SESSION_CARD_PRICE_OPTIONS: ReadonlyArray<{ value: SessionCardPriceMode; label: string }> = [
+/** Same summaries and wording at both levels; each level adds its own default. */
+const PRICE_SUMMARY_OPTIONS: ReadonlyArray<{ value: CardPriceSummaryMode; label: string }> = [
+  { value: 'range', label: 'Full price range (e.g. $50 – $120)' },
+  { value: 'min', label: 'Minimum price ("From $50")' },
+  { value: 'max', label: 'Maximum price ("Up to $120")' },
+];
+
+const PROGRAM_CARD_PRICE_OPTIONS: ReadonlyArray<{ value: ProgramCardPriceMode; label: string }> = [
+  { value: 'default', label: 'Default — "From" + lowest price' },
+  ...PRICE_SUMMARY_OPTIONS,
+];
+
+const SESSION_CARD_PRICE_OPTIONS: ReadonlyArray<{
+  value: Exclude<SessionCardPriceMode, 'range_excluding_free' | 'min_excluding_free'>;
+  label: string;
+}> = [
   { value: 'default', label: 'Default — price only when the session has one pricing option' },
   { value: 'hidden', label: 'Hide price on session card' },
-  { value: 'range', label: 'Full price range (e.g. $50 – $120)' },
-  { value: 'max', label: 'Maximum price' },
-  { value: 'min', label: 'Minimum price' },
-  { value: 'range_excluding_free', label: 'Price range, excluding $0 options' },
-  { value: 'min_excluding_free', label: 'Minimum price, excluding $0 options' },
+  ...PRICE_SUMMARY_OPTIONS,
 ];
 
 function resolveFeatureChecked(
@@ -232,6 +250,7 @@ export function PageEditorProgramsSection({
 }: IPageEditorProgramsSectionProps) {
   const enabledTabs = config.features.enabledTabs || ['programs', 'schedule'];
   const sessionPricingOn = config.features.showSessionPricing ?? config.features.showPricing;
+  const sessionPrice = resolveSessionCardPriceSettings(config.features);
 
   const setFeature = <K extends keyof PageFeatures>(key: K, value: PageFeatures[K]) =>
     setConfig({ ...config, features: { ...config.features, [key]: value } });
@@ -557,6 +576,29 @@ export function PageEditorProgramsSection({
           ))}
 
           <label className="block pt-2 text-sm text-gray-700">
+            <span className="font-medium">Program price</span>
+            <select
+              className="input mt-1"
+              value={config.features.programCardPriceMode || 'default'}
+              disabled={!config.features.showPricing}
+              onChange={(event) =>
+                setFeature('programCardPriceMode', event.target.value as ProgramCardPriceMode)
+              }
+            >
+              {PROGRAM_CARD_PRICE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-0.5 text-xs text-gray-500">
+              Summarizes the program&apos;s public (non-member) pricing options with the same wording
+              as session cards. The prefix only appears when prices differ.
+              {!config.features.showPricing && ' Turn on Show program price to enable.'}
+            </p>
+          </label>
+
+          <label className="block pt-2 text-sm text-gray-700">
             <span className="font-medium">Program order</span>
             <select
               className="input mt-1"
@@ -626,10 +668,18 @@ export function PageEditorProgramsSection({
             <span className="font-medium">Session card price</span>
             <select
               className="input mt-1"
-              value={config.features.sessionCardPriceMode || 'default'}
+              value={sessionPrice.mode}
               disabled={!sessionPricingOn}
               onChange={(event) =>
-                setFeature('sessionCardPriceMode', event.target.value as SessionCardPriceMode)
+                setConfig({
+                  ...config,
+                  features: {
+                    ...config.features,
+                    sessionCardPriceMode: event.target.value as SessionCardPriceMode,
+                    // Legacy *_excluding_free modes fold into the checkbox below.
+                    sessionCardPriceExcludeFree: sessionPrice.excludeFree,
+                  },
+                })
               }
             >
               {SESSION_CARD_PRICE_OPTIONS.map((option) => (
@@ -645,6 +695,25 @@ export function PageEditorProgramsSection({
               {!sessionPricingOn && ' Turn on Show session pricing above to enable.'}
             </p>
           </label>
+
+          <FeatureCheckbox
+            option={{
+              key: 'sessionCardPriceExcludeFree',
+              label: 'Hide $0 options in the session price',
+              hint: 'Free pricing options are skipped instead of showing "FREE".',
+            }}
+            checked={sessionPrice.excludeFree}
+            onChange={(checked) =>
+              setConfig({
+                ...config,
+                features: {
+                  ...config.features,
+                  sessionCardPriceMode: sessionPrice.mode,
+                  sessionCardPriceExcludeFree: checked,
+                },
+              })
+            }
+          />
         </div>
       </div>
 

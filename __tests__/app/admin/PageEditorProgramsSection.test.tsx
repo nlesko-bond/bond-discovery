@@ -43,7 +43,7 @@ describe('PageEditorProgramsSection display groups', () => {
     expect(screen.getByRole('heading', { name: 'Session cards' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Page & schedule options' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /Show program price/ })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /Exclude \$0 options from the program price/ })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Hide \$0 options in the program price/ })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /Show session pricing/ })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /Show full session titles/ })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /Program order/ })).toBeInTheDocument();
@@ -70,6 +70,29 @@ describe('PageEditorProgramsSection display groups', () => {
         features: expect.objectContaining({ showPricing: false, showSessionPricing: true }),
       }),
     );
+  });
+
+  it('offers the same price summaries at both levels plus per-level $0 switches', () => {
+    renderSection(makeConfig({ showPricing: true }));
+    const programSelect = screen.getByRole('combobox', { name: /Program price/ });
+    const sessionSelect = screen.getByRole('combobox', { name: /Session card price/ });
+    const labels = (el: HTMLElement) =>
+      Array.from((el as HTMLSelectElement).options).map((o) => o.textContent);
+    expect(labels(programSelect)).toEqual([
+      'Default — "From" + lowest price',
+      'Full price range (e.g. $50 – $120)',
+      'Minimum price ("From $50")',
+      'Maximum price ("Up to $120")',
+    ]);
+    expect(labels(sessionSelect).slice(2)).toEqual(labels(programSelect).slice(1));
+    expect(screen.getByRole('checkbox', { name: /Hide \$0 options in the program price/ })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Hide \$0 options in the session price/ })).toBeInTheDocument();
+  });
+
+  it('shows a legacy excluding-free session mode as mode + hide-$0 checked', () => {
+    renderSection(makeConfig({ showPricing: true, sessionCardPriceMode: 'range_excluding_free' }));
+    expect(screen.getByRole('combobox', { name: /Session card price/ })).toHaveValue('range');
+    expect(screen.getByRole('checkbox', { name: /Hide \$0 options in the session price/ })).toBeChecked();
   });
 
   it('shows the program type reorder list only for the program_type sort', () => {

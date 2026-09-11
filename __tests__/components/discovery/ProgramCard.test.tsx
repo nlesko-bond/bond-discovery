@@ -976,6 +976,79 @@ describe('ProgramCard', () => {
     });
   });
 
+  describe('programCardPriceMode (shared wording with session cards)', () => {
+    const spread = {
+      ...mockProgram,
+      sessions: [
+        {
+          ...mockSession,
+          products: [
+            { ...mockSession.products![0], id: 'lo', prices: [{ ...mockSession.products![0].prices[0], id: 'l', price: 50, amount: 50 }] },
+            { ...mockSession.products![0], id: 'hi', prices: [{ ...mockSession.products![0].prices[0], id: 'h', price: 120, amount: 120 }] },
+            mockSession.products![1], // member product, excluded from the summary
+          ],
+        },
+      ],
+    };
+    const withMode = (mode: string) => ({
+      ...mockConfig,
+      features: { ...mockConfig.features, programCardPriceMode: mode as never },
+    });
+
+    it('default keeps the legacy From + lowest price', () => {
+      render(<ProgramCard program={spread} config={mockConfig} />);
+      expect(screen.getByTestId('program-price')).toHaveTextContent(/From\s*\$50/);
+    });
+
+    it('range shows the full span with no prefix', () => {
+      render(<ProgramCard program={spread} config={withMode('range')} />);
+      expect(screen.getByTestId('program-price')).toHaveTextContent('$50 – $120');
+      expect(screen.queryByText('From')).not.toBeInTheDocument();
+    });
+
+    it('max shows Up to like the session card', () => {
+      render(<ProgramCard program={spread} config={withMode('max')} />);
+      expect(screen.getByTestId('program-price')).toHaveTextContent(/Up to\s*\$120/);
+    });
+
+    it('min drops the From prefix when there is a single price', () => {
+      const one = { ...mockProgram, sessions: [{ ...mockSession, products: [mockSession.products![0]] }] };
+      render(<ProgramCard program={one} config={withMode('min')} />);
+      expect(screen.getByTestId('program-price')).toHaveTextContent('$99.99');
+      expect(screen.queryByText('From')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('sessionCardPriceExcludeFree', () => {
+    it('hides $0 options from the session summary', () => {
+      const program = {
+        ...mockProgram,
+        sessions: [
+          {
+            ...mockSession,
+            products: [
+              { ...mockSession.products![0], id: 'free', prices: [{ ...mockSession.products![0].prices[0], id: 'f', price: 0, amount: 0 }] },
+              { ...mockSession.products![0], id: 'paid', prices: [{ ...mockSession.products![0].prices[0], id: 'p', price: 160, amount: 160 }] },
+            ],
+          },
+        ],
+      };
+      const config = {
+        ...mockConfig,
+        features: {
+          ...mockConfig.features,
+          sessionCardPriceMode: 'max' as const,
+          sessionCardPriceExcludeFree: true,
+        },
+      };
+      render(<ProgramCard program={program} config={config} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      // Only one paid price remains, so no "Up to" prefix either
+      expect(screen.getByTestId('session-inline-price')).toHaveTextContent('$160');
+      expect(screen.getByTestId('session-inline-price')).not.toHaveTextContent('Up to');
+    });
+  });
+
   describe('programCtaLabel', () => {
     it('uses the default CTA label when not configured', () => {
       render(<ProgramCard program={mockProgram} config={mockConfig} />);
