@@ -82,7 +82,10 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
   });
   
   // Get pricing info
-  const pricingInfo = getPricingInfo(sessions);
+  const pricingInfo = getPricingInfo(
+    sessions,
+    config.features.programCardPriceExcludeFree === true,
+  );
   
   // Get availability info across all sessions
   const totalSpots = sessions.reduce((sum, s) => sum + (s.maxParticipants || s.capacity || 0), 0);
@@ -437,6 +440,9 @@ function SessionCard({
   const pathname = usePathname();
   // Auto-expand pricing if there's only one session (autoExpandPricing=true)
   const [showPricing, setShowPricing] = useState(autoExpandPricing);
+  // Session pricing is its own switch; unset inherits the program-card switch (legacy).
+  const sessionPricingEnabled =
+    config.features.showSessionPricing ?? config.features.showPricing;
   const sessionCapacity = session.maxParticipants || session.capacity;
   const availability = getAvailabilityInfo(session.spotsRemaining, sessionCapacity);
   // No capacity configured means unlimited enrollment — surface it as Available
@@ -498,7 +504,7 @@ function SessionCard({
 
   // Price for the single product (analytics) and the inline label per sessionCardPriceMode
   const singleProductPrice = singleProduct?.prices?.[0]?.price ?? singleProduct?.prices?.[0]?.amount;
-  const inlinePriceLabel = config.features.showPricing
+  const inlinePriceLabel = sessionPricingEnabled
     ? resolveSessionCardPriceLabel(
         products,
         resolveSessionCardPriceMode(config.features.sessionCardPriceMode),
@@ -585,7 +591,7 @@ function SessionCard({
                 <Clock size={12} />
                 Schedule
               </Link>
-              {config.features.showPricing && products.length > 0 && (
+              {sessionPricingEnabled && products.length > 0 && (
                 <>
                   <span className="text-gray-300">|</span>
                   <button
@@ -672,7 +678,7 @@ function SessionCard({
       )}
 
       {/* Products/Pricing Carousel - Show when toggled via "View Pricing" button */}
-      {config.features.showPricing && showPricing && products.length > 0 && (
+      {sessionPricingEnabled && showPricing && products.length > 0 && (
         <div className="mt-3 pt-3 border-t border-gray-100 animate-fade-in">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
@@ -772,7 +778,7 @@ interface PricingInfo {
   hasMemberPricing: boolean;
 }
 
-function getPricingInfo(sessions: Session[]): PricingInfo {
+function getPricingInfo(sessions: Session[], excludeFree = false): PricingInfo {
   let regularPrice: number | undefined;
   let memberPrice: number | undefined;
   let hasMemberPricing = false;
@@ -780,10 +786,14 @@ function getPricingInfo(sessions: Session[]): PricingInfo {
   sessions.forEach(session => {
     (session.products || []).filter((p) => !isCompedProduct(p)).forEach(product => {
       const isMember = product.isMemberProduct;
-      
+
       product.prices.forEach(price => {
         const priceValue = price.price ?? price.amount ?? 0;
-        
+        // programCardPriceExcludeFree: $0 options never drive the "From" price
+        if (excludeFree && priceValue <= 0) {
+          return;
+        }
+
         if (isMember) {
           hasMemberPricing = true;
           if (memberPrice === undefined || priceValue < memberPrice) {
