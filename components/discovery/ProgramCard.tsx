@@ -595,7 +595,7 @@ function SessionCard({
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-gray-500">
             {(session.startDate || session.endDate) && (
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 whitespace-nowrap">
                 <Calendar size={12} className="text-gray-400" />
                 {formatDateRange(session.startDate || '', session.endDate || '')}
               </span>
@@ -607,7 +607,7 @@ function SessionCard({
               </span>
             )}
             {sessionAgeRange && (
-              <span className="flex items-center gap-1" data-testid="session-age-range">
+              <span className="flex items-center gap-1 whitespace-nowrap" data-testid="session-age-range">
                 <Users size={12} className="text-gray-400" />
                 {sessionAgeRange}
               </span>
@@ -639,15 +639,10 @@ function SessionCard({
           </div>
         </div>
         
-        {/* Price + Register Button in Header */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Inline price: legacy single-product price, or a summary per sessionCardPriceMode */}
-          {inlinePriceLabel && (
-            <span className="text-sm font-bold text-gray-900" data-testid="session-inline-price">
-              {inlinePriceLabel}
-            </span>
-          )}
-          
+        {/* Register button with the price stacked underneath, so the right
+            column is only as wide as the button and the date/age lines on the
+            left keep their room instead of wrapping mid-value. */}
+        <div className="flex flex-col items-end gap-1 flex-shrink-0">
           {!hideRegistrationLinks && registrationLink && (
             <a
               href={customRegistrationUrl || registrationLink}
@@ -675,6 +670,15 @@ function SessionCard({
             >
               {isRegistrationUnavailable ? 'Learn More' : (isWaitlistJoinable ? 'Join Waitlist' : 'Register')} <ExternalLink size={12} />
             </a>
+          )}
+          {/* Inline price: legacy single-product price, or a summary per sessionCardPriceMode */}
+          {inlinePriceLabel && (
+            <span
+              className="text-sm font-bold text-gray-900 whitespace-nowrap"
+              data-testid="session-inline-price"
+            >
+              {inlinePriceLabel}
+            </span>
           )}
         </div>
       </div>
