@@ -869,6 +869,17 @@ describe('ProgramCard', () => {
       expect(screen.getByTestId('session-inline-price')).toHaveTextContent('$99.99');
     });
 
+    it('stacks the price under the Register button in the same right-hand column', () => {
+      render(<ProgramCard program={oneOptionProgram} config={mockConfig} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      const price = screen.getByTestId('session-inline-price');
+      const register = screen.getAllByRole('link', { name: /Register/i })[0];
+      expect(price.parentElement).toBe(register.parentElement);
+      expect(price.parentElement?.className).toContain('flex-col');
+      // Register first, price below
+      expect(register.compareDocumentPosition(price) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
     it('default: no inline price when the session has several options', () => {
       render(<ProgramCard program={twoOptionProgram} config={mockConfig} />);
       fireEvent.click(screen.getByRole('button', { name: /Details/i }));
