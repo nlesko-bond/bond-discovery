@@ -560,52 +560,59 @@ describe('rows style — tableColumns-driven session rows', () => {
   });
 
   it('expands non-segmented sessions with an event schedule summary and upcoming dates', () => {
-    const onOpenSchedule = vi.fn();
-    const futureStart = '2026-09-19T13:00:00.000Z';
-    render(
-      <HostPortalV2SessionsView
-        cards={[
-          makeVariableScheduleCard({
-            description: undefined,
-            longDescription: undefined,
-          }),
-        ]}
-        config={makeConfig({
-          portalRowActionMode: 'combined',
-          portalRowShowSegmentRegister: true,
-          portalRowShowSegmentSpots: true,
-        })}
-        filters={EMPTY_FILTERS}
-        accentColor={ACCENT}
-        cardStyle="rows"
-        displayMode="sessions"
-        cardMinWidthPx={240}
-        apiEvents={[
-          {
-            id: 'e1',
-            sessionId: 's2',
-            startDate: futureStart,
-            timezone: 'America/New_York',
-            spotsRemaining: 14,
-            linkSEO: 'register/s2',
-          },
-          {
-            id: 'e2',
-            sessionId: 's2',
-            startDate: '2026-09-26T13:00:00.000Z',
-            timezone: 'America/New_York',
-            spotsRemaining: 8,
-          },
-        ]}
-        onOpenSchedule={onOpenSchedule}
-      />,
-    );
-    fireEvent.click(screen.getByTestId('portal-v2-combined-expand'));
-    expect(screen.getByTestId('portal-v2-event-schedule')).toBeInTheDocument();
-    expect(screen.getByTestId('portal-v2-event-schedule-summary')).toHaveTextContent('Sat · 9:00 AM');
-    expect(screen.getAllByTestId('portal-v2-event-occurrence-row')).toHaveLength(2);
-    fireEvent.click(screen.getByTestId('portal-v2-event-view-full-schedule'));
-    expect(onOpenSchedule).toHaveBeenCalledWith('p1', 's2');
+    // Pin "today" before both fixture events (Sep 19 / Sep 26, 2026) so they
+    // stay upcoming regardless of the real date.
+    vi.useFakeTimers({ now: new Date('2026-09-15T12:00:00Z'), toFake: ['Date'] });
+    try {
+      const onOpenSchedule = vi.fn();
+      const futureStart = '2026-09-19T13:00:00.000Z';
+      render(
+        <HostPortalV2SessionsView
+          cards={[
+            makeVariableScheduleCard({
+              description: undefined,
+              longDescription: undefined,
+            }),
+          ]}
+          config={makeConfig({
+            portalRowActionMode: 'combined',
+            portalRowShowSegmentRegister: true,
+            portalRowShowSegmentSpots: true,
+          })}
+          filters={EMPTY_FILTERS}
+          accentColor={ACCENT}
+          cardStyle="rows"
+          displayMode="sessions"
+          cardMinWidthPx={240}
+          apiEvents={[
+            {
+              id: 'e1',
+              sessionId: 's2',
+              startDate: futureStart,
+              timezone: 'America/New_York',
+              spotsRemaining: 14,
+              linkSEO: 'register/s2',
+            },
+            {
+              id: 'e2',
+              sessionId: 's2',
+              startDate: '2026-09-26T13:00:00.000Z',
+              timezone: 'America/New_York',
+              spotsRemaining: 8,
+            },
+          ]}
+          onOpenSchedule={onOpenSchedule}
+        />,
+      );
+      fireEvent.click(screen.getByTestId('portal-v2-combined-expand'));
+      expect(screen.getByTestId('portal-v2-event-schedule')).toBeInTheDocument();
+      expect(screen.getByTestId('portal-v2-event-schedule-summary')).toHaveTextContent('Sat · 9:00 AM');
+      expect(screen.getAllByTestId('portal-v2-event-occurrence-row')).toHaveLength(2);
+      fireEvent.click(screen.getByTestId('portal-v2-event-view-full-schedule'));
+      expect(onOpenSchedule).toHaveBeenCalledWith('p1', 's2');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('hides the session count summary under program headings in rows layout', () => {
