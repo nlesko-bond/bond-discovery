@@ -39,6 +39,7 @@ import {
 } from '@/lib/event-lookback';
 import { HostPortalFilterBar } from './HostPortalFilterBar';
 import { HostPortalSessionList } from './HostPortalSessionList';
+import { LeagueProgramList } from '@/components/discovery/league/LeagueProgramList';
 import { HostPortalScheduleTab } from './HostPortalScheduleTab';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { useHostPortalEmbedResize } from './useHostPortalEmbedResize';
@@ -110,7 +111,10 @@ export function HostPortalDiscoveryPage({
   const [loadingMore, setLoadingMore] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const embedRootRef = useRef<HTMLDivElement>(null);
-  const useSessionPortalShell = isHostPortalSessionLayout(config);
+  // The league card layout brings its own program view, so it takes the
+  // legacy-programs shell even on session-first/list pages.
+  const useSessionPortalShell =
+    isHostPortalSessionLayout(config) && config.features.programCardLayout !== 'league';
   const sessionLayout = resolvePortalSessionLayout(
     config,
     urlSearchParams.get(PORTAL_SESSION_LAYOUT_QUERY_KEY),
@@ -525,6 +529,15 @@ export function HostPortalDiscoveryPage({
                 linkTarget={linkTarget}
               />
             }
+          />
+        ) : viewMode === 'programs' && config.features.programCardLayout === 'league' ? (
+          <LeagueProgramList
+            programs={filteredPrograms}
+            config={config}
+            events={apiEvents}
+            linkTarget={linkTarget}
+            onOpenSchedule={openScheduleForSession}
+            trackRegisterClicks={!isEmbedded}
           />
         ) : viewMode === 'programs' ? (
           <HostPortalSessionList

@@ -385,7 +385,7 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
  * (callers must pass sanitized markup from lib/safe-html.ts); otherwise
  * children render as-is.
  */
-function ExpandableText({
+export function ExpandableText({
   clampClass,
   className,
   accentColor,

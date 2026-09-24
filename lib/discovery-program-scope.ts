@@ -1,5 +1,5 @@
 import { programIdsFilterMatches } from '@/lib/program-ids-filter';
-import type { DiscoveryConfig, Program } from '@/types';
+import type { DiscoveryConfig, Program, ProgramType } from '@/types';
 
 export const PROGRAMS_DISCOVERY_EXPAND =
   'sessions,sessions.products,sessions.products.prices';
@@ -54,18 +54,53 @@ export function shouldSkipProgramByPageConfig(
 }
 
 /**
- * Drops schedule events whose programId is filtered out by page config.
- * Applied when serving precomputed KV payloads that may predate filter changes.
+ * Page-level program type scope (lowercased, deduped). Empty = every type.
  */
-export function filterDiscoveryEventsByPageConfig<T extends { programId?: unknown }>(
-  events: T[],
-  config: DiscoveryConfig,
-): T[] {
-  const mode = config.features.programFilterMode || 'all';
-  if (mode === 'all') {
+export function getProgramTypeScope(config: DiscoveryConfig): string[] {
+  const scope = config.features.programTypeScope;
+  if (!Array.isArray(scope) || scope.length === 0) {
+    return [];
+  }
+  return Array.from(
+    new Set(scope.map((type) => String(type).trim().toLowerCase()).filter(Boolean)),
+  );
+}
+
+function matchesProgramTypeScope(type: unknown, scope: string[]): boolean {
+  return typeof type === 'string' && scope.includes(type.toLowerCase());
+}
+
+/**
+ * Drops events outside the page's program type scope. Events carry the
+ * program type as `programType` (falling back to `type`, as elsewhere).
+ * Returns the input array untouched when no scope is set.
+ */
+export function filterDiscoveryEventsByProgramTypeScope<
+  T extends { programType?: unknown; type?: unknown },
+>(events: T[], config: DiscoveryConfig): T[] {
+  const scope = getProgramTypeScope(config);
+  if (scope.length === 0) {
     return events;
   }
-  return events.filter((event) => !shouldSkipProgramByPageConfig(event.programId, config));
+  return events.filter((event) =>
+    matchesProgramTypeScope(event.programType ?? event.type, scope),
+  );
+}
+
+/**
+ * Drops schedule events whose program is filtered out by page config
+ * (program IDs, then program type scope). Applied when serving precomputed
+ * KV payloads, which are warmed unscoped and may predate filter changes.
+ */
+export function filterDiscoveryEventsByPageConfig<
+  T extends { programId?: unknown; programType?: unknown; type?: unknown },
+>(events: T[], config: DiscoveryConfig): T[] {
+  const mode = config.features.programFilterMode || 'all';
+  const byId =
+    mode === 'all'
+      ? events
+      : events.filter((event) => !shouldSkipProgramByPageConfig(event.programId, config));
+  return filterDiscoveryEventsByProgramTypeScope(byId, config);
 }
 
 /**
@@ -75,6 +110,10 @@ export function filterProgramsByPageConfig(
   programs: Program[],
   config: DiscoveryConfig,
 ): Program[] {
+  return filterProgramsByTypeScope(filterProgramsByIds(programs, config), config);
+}
+
+function filterProgramsByIds(programs: Program[], config: DiscoveryConfig): Program[] {
   const mode = config.features.programFilterMode || 'all';
   const included = getDiscoveryIncludedProgramIds(config);
   const excluded = getDiscoveryExcludedProgramIds(config);
@@ -87,6 +126,25 @@ export function filterProgramsByPageConfig(
   }
   return programs;
 }
+
+function filterProgramsByTypeScope(programs: Program[], config: DiscoveryConfig): Program[] {
+  const scope = getProgramTypeScope(config);
+  if (scope.length === 0) {
+    return programs;
+  }
+  return programs.filter((program) => matchesProgramTypeScope(program.type, scope));
+}
+
+/** Program types the admin can scope a page to (Bond's programTypes enum). */
+export const SCOPABLE_PROGRAM_TYPES: ProgramType[] = [
+  'league',
+  'tournament',
+  'club_team',
+  'class',
+  'clinic',
+  'camp',
+  'lesson',
+];
 
 /**
  * Compare session end dates using the calendar day (YYYY-MM-DD), not full ISO strings.

@@ -41,6 +41,7 @@ import { HostPortalScheduleTab } from '../HostPortalScheduleTab';
 import { useHostPortalEmbedResize } from '../useHostPortalEmbedResize';
 import { useFacilityScheduleEvents } from '../useFacilityScheduleEvents';
 import { HostPortalV2SessionsView } from './HostPortalV2SessionsView';
+import { LeagueProgramList } from '@/components/discovery/league/LeagueProgramList';
 import { HostPortalV2FilterBar } from './HostPortalV2FilterBar';
 import {
   HostPortalV2EmptyState,
@@ -611,7 +612,13 @@ export function HostPortalV2Page({
         programs={initialPrograms}
         config={config}
         accentColor={accentColor}
-        resultCount={viewMode === 'schedule' ? filteredEvents.length : sessionCards.length}
+        resultCount={
+          viewMode === 'schedule'
+            ? filteredEvents.length
+            : config.features.programCardLayout === 'league'
+              ? filteredPrograms.length
+              : sessionCards.length
+        }
         isScheduleView={viewMode === 'schedule'}
       />
 
@@ -653,6 +660,15 @@ export function HostPortalV2Page({
             linkTarget={linkTarget}
           />
           </>
+        ) : config.features.programCardLayout === 'league' ? (
+          <LeagueProgramList
+            programs={filteredPrograms}
+            config={config}
+            events={apiEvents}
+            linkTarget={linkTarget}
+            onOpenSchedule={showScheduleTab ? openScheduleForSession : undefined}
+            trackRegisterClicks={!isEmbedded}
+          />
         ) : !hasAnyCards ? (
           <HostPortalV2ZeroEventsState companyName={config.branding.companyName} />
         ) : sessionCards.length === 0 ? (

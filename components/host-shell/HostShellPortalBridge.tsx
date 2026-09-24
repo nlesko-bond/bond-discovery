@@ -10,6 +10,11 @@ import {
 import { DEFAULT_BOND_CONSUMER_ORIGIN } from '@/lib/host-shell/constants';
 
 function isRegistrationAnchor(anchor: HTMLAnchorElement): boolean {
+  // Opt-out for plain Bond links that share the /programs/ path but are not
+  // checkout, e.g. the league card's Standings / Schedule & Scores links.
+  if (anchor.dataset.bondPassthrough === 'true') {
+    return false;
+  }
   const href = anchor.getAttribute('href');
   if (!href || href.startsWith('#')) {
     return false;

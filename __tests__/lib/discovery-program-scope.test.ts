@@ -3,6 +3,8 @@ import {
   filterProgramsByPageConfig,
   filterProgramsWithActiveSessions,
   filterDiscoveryEventsByPageConfig,
+  filterDiscoveryEventsByProgramTypeScope,
+  getProgramTypeScope,
   getDiscoveryExcludedProgramIds,
   getDiscoveryIncludedProgramIds,
   sessionEndDateOnOrAfterToday,
@@ -129,5 +131,57 @@ describe('filterDiscoveryEventsByPageConfig', () => {
       { id: 'e3', programId: '999' },
     ];
     expect(filterDiscoveryEventsByPageConfig(events, config).map((e) => e.id)).toEqual(['e3']);
+  });
+});
+
+describe('program type scope', () => {
+  const typed = (id: string, type: string) => ({ ...program(id), type }) as Program;
+
+  it('is a no-op (same array) when no scope is set', () => {
+    const config = minimalConfig();
+    const programs = [typed('1', 'league'), typed('2', 'class')];
+    expect(filterProgramsByPageConfig(programs, config)).toBe(programs);
+    const events = [{ id: 'e1', programId: '1', type: 'class' }];
+    expect(filterDiscoveryEventsByPageConfig(events, config)).toBe(events);
+    expect(filterDiscoveryEventsByProgramTypeScope(events, config)).toBe(events);
+  });
+
+  it('treats an empty scope like no scope', () => {
+    const config = minimalConfig({ features: { enableFilters: [], programTypeScope: [] } });
+    expect(getProgramTypeScope(config)).toEqual([]);
+    const programs = [typed('1', 'league')];
+    expect(filterProgramsByPageConfig(programs, config)).toBe(programs);
+  });
+
+  it('keeps only programs of the scoped types', () => {
+    const config = minimalConfig({
+      features: { enableFilters: [], programTypeScope: ['league', 'tournament'] },
+    });
+    const programs = [typed('1', 'league'), typed('2', 'class'), typed('3', 'tournament'), program('4')];
+    expect(filterProgramsByPageConfig(programs, config).map((p) => p.id)).toEqual(['1', '3']);
+  });
+
+  it('combines with program ID exclusion', () => {
+    const config = minimalConfig({
+      features: {
+        enableFilters: [],
+        programFilterMode: 'exclude',
+        excludedProgramIds: ['1'],
+        programTypeScope: ['league'],
+      },
+    });
+    const programs = [typed('1', 'league'), typed('2', 'league'), typed('3', 'class')];
+    expect(filterProgramsByPageConfig(programs, config).map((p) => p.id)).toEqual(['2']);
+  });
+
+  it('filters events by programType, falling back to type', () => {
+    const config = minimalConfig({ features: { enableFilters: [], programTypeScope: ['league'] } });
+    const events = [
+      { id: 'e1', programId: '1', programType: 'league' },
+      { id: 'e2', programId: '2', type: 'league' },
+      { id: 'e3', programId: '3', type: 'class' },
+      { id: 'e4', programId: '4', type: 'drop_in' },
+    ];
+    expect(filterDiscoveryEventsByPageConfig(events, config).map((e) => e.id)).toEqual(['e1', 'e2']);
   });
 });

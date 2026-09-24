@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { eventShowsStandingsLink, getLeagueStandingsUrl } from '@/lib/schedule-standings';
+import {
+  eventShowsStandingsLink,
+  getLeagueCompetitionUrl,
+  getLeagueStandingsUrl,
+} from '@/lib/schedule-standings';
 import type { CalendarEvent, DiscoveryConfig } from '@/types';
 
 const SEASON_LINK =
@@ -83,5 +87,25 @@ describe('eventShowsStandingsLink', () => {
   it('hides when the standings URL cannot be derived', () => {
     const event = makeEvent({ linkSEO: '/programs/youth-soccer' });
     expect(eventShowsStandingsLink(event, makeConfig(true))).toBe(false);
+  });
+});
+
+describe('getLeagueCompetitionUrl', () => {
+  it('builds the standings and schedule & scores tabs', () => {
+    expect(getLeagueCompetitionUrl(SEASON_LINK, 'standings')).toBe(
+      `${SEASON_LINK}/competition?tab=standings`,
+    );
+    expect(getLeagueCompetitionUrl(SEASON_LINK, 'schedule')).toBe(
+      `${SEASON_LINK}/competition?tab=schedule`,
+    );
+  });
+
+  it('matches getLeagueStandingsUrl exactly', () => {
+    expect(getLeagueStandingsUrl(SEASON_LINK)).toBe(getLeagueCompetitionUrl(SEASON_LINK, 'standings'));
+  });
+
+  it('rejects non-season links', () => {
+    expect(getLeagueCompetitionUrl('https://bondsports.co/activity/programs/x/1', 'schedule')).toBeUndefined();
+    expect(getLeagueCompetitionUrl(undefined, 'schedule')).toBeUndefined();
   });
 });

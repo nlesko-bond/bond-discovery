@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRostersUrlForEvent } from '@/lib/schedule-standings';
+import { getRostersUrlForEvent, getRostersUrlForSession } from '@/lib/schedule-standings';
 import type { CalendarEvent, DiscoveryConfig } from '@/types';
 
 const event = (over: Partial<CalendarEvent> = {}): CalendarEvent =>
@@ -51,5 +51,18 @@ describe('getRostersUrlForEvent', () => {
     expect(getRostersUrlForEvent(e, config())).toBe(
       'http://localhost:3000/rosters/coppermine?session=127956'
     );
+  });
+});
+
+describe('getRostersUrlForSession', () => {
+  it('deep-links to the season when opted in', () => {
+    expect(getRostersUrlForSession('127956', config())).toBe(
+      'http://localhost:3000/rosters/coppermine?session=127956'
+    );
+  });
+
+  it('returns nothing unless opted in with a slug', () => {
+    expect(getRostersUrlForSession('1', config({ showRostersLink: undefined }))).toBeUndefined();
+    expect(getRostersUrlForSession('1', config({ rostersPageSlug: '  ' }))).toBeUndefined();
   });
 });

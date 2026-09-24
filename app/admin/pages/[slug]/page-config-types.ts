@@ -155,6 +155,14 @@ export interface IPageConfig {
     showLeagueStandingsLink?: boolean;
     showRostersLink?: boolean;
     rostersPageSlug?: string;
+    /** Page-level program type scope; empty = every type. */
+    programTypeScope?: ProgramType[];
+    /** 'league' = league cards with a row per season. */
+    programCardLayout?: 'default' | 'league';
+    /** League layout: keep seasons that ended within N days (0–60). */
+    completedSeasonDays?: number;
+    /** League layout: when Standings / Schedule & Scores link-outs show. */
+    leagueLinksMode?: 'auto' | 'always' | 'never';
     showWaitlist?: boolean;
     showScheduleEventType?: boolean;
   };

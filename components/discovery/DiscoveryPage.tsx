@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Program, DiscoveryConfig, DiscoveryFilters, ViewMode, ProgramType } from '@/types';
 import { ProgramGrid } from './ProgramGrid';
+import { LeagueProgramList } from './league/LeagueProgramList';
 import { ScheduleView } from './ScheduleView';
 import { programsToCalendarEvents, buildWeekSchedules } from '@/lib/transformers';
 import { buildUrl, getSportGradient, getProgramTypeLabel, cn, isLightColor } from '@/lib/utils';
@@ -1494,7 +1495,14 @@ export function DiscoveryPage({
       <div className="w-full px-3 sm:px-4 lg:px-6">
         {/* Main Content Area */}
         <main>
-          {viewMode === 'programs' ? (
+          {viewMode === 'programs' && config.features.programCardLayout === 'league' ? (
+            <LeagueProgramList
+              programs={filteredPrograms}
+              config={config}
+              events={apiEvents}
+              linkTarget={linkTarget}
+            />
+          ) : viewMode === 'programs' ? (
             <ProgramGrid 
               programs={filteredPrograms} 
               config={config}

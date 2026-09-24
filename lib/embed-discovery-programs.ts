@@ -5,8 +5,10 @@ import { sortProgramsForDisplay } from '@/lib/program-sort';
 import {
   filterProgramsByPageConfig,
   filterProgramsWithActiveSessions,
+  getProgramTypeScope,
   PROGRAMS_DISCOVERY_EXPAND,
 } from '@/lib/discovery-program-scope';
+import { mergeCompletedSeasons, resolveCompletedSeasonDays, todayYmd } from '@/lib/league-seasons';
 import type { DiscoveryConfig, Program } from '@/types';
 
 /**
@@ -62,6 +64,39 @@ async function fetchProgramsForOrg(
   return filterProgramsWithActiveSessions(programs);
 }
 
+/** Types fetched for completed seasons when the page has no type scope. */
+const DEFAULT_COMPLETED_SEASON_TYPES = ['league', 'tournament', 'club_team'];
+
+/**
+ * Recently ended seasons for league-layout pages. Bond omits ended sessions
+ * unless asked (`includePast`), so this is a separate, type-filtered call
+ * under its own cache key — the shared programs key above is never touched.
+ */
+async function fetchPastProgramsForOrg(
+  client: ReturnType<typeof createBondClient>,
+  orgId: string,
+  apiKey: string,
+  bondEnv: string | undefined,
+  cacheTtlSeconds: number,
+  programTypes: string[],
+): Promise<Program[]> {
+  const cacheKey = `${programsDiscoveryCacheKey(orgId, apiKey, bondEnv)}:past:${programTypes.join(',')}`;
+  const response = await cachedSWR(
+    cacheKey,
+    () =>
+      client.getAllPrograms(orgId, {
+        expand: PROGRAMS_DISCOVERY_EXPAND,
+        includePast: true,
+        programTypes,
+      }),
+    { ttl: cacheTtlSeconds },
+  );
+  return (response.data || []).map((raw) => ({
+    ...transformProgram(raw),
+    organizationId: orgId,
+  }));
+}
+
 /**
  * Loads programs for a discovery page using the same rules as public
  * discovery routes: per-org fetch with cache, session end-date filter,
@@ -82,9 +117,31 @@ export async function fetchProgramsForDiscoveryPage(
   const orgIds = config.organizationIds;
   const cacheTtlSeconds = Math.max(config.cacheTtl || 0, 4 * 60 * 60);
 
+  const completedSeasonDays = resolveCompletedSeasonDays(config);
+  const scopedTypes = getProgramTypeScope(config);
+  const pastProgramTypes = scopedTypes.length > 0 ? scopedTypes : DEFAULT_COMPLETED_SEASON_TYPES;
+
   const promises = orgIds.map(async (orgId) => {
     try {
-      return await fetchProgramsForOrg(client, orgId, apiKey, bondEnv, cacheTtlSeconds);
+      const programs = await fetchProgramsForOrg(client, orgId, apiKey, bondEnv, cacheTtlSeconds);
+      if (completedSeasonDays === 0) {
+        return programs;
+      }
+      try {
+        const pastPrograms = await fetchPastProgramsForOrg(
+          client,
+          orgId,
+          apiKey,
+          bondEnv,
+          cacheTtlSeconds,
+          pastProgramTypes,
+        );
+        return mergeCompletedSeasons(programs, pastPrograms, todayYmd(), completedSeasonDays);
+      } catch (error) {
+        // Completed seasons are extra; the live list still renders without them.
+        console.error(`Error fetching completed seasons for org ${orgId}:`, error);
+        return programs;
+      }
     } catch (error) {
       console.error(`Error fetching programs for org ${orgId}:`, error);
       return [];

@@ -7,6 +7,7 @@ import {
 } from '@/lib/discovery-events';
 import { getConfigBySlug } from '@/lib/config';
 import { getPrecomputedDiscoveryEvents } from '@/lib/discovery-precomputed-events';
+import { filterDiscoveryEventsByProgramTypeScope } from '@/lib/discovery-program-scope';
 import { getAvailabilityPayload } from '@/lib/availability-cache';
 import { maybeAlertZeroDiscoveryEvents } from '@/lib/discovery-zero-events-alert';
 import { getBondApiStats } from '@/lib/bond-client';
@@ -199,6 +200,15 @@ export async function GET(request: Request) {
         horizonMonths,
         startDate,
         explicitEndDate,
+      );
+    }
+
+    // Program type scope is applied at read time (the pipeline and its shared
+    // cache stay unscoped), mirroring the precomputed fast path.
+    if (result.context?.config) {
+      data = filterDiscoveryEventsByProgramTypeScope(
+        data as FullDiscoveryEvent[],
+        result.context.config,
       );
     }
 

@@ -715,6 +715,30 @@ export interface FeatureConfig {
   /** Slug of the roster page the link points at, e.g. 'coppermine'. */
   rostersPageSlug?: string;
   /**
+   * Page-level program type scope (e.g. ['league']). Empty/unset = every type.
+   * Applied at read time after the per-org caches, like the program ID
+   * include/exclude lists, so it never changes the warmed discovery payload.
+   */
+  programTypeScope?: ProgramType[];
+  /**
+   * Program card layout. 'league' swaps the program grid for league cards:
+   * one card per program with a row per season (status, dates, Register,
+   * Schedule & Scores, Standings, Teams). Unset/'default' = legacy cards.
+   */
+  programCardLayout?: 'default' | 'league';
+  /**
+   * League layout only: keep seasons that ended within the last N days
+   * (0–60, default 0) so final standings stay reachable. Costs one extra
+   * Bond programs call per org (includePast), cached separately.
+   */
+  completedSeasonDays?: number;
+  /**
+   * League layout only: when a season row shows the Standings and
+   * Schedule & Scores link-outs. 'auto' (default) = once the season has
+   * started, or once its game schedule is published; 'always' / 'never'.
+   */
+  leagueLinksMode?: 'auto' | 'always' | 'never';
+  /**
    * Redesigned discovery template (plan 009). Only 'v2' changes rendering;
    * absent/'current'/unknown values keep the existing templates byte-identical.
    */

@@ -9,6 +9,8 @@ import type {
   SessionCardPriceMode,
 } from '@/types';
 import { resolveProgramTypeOrder } from '@/lib/program-sort';
+import { SCOPABLE_PROGRAM_TYPES } from '@/lib/discovery-program-scope';
+import { MAX_COMPLETED_SEASON_DAYS } from '@/lib/league-seasons';
 import { resolveSessionCardPriceSettings } from '@/lib/session-card-price';
 import { getProgramTypeLabel } from '@/lib/utils';
 import {
@@ -421,6 +423,147 @@ export function PageEditorProgramsSection({
               )}
             </div>
           )}
+        </div>
+
+        <div className="mt-5">
+          <span className="text-sm font-medium text-gray-700">Program types</span>
+          <p className="mb-2 text-xs text-gray-500">
+            Limit the page to these types (e.g. League for a league page). None checked = every
+            type. Applies on top of the program ID settings above.
+          </p>
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            {SCOPABLE_PROGRAM_TYPES.map((type) => {
+              const scope = config.features.programTypeScope || [];
+              return (
+                <label key={type} className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300"
+                    checked={scope.includes(type)}
+                    onChange={(event) => {
+                      const next = event.target.checked
+                        ? [...scope, type]
+                        : scope.filter((item) => item !== type);
+                      setConfig({
+                        ...config,
+                        features: {
+                          ...config.features,
+                          programTypeScope: next.length > 0 ? next : undefined,
+                        },
+                      });
+                    }}
+                  />
+                  {getProgramTypeLabel(type)}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-1 font-semibold text-gray-900">Program card layout</h3>
+        <p className="mb-4 text-sm text-gray-600">
+          League cards show one card per program with a row per season: status (Registration
+          open, Week 3 of 8, Final), dates, Register while registration is open, and links to Bond
+          Schedule &amp; Scores, Standings and team rosters.
+        </p>
+        <div className="space-y-3">
+          {(
+            [
+              { value: 'default', label: 'Program cards (default)' },
+              { value: 'league', label: 'League cards' },
+            ] as const
+          ).map((option) => (
+            <label key={option.value} className="flex items-center gap-3">
+              <input
+                type="radio"
+                name="programCardLayout"
+                className="text-indigo-600"
+                checked={(config.features.programCardLayout || 'default') === option.value}
+                onChange={() =>
+                  setConfig({
+                    ...config,
+                    features: {
+                      ...config.features,
+                      programCardLayout: option.value === 'default' ? undefined : option.value,
+                    },
+                  })
+                }
+              />
+              <span className="font-medium">{option.label}</span>
+            </label>
+          ))}
+
+          {config.features.programCardLayout === 'league' && (
+            <div className="ml-7 space-y-4">
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700">
+                  Standings / Schedule &amp; Scores links
+                </span>
+                <select
+                  className="input mt-1"
+                  value={config.features.leagueLinksMode || 'auto'}
+                  onChange={(event) =>
+                    setConfig({
+                      ...config,
+                      features: {
+                        ...config.features,
+                        leagueLinksMode:
+                          event.target.value === 'auto'
+                            ? undefined
+                            : (event.target.value as 'always' | 'never'),
+                      },
+                    })
+                  }
+                >
+                  <option value="auto">
+                    Automatic — once the season starts or its game schedule is published
+                  </option>
+                  <option value="always">Always show</option>
+                  <option value="never">Never show</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700">
+                  Keep completed seasons for (days)
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  max={MAX_COMPLETED_SEASON_DAYS}
+                  className="input mt-1 w-32"
+                  value={config.features.completedSeasonDays ?? 0}
+                  onChange={(event) => {
+                    const days = Math.min(
+                      MAX_COMPLETED_SEASON_DAYS,
+                      Math.max(0, Math.floor(Number(event.target.value) || 0)),
+                    );
+                    setConfig({
+                      ...config,
+                      features: {
+                        ...config.features,
+                        completedSeasonDays: days > 0 ? days : undefined,
+                      },
+                    });
+                  }}
+                />
+                <p className="mt-0.5 text-xs text-gray-500">
+                  0 hides seasons once they end. Above 0, finished seasons stay listed as
+                  &quot;Final&quot; with their Standings link (max {MAX_COMPLETED_SEASON_DAYS}).
+                </p>
+              </label>
+
+              <p className="text-xs text-gray-500">
+                The Teams link uses the &quot;Show team rosters link&quot; setting and roster page
+                slug under Page &amp; schedule options.
+              </p>
+            </div>
+          )}
+        </div>
+        <div className="mt-3">
+          <SurfaceBadge surfaces={['Public', 'Embed', 'Portal']} />
         </div>
       </div>
 

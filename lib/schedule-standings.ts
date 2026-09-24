@@ -10,6 +10,17 @@ const BOND_CONSUMER_ORIGIN = 'https://bondsports.co';
  * Returns undefined when linkSEO is missing or is not a season-level link.
  */
 export function getLeagueStandingsUrl(linkSEO: string | undefined): string | undefined {
+  return getLeagueCompetitionUrl(linkSEO, 'standings');
+}
+
+/**
+ * The season page's competition tab: 'standings' or 'schedule' (Bond's
+ * "Schedule & Scores"). Public on bondsports.co — no login needed.
+ */
+export function getLeagueCompetitionUrl(
+  linkSEO: string | undefined,
+  tab: 'standings' | 'schedule',
+): string | undefined {
   if (!linkSEO) return undefined;
   const absolute = linkSEO.startsWith('http') ? linkSEO : `${BOND_CONSUMER_ORIGIN}${linkSEO}`;
   try {
@@ -18,7 +29,7 @@ export function getLeagueStandingsUrl(linkSEO: string | undefined): string | und
     if (!/\/season\/[^/]+\/[^/]+$/.test(path)) {
       return undefined;
     }
-    return `${url.origin}${path}/competition?tab=standings`;
+    return `${url.origin}${path}/competition?tab=${tab}`;
   } catch {
     return undefined;
   }
@@ -51,14 +62,30 @@ export function getRostersUrlForEvent(
   const programType = event.programType || event.type;
   if (programType !== 'league') return undefined;
 
+  return buildRostersUrl(slug, event.sessionId);
+}
+
+/**
+ * Roster deep link for a league card's season row. Same opt-in as the
+ * schedule-row link (`showRostersLink` + `rostersPageSlug`).
+ */
+export function getRostersUrlForSession(
+  sessionId: string | undefined,
+  config: DiscoveryConfig
+): string | undefined {
+  if (config.features.showRostersLink !== true) return undefined;
+  const slug = config.features.rostersPageSlug?.trim();
+  if (!slug) return undefined;
+  return buildRostersUrl(slug, sessionId);
+}
+
+function buildRostersUrl(slug: string, sessionId: string | undefined): string {
   // Absolute, like every sibling link in this footer. A relative URL combined
   // with an `in_frame` page's target="_self" would navigate the partner iframe
   // to /rosters/{slug} -- which this app serves with `frame-ancestors 'none'`,
   // so the embed would simply go blank.
   const origin =
     typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_ORIGIN || '');
-  const path = event.sessionId
-    ? `/rosters/${slug}?session=${event.sessionId}`
-    : `/rosters/${slug}`;
+  const path = sessionId ? `/rosters/${slug}?session=${sessionId}` : `/rosters/${slug}`;
   return `${origin}${path}`;
 }

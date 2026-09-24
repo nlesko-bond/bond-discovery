@@ -298,12 +298,20 @@ export class BondClient {
    */
   async getAllPrograms(
     orgId: string,
-    options?: { expand?: string; facilityId?: string; status?: string }
+    options?: {
+      expand?: string;
+      facilityId?: string;
+      status?: string;
+      includePast?: boolean;
+      programTypes?: string[];
+    }
   ): Promise<APIResponse<Program[]>> {
     return this.fetchAllPages<Program>(`/organization/${orgId}/programs`, {
       expand: options?.expand || 'sessions,sessions.products,sessions.products.prices',
       facility_id: options?.facilityId,
       status: options?.status,
+      includePast: options?.includePast ? 'true' : undefined,
+      programTypes: options?.programTypes?.length ? options.programTypes.join(',') : undefined,
       per_page: 100,
     });
   }
