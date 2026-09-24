@@ -636,7 +636,7 @@ async function fetchAndTransformEvents(context: DiscoveryEventsContext): Promise
         return await fetchIncludedProgramEvents(client, orgId, context);
       }
 
-      const programsResponse = await client.getPrograms(orgId, {
+      const programsResponse = await client.getAllPrograms(orgId, {
         expand: 'sessions,sessions.products,sessions.products.prices',
         facilityId: context.facilityId,
       });

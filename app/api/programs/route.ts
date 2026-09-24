@@ -50,7 +50,7 @@ export async function GET(request: Request) {
         const cacheKey = programsCacheKey(orgId, facilityId, apiKey, bondEnv);
         const response = await cachedSWR(
           cacheKey,
-          () => client.getPrograms(orgId, { expand, facilityId }),
+          () => client.getAllPrograms(orgId, { expand, facilityId }),
           { ttl: 4 * 60 * 60 }
         );
 

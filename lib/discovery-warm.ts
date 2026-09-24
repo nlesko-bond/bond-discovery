@@ -62,7 +62,7 @@ export async function warmScopeGroup(configs: DiscoveryConfig[]): Promise<WarmDe
       primary.organizationIds.map(async (orgId: string) => {
         try {
           const key = programsCacheKey(orgId, undefined, apiKey, primary.features.bondEnv);
-          const response = await client.getPrograms(orgId);
+          const response = await client.getAllPrograms(orgId);
           await cacheSet(key, response, { ttl: programsTtl });
         } catch (err) {
           console.error(`[warm-discovery] Failed to warm programs for org ${orgId}:`, err);

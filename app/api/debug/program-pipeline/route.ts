@@ -41,7 +41,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const response = await client.getPrograms(orgId, { expand: PROGRAMS_DISCOVERY_EXPAND });
+    const response = await client.getAllPrograms(orgId, { expand: PROGRAMS_DISCOVERY_EXPAND });
     const rawCount = (response.data || []).length;
     const transformed = (response.data || []).map((raw) => ({
       ...transformProgram(raw),

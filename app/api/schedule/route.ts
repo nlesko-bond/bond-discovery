@@ -47,7 +47,7 @@ export async function GET(request: Request) {
         
         const response = await cachedSWR(
           cacheKey,
-          () => client.getPrograms(orgId, { 
+          () => client.getAllPrograms(orgId, { 
             expand: 'sessions,sessions.products,sessions.products.prices,sessions.events,facility',
             facilityId 
           }),

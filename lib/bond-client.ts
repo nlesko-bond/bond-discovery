@@ -34,6 +34,9 @@ interface BondApiStats {
 
 const BOND_PAGE_FETCH_CONCURRENCY = 3;
 
+/** Programs requested per page. Bond defaults to 30 when `itemsPerPage` is omitted. */
+export const PROGRAMS_PAGE_SIZE = 100;
+
 let bondApiStats: BondApiStats = {
   totalRequests: 0,
   rateLimitHits: 0,
@@ -276,7 +279,9 @@ export class BondClient {
       // Full expand to get all nested data: sessions, products, and prices
       expand: options?.expand || 'sessions,sessions.products,sessions.products.prices',
       page: options?.page || 1,
-      per_page: options?.perPage || 100,
+      // Bond's page-size param is `itemsPerPage` (default 30). It ignores
+      // `per_page`, which silently capped this at 30 programs.
+      itemsPerPage: options?.perPage || PROGRAMS_PAGE_SIZE,
     };
 
     if (options?.facilityId) {
@@ -292,9 +297,11 @@ export class BondClient {
   /**
    * Every program for an organization, across all pages.
    *
-   * `getPrograms` reads a single page (default 100). Callers that need a
-   * complete list — roster scope resolution, for instance — must use this, or
-   * an org with more than one page of programs silently loses the remainder.
+   * `getPrograms` reads a single page. Callers that need a complete list —
+   * discovery pages, the warm pipeline, roster scope resolution — must use
+   * this, or an org with more than one page of programs silently loses the
+   * remainder. At PROGRAMS_PAGE_SIZE per page nearly every org fits in one
+   * call, so this costs no extra Bond requests in the common case.
    */
   async getAllPrograms(
     orgId: string,
@@ -304,7 +311,7 @@ export class BondClient {
       expand: options?.expand || 'sessions,sessions.products,sessions.products.prices',
       facility_id: options?.facilityId,
       status: options?.status,
-      per_page: 100,
+      itemsPerPage: PROGRAMS_PAGE_SIZE,
     });
   }
 

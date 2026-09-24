@@ -24,7 +24,7 @@ vi.mock('@/lib/discovery-events', () => ({
 
 const getProgramsMock = vi.fn();
 vi.mock('@/lib/bond-client', () => ({
-  createBondClient: () => ({ getPrograms: getProgramsMock }),
+  createBondClient: () => ({ getAllPrograms: getProgramsMock }),
   // Mirrors production exactly: no fallback. A mock that returned a default
   // here would make the fail-closed path unreachable under test.
   resolveBondApiKey: (explicit?: string) => explicit || undefined,

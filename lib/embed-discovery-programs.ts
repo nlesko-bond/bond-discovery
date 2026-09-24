@@ -37,13 +37,13 @@ async function fetchProgramsForOrg(
     cacheKey,
     async () => {
       try {
-        return await client.getPrograms(orgId, { expand: PROGRAMS_DISCOVERY_EXPAND });
+        return await client.getAllPrograms(orgId, { expand: PROGRAMS_DISCOVERY_EXPAND });
       } catch (primaryError) {
         console.error(
           `[fetchProgramsForDiscoveryPage] expand failed for org ${orgId}, retrying lighter expand`,
           primaryError,
         );
-        return client.getPrograms(orgId, { expand: 'sessions,sessions.products' });
+        return client.getAllPrograms(orgId, { expand: 'sessions,sessions.products' });
       }
     },
     { ttl: cacheTtlSeconds },
