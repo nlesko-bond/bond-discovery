@@ -29,6 +29,8 @@ export interface DayboardLockerRoom {
   label: string | null;
   /** Room number(s) as displayed, e.g. "5" or "5 & 7". */
   rooms: string;
+  /** Extra detail after the room when a label comes first — the jersey color in "Slothful LR 2 - Black". */
+  detail?: string;
 }
 
 export interface DayboardSpaceTag {
@@ -129,8 +131,11 @@ export function splitTeams(title: string, keywords: string[]): [string, string] 
 const LR_WORD = '(?:lr|locker\\s*rooms?|lockers?)';
 const ROOM_NUM = '#?\\s*\\d+[a-z]?';
 const ROOM_LIST = `(${ROOM_NUM}(?:\\s*(?:&|and|,|/|\\+)\\s*${ROOM_NUM})*)`;
-const LR_LEADING = new RegExp(`^${LR_WORD}\\.?\\s*:?\\s*${ROOM_LIST}(?:\\s*[-–:]\\s*|\\s+|$)(.*)$`, 'i');
-const LR_TRAILING = new RegExp(`^(.+?)\\s*[-–:]?\\s*${LR_WORD}\\.?\\s*:?\\s*${ROOM_LIST}$`, 'i');
+// The room can sit anywhere in the line: text before it, after it, or both.
+const LR_ANYWHERE = new RegExp(
+  `^(.*?)\\s*[-–:]?\\s*\\b${LR_WORD}\\.?\\s*:?\\s*${ROOM_LIST}(?![0-9a-z])\\s*(?:[-–:]\\s*)?(.*)$`,
+  'i',
+);
 
 function formatRooms(raw: string): string {
   return raw
@@ -141,18 +146,22 @@ function formatRooms(raw: string): string {
     .join(' & ');
 }
 
-/** Parses one notes line ("LR 2 Aviators", "Under 18 LR 5", "LR 5 & 7"), or null. */
+/**
+ * Parses one notes line, or null. Handles the room with text before it, after
+ * it, or both:
+ *   "LR 2 Aviators" / "LR 1 - Lost Boys"  → label after
+ *   "Under 18 LR 5"                        → label before
+ *   "Slothful LR 2 - Black"                → label before, detail (jersey color) after
+ *   "LR 5 & 7"                             → no label
+ */
 export function parseLockerRoomLine(line: string): DayboardLockerRoom | null {
-  const text = line.trim();
-  if (!text) return null;
-  const leading = text.match(LR_LEADING);
-  if (leading) {
-    const label = leading[2].trim().replace(/^[-–:]\s*/, '');
-    return { rooms: formatRooms(leading[1]), label: label || null };
-  }
-  const trailing = text.match(LR_TRAILING);
-  if (trailing) return { rooms: formatRooms(trailing[2]), label: trailing[1].trim() || null };
-  return null;
+  const match = line.trim().match(LR_ANYWHERE);
+  if (!match) return null;
+  const before = match[1].trim().replace(/[-–:]$/, '').trim();
+  const after = match[3].trim();
+  const rooms = formatRooms(match[2]);
+  if (before && after) return { rooms, label: before, detail: after };
+  return { rooms, label: before || after || null };
 }
 
 /** Splits notes into parsed locker rooms and whatever lines didn't parse. */

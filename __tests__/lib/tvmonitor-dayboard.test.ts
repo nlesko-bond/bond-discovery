@@ -124,6 +124,8 @@ describe('locker room parsing', () => {
     ['Under 18 LR 5', { rooms: '5', label: 'Under 18' }],
     ['Locker rooms 5 & 7', { rooms: '5 & 7', label: null }],
     ['Locker room: 108A', { rooms: '108A', label: null }],
+    ['Slothful LR 2 - Black', { rooms: '2', label: 'Slothful', detail: 'Black' }],
+    ['Lord of the Rinks LR 8', { rooms: '8', label: 'Lord of the Rinks' }],
   ])('parses %s', (line, expected) => {
     expect(parseLockerRoomLine(line)).toEqual(expected);
   });
@@ -134,6 +136,17 @@ describe('locker room parsing', () => {
       leftover: 'Rinkside Room - Golden Eagles',
     });
     expect(parseLockerRoomLine('Bring your own stick')).toBeNull();
+  });
+
+  it('puts jersey-color rooms on the right team (real Utah notes, Sep 25)', () => {
+    const { lockerRooms, leftover } = parseLockerRoomNotes('Hangry Hippos LR 4 - White\nPylons LR 7 - Black');
+    expect(leftover).toBeNull();
+    const { teams, unassigned } = assignLockerRoomsToTeams(['Hangry Hippos', 'PYLONS'], lockerRooms);
+    expect(unassigned).toEqual([]);
+    expect(teams).toEqual([
+      { name: 'Hangry Hippos', lockerRooms: [{ rooms: '4', label: null, detail: 'White' }] },
+      { name: 'PYLONS', lockerRooms: [{ rooms: '7', label: null, detail: 'Black' }] },
+    ]);
   });
 
   it('hands rooms to the team they name, tolerating case and near-miss names', () => {
