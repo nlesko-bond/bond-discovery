@@ -371,7 +371,7 @@ describe('dayboard config + legacy wiring', () => {
   it('round-trips through normalization with defaults filled in', () => {
     const schedule = normalizeTvMonitorConfig({ schedule: { viewMode: 'dayboard', dayboard: { heading: '', pageSeconds: 2 } } }).schedule;
     expect(schedule.viewMode).toBe('dayboard');
-    expect(schedule.dayboard).toMatchObject({ heading: '', pageSeconds: 8, gamesKeywords: ['vs'], parseLockerRooms: true });
+    expect(schedule.dayboard).toMatchObject({ heading: '', pageSeconds: 5, gamesKeywords: ['vs'], parseLockerRooms: true });
   });
 
   it('always fetches the full day', () => {
