@@ -5,6 +5,7 @@ import TvAdSlotView from '@/components/tvmonitor/TvAdSlot';
 import TvScheduleGrid from '@/components/tvmonitor/TvScheduleGrid';
 import TvScheduleFeed from '@/components/tvmonitor/TvScheduleFeed';
 import TvScheduleGroupedFeed from '@/components/tvmonitor/TvScheduleGroupedFeed';
+import TvScheduleDayboard from '@/components/tvmonitor/TvScheduleDayboard';
 import TvMonitorTicker from '@/components/tvmonitor/TvMonitorTicker';
 import type {
   TvMonitorAdSlot,
@@ -336,6 +337,8 @@ export default function TvMonitorScreen({
             {scheduleBlock.enabled ? (
               scheduleBlock.viewMode === 'feed' ? (
                 <TvScheduleFeed spaces={spaces} settings={scheduleBlock} compact={compactColumns} />
+              ) : scheduleBlock.viewMode === 'dayboard' ? (
+                <TvScheduleDayboard spaces={spaces} settings={scheduleBlock} design={design} />
               ) : scheduleBlock.viewMode === 'grouped' ? (
                 <TvScheduleGroupedFeed spaces={spaces} settings={scheduleBlock} compact={compactColumns} />
               ) : (

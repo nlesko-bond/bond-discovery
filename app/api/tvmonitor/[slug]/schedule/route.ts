@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTvMonitorPageBySlugCached } from '@/lib/tvmonitor-config';
 import { getTvMonitorSchedule } from '@/lib/tvmonitor-schedule';
+import { scheduleFetchHours } from '@/lib/tvmonitor-schedule-format';
 import { getTvMonitorWeather } from '@/lib/tvmonitor-weather';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,7 @@ export async function GET(_request: NextRequest, { params }: { params: { slug: s
       page.organization_id,
       page.facility_id,
       scheduleBlock.resourceIds,
-      scheduleBlock.futureHoursLimit,
+      scheduleFetchHours(scheduleBlock),
     );
     const weather =
       header.weather.enabled && header.weather.location ? await getTvMonitorWeather(header.weather.location) : null;

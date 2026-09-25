@@ -10,6 +10,15 @@ export interface GroupedScheduleSlot extends TvMonitorSlot {
   children: TvMonitorSlot[];
 }
 
+/**
+ * Hours ahead to request from Bond. The day board shows everything left in
+ * the day regardless of the "hours ahead" setting, so it always asks for the
+ * full 24h and trims to today itself (see lib/tvmonitor-dayboard.ts).
+ */
+export function scheduleFetchHours(settings: Pick<TvMonitorScheduleBlock, 'viewMode' | 'futureHoursLimit'>): number {
+  return settings.viewMode === 'dayboard' ? 24 : settings.futureHoursLimit;
+}
+
 export function formatEventTime(time: string): string {
   const date = new Date(`2000-01-01T${time}`);
   if (Number.isNaN(date.getTime())) return time;

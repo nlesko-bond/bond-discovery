@@ -51,6 +51,8 @@ import {
   type GroupedScheduleSlot,
   type MergeableScheduleSlot,
 } from '@/lib/tvmonitor-schedule-format';
+import { secondsUntilNextDayboardPage } from '@/lib/tvmonitor-dayboard';
+import { renderDayboardHtml } from '@/lib/tvmonitor-dayboard-render';
 import {
   escapeHtml,
   legacyWeatherIconSvg,
@@ -421,6 +423,9 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
   }
 
   let scheduleAreaHtml = '';
+  // The day board flips pages by reloading, so when it has more than one page
+  // the next reload lands exactly on the next flip instead of refreshSeconds.
+  let dayboardFlipSeconds: number | null = null;
   if (!scheduleBlock.enabled) {
     scheduleAreaHtml = '';
   } else if (spaces.length === 0) {
@@ -434,6 +439,18 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
         ? 'Could not reach the Bond schedule API — this will retry automatically on the next refresh.'
         : 'No events returned for the configured resources.';
     scheduleAreaHtml = `<div style="display:flex;height:100%;align-items:center;justify-content:center;font-size:24px;color:${secondary};text-align:center;padding:0 32px;">${escapeHtml(message)}</div>`;
+  } else if (scheduleBlock.viewMode === 'dayboard') {
+    const { html, model } = renderDayboardHtml({
+      spaces,
+      settings: scheduleBlock,
+      design,
+      now: nowForLiveCheck,
+      epochMs: now.getTime(),
+    });
+    scheduleAreaHtml = html;
+    if (model.pageCount > 1) {
+      dayboardFlipSeconds = secondsUntilNextDayboardPage(now.getTime(), scheduleBlock.dayboard.pageSeconds);
+    }
   } else if (scheduleBlock.viewMode === 'feed') {
     const items = buildFeedItems(spaces, scheduleBlock, buildResourceColors(spaces));
     // Full width, so it can list every booked resource outright when asked.
@@ -629,7 +646,7 @@ export function renderTvMonitorLegacyHtml(props: Props): string {
     `<head>` +
     `<meta charset="utf-8" />` +
     `<meta name="viewport" content="width=device-width, initial-scale=1" />` +
-    `<meta http-equiv="refresh" content="${config.refreshSeconds}" />` +
+    `<meta http-equiv="refresh" content="${dayboardFlipSeconds != null ? Math.min(dayboardFlipSeconds, config.refreshSeconds) : config.refreshSeconds}" />` +
     `<title>${escapeHtml(pageName)} — TV Monitor</title>` +
     `<meta name="robots" content="noindex, nofollow" />` +
     `<style>` +

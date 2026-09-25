@@ -5,7 +5,23 @@
  * page is edited freely, so templates are starting points, not constraints.
  */
 
-import type { TvMonitorConfig, TvMonitorDesign, TvMonitorTemplateKey } from '@/types/tvmonitor';
+import type {
+  TvMonitorConfig,
+  TvMonitorDayboardSettings,
+  TvMonitorDesign,
+  TvMonitorTemplateKey,
+} from '@/types/tvmonitor';
+
+export const DEFAULT_DAYBOARD_SETTINGS: TvMonitorDayboardSettings = {
+  heading: "Today's schedule",
+  showDateHeading: true,
+  primaryTitle: 'Schedule',
+  gamesEnabled: true,
+  gamesTitle: 'Games',
+  gamesKeywords: ['vs'],
+  parseLockerRooms: true,
+  pageSeconds: 15,
+};
 
 export const TV_DESIGN_PRESETS: Record<'dark' | 'light', TvMonitorDesign> = {
   dark: {
@@ -122,6 +138,7 @@ function baseConfig(): TvMonitorConfig {
       scrollSpeed: 2,
       scrollMode: 'synchronized',
       scrollPauseSeconds: 3,
+      dayboard: { ...DEFAULT_DAYBOARD_SETTINGS, gamesKeywords: [...DEFAULT_DAYBOARD_SETTINGS.gamesKeywords] },
     },
     ads: [],
     ticker: { enabled: false, label: 'UPDATES', messages: [], scrollSpeed: 3 },

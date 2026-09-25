@@ -92,8 +92,37 @@ export interface TvMonitorHeaderBlock {
  *             on the left, "Pool Lanes" on the right). Cards are identical
  *             to 'feed' cards, resource pill and all — only the set of
  *             resources merged into each column differs.
+ * 'dayboard' — a still (non-scrolling) board of the rest of today, split into
+ *             a main section and an optional "games" section (events named
+ *             "Team A vs Team B"), with locker rooms parsed out of the notes.
+ *             Built for printed-schedule-style lobby boards; see
+ *             lib/tvmonitor-dayboard.ts.
  */
-export type TvMonitorScheduleViewMode = 'columns' | 'feed' | 'grouped';
+export type TvMonitorScheduleViewMode = 'columns' | 'feed' | 'grouped' | 'dayboard';
+
+/** 'dayboard' view settings. Preserved in every view mode, like `groups`. */
+export interface TvMonitorDayboardSettings {
+  /** Small kicker line above the date heading, e.g. "Today on the ice". Empty hides it. */
+  heading: string;
+  /** Big "THURSDAY · SEP 24" heading at the top of the board. */
+  showDateHeading: boolean;
+  /** Title of the main (non-game) section. */
+  primaryTitle: string;
+  /** Split events whose names match `gamesKeywords` into their own section. */
+  gamesEnabled: boolean;
+  /** Title of the games section, e.g. "Adult League". */
+  gamesTitle: string;
+  /**
+   * Whole-word, case-insensitive keywords that put an event in the games
+   * section. The first matching keyword also splits the name into the two
+   * teams ("Aviators vs Baja" → Aviators / Baja).
+   */
+  gamesKeywords: string[];
+  /** Turn "LR 2 Aviators" style notes into locker-room chips (raw notes otherwise). */
+  parseLockerRooms: boolean;
+  /** Seconds each page stays up when the day doesn't fit on one screen. */
+  pageSeconds: number;
+}
 
 /**
  * One column of the 'grouped' view: a display name plus the subset of
@@ -185,6 +214,7 @@ export interface TvMonitorScheduleBlock {
   scrollMode: TvMonitorScrollMode;
   /** Seconds to hold at the top/bottom before the scroll loop continues. */
   scrollPauseSeconds: number;
+  dayboard: TvMonitorDayboardSettings;
 }
 
 export type TvMonitorAdAssetType = 'image' | 'video';
