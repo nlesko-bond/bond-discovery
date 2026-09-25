@@ -257,7 +257,7 @@ function sectionHtml(section: DayboardSection, p: Palette, style: string): strin
       : '';
   const rowsHtml =
     section.rows.length === 0
-      ? `<div style="padding-top:3${p.u};font-size:2.6${p.u};color:${p.secondary};">Nothing else scheduled today</div>`
+      ? `<div style="padding-top:3${p.u};font-size:2.6${p.u};font-weight:700;color:${p.secondary};">No events scheduled</div>`
       : section.rows
           .map((row, index) =>
             row.kind === 'game'
@@ -346,22 +346,19 @@ export function renderDayboardHtml(input: DayboardRenderInput): { html: string; 
       : '';
   const bodyTop = headingVh > 0 ? `${round(headingVh + 1.6)}${p.u}` : '0';
 
-  let bodyHtml: string;
-  if (model.empty) {
-    bodyHtml =
-      `<div style="position:absolute;top:${bodyTop};left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;` +
-      `font-size:3.4${p.u};font-weight:700;color:${p.secondary};text-align:center;">Nothing else scheduled today</div>`;
-  } else {
-    const both = model.primary && model.games;
-    const primaryHtml = model.primary
-      ? sectionHtml(model.primary, p, both ? `flex:1.25 1 0;min-width:0;margin-right:3${p.u};` : 'flex:1 1 0;min-width:0;')
-      : '';
-    const divider = both ? `<div style="width:0.3${p.u};flex-shrink:0;background:${escapeHtml(withAlpha(design.accentColor, 0.4, p.border))};margin-right:3${p.u};"></div>` : '';
-    const gamesHtml = model.games ? sectionHtml(model.games, p, 'flex:1 1 0;min-width:0;') : '';
-    bodyHtml =
-      `<div style="position:absolute;top:${bodyTop};left:0;right:0;bottom:0;display:flex;">` +
-      `${primaryHtml}${divider}${gamesHtml}</div>`;
-  }
+  const both = Boolean(model.games);
+  const primaryHtml = sectionHtml(
+    model.primary,
+    p,
+    both ? `flex:1.25 1 0;min-width:0;margin-right:3${p.u};` : 'flex:1 1 0;min-width:0;',
+  );
+  const divider = both
+    ? `<div style="width:0.3${p.u};flex-shrink:0;background:${escapeHtml(withAlpha(design.accentColor, 0.4, p.border))};margin-right:3${p.u};"></div>`
+    : '';
+  const gamesHtml = model.games ? sectionHtml(model.games, p, 'flex:1 1 0;min-width:0;') : '';
+  const bodyHtml =
+    `<div style="position:absolute;top:${bodyTop};left:0;right:0;bottom:0;display:flex;">` +
+    `${primaryHtml}${divider}${gamesHtml}</div>`;
 
   return {
     html: `<div style="position:relative;height:100%;color:${p.font};">${headingHtml}${bodyHtml}</div>`,

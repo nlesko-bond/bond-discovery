@@ -288,7 +288,7 @@ describe('pagination', () => {
     const model = buildDayboardModel(busy, settings(), NOW, 0);
     expect(model.pageCount).toBe(2);
     expect(model.primary?.rows).toHaveLength(10);
-    expect(model.games).toBeNull();
+    expect(model.games?.rows).toHaveLength(0);
   });
 });
 
@@ -336,6 +336,14 @@ describe('renderDayboardHtml', () => {
     expect(html).not.toMatch(/\dvh/);
   });
 
+  it('keeps the main section on screen once only games are left', () => {
+    const evening = new Date('2026-09-24T22:05:00');
+    const { html, model } = renderDayboardHtml({ spaces: utahSpaces(), settings: settings(), design, now: evening, epochMs: evening.getTime() });
+    expect(model.primary.rows).toHaveLength(0);
+    expect(model.games?.rows.length).toBeGreaterThan(0);
+    expect(html).toContain('No events scheduled');
+  });
+
   it('shows an empty state once the day is over', () => {
     const late = new Date('2026-09-24T23:59:30');
     const { html, model } = renderDayboardHtml({
@@ -345,8 +353,11 @@ describe('renderDayboardHtml', () => {
       now: late,
       epochMs: late.getTime(),
     });
-    expect(model.empty).toBe(true);
-    expect(html).toContain('Nothing else scheduled today');
+    expect(model.primary.rows).toHaveLength(0);
+    expect(model.games?.rows).toHaveLength(0);
+    // Both sections stay up, each saying it's empty.
+    expect(html).toContain('Adult League');
+    expect(html.match(/No events scheduled/g)).toHaveLength(2);
   });
 
   it('picks readable text for filled tags in light and dark themes', () => {

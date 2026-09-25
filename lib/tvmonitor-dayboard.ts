@@ -70,12 +70,10 @@ export interface DayboardSection {
 }
 
 export interface DayboardModel {
-  primary: DayboardSection | null;
+  primary: DayboardSection;
   games: DayboardSection | null;
   /** Largest page count across sections — > 1 means the board flips pages. */
   pageCount: number;
-  /** Nothing left today in either section. */
-  empty: boolean;
 }
 
 // Readability limits for a 1080p lobby TV. Past these a section paginates
@@ -422,20 +420,18 @@ export function buildDayboardModel(
   pageTick: number,
 ): DayboardModel {
   const { events, games } = buildDayboardRows(spaces, settings, now);
-  // An empty section gives its width to the other one rather than sitting on
-  // screen saying "nothing here" all morning.
-  const primary =
-    events.length > 0 || games.length === 0
-      ? { title: settings.dayboard.primaryTitle, ...paginateRows(events, DAYBOARD_MAX_EVENT_ROWS, DAYBOARD_MIN_EVENT_ROWS, pageTick) }
-      : null;
-  const gameSection =
-    games.length > 0
-      ? { title: settings.dayboard.gamesTitle, ...paginateRows(games, DAYBOARD_MAX_GAME_ROWS, DAYBOARD_MIN_GAME_ROWS, pageTick) }
-      : null;
+  // Both sections stay on screen all day, even when one has nothing left, so
+  // the layout never shifts under people who glance at it every day.
+  const primary = {
+    title: settings.dayboard.primaryTitle,
+    ...paginateRows(events, DAYBOARD_MAX_EVENT_ROWS, DAYBOARD_MIN_EVENT_ROWS, pageTick),
+  };
+  const gameSection = settings.dayboard.gamesEnabled
+    ? { title: settings.dayboard.gamesTitle, ...paginateRows(games, DAYBOARD_MAX_GAME_ROWS, DAYBOARD_MIN_GAME_ROWS, pageTick) }
+    : null;
   return {
     primary,
     games: gameSection,
-    pageCount: Math.max(primary?.pageCount ?? 1, gameSection?.pageCount ?? 1),
-    empty: events.length === 0 && games.length === 0,
+    pageCount: Math.max(primary.pageCount, gameSection?.pageCount ?? 1),
   };
 }
