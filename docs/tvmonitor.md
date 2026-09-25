@@ -205,8 +205,9 @@ takes every color from `design`.
   section splits into evenly sized pages (16 rows → 8 + 8) and shows "Page 1 of 2".
   The page shown comes from the wall clock (`floor(epoch / pageSeconds)`), so every
   TV on the same board flips together. Legacy mode flips by reloading: the meta
-  refresh is set to the seconds left until the next flip. An empty section gives
-  its width to the other one.
+  refresh is set to the seconds left until the next flip. Both sections stay on
+  screen all day, even when one has nothing left ("No events scheduled"), so the
+  layout never shifts under people who glance at it daily.
 - **Layout**: dotted accent rules between rows (the printed sheet's look), locker
   rooms as soft accent tags right next to what they belong to (under the event
   name, or after each team's name on games), and an optional `headingLogoUrl`
