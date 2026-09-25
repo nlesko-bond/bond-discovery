@@ -37,8 +37,10 @@ import type { TvMonitorDesign, TvMonitorScheduleBlock, TvMonitorSpace } from '@/
 const ROWS_AREA_VH = 62;
 const HEADING_KICKER_VH = 3.2;
 const HEADING_DATE_VH = 6.4;
-// With side logos the heading grows so the logos read at a distance.
-const HEADING_WITH_LOGO_VH = 13;
+// With side logos the heading grows so the logos read at a distance, and the
+// heading text becomes the big accent title (the printed sheet's layout).
+const HEADING_WITH_LOGO_VH = 16;
+const HEADING_TITLE_VH = 6;
 const SECTION_TITLE_VH = 6;
 
 function clamp(value: number, min: number, max: number): number {
@@ -96,6 +98,7 @@ interface Palette {
   onAccent: string;
   border: string;
   liveBg: string;
+  roomBg: string;
 }
 
 /**
@@ -114,6 +117,7 @@ function paletteFor(design: TvMonitorDesign, u: DayboardUnit): Palette {
     // cardBorder is tuned for faint card outlines; row dividers need a bit more.
     border: escapeHtml(withAlpha(design.fontColor, 0.14, design.cardBorder)),
     liveBg: escapeHtml(withAlpha(design.accentColor, 0.16, design.cardBg)),
+    roomBg: escapeHtml(withAlpha(design.accentColor, 0.22, design.cardBg)),
   };
 }
 
@@ -136,22 +140,24 @@ function spaceTagHtml(tag: DayboardSpaceTag, fontVh: number, p: Palette): string
   );
 }
 
-// Fixed column widths, so locker rooms and rink tags line up down the board
-// under their column headings — the printed sheet's "Event | Locker Room" grid.
-const EVENT_ROOM_COL = 17;
+// Fixed width for the rink tags so they line up down the board.
 const EVENT_RINK_COL = 12;
-const GAME_ROOM_COL = 13;
 const ROW_PAD_LEFT = 1.6;
 const ROW_PAD_RIGHT = 1.2;
 
-/** One locker-room line as plain text: "Under 18  5" or "5 & 7". */
-function lockerLineHtml(room: DayboardLockerRoom, p: Palette): string {
+/**
+ * Locker-room tag, sat right next to what it belongs to (the team, or the
+ * event). A soft accent fill rather than an outline, so it reads as a label
+ * and doesn't compete with the solid/outlined rink tags.
+ */
+function lockerTagHtml(room: DayboardLockerRoom, fontVh: number, p: Palette): string {
   const label = room.label
-    ? `<span style="color:${p.secondary};font-weight:700;margin-right:0.6${p.u};">${escapeHtml(room.label)}</span>`
+    ? `<span style="color:${p.secondary};font-weight:700;margin-right:0.5${p.u};">${escapeHtml(room.label)}</span>`
     : '';
   return (
-    `<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">` +
-    `${label}<span style="font-weight:800;">${escapeHtml(room.rooms)}</span></div>`
+    `<span style="display:inline-block;margin-left:0.9${p.u};padding:0.25${p.u} 0.8${p.u};border-radius:0.6${p.u};white-space:nowrap;` +
+    `vertical-align:middle;background:${p.roomBg};font-size:${fontVh}${p.u};font-weight:800;line-height:1.25;">` +
+    `${label}LR ${escapeHtml(room.rooms)}</span>`
   );
 }
 
@@ -175,7 +181,7 @@ function rowBoxStyle(slots: number, index: number, live: boolean, p: Palette): s
   );
 }
 
-function eventRowHtml(row: DayboardRow, slots: number, index: number, showRooms: boolean, p: Palette): string {
+function eventRowHtml(row: DayboardRow, slots: number, index: number, p: Palette): string {
   const font = eventFontVh(slots);
   const small = round(font * 0.62);
   const multiTime = row.times.length > 1;
@@ -187,12 +193,13 @@ function eventRowHtml(row: DayboardRow, slots: number, index: number, showRooms:
   const notesHtml = row.notes
     ? `<div style="font-size:${small}${p.u};font-weight:600;color:${p.secondary};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:0.3${p.u};">${escapeHtml(row.notes)}</div>`
     : '';
-  const roomFont = round(font * (row.lockerRooms.length > 2 ? 0.58 : 0.74));
-  const roomsHtml = showRooms
-    ? `<div style="width:${EVENT_ROOM_COL}${p.u};flex-shrink:0;padding-left:1${p.u};font-size:${roomFont}${p.u};line-height:1.2;">` +
-      row.lockerRooms.map((room) => lockerLineHtml(room, p)).join('') +
-      `</div>`
-    : '';
+  // Tags start on the title's left edge (the first tag's margin is pulled back).
+  const roomsHtml =
+    row.lockerRooms.length > 0
+      ? `<div style="margin-top:0.5${p.u};margin-left:-0.9${p.u};white-space:nowrap;overflow:hidden;">` +
+        row.lockerRooms.map((room) => lockerTagHtml(room, round(font * 0.6), p)).join('') +
+        `</div>`
+      : '';
   return (
     `<div style="${rowBoxStyle(slots, index, row.live, p)}">` +
     (row.live ? liveBarHtml(p) : '') +
@@ -201,8 +208,7 @@ function eventRowHtml(row: DayboardRow, slots: number, index: number, showRooms:
     `<div style="flex:1 1 0;min-width:0;">` +
     `<div style="font-size:${font}${p.u};font-weight:800;line-height:1.12;max-height:2.3em;overflow:hidden;">` +
     `${escapeHtml(row.title)}${row.live ? liveChipHtml(round(font * 0.45), p) : ''}</div>` +
-    `${notesHtml}</div>` +
-    roomsHtml +
+    `${roomsHtml}${notesHtml}</div>` +
     `<div style="width:${EVENT_RINK_COL}${p.u};flex-shrink:0;">` +
     row.spaces.map((tag) => `<div style="margin:0.3${p.u} 0;">${spaceTagHtml(tag, round(font * 0.55), p)}</div>`).join('') +
     `</div></div></div>`
@@ -212,25 +218,21 @@ function eventRowHtml(row: DayboardRow, slots: number, index: number, showRooms:
 function gameRowHtml(row: DayboardRow, slots: number, index: number, p: Palette): string {
   const font = gameFontVh(slots);
   const small = round(font * 0.66);
-  const roomCell = (rooms: DayboardLockerRoom[]) =>
-    `<div style="width:${GAME_ROOM_COL}${p.u};flex-shrink:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">` +
-    escapeHtml(rooms.map((room) => (room.label ? `${room.label} ${room.rooms}` : room.rooms)).join(', ')) +
-    `</div>`;
+  const tags = (rooms: DayboardLockerRoom[]) => rooms.map((room) => lockerTagHtml(room, small, p)).join('');
   const teamLine = (teamIndex: number) => {
     const team = row.teams[teamIndex];
     if (!team) return '';
     const vs = teamIndex === 1 ? `<span style="color:${p.secondary};font-weight:700;margin-right:0.8${p.u};">vs</span>` : '';
     return (
-      `<div style="display:flex;align-items:center;font-size:${font}${p.u};font-weight:800;line-height:1.3;">` +
-      `<div style="flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${vs}${escapeHtml(team.name)}</div>` +
-      `${roomCell(team.lockerRooms)}</div>`
+      `<div style="font-size:${font}${p.u};font-weight:800;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">` +
+      `${vs}${escapeHtml(team.name)}${tags(team.lockerRooms)}</div>`
     );
   };
   const extras =
     row.lockerRooms.length > 0 || row.notes
       ? `<div style="display:flex;align-items:center;font-size:${small}${p.u};color:${p.secondary};font-weight:600;line-height:1.3;">` +
         `<div style="flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(row.notes ?? '')}</div>` +
-        `${roomCell(row.lockerRooms)}</div>`
+        `<div style="flex-shrink:0;color:${p.font};">${tags(row.lockerRooms)}</div></div>`
       : '';
   return (
     `<div style="${rowBoxStyle(slots, index, row.live, p)}">` +
@@ -247,28 +249,11 @@ function gameRowHtml(row: DayboardRow, slots: number, index: number, p: Palette)
   );
 }
 
-function columnHeadingHtml(label: string, width: number, align: 'left' | 'right', p: Palette, padLeft = 0): string {
-  return (
-    `<div style="width:${width}${p.u};flex-shrink:0;padding-left:${padLeft}${p.u};text-align:${align};white-space:nowrap;` +
-    `font-size:1.6${p.u};font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:${p.secondary};">${escapeHtml(label)}</div>`
-  );
-}
-
 function sectionHtml(section: DayboardSection, p: Palette, style: string): string {
   const pager =
     section.pageCount > 1
       ? `<span style="margin-left:1.6${p.u};font-size:1.8${p.u};font-weight:800;letter-spacing:0.14em;color:${p.accent};">` +
         `PAGE ${section.pageIndex + 1} OF ${section.pageCount}</span>`
-      : '';
-  const isGames = section.rows.some((row) => row.kind === 'game');
-  // The locker-room column only appears when this page actually has rooms to show.
-  const showRooms = section.rows.some((row) => row.lockerRooms.length > 0);
-  const headings = isGames
-    ? section.rows.some((row) => row.teams.some((team) => team.lockerRooms.length > 0))
-      ? columnHeadingHtml('Locker room', GAME_ROOM_COL, 'right', p)
-      : ''
-    : showRooms
-      ? columnHeadingHtml('Locker room', EVENT_ROOM_COL, 'left', p, 1) + `<div style="width:${EVENT_RINK_COL}${p.u};flex-shrink:0;"></div>`
       : '';
   const rowsHtml =
     section.rows.length === 0
@@ -277,7 +262,7 @@ function sectionHtml(section: DayboardSection, p: Palette, style: string): strin
           .map((row, index) =>
             row.kind === 'game'
               ? gameRowHtml(row, section.slotsPerPage, index, p)
-              : eventRowHtml(row, section.slotsPerPage, index, showRooms, p),
+              : eventRowHtml(row, section.slotsPerPage, index, p),
           )
           .join('');
   return (
@@ -285,7 +270,7 @@ function sectionHtml(section: DayboardSection, p: Palette, style: string): strin
     `<div style="position:absolute;top:0;left:0;right:0;height:${SECTION_TITLE_VH}${p.u};display:flex;align-items:center;` +
     `padding-right:${ROW_PAD_RIGHT}${p.u};border-bottom:0.4${p.u} solid ${p.accent};">` +
     `<div style="flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:3.6${p.u};font-weight:900;` +
-    `letter-spacing:0.05em;text-transform:uppercase;">${escapeHtml(section.title)}${pager}</div>${headings}</div>` +
+    `letter-spacing:0.05em;text-transform:uppercase;">${escapeHtml(section.title)}${pager}</div></div>` +
     `<div style="position:absolute;top:${SECTION_TITLE_VH}${p.u};left:0;right:0;bottom:0;">${rowsHtml}</div>` +
     `</div>`
   );
@@ -324,22 +309,34 @@ export function renderDayboardHtml(input: DayboardRenderInput): { html: string; 
   const model = buildDayboardModel(spaces, settings, now, dayboardPageTick(epochMs, dayboard.pageSeconds));
 
   const kicker = dayboard.heading.trim();
-  const textVh = (kicker ? HEADING_KICKER_VH : 0) + (dayboard.showDateHeading ? HEADING_DATE_VH : 0);
   // Legacy hardware can't decode AVIF/WebP; toLegacyImageUrl forces PNG for our Cloudinary uploads.
-  const logoUrl = dayboard.headingLogoUrl ? toLegacyImageUrl(dayboard.headingLogoUrl) ?? dayboard.headingLogoUrl : null;
+  const legacySafe = (url: string | null) => (url ? toLegacyImageUrl(url) ?? url : null);
+  const leftLogo = legacySafe(dayboard.headingLogoUrl);
+  // One logo repeats on both sides; a right-side logo alone sits on the right only.
+  const rightLogo = legacySafe(dayboard.headingLogoRightUrl) ?? leftLogo;
+  const logoUrl = leftLogo ?? rightLogo;
+  const kickerVh = logoUrl ? HEADING_TITLE_VH : HEADING_KICKER_VH;
+  const kickerStyle = logoUrl
+    ? `font-size:4.6${p.u};font-weight:900;letter-spacing:0.01em;`
+    : `font-size:2.1${p.u};font-weight:800;letter-spacing:0.3em;text-transform:uppercase;`;
+  const textVh = (kicker ? kickerVh : 0) + (dayboard.showDateHeading ? HEADING_DATE_VH : 0);
   const headingVh = logoUrl ? HEADING_WITH_LOGO_VH : textVh;
-  const logoImg = (side: 'left' | 'right') =>
-    `<img src="${escapeHtml(logoUrl ?? '')}" alt="" style="position:absolute;top:0;${side}:0;height:${HEADING_WITH_LOGO_VH}${p.u};` +
-    `max-width:25%;object-fit:contain;" />`;
+  const logoImg = (side: 'left' | 'right', url: string | null) =>
+    !url
+      ? ''
+      : `<img src="${escapeHtml(url)}" alt="" style="position:absolute;top:0;${side}:0;height:${HEADING_WITH_LOGO_VH}${p.u};` +
+    `max-width:13%;object-fit:contain;" />`;
   const headingHtml =
     headingVh > 0
       ? `<div style="position:absolute;top:0;left:0;right:0;height:${headingVh}${p.u};text-align:center;overflow:hidden;">` +
-        (logoUrl ? logoImg('left') + logoImg('right') : '') +
+        logoImg('left', leftLogo) +
+        logoImg('right', rightLogo) +
         // Plain top padding rather than flex centering — see the legacy layout notes above.
-        `<div style="padding-top:${round((headingVh - textVh) / 2)}${p.u};">` +
+        // Side margins keep the text clear of the logos (capped at 13% wide).
+        `<div style="padding-top:${round((headingVh - textVh) / 2)}${p.u};margin:0 ${logoUrl ? '13%' : '0'};">` +
         (kicker
-          ? `<div style="height:${HEADING_KICKER_VH}${p.u};line-height:${HEADING_KICKER_VH}${p.u};font-size:2.1${p.u};font-weight:800;` +
-            `letter-spacing:0.3em;text-transform:uppercase;color:${p.accent};">${escapeHtml(kicker)}</div>`
+          ? `<div style="height:${kickerVh}${p.u};line-height:${kickerVh}${p.u};${kickerStyle}white-space:nowrap;overflow:hidden;` +
+            `text-overflow:ellipsis;color:${p.accent};">${escapeHtml(kicker)}</div>`
           : '') +
         (dayboard.showDateHeading
           ? `<div style="height:${HEADING_DATE_VH}${p.u};line-height:${HEADING_DATE_VH}${p.u};font-size:5.2${p.u};font-weight:900;` +

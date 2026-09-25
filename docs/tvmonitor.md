@@ -208,8 +208,10 @@ takes every color from `design`.
   refresh is set to the seconds left until the next flip. An empty section gives
   its width to the other one.
 - **Layout**: dotted accent rules between rows (the printed sheet's look), locker
-  rooms in a fixed-width column under a "Locker room" heading so they line up down
-  the board, and an optional `headingLogoUrl` shown on both sides of the heading.
+  rooms as soft accent tags right next to what they belong to (under the event
+  name, or after each team's name on games), and an optional `headingLogoUrl`
+  shown on both sides of the heading — with a logo, the heading text becomes a
+  large accent title above the date.
 - **One renderer, two paths**: `lib/tvmonitor-dayboard-render.ts` returns an HTML
   string (escaped, legacy-safe CSS only). The legacy page splices it in; the React
   view injects it with `dangerouslySetInnerHTML` and re-renders every second.

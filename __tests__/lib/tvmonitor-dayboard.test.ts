@@ -322,6 +322,14 @@ describe('renderDayboardHtml', () => {
     expect(html).toContain('logo.png&quot; onerror=&quot;x');
   });
 
+  it('uses a separate right logo when one is set', () => {
+    const both = settings({ dayboard: { headingLogoUrl: 'https://example.com/left.png', headingLogoRightUrl: 'https://example.com/right.png' } });
+    const { html } = renderDayboardHtml({ spaces: utahSpaces(), settings: both, design, now: NOW, epochMs: NOW.getTime() });
+    expect(html).toContain('left.png');
+    expect(html).toContain('right.png');
+    expect(html.match(/<img /g)).toHaveLength(2);
+  });
+
   it('sizes in container units for the React view', () => {
     const { html } = renderDayboardHtml({ spaces: utahSpaces(), settings: settings(), design, now: NOW, epochMs: NOW.getTime(), unit: 'cqh' });
     expect(html).toContain('cqh');

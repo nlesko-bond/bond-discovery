@@ -978,12 +978,20 @@ export default function MonitorEditor({
                       checked={config.schedule.dayboard.showDateHeading}
                       onChange={(v) => patchDayboard({ showDateHeading: v })}
                     />
-                    <Field label="Heading logo" hint="Shown on both sides of the heading. A PNG with a transparent background works best on older TVs.">
+                    <Field label="Heading logo — left" hint="Also used on the right unless you set a right logo. A PNG with a transparent background works best on older TVs.">
                       <MediaInput
                         value={config.schedule.dayboard.headingLogoUrl ?? ''}
                         onChange={(url) => patchDayboard({ headingLogoUrl: url || null })}
                         accept="image"
                         placeholder="https://…/logo.png"
+                      />
+                    </Field>
+                    <Field label="Heading logo — right (optional)" hint="Leave empty to repeat the left logo.">
+                      <MediaInput
+                        value={config.schedule.dayboard.headingLogoRightUrl ?? ''}
+                        onChange={(url) => patchDayboard({ headingLogoRightUrl: url || null })}
+                        accept="image"
+                        placeholder="https://…/sponsor-logo.png"
                       />
                     </Field>
                     <Field label="Main section title">
