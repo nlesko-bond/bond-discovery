@@ -315,6 +315,27 @@ describe('renderDayboardHtml', () => {
     expect(html).not.toContain('<script');
   });
 
+  it('puts the heading logo on both sides, escaped', () => {
+    const withLogo = settings({ dayboard: { headingLogoUrl: 'https://example.com/logo.png" onerror="x' } });
+    const { html } = renderDayboardHtml({ spaces: utahSpaces(), settings: withLogo, design, now: NOW, epochMs: NOW.getTime() });
+    expect(html.match(/<img /g)).toHaveLength(2);
+    expect(html).toContain('logo.png&quot; onerror=&quot;x');
+  });
+
+  it('uses a separate right logo when one is set', () => {
+    const both = settings({ dayboard: { headingLogoUrl: 'https://example.com/left.png', headingLogoRightUrl: 'https://example.com/right.png' } });
+    const { html } = renderDayboardHtml({ spaces: utahSpaces(), settings: both, design, now: NOW, epochMs: NOW.getTime() });
+    expect(html).toContain('left.png');
+    expect(html).toContain('right.png');
+    expect(html.match(/<img /g)).toHaveLength(2);
+  });
+
+  it('sizes in container units for the React view', () => {
+    const { html } = renderDayboardHtml({ spaces: utahSpaces(), settings: settings(), design, now: NOW, epochMs: NOW.getTime(), unit: 'cqh' });
+    expect(html).toContain('cqh');
+    expect(html).not.toMatch(/\dvh/);
+  });
+
   it('shows an empty state once the day is over', () => {
     const late = new Date('2026-09-24T23:59:30');
     const { html, model } = renderDayboardHtml({
@@ -368,7 +389,7 @@ describe('dayboard config + legacy wiring', () => {
       pageName: 'Utah',
     });
     expect(html).toContain('<meta http-equiv="refresh" content="5" />');
-    expect(html).toContain('Page 1 of 2');
+    expect(html).toContain('PAGE 1 OF 2');
     expect(html).not.toContain('<script');
   });
 });

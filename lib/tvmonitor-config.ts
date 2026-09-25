@@ -303,6 +303,8 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
         // Empty is a valid choice here (it hides the kicker line), so no asString fallback.
         heading: typeof dayboard.heading === 'string' ? dayboard.heading : defaults.schedule.dayboard.heading,
         showDateHeading: asBool(dayboard.showDateHeading, defaults.schedule.dayboard.showDateHeading),
+        headingLogoUrl: asNullableString(dayboard.headingLogoUrl),
+        headingLogoRightUrl: asNullableString(dayboard.headingLogoRightUrl),
         primaryTitle: asString(dayboard.primaryTitle, defaults.schedule.dayboard.primaryTitle),
         gamesEnabled: asBool(dayboard.gamesEnabled, defaults.schedule.dayboard.gamesEnabled),
         gamesTitle: asString(dayboard.gamesTitle, defaults.schedule.dayboard.gamesTitle),
