@@ -141,7 +141,7 @@ function spaceTagHtml(tag: DayboardSpaceTag, fontVh: number, p: Palette): string
 }
 
 // Fixed width for the rink tags so they line up down the board.
-const EVENT_RINK_COL = 12;
+const EVENT_RINK_COL = 14;
 const ROW_PAD_LEFT = 1.6;
 const ROW_PAD_RIGHT = 1.2;
 
@@ -189,8 +189,9 @@ function eventRowHtml(row: DayboardRow, slots: number, index: number, p: Palette
   const font = eventFontVh(slots);
   const small = round(font * 0.62);
   const multiTime = row.times.length > 1;
-  // Collapsed sessions list their times in a smaller stacked block.
-  const timeFont = multiTime ? round(font * 0.66) : round(font * 0.92);
+  // Collapsed sessions stack their times. Two fit at full size; three or more
+  // shrink a little so the stack stays inside the row.
+  const timeFont = round(font * (row.times.length > 2 ? 0.74 : 0.92));
   const timesHtml = multiTime
     ? row.times.map((t) => `<div>${escapeHtml(t)}</div>`).join('')
     : escapeHtml(row.times[0] ?? '');
@@ -214,7 +215,7 @@ function eventRowHtml(row: DayboardRow, slots: number, index: number, p: Palette
     `${escapeHtml(row.title)}${row.live ? liveChipHtml(round(font * 0.45), p) : ''}</div>` +
     `${roomsHtml}${notesHtml}</div>` +
     `<div style="width:${EVENT_RINK_COL}${p.u};flex-shrink:0;">` +
-    row.spaces.map((tag) => `<div style="margin:0.3${p.u} 0;">${spaceTagHtml(tag, round(font * 0.55), p)}</div>`).join('') +
+    row.spaces.map((tag) => `<div style="margin:0.3${p.u} 0;">${spaceTagHtml(tag, round(font * 0.72), p)}</div>`).join('') +
     `</div></div></div>`
   );
 }
@@ -245,7 +246,7 @@ function gameRowHtml(row: DayboardRow, slots: number, index: number, p: Palette)
     `<div style="display:flex;align-items:center;margin-bottom:0.4${p.u};">` +
     `<div style="flex:1 1 0;min-width:0;font-size:${round(font * 0.9)}${p.u};font-weight:900;color:${p.accent};">` +
     `${escapeHtml(row.times[0] ?? '')}${row.live ? liveChipHtml(round(font * 0.5), p) : ''}</div>` +
-    `<div style="flex-shrink:0;">${row.spaces.map((tag) => spaceTagHtml(tag, round(font * 0.6), p)).join(' ')}</div></div>` +
+    `<div style="flex-shrink:0;">${row.spaces.map((tag) => spaceTagHtml(tag, round(font * 0.78), p)).join(' ')}</div></div>` +
     teamLine(0) +
     teamLine(1) +
     extras +

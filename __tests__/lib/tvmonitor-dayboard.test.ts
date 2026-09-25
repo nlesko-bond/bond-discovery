@@ -183,10 +183,10 @@ describe('buildSpaceLabels', () => {
 });
 
 describe('formatTimeList', () => {
-  it('only labels the last of a same-meridiem run', () => {
+  it('gives every time its own AM/PM', () => {
     expect(formatTimeList(['16:45:00', '17:30:00', '18:15:00']).map((t) => t.replace(/\s/g, ' '))).toEqual([
-      '4:45',
-      '5:30',
+      '4:45 PM',
+      '5:30 PM',
       '6:15 PM',
     ]);
     expect(formatTimeList(['11:30:00', '12:15:00']).map((t) => t.replace(/\s/g, ' '))).toEqual(['11:30 AM', '12:15 PM']);
@@ -229,7 +229,7 @@ describe('buildDayboardRows', () => {
   it('collapses repeat sessions into one row listing each time', () => {
     const lts = events.filter((row) => row.title === 'Learn To Skate');
     expect(lts).toHaveLength(1);
-    expect(lts[0].times.map((t) => t.replace(/\s/g, ' '))).toEqual(['8:00', '8:45 PM']);
+    expect(lts[0].times.map((t) => t.replace(/\s/g, ' '))).toEqual(['8:00 PM', '8:45 PM']);
   });
 
   it("merges Bond's doubled rows for the same session", () => {

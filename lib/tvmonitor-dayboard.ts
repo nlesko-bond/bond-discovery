@@ -256,18 +256,9 @@ interface WorkingRow {
   live: boolean;
 }
 
-/**
- * Start times as the board shows them. A run of same-meridiem times only
- * labels the last one: ["4:45 PM", "5:30 PM"] → ["4:45", "5:30 PM"].
- */
+/** Start times as the board shows them — each one complete ("4:00 PM", "4:45 PM"). */
 export function formatTimeList(times: string[]): string[] {
-  const formatted = times.map((time) => formatEventTime(time));
-  return formatted.map((label, i) => {
-    const next = formatted[i + 1];
-    const suffix = label.match(/\s?[AP]M$/i)?.[0];
-    if (!next || !suffix) return label;
-    return next.endsWith(suffix.trim()) ? label.slice(0, -suffix.length) : label;
-  });
+  return times.map((time) => formatEventTime(time));
 }
 
 /**
