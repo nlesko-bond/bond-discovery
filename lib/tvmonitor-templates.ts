@@ -15,6 +15,7 @@ import type {
 export const DEFAULT_DAYBOARD_SETTINGS: TvMonitorDayboardSettings = {
   heading: "Today's schedule",
   showDateHeading: true,
+  headingLogoUrl: null,
   primaryTitle: 'Schedule',
   gamesEnabled: true,
   gamesTitle: 'Games',

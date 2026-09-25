@@ -106,6 +106,8 @@ export interface TvMonitorDayboardSettings {
   heading: string;
   /** Big "THURSDAY · SEP 24" heading at the top of the board. */
   showDateHeading: boolean;
+  /** Optional logo shown on both sides of the heading, like a printed schedule sheet. */
+  headingLogoUrl: string | null;
   /** Title of the main (non-game) section. */
   primaryTitle: string;
   /** Split events whose names match `gamesKeywords` into their own section. */

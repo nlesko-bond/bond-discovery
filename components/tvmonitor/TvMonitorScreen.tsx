@@ -162,6 +162,9 @@ export default function TvMonitorScreen({
         ...cssVars,
         color: design.fontColor,
         fontFamily: `'${design.fontFamily}', system-ui, sans-serif`,
+        // The day board sizes itself in cqh against this box (the screen), so a
+        // scaled-down studio preview renders like the real TV.
+        ...(scheduleBlock.viewMode === 'dayboard' ? { containerType: 'size' as const } : {}),
         background: design.bgImageUrl ? design.bgColor2 : gradient,
       }}
     >

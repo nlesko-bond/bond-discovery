@@ -978,6 +978,14 @@ export default function MonitorEditor({
                       checked={config.schedule.dayboard.showDateHeading}
                       onChange={(v) => patchDayboard({ showDateHeading: v })}
                     />
+                    <Field label="Heading logo" hint="Shown on both sides of the heading. A PNG with a transparent background works best on older TVs.">
+                      <MediaInput
+                        value={config.schedule.dayboard.headingLogoUrl ?? ''}
+                        onChange={(url) => patchDayboard({ headingLogoUrl: url || null })}
+                        accept="image"
+                        placeholder="https://…/logo.png"
+                      />
+                    </Field>
                     <Field label="Main section title">
                       <TextInput
                         value={config.schedule.dayboard.primaryTitle}

@@ -207,9 +207,17 @@ takes every color from `design`.
   TV on the same board flips together. Legacy mode flips by reloading: the meta
   refresh is set to the seconds left until the next flip. An empty section gives
   its width to the other one.
+- **Layout**: dotted accent rules between rows (the printed sheet's look), locker
+  rooms in a fixed-width column under a "Locker room" heading so they line up down
+  the board, and an optional `headingLogoUrl` shown on both sides of the heading.
 - **One renderer, two paths**: `lib/tvmonitor-dayboard-render.ts` returns an HTML
   string (escaped, legacy-safe CSS only). The legacy page splices it in; the React
   view injects it with `dangerouslySetInnerHTML` and re-renders every second.
+  Sizes are in `vh` on the legacy page and `cqh` in React, where `TvMonitorScreen`
+  makes its root a size container — so the scaled studio preview matches the TV
+  instead of sizing against the editor's browser window. The React view also uses
+  `schedule.timezone` (when set) for "today" and "now", so an admin in another
+  timezone previews the facility's day.
 
 **Combining duplicate bookings** (`schedule.mergeDuplicateBookings`, default off):
 Bond models dependent and parent/child spaces, so slots-schedule returns **one slot

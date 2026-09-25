@@ -26,7 +26,7 @@ import {
   type DayboardSection,
   type DayboardSpaceTag,
 } from '@/lib/tvmonitor-dayboard';
-import { escapeHtml } from '@/lib/tvmonitor-legacy';
+import { escapeHtml, toLegacyImageUrl } from '@/lib/tvmonitor-legacy';
 import { resourceColorFor } from '@/lib/tvmonitor-schedule-format';
 import type { TvMonitorDesign, TvMonitorScheduleBlock, TvMonitorSpace } from '@/types/tvmonitor';
 
@@ -37,6 +37,8 @@ import type { TvMonitorDesign, TvMonitorScheduleBlock, TvMonitorSpace } from '@/
 const ROWS_AREA_VH = 62;
 const HEADING_KICKER_VH = 3.2;
 const HEADING_DATE_VH = 6.4;
+// With side logos the heading grows so the logos read at a distance.
+const HEADING_WITH_LOGO_VH = 13;
 const SECTION_TITLE_VH = 6;
 
 function clamp(value: number, min: number, max: number): number {
@@ -86,6 +88,8 @@ function withAlpha(color: string, alpha: number, fallback: string): string {
 }
 
 interface Palette {
+  /** Length unit the board is sized in: `vh` fills the viewport, `cqh` the nearest size container. */
+  u: DayboardUnit;
   font: string;
   secondary: string;
   accent: string;
@@ -100,8 +104,9 @@ interface Palette {
  * every color is escaped before it lands in a style attribute — otherwise a
  * value like `red"><img onerror=…>` would break out of it.
  */
-function paletteFor(design: TvMonitorDesign): Palette {
+function paletteFor(design: TvMonitorDesign, u: DayboardUnit): Palette {
   return {
+    u,
     font: escapeHtml(design.fontColor),
     secondary: escapeHtml(design.secondaryFontColor),
     accent: escapeHtml(design.accentColor),
@@ -119,48 +124,58 @@ function paletteFor(design: TvMonitorDesign): Palette {
  */
 function spaceTagHtml(tag: DayboardSpaceTag, fontVh: number, p: Palette): string {
   const base =
-    `display:inline-block;margin-left:0.8vh;padding:0.35vh 1vh;border-radius:0.8vh;white-space:nowrap;` +
-    `font-size:${fontVh}vh;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;`;
+    `display:inline-block;padding:0.35${p.u} 1${p.u};border-radius:0.8${p.u};white-space:nowrap;` +
+    `font-size:${fontVh}${p.u};font-weight:800;letter-spacing:0.1em;text-transform:uppercase;`;
   if (tag.index === 1) {
-    return `<span style="${base}border:0.25vh solid ${p.font};color:${p.font};">${escapeHtml(tag.label)}</span>`;
+    return `<span style="${base}border:0.25${p.u} solid ${p.font};color:${p.font};">${escapeHtml(tag.label)}</span>`;
   }
   const fill = tag.index === 0 ? p.accent : resourceColorFor(tag.index);
   return (
-    `<span style="${base}border:0.25vh solid ${fill};background:${fill};color:${readableTextOn(fill)};">` +
+    `<span style="${base}border:0.25${p.u} solid ${fill};background:${fill};color:${readableTextOn(fill)};">` +
     `${escapeHtml(tag.label)}</span>`
   );
 }
 
-function lockerChipHtml(room: DayboardLockerRoom, fontVh: number, p: Palette): string {
+// Fixed column widths, so locker rooms and rink tags line up down the board
+// under their column headings — the printed sheet's "Event | Locker Room" grid.
+const EVENT_ROOM_COL = 17;
+const EVENT_RINK_COL = 12;
+const GAME_ROOM_COL = 13;
+const ROW_PAD_LEFT = 1.6;
+const ROW_PAD_RIGHT = 1.2;
+
+/** One locker-room line as plain text: "Under 18  5" or "5 & 7". */
+function lockerLineHtml(room: DayboardLockerRoom, p: Palette): string {
   const label = room.label
-    ? `<span style="color:${p.secondary};font-weight:700;margin-right:0.6vh;">${escapeHtml(room.label)}</span>`
+    ? `<span style="color:${p.secondary};font-weight:700;margin-right:0.6${p.u};">${escapeHtml(room.label)}</span>`
     : '';
   return (
-    `<span style="display:inline-block;margin-left:0.8vh;padding:0.3vh 0.9vh;border-radius:0.8vh;white-space:nowrap;` +
-    `border:0.2vh solid ${p.secondary};font-size:${fontVh}vh;font-weight:800;">` +
-    `${label}LR ${escapeHtml(room.rooms)}</span>`
+    `<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">` +
+    `${label}<span style="font-weight:800;">${escapeHtml(room.rooms)}</span></div>`
   );
 }
 
 function liveChipHtml(fontVh: number, p: Palette): string {
   return (
-    `<span style="display:inline-block;margin-left:1vh;padding:0.3vh 0.8vh;border-radius:0.6vh;vertical-align:middle;` +
-    `font-size:${fontVh}vh;font-weight:900;letter-spacing:0.12em;background:${p.accent};color:${p.onAccent};">NOW</span>`
+    `<span style="display:inline-block;margin-left:1${p.u};padding:0.3${p.u} 0.8${p.u};border-radius:0.6${p.u};vertical-align:middle;` +
+    `font-size:${fontVh}${p.u};font-weight:900;letter-spacing:0.12em;background:${p.accent};color:${p.onAccent};">NOW</span>`
   );
 }
 
 function liveBarHtml(p: Palette): string {
-  return `<div style="position:absolute;left:0;top:18%;bottom:18%;width:0.6vh;border-radius:0.3vh;background:${p.accent};"></div>`;
+  return `<div style="position:absolute;left:0;top:12%;bottom:12%;width:0.6${p.u};border-radius:0.3${p.u};background:${p.accent};"></div>`;
 }
 
-function rowBoxStyle(slots: number, live: boolean, p: Palette): string {
+/** Rows are divided by a dotted accent rule, like the printed sheet; the first row sits under the solid title rule. */
+function rowBoxStyle(slots: number, index: number, live: boolean, p: Palette): string {
   return (
-    `position:relative;height:${round(100 / slots)}%;overflow:hidden;border-top:1px solid ${live ? 'transparent' : p.border};` +
-    (live ? `background:${p.liveBg};border-radius:1vh;` : '')
+    `position:relative;height:${round(100 / slots)}%;overflow:hidden;` +
+    (index > 0 ? `border-top:0.3${p.u} dotted ${p.accent};` : '') +
+    (live ? `background:${p.liveBg};` : '')
   );
 }
 
-function eventRowHtml(row: DayboardRow, slots: number, p: Palette): string {
+function eventRowHtml(row: DayboardRow, slots: number, index: number, showRooms: boolean, p: Palette): string {
   const font = eventFontVh(slots);
   const small = round(font * 0.62);
   const multiTime = row.times.length > 1;
@@ -170,51 +185,61 @@ function eventRowHtml(row: DayboardRow, slots: number, p: Palette): string {
     ? row.times.map((t) => `<div>${escapeHtml(t)}</div>`).join('')
     : escapeHtml(row.times[0] ?? '');
   const notesHtml = row.notes
-    ? `<div style="font-size:${small}vh;font-weight:600;color:${p.secondary};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:0.3vh;">${escapeHtml(row.notes)}</div>`
+    ? `<div style="font-size:${small}${p.u};font-weight:600;color:${p.secondary};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:0.3${p.u};">${escapeHtml(row.notes)}</div>`
+    : '';
+  const roomFont = round(font * (row.lockerRooms.length > 2 ? 0.58 : 0.74));
+  const roomsHtml = showRooms
+    ? `<div style="width:${EVENT_ROOM_COL}${p.u};flex-shrink:0;padding-left:1${p.u};font-size:${roomFont}${p.u};line-height:1.2;">` +
+      row.lockerRooms.map((room) => lockerLineHtml(room, p)).join('') +
+      `</div>`
     : '';
   return (
-    `<div style="${rowBoxStyle(slots, row.live, p)}">` +
+    `<div style="${rowBoxStyle(slots, index, row.live, p)}">` +
     (row.live ? liveBarHtml(p) : '') +
-    `<div style="position:absolute;top:0;bottom:0;left:1.6vh;right:1.2vh;display:flex;align-items:center;">` +
-    `<div style="width:${round(font * 5.2)}vh;flex-shrink:0;font-size:${timeFont}vh;font-weight:800;line-height:1.15;">${timesHtml}</div>` +
+    `<div style="position:absolute;top:0;bottom:0;left:${ROW_PAD_LEFT}${p.u};right:${ROW_PAD_RIGHT}${p.u};display:flex;align-items:center;">` +
+    `<div style="width:${round(font * 5.2)}${p.u};flex-shrink:0;font-size:${timeFont}${p.u};font-weight:800;line-height:1.15;">${timesHtml}</div>` +
     `<div style="flex:1 1 0;min-width:0;">` +
-    `<div style="font-size:${font}vh;font-weight:800;line-height:1.12;max-height:2.3em;overflow:hidden;">` +
+    `<div style="font-size:${font}${p.u};font-weight:800;line-height:1.12;max-height:2.3em;overflow:hidden;">` +
     `${escapeHtml(row.title)}${row.live ? liveChipHtml(round(font * 0.45), p) : ''}</div>` +
     `${notesHtml}</div>` +
-    `<div style="flex-shrink:0;display:flex;align-items:center;">` +
-    row.lockerRooms.map((room) => lockerChipHtml(room, small, p)).join('') +
-    row.spaces.map((tag) => spaceTagHtml(tag, round(font * 0.55), p)).join('') +
+    roomsHtml +
+    `<div style="width:${EVENT_RINK_COL}${p.u};flex-shrink:0;">` +
+    row.spaces.map((tag) => `<div style="margin:0.3${p.u} 0;">${spaceTagHtml(tag, round(font * 0.55), p)}</div>`).join('') +
     `</div></div></div>`
   );
 }
 
-function gameRowHtml(row: DayboardRow, slots: number, p: Palette): string {
+function gameRowHtml(row: DayboardRow, slots: number, index: number, p: Palette): string {
   const font = gameFontVh(slots);
   const small = round(font * 0.66);
-  const teamLine = (index: number) => {
-    const team = row.teams[index];
+  const roomCell = (rooms: DayboardLockerRoom[]) =>
+    `<div style="width:${GAME_ROOM_COL}${p.u};flex-shrink:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">` +
+    escapeHtml(rooms.map((room) => (room.label ? `${room.label} ${room.rooms}` : room.rooms)).join(', ')) +
+    `</div>`;
+  const teamLine = (teamIndex: number) => {
+    const team = row.teams[teamIndex];
     if (!team) return '';
-    const vs = index === 1 ? `<span style="color:${p.secondary};font-weight:700;margin-right:0.8vh;">vs</span>` : '';
+    const vs = teamIndex === 1 ? `<span style="color:${p.secondary};font-weight:700;margin-right:0.8${p.u};">vs</span>` : '';
     return (
-      `<div style="display:flex;align-items:center;font-size:${font}vh;font-weight:800;line-height:1.3;">` +
+      `<div style="display:flex;align-items:center;font-size:${font}${p.u};font-weight:800;line-height:1.3;">` +
       `<div style="flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${vs}${escapeHtml(team.name)}</div>` +
-      `<div style="flex-shrink:0;">${team.lockerRooms.map((room) => lockerChipHtml(room, small, p)).join('')}</div></div>`
+      `${roomCell(team.lockerRooms)}</div>`
     );
   };
   const extras =
     row.lockerRooms.length > 0 || row.notes
-      ? `<div style="display:flex;align-items:center;font-size:${small}vh;color:${p.secondary};font-weight:600;line-height:1.3;">` +
+      ? `<div style="display:flex;align-items:center;font-size:${small}${p.u};color:${p.secondary};font-weight:600;line-height:1.3;">` +
         `<div style="flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(row.notes ?? '')}</div>` +
-        `<div style="flex-shrink:0;color:${p.font};">${row.lockerRooms.map((room) => lockerChipHtml(room, small, p)).join('')}</div></div>`
+        `${roomCell(row.lockerRooms)}</div>`
       : '';
   return (
-    `<div style="${rowBoxStyle(slots, row.live, p)}">` +
+    `<div style="${rowBoxStyle(slots, index, row.live, p)}">` +
     (row.live ? liveBarHtml(p) : '') +
-    `<div style="position:absolute;top:0;bottom:0;left:1.6vh;right:0.6vh;display:flex;flex-direction:column;justify-content:center;">` +
-    `<div style="display:flex;align-items:center;margin-bottom:0.4vh;">` +
-    `<div style="flex:1 1 0;min-width:0;font-size:${round(font * 0.9)}vh;font-weight:900;color:${p.accent};">` +
+    `<div style="position:absolute;top:0;bottom:0;left:${ROW_PAD_LEFT}${p.u};right:${ROW_PAD_RIGHT}${p.u};display:flex;flex-direction:column;justify-content:center;">` +
+    `<div style="display:flex;align-items:center;margin-bottom:0.4${p.u};">` +
+    `<div style="flex:1 1 0;min-width:0;font-size:${round(font * 0.9)}${p.u};font-weight:900;color:${p.accent};">` +
     `${escapeHtml(row.times[0] ?? '')}${row.live ? liveChipHtml(round(font * 0.5), p) : ''}</div>` +
-    `<div style="flex-shrink:0;">${row.spaces.map((tag) => spaceTagHtml(tag, round(font * 0.6), p)).join('')}</div></div>` +
+    `<div style="flex-shrink:0;">${row.spaces.map((tag) => spaceTagHtml(tag, round(font * 0.6), p)).join(' ')}</div></div>` +
     teamLine(0) +
     teamLine(1) +
     extras +
@@ -222,30 +247,58 @@ function gameRowHtml(row: DayboardRow, slots: number, p: Palette): string {
   );
 }
 
+function columnHeadingHtml(label: string, width: number, align: 'left' | 'right', p: Palette, padLeft = 0): string {
+  return (
+    `<div style="width:${width}${p.u};flex-shrink:0;padding-left:${padLeft}${p.u};text-align:${align};white-space:nowrap;` +
+    `font-size:1.6${p.u};font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:${p.secondary};">${escapeHtml(label)}</div>`
+  );
+}
+
 function sectionHtml(section: DayboardSection, p: Palette, style: string): string {
   const pager =
     section.pageCount > 1
-      ? `<div style="flex-shrink:0;font-size:1.8vh;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:${p.accent};">` +
-        `Page ${section.pageIndex + 1} of ${section.pageCount}</div>`
+      ? `<span style="margin-left:1.6${p.u};font-size:1.8${p.u};font-weight:800;letter-spacing:0.14em;color:${p.accent};">` +
+        `PAGE ${section.pageIndex + 1} OF ${section.pageCount}</span>`
+      : '';
+  const isGames = section.rows.some((row) => row.kind === 'game');
+  // The locker-room column only appears when this page actually has rooms to show.
+  const showRooms = section.rows.some((row) => row.lockerRooms.length > 0);
+  const headings = isGames
+    ? section.rows.some((row) => row.teams.some((team) => team.lockerRooms.length > 0))
+      ? columnHeadingHtml('Locker room', GAME_ROOM_COL, 'right', p)
+      : ''
+    : showRooms
+      ? columnHeadingHtml('Locker room', EVENT_ROOM_COL, 'left', p, 1) + `<div style="width:${EVENT_RINK_COL}${p.u};flex-shrink:0;"></div>`
       : '';
   const rowsHtml =
     section.rows.length === 0
-      ? `<div style="padding-top:3vh;font-size:2.6vh;color:${p.secondary};">Nothing else scheduled today</div>`
+      ? `<div style="padding-top:3${p.u};font-size:2.6${p.u};color:${p.secondary};">Nothing else scheduled today</div>`
       : section.rows
-          .map((row) =>
-            row.kind === 'game' ? gameRowHtml(row, section.slotsPerPage, p) : eventRowHtml(row, section.slotsPerPage, p),
+          .map((row, index) =>
+            row.kind === 'game'
+              ? gameRowHtml(row, section.slotsPerPage, index, p)
+              : eventRowHtml(row, section.slotsPerPage, index, showRooms, p),
           )
           .join('');
   return (
     `<div style="position:relative;${style}">` +
-    `<div style="position:absolute;top:0;left:0;right:0;height:${SECTION_TITLE_VH}vh;display:flex;align-items:center;` +
-    `border-bottom:0.4vh solid ${p.accent};">` +
-    `<div style="flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:3.6vh;font-weight:900;` +
-    `letter-spacing:0.05em;text-transform:uppercase;">${escapeHtml(section.title)}</div>${pager}</div>` +
-    `<div style="position:absolute;top:${SECTION_TITLE_VH + 0.8}vh;left:0;right:0;bottom:0;">${rowsHtml}</div>` +
+    `<div style="position:absolute;top:0;left:0;right:0;height:${SECTION_TITLE_VH}${p.u};display:flex;align-items:center;` +
+    `padding-right:${ROW_PAD_RIGHT}${p.u};border-bottom:0.4${p.u} solid ${p.accent};">` +
+    `<div style="flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:3.6${p.u};font-weight:900;` +
+    `letter-spacing:0.05em;text-transform:uppercase;">${escapeHtml(section.title)}${pager}</div>${headings}</div>` +
+    `<div style="position:absolute;top:${SECTION_TITLE_VH}${p.u};left:0;right:0;bottom:0;">${rowsHtml}</div>` +
     `</div>`
   );
 }
+
+/**
+ * 'vh' for the legacy page, which always fills the TV's viewport.
+ * 'cqh' for the React view: TvMonitorScreen makes its root a size container,
+ * so the board sizes against the *screen*, not the browser window — which is
+ * what makes the studio preview (a 1920×1080 screen scaled into the editor)
+ * match the TV. The legacy hardware predates container units by years.
+ */
+export type DayboardUnit = 'vh' | 'cqh';
 
 export interface DayboardRenderInput {
   spaces: TvMonitorSpace[];
@@ -255,6 +308,7 @@ export interface DayboardRenderInput {
   now: Date;
   /** Real epoch ms — drives which page is showing. */
   epochMs: number;
+  unit?: DayboardUnit;
 }
 
 export function dayboardDateHeading(now: Date): string {
@@ -264,39 +318,48 @@ export function dayboardDateHeading(now: Date): string {
 }
 
 export function renderDayboardHtml(input: DayboardRenderInput): { html: string; model: DayboardModel } {
-  const { spaces, settings, design, now, epochMs } = input;
+  const { spaces, settings, design, now, epochMs, unit = 'vh' } = input;
   const { dayboard } = settings;
-  const p = paletteFor(design);
+  const p = paletteFor(design, unit);
   const model = buildDayboardModel(spaces, settings, now, dayboardPageTick(epochMs, dayboard.pageSeconds));
 
   const kicker = dayboard.heading.trim();
-  const headingVh = (kicker ? HEADING_KICKER_VH : 0) + (dayboard.showDateHeading ? HEADING_DATE_VH : 0);
+  const textVh = (kicker ? HEADING_KICKER_VH : 0) + (dayboard.showDateHeading ? HEADING_DATE_VH : 0);
+  // Legacy hardware can't decode AVIF/WebP; toLegacyImageUrl forces PNG for our Cloudinary uploads.
+  const logoUrl = dayboard.headingLogoUrl ? toLegacyImageUrl(dayboard.headingLogoUrl) ?? dayboard.headingLogoUrl : null;
+  const headingVh = logoUrl ? HEADING_WITH_LOGO_VH : textVh;
+  const logoImg = (side: 'left' | 'right') =>
+    `<img src="${escapeHtml(logoUrl ?? '')}" alt="" style="position:absolute;top:0;${side}:0;height:${HEADING_WITH_LOGO_VH}${p.u};` +
+    `max-width:25%;object-fit:contain;" />`;
   const headingHtml =
     headingVh > 0
-      ? `<div style="position:absolute;top:0;left:0;right:0;height:${headingVh}vh;text-align:center;overflow:hidden;">` +
+      ? `<div style="position:absolute;top:0;left:0;right:0;height:${headingVh}${p.u};text-align:center;overflow:hidden;">` +
+        (logoUrl ? logoImg('left') + logoImg('right') : '') +
+        // Plain top padding rather than flex centering — see the legacy layout notes above.
+        `<div style="padding-top:${round((headingVh - textVh) / 2)}${p.u};">` +
         (kicker
-          ? `<div style="height:${HEADING_KICKER_VH}vh;line-height:${HEADING_KICKER_VH}vh;font-size:2.1vh;font-weight:800;` +
+          ? `<div style="height:${HEADING_KICKER_VH}${p.u};line-height:${HEADING_KICKER_VH}${p.u};font-size:2.1${p.u};font-weight:800;` +
             `letter-spacing:0.3em;text-transform:uppercase;color:${p.accent};">${escapeHtml(kicker)}</div>`
           : '') +
         (dayboard.showDateHeading
-          ? `<div style="height:${HEADING_DATE_VH}vh;line-height:${HEADING_DATE_VH}vh;font-size:5.2vh;font-weight:900;` +
+          ? `<div style="height:${HEADING_DATE_VH}${p.u};line-height:${HEADING_DATE_VH}${p.u};font-size:5.2${p.u};font-weight:900;` +
             `letter-spacing:0.02em;text-transform:uppercase;">${escapeHtml(dayboardDateHeading(now))}</div>`
           : '') +
-        `</div>`
+        `</div></div>`
       : '';
-  const bodyTop = headingVh > 0 ? `${round(headingVh + 1.6)}vh` : '0';
+  const bodyTop = headingVh > 0 ? `${round(headingVh + 1.6)}${p.u}` : '0';
 
   let bodyHtml: string;
   if (model.empty) {
     bodyHtml =
       `<div style="position:absolute;top:${bodyTop};left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;` +
-      `font-size:3.4vh;font-weight:700;color:${p.secondary};text-align:center;">Nothing else scheduled today</div>`;
+      `font-size:3.4${p.u};font-weight:700;color:${p.secondary};text-align:center;">Nothing else scheduled today</div>`;
   } else {
     const both = model.primary && model.games;
     const primaryHtml = model.primary
-      ? sectionHtml(model.primary, p, both ? 'flex:1.25 1 0;min-width:0;margin-right:3vh;' : 'flex:1 1 0;min-width:0;')
+      ? sectionHtml(model.primary, p, both ? `flex:1.25 1 0;min-width:0;margin-right:3${p.u};` : 'flex:1 1 0;min-width:0;')
       : '';
-    const divider = both ? `<div style="width:0.3vh;flex-shrink:0;background:${escapeHtml(withAlpha(design.accentColor, 0.4, p.border))};margin-right:3vh;"></div>` : '';
+    const divider = both ? `<div style="width:0.3${p.u};flex-shrink:0;background:${escapeHtml(withAlpha(design.accentColor, 0.4, p.border))};margin-right:3${p.u};"></div>` : '';
     const gamesHtml = model.games ? sectionHtml(model.games, p, 'flex:1 1 0;min-width:0;') : '';
     bodyHtml =
       `<div style="position:absolute;top:${bodyTop};left:0;right:0;bottom:0;display:flex;">` +
