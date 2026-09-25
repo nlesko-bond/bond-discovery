@@ -52,6 +52,10 @@ export function resourceIdCapFor(viewMode: TvMonitorScheduleViewMode): number {
 // state rather than a layout we're designing for.
 export const MAX_TV_SCHEDULE_GROUPS = 4;
 export const MIN_TV_REFRESH_SECONDS = 30;
+// Day board page flips. Legacy mode flips by reloading the page, so the floor
+// keeps a wall of TVs from hammering the route.
+export const MIN_DAYBOARD_PAGE_SECONDS = 8;
+export const MAX_DAYBOARD_PAGE_SECONDS = 120;
 
 function asString(value: unknown, fallback: string): string {
   return typeof value === 'string' && value.length > 0 ? value : fallback;
@@ -184,7 +188,17 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
 
   const schedule = rec.schedule && typeof rec.schedule === 'object' ? (rec.schedule as Record<string, unknown>) : {};
   const scheduleViewMode: TvMonitorScheduleViewMode =
-    schedule.viewMode === 'feed' ? 'feed' : schedule.viewMode === 'grouped' ? 'grouped' : 'columns';
+    schedule.viewMode === 'feed' || schedule.viewMode === 'grouped' || schedule.viewMode === 'dayboard'
+      ? schedule.viewMode
+      : 'columns';
+  const dayboard =
+    schedule.dayboard && typeof schedule.dayboard === 'object' ? (schedule.dayboard as Record<string, unknown>) : {};
+  const dayboardKeywords = Array.isArray(dayboard.gamesKeywords)
+    ? dayboard.gamesKeywords
+        .filter((k): k is string => typeof k === 'string' && k.trim().length > 0)
+        .map((k) => k.trim())
+        .slice(0, 10)
+    : null;
   const scheduleResourceIds = asIdArray(schedule.resourceIds).slice(0, resourceIdCapFor(scheduleViewMode));
   const scheduleGroups = normalizeScheduleGroups(schedule.groups, scheduleResourceIds);
   // Only keep the "you are here" pointer if it's actually one of the resources on screen.
@@ -285,6 +299,23 @@ export function normalizeTvMonitorConfig(raw: unknown): TvMonitorConfig {
       scrollSpeed: asNumber(schedule.scrollSpeed, defaults.schedule.scrollSpeed, 1, 5),
       scrollMode: schedule.scrollMode === 'independent' ? 'independent' : 'synchronized',
       scrollPauseSeconds: asNumber(schedule.scrollPauseSeconds, defaults.schedule.scrollPauseSeconds, 0, 30),
+      dayboard: {
+        // Empty is a valid choice here (it hides the kicker line), so no asString fallback.
+        heading: typeof dayboard.heading === 'string' ? dayboard.heading : defaults.schedule.dayboard.heading,
+        showDateHeading: asBool(dayboard.showDateHeading, defaults.schedule.dayboard.showDateHeading),
+        primaryTitle: asString(dayboard.primaryTitle, defaults.schedule.dayboard.primaryTitle),
+        gamesEnabled: asBool(dayboard.gamesEnabled, defaults.schedule.dayboard.gamesEnabled),
+        gamesTitle: asString(dayboard.gamesTitle, defaults.schedule.dayboard.gamesTitle),
+        gamesKeywords:
+          dayboardKeywords && dayboardKeywords.length > 0 ? dayboardKeywords : defaults.schedule.dayboard.gamesKeywords,
+        parseLockerRooms: asBool(dayboard.parseLockerRooms, defaults.schedule.dayboard.parseLockerRooms),
+        pageSeconds: asNumber(
+          dayboard.pageSeconds,
+          defaults.schedule.dayboard.pageSeconds,
+          MIN_DAYBOARD_PAGE_SECONDS,
+          MAX_DAYBOARD_PAGE_SECONDS,
+        ),
+      },
     },
     ads,
     ticker: {

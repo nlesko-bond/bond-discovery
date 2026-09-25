@@ -53,7 +53,7 @@ Building blocks inside `config`:
 | Block | Settings |
 |---|---|
 | `header` | logo, title, live clock, date, schedule QR, waiver QR, optional sponsor ad slot, optional weather chip (see below) |
-| `schedule` | **view** — `columns` (one column per resource), `feed` (all resources merged into one full-width, chronologically-sorted scrolling list, each event tagged with its resource), or `grouped` (several named columns, each a feed over its own group of resources); resource (space) IDs — cap depends on view, see below; `grouped` also carries `groups[]`; optional "you are here" wayfinding highlight (`columns` only, see below); card style — `cards` (default) or `plain`; hours ahead (1–24), show notes / maintenance / private events + notes size/color/italic/bold, labels, auto-scroll (speed 1–5, pause; `columns` and `grouped` also have synchronized vs independent) |
+| `schedule` | **view** — `columns` (one column per resource), `feed` (all resources merged into one full-width, chronologically-sorted scrolling list, each event tagged with its resource), `grouped` (several named columns, each a feed over its own group of resources), or `dayboard` (a still, non-scrolling board of the rest of today — see below); resource (space) IDs — cap depends on view, see below; `grouped` also carries `groups[]`; optional "you are here" wayfinding highlight (`columns` only, see below); card style — `cards` (default) or `plain`; hours ahead (1–24), show notes / maintenance / private events + notes size/color/italic/bold, labels, auto-scroll (speed 1–5, pause; `columns` and `grouped` also have synchronized vs independent) |
 | `ads[]` | fixed placements: left/right rail (optionally full screen height, header beside it), top/bottom banner, in-header; sized by pixels or % of screen; each rotates image/video assets by URL with per-asset duration. The builder shows each slot's rendered px + aspect ratio. JS ad tags are a planned future asset type. |
 | `ticker` | optional scrolling text bar across the bottom of the screen — a label chip + up to 20 plain-text messages, pure CSS marquee. Distinct from `ads[]`: text announcements, not image/video creative. |
 | `design` | dark/light presets, Google font, font/secondary/accent colors, background gradient (color 1 → color 2), optional background image with adjustable color-overlay strength, card colors |
@@ -118,7 +118,7 @@ Facility ID and the resource list client-side and shows a warning — forcing a
 conscious re-pick rather than silently saving a page pointed at another org's
 (possibly nonexistent, possibly someone else's) facility/resources.
 
-**Schedule view — columns vs feed vs grouped**: `TvMonitorScreen` picks the renderer
+**Schedule view — columns vs feed vs grouped vs dayboard**: `TvMonitorScreen` picks the renderer
 from `config.schedule.viewMode`.
 - `columns` (`components/tvmonitor/TvScheduleGrid.tsx`, default) — one column per
   resource, each independently or synchronously auto-scrolling.
@@ -136,6 +136,10 @@ from `config.schedule.viewMode`.
   to `feed` cards, resource pill and all — only the set of resources merged into
   each column differs, so a grouped column tells you both *which group* (header)
   and *which resource* (pill) an event belongs to.
+
+- `dayboard` (`components/tvmonitor/TvScheduleDayboard.tsx`) — a still board of
+  everything left today, modelled on the printed daily sheets rinks tape up in the
+  lobby. See **Day board** below.
 
 `feed` and every column of `grouped` render the same `TvFeedList` component and share
 `buildFeedItems()`, so filtering, parent/child nesting, and sort order can't drift
@@ -169,6 +173,43 @@ between them. The legacy zero-JS renderer calls the same `buildFeedItems()` /
 - Resource colors come from `buildResourceColors()`, keyed by **space id** rather than
   by position within a column — two columns each starting at `palette[0]` would paint
   unrelated resources the same color on one screen.
+
+**Day board** (`schedule.viewMode = 'dayboard'`, settings in `schedule.dayboard`).
+Built for Utah Mammoth Ice Center, who wanted their printed "Event → Locker Room →
+Rink" sheet on the TV instead of a scrolling list. Works in light and dark — it
+takes every color from `design`.
+- **Data** (`lib/tvmonitor-dayboard.ts`, pure): always fetches 24h
+  (`scheduleFetchHours()` — the "hours ahead" setting is ignored and hidden), then
+  keeps only slots dated *today* in the facility's wall clock, plus anything running
+  now, minus anything already over. Bond's endpoint doesn't return finished slots,
+  so the board shows the rest of the day rather than a whole-day history.
+  Top-level slots only (ice cuts and other child slots are dropped); private /
+  maintenance follow the usual toggles.
+- **Name cleanup**: Bond's session suffix is stripped
+  (`"Learn To Skate - July - Aug - Fri - 04:00 pm"` → `"Learn To Skate"`); month
+  segments only go when a day+time suffix was found, so `"Summer Camp - May"` stays.
+- **Dedupe / collapse**: same cleaned name + same time → one row, resources unioned
+  (a booking on both rinks, or Bond's doubled session rows). Repeat sessions of the
+  same event on the same resources with the same notes collapse into one row listing
+  every start time.
+- **Games section**: an event whose name contains a `gamesKeywords` entry as a whole
+  word (default `vs`) goes into its own section, and the keyword splits the name into
+  two teams. `gamesEnabled: false` keeps everything in one section.
+- **Locker rooms** (`parseLockerRooms`): notes lines like `LR 2 Aviators`,
+  `LR 1 - Lost Boys`, `Under 18 LR 5`, `LR 5 & 7`, `Locker room: 108A` become chips.
+  On games, a room whose label names a team (case-insensitive, containment or same
+  first word) sits on that team's line. Lines that don't parse stay as plain notes.
+- **Fit and overflow**: rows are percentage heights of their section and fonts are in
+  `vh`, scaled by how many rows a page holds, so the board never scrolls at any
+  resolution. Past `DAYBOARD_MAX_EVENT_ROWS` (12) / `DAYBOARD_MAX_GAME_ROWS` (8) a
+  section splits into evenly sized pages (16 rows → 8 + 8) and shows "Page 1 of 2".
+  The page shown comes from the wall clock (`floor(epoch / pageSeconds)`), so every
+  TV on the same board flips together. Legacy mode flips by reloading: the meta
+  refresh is set to the seconds left until the next flip. An empty section gives
+  its width to the other one.
+- **One renderer, two paths**: `lib/tvmonitor-dayboard-render.ts` returns an HTML
+  string (escaped, legacy-safe CSS only). The legacy page splices it in; the React
+  view injects it with `dangerouslySetInnerHTML` and re-renders every second.
 
 **Combining duplicate bookings** (`schedule.mergeDuplicateBookings`, default off):
 Bond models dependent and parent/child spaces, so slots-schedule returns **one slot

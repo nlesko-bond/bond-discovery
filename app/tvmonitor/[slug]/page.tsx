@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import TvMonitorDisplay from '@/components/tvmonitor/TvMonitorDisplay';
 import { getTvMonitorPageBySlugCached } from '@/lib/tvmonitor-config';
 import { getTvMonitorSchedule } from '@/lib/tvmonitor-schedule';
+import { scheduleFetchHours } from '@/lib/tvmonitor-schedule-format';
 import { getTvMonitorWeather } from '@/lib/tvmonitor-weather';
 import type { TvMonitorSchedulePayload } from '@/types/tvmonitor';
 
@@ -37,7 +38,7 @@ export default async function TvMonitorPage({ params }: { params: { slug: string
       page.organization_id,
       page.facility_id,
       page.config.schedule.resourceIds,
-      page.config.schedule.futureHoursLimit,
+      scheduleFetchHours(page.config.schedule),
     );
   } catch (error) {
     console.error('[TvMonitor] initial schedule fetch failed:', error);

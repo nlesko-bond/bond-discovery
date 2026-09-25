@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import TvMonitorScreen from '@/components/tvmonitor/TvMonitorScreen';
+import { scheduleFetchHours } from '@/lib/tvmonitor-schedule-format';
 import type { TvMonitorConfig, TvMonitorSchedulePayload, TvMonitorWeatherPayload } from '@/types/tvmonitor';
 
 /** Base render resolution per screen ratio; the preview scales it to fit. */
@@ -44,7 +45,7 @@ export default function MonitorPreview({
   }, []);
 
   const resourceKey = config.schedule.resourceIds.join(',');
-  const hours = config.schedule.futureHoursLimit;
+  const hours = scheduleFetchHours(config.schedule);
 
   useEffect(() => {
     if (!organizationId || !facilityId || !resourceKey) {

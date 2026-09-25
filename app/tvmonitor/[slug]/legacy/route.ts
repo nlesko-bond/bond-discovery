@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTvMonitorPageBySlugCached } from '@/lib/tvmonitor-config';
 import { getTvMonitorSchedule } from '@/lib/tvmonitor-schedule';
+import { scheduleFetchHours } from '@/lib/tvmonitor-schedule-format';
 import { getTvMonitorWeather } from '@/lib/tvmonitor-weather';
 import { renderTvMonitorLegacyHtml } from '@/lib/tvmonitor-legacy-render';
 import type { TvMonitorSchedulePayload } from '@/types/tvmonitor';
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       page.organization_id,
       page.facility_id,
       scheduleBlock.resourceIds,
-      scheduleBlock.futureHoursLimit,
+      scheduleFetchHours(scheduleBlock),
     );
   } catch (error) {
     console.error('[TvMonitorLegacy] schedule fetch failed:', error);

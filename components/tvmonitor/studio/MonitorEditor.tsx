@@ -8,7 +8,13 @@ import MonitorPreview, { BASE_SIZES } from '@/components/tvmonitor/studio/Monito
 import MediaInput from '@/components/tvmonitor/studio/MediaInput';
 import { ColorInput, Field, NumberInput, SectionCard, Select, TextInput, Toggle } from '@/components/tvmonitor/studio/fields';
 import { TV_DESIGN_PRESETS } from '@/lib/tvmonitor-templates';
-import { MAX_TV_SCHEDULE_GROUPS, resourceIdCapFor } from '@/lib/tvmonitor-config';
+import {
+  MAX_DAYBOARD_PAGE_SECONDS,
+  MAX_TV_SCHEDULE_GROUPS,
+  MIN_DAYBOARD_PAGE_SECONDS,
+  resourceIdCapFor,
+} from '@/lib/tvmonitor-config';
+import { scheduleFetchHours } from '@/lib/tvmonitor-schedule-format';
 import type {
   ITvMonitorPage,
   TvMonitorAdAsset,
@@ -195,6 +201,9 @@ export default function MonitorEditor({
   const [resourceInput, setResourceInput] = useState('');
   /** Grouped view: the pending paste-box text for each group, keyed by group id. */
   const [groupInputs, setGroupInputs] = useState<Record<string, string>>({});
+  // Raw text while editing the comma-separated keywords; parsed on blur so a
+  // half-typed "vs," doesn't get normalized away mid-keystroke.
+  const [dayboardKeywordsInput, setDayboardKeywordsInput] = useState<string | null>(null);
   const [tickerMessageInput, setTickerMessageInput] = useState('');
   const [copied, setCopied] = useState(false);
 
@@ -216,6 +225,9 @@ export default function MonitorEditor({
   }
   function patchSchedule(updates: Partial<TvMonitorConfig['schedule']>) {
     patchConfig({ schedule: { ...config.schedule, ...updates } });
+  }
+  function patchDayboard(updates: Partial<TvMonitorConfig['schedule']['dayboard']>) {
+    patchSchedule({ dayboard: { ...config.schedule.dayboard, ...updates } });
   }
   function patchDesign(updates: Partial<TvMonitorConfig['design']>) {
     patchConfig({ design: { ...config.design, ...updates } });
@@ -284,7 +296,7 @@ export default function MonitorEditor({
       orgId: String(page.organization_id),
       facilityId: String(facilityId),
       spaceIds: config.schedule.resourceIds.join(','),
-      hours: String(config.schedule.futureHoursLimit),
+      hours: String(scheduleFetchHours(config.schedule)),
     });
     const res = await fetch(`/api/tvmonitor/preview-schedule?${params}`, { cache: 'no-store' });
     const data = await res.json();
@@ -494,8 +506,9 @@ export default function MonitorEditor({
   // Both of these render side-by-side columns, so both expose the
   // synchronized-vs-independent scroll choice that a single feed can't use.
   const multiColumnView = config.schedule.viewMode === 'columns' || grouped;
+  const dayboard = config.schedule.viewMode === 'dayboard';
   const viewModeLabel =
-    config.schedule.viewMode === 'feed' ? 'Feed' : grouped ? 'Grouped' : 'Columns';
+    config.schedule.viewMode === 'feed' ? 'Feed' : grouped ? 'Grouped' : dayboard ? 'Day board' : 'Columns';
   /** Resources in the inventory that no group has claimed — they render in an "Other" column. */
   const unassignedResourceIds = grouped
     ? config.schedule.resourceIds.filter(
@@ -527,7 +540,9 @@ export default function MonitorEditor({
         : headerBits.join(' · ') || 'Empty',
     schedule: !config.schedule.enabled
       ? 'Hidden'
-      : `${viewModeLabel}${groupedSummarySuffix} · Next ${config.schedule.futureHoursLimit}h${config.schedule.mergeDuplicateBookings ? ' · combined' : ''}${config.schedule.autoScroll ? ` · ${multiColumnView ? (config.schedule.scrollMode === 'synchronized' ? 'synced' : 'independent') + ' scroll' : 'scrolling'}` : ''}`,
+      : dayboard
+        ? `Day board · rest of today${config.schedule.dayboard.gamesEnabled ? ` · ${config.schedule.dayboard.gamesTitle} split out` : ''}`
+        : `${viewModeLabel}${groupedSummarySuffix} · Next ${config.schedule.futureHoursLimit}h${config.schedule.mergeDuplicateBookings ? ' · combined' : ''}${config.schedule.autoScroll ? ` · ${multiColumnView ? (config.schedule.scrollMode === 'synchronized' ? 'synced' : 'independent') + ' scroll' : 'scrolling'}` : ''}`,
     ads:
       enabledAdSlots.length === 0
         ? 'None'
@@ -934,7 +949,9 @@ export default function MonitorEditor({
                       ? 'All resources merged into one scrolling list, sorted by time, with the location shown on each event.'
                       : grouped
                         ? 'One column per group, each a scrolling list merging that group’s resources — e.g. Courts on the left, Pool Lanes on the right.'
-                        : 'One column per resource, side by side.'
+                        : dayboard
+                          ? 'A still board of everything left today — no scrolling. Games ("Team A vs Team B") get their own section, and locker rooms are read from event notes.'
+                          : 'One column per resource, side by side.'
                   }
                 >
                   <Select
@@ -944,9 +961,85 @@ export default function MonitorEditor({
                       { value: 'columns', label: 'Columns — one per resource' },
                       { value: 'feed', label: 'Feed — everything today, one scrolling list' },
                       { value: 'grouped', label: 'Grouped — a feed per group of resources' },
+                      { value: 'dayboard', label: 'Day board — the rest of today, no scrolling' },
                     ]}
                   />
                 </Field>
+                {dayboard && (
+                  <div className="ml-3 space-y-2 border-l-2 border-gray-100 pl-3">
+                    <Field label="Heading" hint='Small line above the date, e.g. "Today on the ice". Leave empty to hide it.'>
+                      <TextInput
+                        value={config.schedule.dayboard.heading}
+                        onChange={(e) => patchDayboard({ heading: e.target.value })}
+                      />
+                    </Field>
+                    <Toggle
+                      label="Show today's date as a big heading"
+                      checked={config.schedule.dayboard.showDateHeading}
+                      onChange={(v) => patchDayboard({ showDateHeading: v })}
+                    />
+                    <Field label="Main section title">
+                      <TextInput
+                        value={config.schedule.dayboard.primaryTitle}
+                        onChange={(e) => patchDayboard({ primaryTitle: e.target.value })}
+                      />
+                    </Field>
+                    <Toggle
+                      label="Put games in their own section"
+                      checked={config.schedule.dayboard.gamesEnabled}
+                      onChange={(v) => patchDayboard({ gamesEnabled: v })}
+                    />
+                    {config.schedule.dayboard.gamesEnabled && (
+                      <>
+                        <Field label="Games section title" hint='e.g. "Adult League".'>
+                          <TextInput
+                            value={config.schedule.dayboard.gamesTitle}
+                            onChange={(e) => patchDayboard({ gamesTitle: e.target.value })}
+                          />
+                        </Field>
+                        <Field
+                          label="Game keywords"
+                          hint='Comma-separated. An event whose name contains one of these as a whole word is a game, and the word splits the two teams — "Aviators vs Baja".'
+                        >
+                          <TextInput
+                            value={dayboardKeywordsInput ?? config.schedule.dayboard.gamesKeywords.join(', ')}
+                            onChange={(e) => setDayboardKeywordsInput(e.target.value)}
+                            onBlur={() => {
+                              const keywords = (dayboardKeywordsInput ?? '')
+                                .split(',')
+                                .map((k) => k.trim())
+                                .filter(Boolean);
+                              if (dayboardKeywordsInput != null && keywords.length > 0) patchDayboard({ gamesKeywords: keywords });
+                              setDayboardKeywordsInput(null);
+                            }}
+                          />
+                        </Field>
+                      </>
+                    )}
+                    <Toggle
+                      label="Read locker rooms from notes"
+                      checked={config.schedule.dayboard.parseLockerRooms}
+                      onChange={(v) => patchDayboard({ parseLockerRooms: v })}
+                    />
+                    {config.schedule.dayboard.parseLockerRooms && (
+                      <p className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                        One per line in the event notes: “LR 2 Aviators”, “Under 18 LR 5”, or “LR 5 &amp; 7”. On games,
+                        rooms named after a team show next to that team. Lines that don’t match show as plain notes.
+                      </p>
+                    )}
+                    <Field
+                      label={`Seconds per page (${MIN_DAYBOARD_PAGE_SECONDS}–${MAX_DAYBOARD_PAGE_SECONDS})`}
+                      hint="Only used on busy days that don’t fit on one screen — the board flips between pages instead of scrolling."
+                    >
+                      <NumberInput
+                        value={config.schedule.dayboard.pageSeconds}
+                        min={MIN_DAYBOARD_PAGE_SECONDS}
+                        max={MAX_DAYBOARD_PAGE_SECONDS}
+                        onChange={(n) => patchDayboard({ pageSeconds: n })}
+                      />
+                    </Field>
+                  </div>
+                )}
                 {grouped && (
                   <Field
                     label="Groups"
@@ -1069,6 +1162,8 @@ export default function MonitorEditor({
                     </div>
                   </Field>
                 )}
+                {!dayboard && (
+                <>
                 <Field label="Hours ahead to show (1–24)">
                   <NumberInput value={config.schedule.futureHoursLimit} min={1} max={24} onChange={(n) => patchSchedule({ futureHoursLimit: n })} />
                 </Field>
@@ -1082,6 +1177,8 @@ export default function MonitorEditor({
                     ]}
                   />
                 </Field>
+                </>
+                )}
                 {config.schedule.viewMode === 'columns' && config.schedule.resourceIds.length > 1 && (
                   <>
                     <Field
@@ -1168,8 +1265,10 @@ export default function MonitorEditor({
                     <TextInput value={config.schedule.privateEventLabel} onChange={(e) => patchSchedule({ privateEventLabel: e.target.value })} />
                   </Field>
                 )}
+                {!dayboard && (
                 <Toggle label="Auto-scroll" checked={config.schedule.autoScroll} onChange={(v) => patchSchedule({ autoScroll: v })} />
-                {config.schedule.autoScroll && (
+                )}
+                {!dayboard && config.schedule.autoScroll && (
                   <>
                     <Field label={`Scroll speed: ${config.schedule.scrollSpeed}`}>
                       <input
