@@ -157,7 +157,11 @@ function lockerTagHtml(room: DayboardLockerRoom, fontVh: number, p: Palette): st
   return (
     `<span style="display:inline-block;margin-left:0.9${p.u};padding:0.25${p.u} 0.8${p.u};border-radius:0.6${p.u};white-space:nowrap;` +
     `vertical-align:middle;background:${p.roomBg};font-size:${fontVh}${p.u};font-weight:800;line-height:1.25;">` +
-    `${label}LR ${escapeHtml(room.rooms)}</span>`
+    `${label}LR ${escapeHtml(room.rooms)}` +
+    (room.detail
+      ? `<span style="color:${p.secondary};font-weight:700;margin-left:0.5${p.u};">· ${escapeHtml(room.detail)}</span>`
+      : '') +
+    `</span>`
   );
 }
 
