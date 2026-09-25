@@ -54,7 +54,7 @@ export const MAX_TV_SCHEDULE_GROUPS = 4;
 export const MIN_TV_REFRESH_SECONDS = 30;
 // Day board page flips. Legacy mode flips by reloading the page, so the floor
 // keeps a wall of TVs from hammering the route.
-export const MIN_DAYBOARD_PAGE_SECONDS = 8;
+export const MIN_DAYBOARD_PAGE_SECONDS = 5;
 export const MAX_DAYBOARD_PAGE_SECONDS = 120;
 
 function asString(value: unknown, fallback: string): string {
