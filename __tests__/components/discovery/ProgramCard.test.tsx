@@ -834,6 +834,34 @@ describe('ProgramCard', () => {
     });
   });
 
+  describe('session card days and times (sessionCardShowSchedule)', () => {
+    const scheduleLines = new Map([
+      [String(mockSession.id), ['Tue & Thu · 3:30–5 PM']],
+      [String(mockSessionFull.id), ['Thu · 4–4:55 PM', 'Sat · 9–9:55 AM']],
+    ]);
+    const program = { ...mockProgram, sessions: [mockSession, mockSessionFull] };
+
+    it('shows no days/times line when no summaries are passed', () => {
+      render(<ProgramCard program={program} config={mockConfig} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.queryByTestId('session-schedule-line')).not.toBeInTheDocument();
+    });
+
+    it('shows each session its own summary lines', () => {
+      render(<ProgramCard program={program} config={mockConfig} sessionScheduleLines={scheduleLines} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      const lines = screen.getAllByTestId('session-schedule-line').map((el) => el.textContent);
+      expect(lines).toEqual(['Tue & Thu · 3:30–5 PM', 'Thu · 4–4:55 PM', 'Sat · 9–9:55 AM']);
+    });
+
+    it('shows nothing for a session without a summary', () => {
+      const onlyFirst = new Map([[String(mockSession.id), ['Tue · 4–4:55 PM']]]);
+      render(<ProgramCard program={program} config={mockConfig} sessionScheduleLines={onlyFirst} />);
+      fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+      expect(screen.getAllByTestId('session-schedule-line')).toHaveLength(1);
+    });
+  });
+
   describe('session card facility (sessionCardShowFacility)', () => {
     it('shows the session facility by default', () => {
       render(<ProgramCard program={mockProgram} config={mockConfig} />);
