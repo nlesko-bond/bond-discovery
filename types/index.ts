@@ -564,6 +564,12 @@ export interface FeatureConfig {
    */
   sessionCardShowAgeRange?: boolean;
   /**
+   * Shows a days/times summary on session cards (e.g. "Tue & Thu · 3:30–5 PM"),
+   * built from the session's upcoming events. Default false (opt-in; legacy
+   * session cards show only the date range).
+   */
+  sessionCardShowSchedule?: boolean;
+  /**
    * Shows the session's facility on session cards. Default true (legacy).
    */
   sessionCardShowFacility?: boolean;

@@ -11,9 +11,11 @@ interface ProgramGridProps {
   linkTarget?: '_blank' | '_top' | '_self';
   hideRegistrationLinks?: boolean;
   customRegistrationUrl?: string;
+  /** Days/times summary lines per session id, present only when the page opts in. */
+  sessionScheduleLines?: ReadonlyMap<string, string[]>;
 }
 
-export function ProgramGrid({ programs, config, hasMultipleFacilities, linkTarget = '_blank', hideRegistrationLinks, customRegistrationUrl }: ProgramGridProps) {
+export function ProgramGrid({ programs, config, hasMultipleFacilities, linkTarget = '_blank', hideRegistrationLinks, customRegistrationUrl, sessionScheduleLines }: ProgramGridProps) {
   if (programs.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -59,6 +61,7 @@ export function ProgramGrid({ programs, config, hasMultipleFacilities, linkTarge
             linkTarget={linkTarget}
             hideRegistrationLinks={hideRegistrationLinks}
             customRegistrationUrl={customRegistrationUrl}
+            sessionScheduleLines={sessionScheduleLines}
           />
         ))}
       </div>

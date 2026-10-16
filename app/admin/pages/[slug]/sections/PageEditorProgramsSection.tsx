@@ -74,6 +74,11 @@ const SESSION_CARD_OPTIONS: ReadonlyArray<IFeatureCheckboxOption> = [
     hint: "The session's age range (falls back to the program's). Default off.",
   },
   {
+    key: 'sessionCardShowSchedule',
+    label: 'Show days and times',
+    hint: 'A summary of when the session meets, e.g. "Tue & Thu · 3:30–5 PM", from its upcoming events. Irregular schedules read "Select dates" or "Times vary". Default off.',
+  },
+  {
     key: 'sessionCardShowFacility',
     label: 'Show facility',
     hint: 'Default on.',

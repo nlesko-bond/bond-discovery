@@ -61,6 +61,8 @@ export interface IPageConfig {
     sessionCardFullTitle?: boolean;
     /** Shows the age range on session cards (default off). */
     sessionCardShowAgeRange?: boolean;
+    /** Shows a days/times summary on session cards (default off). */
+    sessionCardShowSchedule?: boolean;
     /** Shows the facility on session cards (default on). */
     sessionCardShowFacility?: boolean;
     /** Inline price summary on session cards (default: legacy single-product price). */

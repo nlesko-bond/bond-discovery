@@ -6,6 +6,7 @@ import {
   Users, 
   Clock, 
   Calendar, 
+  CalendarClock,
   MapPin,
   Tag,
   Sparkles,
@@ -47,6 +48,8 @@ interface ProgramCardProps {
   linkTarget?: '_blank' | '_top' | '_self'; // Link target for register buttons
   hideRegistrationLinks?: boolean; // Hide all register buttons
   customRegistrationUrl?: string; // Override registration URL
+  /** Days/times summary lines per session id, present only when the page opts in. */
+  sessionScheduleLines?: ReadonlyMap<string, string[]>;
 }
 
 // Sport-specific gradients for visual appeal
@@ -65,7 +68,7 @@ const sportGradients: Record<string, string> = {
   default: 'from-indigo-600 to-purple-600',
 };
 
-export function ProgramCard({ program, config, autoExpand = false, showFacility = true, linkTarget = '_blank', hideRegistrationLinks = false, customRegistrationUrl }: ProgramCardProps) {
+export function ProgramCard({ program, config, autoExpand = false, showFacility = true, linkTarget = '_blank', hideRegistrationLinks = false, customRegistrationUrl, sessionScheduleLines }: ProgramCardProps) {
   const [expanded, setExpanded] = useState(autoExpand);
   
   // Dynamic colors from config
@@ -340,6 +343,7 @@ export function ProgramCard({ program, config, autoExpand = false, showFacility 
                   linkTarget={linkTarget}
                   hideRegistrationLinks={hideRegistrationLinks}
                   customRegistrationUrl={customRegistrationUrl}
+                  scheduleLines={sessionScheduleLines?.get(String(session.id))}
                 />
               ))
             ) : (
@@ -452,6 +456,7 @@ function SessionCard({
   linkTarget = '_blank',
   hideRegistrationLinks = false,
   customRegistrationUrl,
+  scheduleLines,
 }: {
   session: Session;
   config: DiscoveryConfig;
@@ -464,6 +469,7 @@ function SessionCard({
   linkTarget?: '_blank' | '_top' | '_self';
   hideRegistrationLinks?: boolean;
   customRegistrationUrl?: string;
+  scheduleLines?: string[];
 }) {
   const pathname = usePathname();
   // Auto-expand pricing if there's only one session (autoExpandPricing=true)
@@ -599,6 +605,16 @@ function SessionCard({
                 {formatDateRange(session.startDate || '', session.endDate || '')}
               </span>
             )}
+            {scheduleLines?.map((line) => (
+              <span
+                key={line}
+                className="flex items-center gap-1"
+                data-testid="session-schedule-line"
+              >
+                <CalendarClock size={12} className="flex-shrink-0 text-gray-400" />
+                {line}
+              </span>
+            ))}
             {facilityName && (
               <span className="flex items-center gap-1">
                 <MapPin size={12} className="text-gray-400" />

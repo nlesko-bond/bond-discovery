@@ -37,6 +37,7 @@ import { ProgramGridSkeleton, ScheduleViewSkeleton } from '@/components/ui/Skele
 import { GoogleTagManager, gtmEvent } from '@/components/analytics/GoogleTagManager';
 import { bondAnalytics } from '@/lib/analytics';
 import { programIdsFilterMatches } from '@/lib/program-ids-filter';
+import { buildSessionScheduleSummaries } from '@/lib/session-schedule-summary';
 import { useFacilityScheduleEvents } from '@/components/host-shell/useFacilityScheduleEvents';
 import { extendPortalFilterOptionsWithFacilityEvents } from '@/lib/host-shell/portal-filter-options';
 
@@ -543,6 +544,11 @@ export function DiscoveryPage({
   const [totalServerEvents, setTotalServerEvents] = useState(initialTotalServerEvents);
   const [loadingMore, setLoadingMore] = useState(false);
   const cacheV2Enabled = config.features.discoveryCacheEnabled !== false;
+  const showSessionSchedule = config.features.sessionCardShowSchedule === true;
+  const sessionScheduleLines = useMemo(
+    () => (showSessionSchedule ? buildSessionScheduleSummaries(apiEvents) : undefined),
+    [showSessionSchedule, apiEvents],
+  );
 
   // Ref to track the current fetch request for cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -579,7 +585,9 @@ export function DiscoveryPage({
   // Fetch events from API when schedule view is selected
   useEffect(() => {
     // Only fetch if we're in schedule view and haven't fetched yet
-    if (viewMode !== 'schedule' || eventsFetched) {
+    const needsEvents =
+      viewMode === 'schedule' || (viewMode === 'programs' && showSessionSchedule);
+    if (!needsEvents || eventsFetched) {
       return;
     }
     
@@ -644,7 +652,7 @@ export function DiscoveryPage({
     return () => {
       abortController.abort();
     };
-  }, [viewMode, eventsFetched, config.slug]);
+  }, [viewMode, eventsFetched, config.slug, showSessionSchedule]);
 
   const loadMoreEvents = useCallback(() => {
     if (loadingMore || apiEvents.length >= totalServerEvents) return;
@@ -1510,6 +1518,7 @@ export function DiscoveryPage({
               linkTarget={linkTarget}
               hideRegistrationLinks={config.features.hideRegistrationLinks}
               customRegistrationUrl={config.features.customRegistrationUrl}
+              sessionScheduleLines={sessionScheduleLines}
             />
           ) : (
             <ScheduleView 
