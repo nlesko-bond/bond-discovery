@@ -6,7 +6,6 @@ import {
   buildV2GenderOptions,
   countSessionsPerAgeBucket,
   derivePortalCardTint,
-  formatActivityLabel,
   isPortalTemplateV2,
   resolveMemberPricing,
   resolveMemberPricingStyle,
@@ -230,15 +229,6 @@ describe('buildV2GenderOptions', () => {
     ] as unknown as Program[];
     expect(buildV2GenderOptions(programs)).toEqual([{ id: 'male', label: 'Boys' }]);
     expect(buildV2GenderOptions([])).toEqual([]);
-  });
-});
-
-describe('formatActivityLabel', () => {
-  it('humanizes sport ids', () => {
-    expect(formatActivityLabel('ice_skating')).toBe('Ice Skating');
-    expect(formatActivityLabel('soccer')).toBe('Soccer');
-    expect(formatActivityLabel('martial-arts')).toBe('Martial Arts');
-    expect(formatActivityLabel('FLAG FOOTBALL')).toBe('Flag Football');
   });
 });
 

@@ -206,11 +206,18 @@ export function getProgramTypeLabel(type?: ProgramType | string): string {
 }
 
 /**
- * Get sport label (capitalize)
+ * Human label for a Bond sport / activity id: underscores, hyphens and
+ * spaces become word breaks and each word is capitalized
+ * ('figure_skating' → 'Figure Skating', 'BASKETBALL' → 'Basketball').
+ * Display only — keep the raw id for filter values and lookups.
  */
 export function getSportLabel(sport?: string): string {
   if (!sport) return '';
-  return sport.charAt(0).toUpperCase() + sport.slice(1).toLowerCase();
+  return sport
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 }
 
 /**

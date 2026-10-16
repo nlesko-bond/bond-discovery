@@ -19,7 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import type { DiscoveryConfig, DiscoveryFilters, Program } from '@/types';
-import { cn, getProgramTypeLabel } from '@/lib/utils';
+import { cn, getProgramTypeLabel, getSportLabel } from '@/lib/utils';
 import {
   clampEventLookbackDays,
   getScheduleDateBounds,
@@ -28,7 +28,6 @@ import type { IPortalFilterOptions } from '@/lib/host-shell/portal-filter-option
 import {
   buildV2GenderOptions,
   countSessionsPerAgeBucket,
-  formatActivityLabel,
 } from '@/lib/host-shell/portal-v2';
 import {
   applyFacetSelection,
@@ -478,7 +477,7 @@ export function HostPortalV2FilterBar({
                   aria-pressed={isActive}
                   onClick={() => toggleSport(sport.id)}
                 >
-                  {formatActivityLabel(sport.id)}
+                  {getSportLabel(sport.id)}
                   <span
                     className={cn(
                       'ml-1.5 text-xs tabular-nums',

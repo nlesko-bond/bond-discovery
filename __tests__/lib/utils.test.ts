@@ -177,8 +177,21 @@ describe('getSportLabel', () => {
     expect(getSportLabel('Tennis')).toBe('Tennis');
   });
 
+  it('turns underscores, hyphens and spaces into title-cased words', () => {
+    expect(getSportLabel('figure_skating')).toBe('Figure Skating');
+    expect(getSportLabel('ice_skating')).toBe('Ice Skating');
+    expect(getSportLabel('corporate_events')).toBe('Corporate Events');
+    expect(getSportLabel('martial-arts')).toBe('Martial Arts');
+    expect(getSportLabel('FLAG FOOTBALL')).toBe('Flag Football');
+  });
+
+  it('ignores leading, trailing and repeated separators', () => {
+    expect(getSportLabel('_ice__skating_')).toBe('Ice Skating');
+  });
+
   it('returns empty string for undefined', () => {
     expect(getSportLabel(undefined)).toBe('');
+    expect(getSportLabel('')).toBe('');
   });
 });
 

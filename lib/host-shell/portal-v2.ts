@@ -494,18 +494,6 @@ export function buildV2GenderOptions(
   return options;
 }
 
-/**
- * Activity chip label: 'ice_skating' → 'Ice Skating'. (The shared getSportLabel
- * keeps underscores; v2 chips need clean human labels without changing it.)
- */
-export function formatActivityLabel(sportId: string): string {
-  return sportId
-    .split(/[\s_-]+/)
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-}
-
 // ---------------------------------------------------------------------------
 // Preview URL overrides (operator comparison; defaults unchanged without params)
 // ---------------------------------------------------------------------------
