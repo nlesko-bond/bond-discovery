@@ -34,6 +34,33 @@ interface BondApiStats {
 
 const BOND_PAGE_FETCH_CONCURRENCY = 3;
 
+/** Values Bond accepts in the programs `statuses` filter. Any other value, lowercase included, returns 400. */
+export type BondProgramStatus =
+  | 'DRAFT'
+  | 'PUBLISHED'
+  | 'CLOSED'
+  | 'CANCELLED'
+  | 'ARCHIVE'
+  | 'UNPUBLISHED';
+
+interface ProgramFilterOptions {
+  facilityId?: string;
+  statuses?: BondProgramStatus[];
+}
+
+/**
+ * Programs filter params, using the names Bond actually reads. Bond silently
+ * ignores unknown params, so the old `facility_id` / `status` returned every
+ * program in the org. Arrays go comma-joined, like `expand` and `programTypes`.
+ * Bond also accepts repeated keys (`facilitiesIds=1&facilitiesIds=2`).
+ */
+function programFilterParams(options?: ProgramFilterOptions): Record<string, string | undefined> {
+  return {
+    facilitiesIds: options?.facilityId || undefined,
+    statuses: options?.statuses?.length ? options.statuses.join(',') : undefined,
+  };
+}
+
 let bondApiStats: BondApiStats = {
   totalRequests: 0,
   rateLimitHits: 0,
@@ -264,10 +291,8 @@ export class BondClient {
    */
   async getPrograms(
     orgId: string,
-    options?: {
+    options?: ProgramFilterOptions & {
       expand?: string;
-      facilityId?: string;
-      status?: string;
       page?: number;
       perPage?: number;
     }
@@ -277,14 +302,8 @@ export class BondClient {
       expand: options?.expand || 'sessions,sessions.products,sessions.products.prices',
       page: options?.page || 1,
       per_page: options?.perPage || 100,
+      ...programFilterParams(options),
     };
-
-    if (options?.facilityId) {
-      params.facility_id = options.facilityId;
-    }
-    if (options?.status) {
-      params.status = options.status;
-    }
 
     return this.fetch<APIResponse<Program[]>>(`/organization/${orgId}/programs`, params);
   }
@@ -298,18 +317,15 @@ export class BondClient {
    */
   async getAllPrograms(
     orgId: string,
-    options?: {
+    options?: ProgramFilterOptions & {
       expand?: string;
-      facilityId?: string;
-      status?: string;
       includePast?: boolean;
       programTypes?: string[];
     }
   ): Promise<APIResponse<Program[]>> {
     return this.fetchAllPages<Program>(`/organization/${orgId}/programs`, {
       expand: options?.expand || 'sessions,sessions.products,sessions.products.prices',
-      facility_id: options?.facilityId,
-      status: options?.status,
+      ...programFilterParams(options),
       includePast: options?.includePast ? 'true' : undefined,
       programTypes: options?.programTypes?.length ? options.programTypes.join(',') : undefined,
       per_page: 100,
